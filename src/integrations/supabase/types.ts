@@ -14,7 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          belt_level: string | null
+          created_at: string
+          email: string
+          emergency_contact: string | null
+          first_name: string
+          id: string
+          last_name: string
+          membership_status: string
+          parent_id: string | null
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          belt_level?: string | null
+          created_at?: string
+          email: string
+          emergency_contact?: string | null
+          first_name: string
+          id: string
+          last_name: string
+          membership_status?: string
+          parent_id?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          belt_level?: string | null
+          created_at?: string
+          email?: string
+          emergency_contact?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          membership_status?: string
+          parent_id?: string | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,6 +1,21 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/lib/supabase';
+import { supabase } from "@/integrations/supabase/client";
+
+interface Profile {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: 'student' | 'admin';
+  parent_id?: string;
+  phone?: string;
+  emergency_contact?: string;
+  belt_level?: string;
+  membership_status: 'active' | 'inactive' | 'alumni';
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -62,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
       } else if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
