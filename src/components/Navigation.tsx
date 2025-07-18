@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { Shield, Users, CreditCard, BarChart3 } from "lucide-react";
 
 const Navigation = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-4">
@@ -24,12 +28,32 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-            <Button variant="gold" size="sm">
-              Get Started
-            </Button>
+            {user ? (
+              <Button 
+                variant="gold" 
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  variant="gold" 
+                  size="sm"
+                  onClick={() => navigate('/auth')}
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -37,4 +61,4 @@ const Navigation = () => {
   );
 };
 
-export default Navigation;
+export { Navigation };
