@@ -52,6 +52,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'dojo-navy': 'hsl(var(--dojo-navy))',
+				'gold-accent': 'hsl(var(--gold-accent))',
+				'champion-red': 'hsl(var(--champion-red))',
+				'sensei-gray': 'hsl(var(--sensei-gray))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
