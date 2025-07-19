@@ -91,12 +91,12 @@ export const OverviewReports = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary" className="mr-1">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Badge variant="secondary">
                 {stats?.activeStudents || 0} active
               </Badge>
-              current members
-            </p>
+              <span>current members</span>
+            </div>
           </CardContent>
         </Card>
 
