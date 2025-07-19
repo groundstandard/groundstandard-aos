@@ -11,6 +11,9 @@ import { MessageInput } from './MessageInput';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Hash, Lock, Crown, Users } from 'lucide-react';
+import { ChannelSetup } from './ChannelSetup';
+import { DateDivider } from './DateDivider';
+import { format, isSameDay } from 'date-fns';
 
 interface Message {
   id: string;
@@ -336,6 +339,14 @@ export const EnhancedChatInterface = () => {
     setReplyingTo(null);
   };
 
+  const handleDescriptionAdded = (description: string) => {
+    setChannels(prev => prev.map(channel => 
+      channel.id === activeChannel 
+        ? { ...channel, description }
+        : channel
+    ));
+  };
+
   const handleChannelSwitch = (channelId: string) => {
     const channel = channels.find(c => c.id === channelId);
     
@@ -497,6 +508,36 @@ export const EnhancedChatInterface = () => {
     return getCurrentChannelMessages().filter(msg => !msg.parent_message_id);
   };
 
+  // Group messages by date and insert date dividers
+  const getMessagesWithDividers = (): (Message | { type: 'date-divider'; date: string })[] => {
+    const messages = getTopLevelMessages();
+    const messagesWithDividers: (Message | { type: 'date-divider'; date: string })[] = [];
+    
+    messages.forEach((message, index) => {
+      const prevMessage = messages[index - 1];
+      const messageDate = new Date(message.created_at);
+      const prevMessageDate = prevMessage ? new Date(prevMessage.created_at) : null;
+      
+      // Add date divider if this is the first message or if the date changed
+      if (!prevMessageDate || !isSameDay(messageDate, prevMessageDate)) {
+        messagesWithDividers.push({
+          type: 'date-divider',
+          date: message.created_at
+        });
+      }
+      
+      messagesWithDividers.push(message);
+    });
+    
+    return messagesWithDividers;
+  };
+
+  // Check if channel is new (no messages)
+  const isNewChannel = (): boolean => {
+    const messages = getCurrentChannelMessages();
+    return messages.length === 0;
+  };
+
   // Update thread count for messages with replies
   const getMessageWithThreadCount = (message: Message): Message => {
     const threadCount = getThreadReplies(message.id).length;
@@ -576,37 +617,50 @@ export const EnhancedChatInterface = () => {
                 onScroll={handleScroll}
                 className="flex-1 overflow-y-auto p-4"
               >
-                <div className="space-y-1 min-h-full flex flex-col justify-end">
-                  {getTopLevelMessages().map((message, index) => {
-                     const topLevelMessages = getTopLevelMessages();
-                     const prevMessage = topLevelMessages[index - 1];
-                     const messageWithThreadCount = getMessageWithThreadCount(message);
-                     const isOwnMessage = message.sender_id === profile?.id;
-                     const showAvatar = !prevMessage || 
-                       prevMessage.sender_id !== message.sender_id || 
-                       isOwnMessage !== (prevMessage.sender_id === profile?.id);
+                {isNewChannel() ? (
+                  <ChannelSetup 
+                    channel={currentChannel!} 
+                    onDescriptionAdded={handleDescriptionAdded}
+                  />
+                ) : (
+                  <div className="space-y-1 min-h-full flex flex-col justify-end">
+                    {getMessagesWithDividers().map((item, index) => {
+                       if ('type' in item && item.type === 'date-divider') {
+                         return <DateDivider key={`divider-${item.date}`} date={item.date} />;
+                       }
+                       
+                       const message = item as Message;
+                       const messagesWithDividers = getMessagesWithDividers();
+                       const prevItem = messagesWithDividers[index - 1];
+                       const prevMessage = prevItem && !('type' in prevItem) ? prevItem as Message : null;
+                       const messageWithThreadCount = getMessageWithThreadCount(message);
+                       const isOwnMessage = message.sender_id === profile?.id;
+                       const showAvatar = !prevMessage || 
+                         prevMessage.sender_id !== message.sender_id || 
+                         isOwnMessage !== (prevMessage.sender_id === profile?.id);
 
-                     return (
-                       <MessageBubble
-                         key={message.id}
-                         message={messageWithThreadCount}
-                         isOwnMessage={isOwnMessage}
-                         showAvatar={showAvatar}
-                         onReaction={handleReaction}
-                         onReply={handleReply}
-                         onEdit={handleEdit}
-                         onDelete={handleDelete}
-                         onPin={handlePin}
-                         onReport={handleReport}
-                         onToggleThread={handleToggleThread}
-                         showThread={expandedThreads.has(message.id)}
-                         threadReplies={getThreadReplies(message.id)}
-                         currentUserId={profile?.id}
-                       />
-                     );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
+                       return (
+                         <MessageBubble
+                           key={message.id}
+                           message={messageWithThreadCount}
+                           isOwnMessage={isOwnMessage}
+                           showAvatar={showAvatar}
+                           onReaction={handleReaction}
+                           onReply={handleReply}
+                           onEdit={handleEdit}
+                           onDelete={handleDelete}
+                           onPin={handlePin}
+                           onReport={handleReport}
+                           onToggleThread={handleToggleThread}
+                           showThread={expandedThreads.has(message.id)}
+                           threadReplies={getThreadReplies(message.id)}
+                           currentUserId={profile?.id}
+                         />
+                       );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                )}
               </div>
 
               {/* Reply Indicator */}
@@ -701,37 +755,50 @@ export const EnhancedChatInterface = () => {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4"
         >
-          <div className="space-y-1 min-h-full flex flex-col justify-end">
-            {getTopLevelMessages().map((message, index) => {
-              const topLevelMessages = getTopLevelMessages();
-              const prevMessage = topLevelMessages[index - 1];
-              const messageWithThreadCount = getMessageWithThreadCount(message);
-              const isOwnMessage = message.sender_id === profile?.id;
-              const showAvatar = !prevMessage || 
-                prevMessage.sender_id !== message.sender_id || 
-                isOwnMessage !== (prevMessage.sender_id === profile?.id);
+          {isNewChannel() ? (
+            <ChannelSetup 
+              channel={currentChannel!} 
+              onDescriptionAdded={handleDescriptionAdded}
+            />
+          ) : (
+            <div className="space-y-1 min-h-full flex flex-col justify-end">
+              {getMessagesWithDividers().map((item, index) => {
+                if ('type' in item && item.type === 'date-divider') {
+                  return <DateDivider key={`divider-${item.date}`} date={item.date} />;
+                }
+                
+                const message = item as Message;
+                const messagesWithDividers = getMessagesWithDividers();
+                const prevItem = messagesWithDividers[index - 1];
+                const prevMessage = prevItem && !('type' in prevItem) ? prevItem as Message : null;
+                const messageWithThreadCount = getMessageWithThreadCount(message);
+                const isOwnMessage = message.sender_id === profile?.id;
+                const showAvatar = !prevMessage || 
+                  prevMessage.sender_id !== message.sender_id || 
+                  isOwnMessage !== (prevMessage.sender_id === profile?.id);
 
-              return (
-                <MessageBubble
-                  key={message.id}
-                  message={messageWithThreadCount}
-                  isOwnMessage={isOwnMessage}
-                  showAvatar={showAvatar}
-                  onReaction={handleReaction}
-                  onReply={handleReply}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onPin={handlePin}
-                  onReport={handleReport}
-                  onToggleThread={handleToggleThread}
-                  showThread={expandedThreads.has(message.id)}
-                  threadReplies={getThreadReplies(message.id)}
-                  currentUserId={profile?.id}
-                />
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
+                return (
+                  <MessageBubble
+                    key={message.id}
+                    message={messageWithThreadCount}
+                    isOwnMessage={isOwnMessage}
+                    showAvatar={showAvatar}
+                    onReaction={handleReaction}
+                    onReply={handleReply}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onPin={handlePin}
+                    onReport={handleReport}
+                    onToggleThread={handleToggleThread}
+                    showThread={expandedThreads.has(message.id)}
+                    threadReplies={getThreadReplies(message.id)}
+                    currentUserId={profile?.id}
+                  />
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
 
         {/* Reply Indicator */}
