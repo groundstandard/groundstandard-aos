@@ -1485,6 +1485,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      check_absent_members: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string

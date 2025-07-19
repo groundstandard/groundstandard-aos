@@ -11,3 +11,12 @@ verify_jwt = true
 
 [functions.generate-financial-report]
 verify_jwt = true
+
+[functions.highlevel-automation]
+verify_jwt = true
+
+[functions.highlevel-webhook]
+verify_jwt = false
+
+[functions.check-absent-members]
+verify_jwt = false
