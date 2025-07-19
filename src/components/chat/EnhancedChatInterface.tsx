@@ -548,7 +548,7 @@ export const EnhancedChatInterface = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-end">
                 <div className="space-y-1">
                   {getTopLevelMessages().map((message, index) => {
                      const topLevelMessages = getTopLevelMessages();
@@ -577,7 +577,7 @@ export const EnhancedChatInterface = () => {
                          currentUserId={profile?.id}
                        />
                      );
-                   })}
+                  })}
                 </div>
                 <div ref={messagesEndRef} />
               </div>
@@ -669,7 +669,7 @@ export const EnhancedChatInterface = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-end">
           <div className="space-y-1">
             {getTopLevelMessages().map((message, index) => {
               const topLevelMessages = getTopLevelMessages();
