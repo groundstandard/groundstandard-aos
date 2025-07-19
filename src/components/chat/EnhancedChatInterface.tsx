@@ -410,6 +410,17 @@ export const EnhancedChatInterface = () => {
     return messages.filter(msg => msg.parent_message_id === messageId);
   };
 
+  // Get only top-level messages (not replies)
+  const getTopLevelMessages = (): Message[] => {
+    return messages.filter(msg => !msg.parent_message_id);
+  };
+
+  // Update thread count for messages with replies
+  const getMessageWithThreadCount = (message: Message): Message => {
+    const threadCount = getThreadReplies(message.id).length;
+    return { ...message, thread_count: threadCount > 0 ? threadCount : undefined };
+  };
+
   const currentChannel = channels.find(c => c.id === activeChannel);
 
   const getChannelIcon = (channel: Channel) => {
@@ -478,8 +489,10 @@ export const EnhancedChatInterface = () => {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-1">
-                  {messages.map((message, index) => {
-                     const prevMessage = messages[index - 1];
+                  {getTopLevelMessages().map((message, index) => {
+                     const topLevelMessages = getTopLevelMessages();
+                     const prevMessage = topLevelMessages[index - 1];
+                     const messageWithThreadCount = getMessageWithThreadCount(message);
                      const isOwnMessage = message.sender_id === profile?.id;
                      const showAvatar = !prevMessage || 
                        prevMessage.sender_id !== message.sender_id || 
@@ -488,7 +501,7 @@ export const EnhancedChatInterface = () => {
                      return (
                        <MessageBubble
                          key={message.id}
-                         message={message}
+                         message={messageWithThreadCount}
                          isOwnMessage={isOwnMessage}
                          showAvatar={showAvatar}
                          onReaction={handleReaction}
@@ -593,8 +606,10 @@ export const EnhancedChatInterface = () => {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-1">
-            {messages.map((message, index) => {
-              const prevMessage = messages[index - 1];
+            {getTopLevelMessages().map((message, index) => {
+              const topLevelMessages = getTopLevelMessages();
+              const prevMessage = topLevelMessages[index - 1];
+              const messageWithThreadCount = getMessageWithThreadCount(message);
               const isOwnMessage = message.sender_id === profile?.id;
               const showAvatar = !prevMessage || 
                 prevMessage.sender_id !== message.sender_id || 
@@ -603,7 +618,7 @@ export const EnhancedChatInterface = () => {
               return (
                 <MessageBubble
                   key={message.id}
-                  message={message}
+                  message={messageWithThreadCount}
                   isOwnMessage={isOwnMessage}
                   showAvatar={showAvatar}
                   onReaction={handleReaction}
