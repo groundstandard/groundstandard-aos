@@ -108,7 +108,7 @@ export const ChatMessages = ({
     isOwnMessage: boolean; 
     showAvatar: boolean; 
   }) => (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`}>
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-1`}>
       <div className={`flex max-w-[85%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
         {/* Avatar */}
         {!isOwnMessage && (
@@ -235,7 +235,7 @@ export const ChatMessages = ({
       </div>
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
         {/* Channel description */}
         {currentChannel && (
           <div className="text-center mb-6 py-4">

@@ -211,7 +211,7 @@ export const MessageBubble = ({
   // System message rendering
   if (message.is_system_message) {
     return (
-      <div className="flex justify-center mb-3">
+      <div className="flex justify-center mb-1">
         <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-full">
           <Avatar className="h-6 w-6">
             <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
@@ -230,7 +230,7 @@ export const MessageBubble = ({
   }
 
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`}>
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-1`}>
       <div className={`flex max-w-[85%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 group`}>
         {/* Avatar */}
         {!isOwnMessage && (

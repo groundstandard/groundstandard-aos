@@ -875,7 +875,7 @@ export const EnhancedChatInterface = () => {
                 <div 
                   ref={messagesContainerRef}
                   onScroll={handleScroll}
-                  className="flex-1 overflow-y-auto px-4 pt-4 pb-2"
+                  className="flex-1 overflow-y-auto px-4 pt-4 pb-4"
                 >
                   {isNewChannel() ? (
                     <ChannelSetup 
@@ -1092,7 +1092,7 @@ export const EnhancedChatInterface = () => {
         <div 
           ref={messagesContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 pt-4 pb-2"
+          className="flex-1 overflow-y-auto px-4 pt-4 pb-4"
         >
           {isNewChannel() ? (
             <ChannelSetup 
