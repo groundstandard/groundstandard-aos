@@ -174,49 +174,60 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Quick Navigation Actions */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Quick Access</CardTitle>
-            <CardDescription>Navigate to key member features</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button 
-                variant="outline" 
-                className="h-16 flex flex-col items-center justify-center text-xs gap-1"
-                onClick={() => navigate('/classes')}
-              >
-                <Calendar className="h-4 w-4" />
-                Classes
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-16 flex flex-col items-center justify-center text-xs gap-1"
-                onClick={() => navigate('/attendance')}
-              >
-                <CheckCircle className="h-4 w-4" />
-                Attendance
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-16 flex flex-col items-center justify-center text-xs gap-1"
-                onClick={() => navigate('/progress')}
-              >
-                <BarChart3 className="h-4 w-4" />
-                Progress
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-16 flex flex-col items-center justify-center text-xs gap-1"
-                onClick={() => navigate('/chat')}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Academy Chat
-              </Button>
+        {/* Member Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Member Since</h3>
+              <User className="h-4 w-4 text-blue-500" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-1">
+              <p className="text-2xl font-bold">
+                {new Date(profile.created_at).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))} days ago
+              </p>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Total Classes</h3>
+              <BarChart3 className="h-4 w-4 text-green-500" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl font-bold">42</p>
+              <p className="text-xs text-muted-foreground">+3 This month</p>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Current Belt</h3>
+              <Award className="h-4 w-4 text-purple-500" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl font-bold">{profile.belt_level || 'White'}</p>
+              <p className="text-xs text-muted-foreground">Next: Yellow Belt</p>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Next Class</h3>
+              <Calendar className="h-4 w-4 text-orange-500" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl font-bold">Today</p>
+              <p className="text-xs text-muted-foreground">7:00 PM - Karate</p>
+            </div>
+          </Card>
+        </div>
 
         {/* Member Features Grid */}
         <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
