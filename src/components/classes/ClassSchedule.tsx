@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ export const ClassSchedule = () => {
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchClassesWithSchedules();
@@ -123,20 +125,20 @@ export const ClassSchedule = () => {
       }
 
       if (userEnrollments && userEnrollments.length >= 3) {
-        toast({
-          variant: 'destructive',
-          title: 'Upgrade Required',
-          description: 'Free plan allows up to 3 classes. Upgrade to premium for unlimited access.',
-          action: (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.location.href = '/subscription'}
-            >
-              Upgrade
-            </Button>
-          )
-        });
+         toast({
+           variant: 'destructive',
+           title: 'Upgrade Required',
+           description: 'Free plan allows up to 3 classes. Upgrade to premium for unlimited access.',
+           action: (
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => navigate('/subscription')}
+             >
+               Upgrade
+             </Button>
+           )
+         });
         return;
       }
     }
@@ -246,15 +248,15 @@ export const ClassSchedule = () => {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.location.href = '/subscription'}
-                className="border-amber-300 text-amber-700 hover:bg-amber-100"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                Upgrade
-              </Button>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 onClick={() => navigate('/subscription')}
+                 className="border-amber-300 text-amber-700 hover:bg-amber-100"
+               >
+                 <Crown className="h-4 w-4 mr-2" />
+                 Upgrade
+               </Button>
             </div>
           </CardContent>
         </Card>
