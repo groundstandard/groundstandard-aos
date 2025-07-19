@@ -152,6 +152,9 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
+              Student Active
+            </Badge>
             <Dialog>
               <DialogTrigger asChild>
                 <Button 
@@ -170,15 +173,7 @@ const Dashboard = () => {
                 <ProfileView />
               </DialogContent>
             </Dialog>
-            <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
-              Student Active
-            </Badge>
           </div>
-        </div>
-
-        {/* View Toggle in lower middle */}
-        <div className="flex justify-center mb-6">
-          <ViewToggle />
         </div>
 
         {/* Student Statistics */}
@@ -308,6 +303,11 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* View Toggle at bottom center */}
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10">
+          <ViewToggle />
         </div>
       </div>
     </div>
