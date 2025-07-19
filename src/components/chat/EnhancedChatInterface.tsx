@@ -212,6 +212,82 @@ export const EnhancedChatInterface = () => {
         });
 
         setChannelMessages(messagesByChannel);
+
+        // Set up real-time subscription for new messages
+        const messageSubscription = supabase
+          .channel('chat-messages')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'chat_messages'
+            },
+            async (payload) => {
+              console.log('New message received:', payload);
+              
+              // Fetch the complete message with profile data
+              const { data: newMessageData, error } = await supabase
+                .from('chat_messages')
+                .select(`
+                  *,
+                  profiles!inner(first_name, last_name, role)
+                `)
+                .eq('id', payload.new.id)
+                .single();
+
+              if (error || !newMessageData) {
+                console.error('Error fetching new message:', error);
+                return;
+              }
+
+              // Find the channel name for this message
+              let channelKey = '';
+              if (newMessageData.channel_id) {
+                const channel = loadedChannels.find(c => c.id === newMessageData.channel_id);
+                channelKey = channel?.name || '';
+              } else if (newMessageData.dm_channel_id) {
+                channelKey = `dm-${newMessageData.dm_channel_id}`;
+              }
+
+              if (channelKey) {
+                const { cleanContent, attachments } = parseAttachments(newMessageData.content || '');
+                const dbAttachments = Array.isArray(newMessageData.attachments) ? newMessageData.attachments as Array<{ url: string; type: string; name: string }> : [];
+
+                const newMessage: Message = {
+                  id: newMessageData.id,
+                  content: cleanContent,
+                  sender_id: newMessageData.sender_id,
+                  sender_name: `${newMessageData.profiles.first_name} ${newMessageData.profiles.last_name}`,
+                  sender_role: newMessageData.profiles.role,
+                  created_at: newMessageData.created_at,
+                  parent_message_id: newMessageData.parent_message_id,
+                  attachments: dbAttachments.length > 0 ? dbAttachments : (attachments.length > 0 ? attachments : undefined),
+                  mentioned_users: newMessageData.mentioned_users || []
+                };
+
+                // Only add if not already in local state (to avoid duplicates)
+                setChannelMessages(prev => {
+                  const existingMessages = prev[channelKey] || [];
+                  const messageExists = existingMessages.some(msg => msg.id === newMessage.id);
+                  
+                  if (!messageExists) {
+                    return {
+                      ...prev,
+                      [channelKey]: [...existingMessages, newMessage]
+                    };
+                  }
+                  return prev;
+                });
+              }
+            }
+          )
+          .subscribe();
+
+        // Clean up subscription on unmount
+        return () => {
+          messageSubscription.unsubscribe();
+        };
       } catch (error) {
         console.error('Error loading data:', error);
         setChannelMessages({});
