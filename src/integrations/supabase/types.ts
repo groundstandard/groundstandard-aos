@@ -294,6 +294,152 @@ export type Database = {
           },
         ]
       }
+      communication_logs: {
+        Row: {
+          contact_id: string
+          content: string
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json | null
+          sent_at: string
+          sent_by: string | null
+          status: string | null
+          subject: string | null
+        }
+        Insert: {
+          contact_id: string
+          content: string
+          created_at?: string
+          id?: string
+          message_type: string
+          metadata?: Json | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Update: {
+          contact_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_activities: {
+        Row: {
+          activity_data: Json | null
+          activity_description: string | null
+          activity_title: string
+          activity_type: string
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_description?: string | null
+          activity_title: string
+          activity_type: string
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_description?: string | null
+          activity_title?: string
+          activity_type?: string
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_imports: {
+        Row: {
+          created_at: string
+          error_details: Json | null
+          failed_imports: number
+          file_name: string
+          id: string
+          import_status: string
+          imported_by: string | null
+          successful_imports: number
+          total_records: number
+        }
+        Insert: {
+          created_at?: string
+          error_details?: Json | null
+          failed_imports: number
+          file_name: string
+          id?: string
+          import_status?: string
+          imported_by?: string | null
+          successful_imports: number
+          total_records: number
+        }
+        Update: {
+          created_at?: string
+          error_details?: Json | null
+          failed_imports?: number
+          file_name?: string
+          id?: string
+          import_status?: string
+          imported_by?: string | null
+          successful_imports?: number
+          total_records?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_imports_imported_by_fkey"
+            columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_registrations: {
         Row: {
           event_id: string
@@ -464,6 +610,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      family_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          is_emergency_contact: boolean | null
+          notes: string | null
+          primary_contact_id: string
+          related_contact_id: string
+          relationship_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_emergency_contact?: boolean | null
+          notes?: string | null
+          primary_contact_id: string
+          related_contact_id: string
+          relationship_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_emergency_contact?: boolean | null
+          notes?: string | null
+          primary_contact_id?: string
+          related_contact_id?: string
+          relationship_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_relationships_primary_contact_id_fkey"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_relationships_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory: {
         Row: {

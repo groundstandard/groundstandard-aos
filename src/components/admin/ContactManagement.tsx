@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, UserCheck, UserMinus, GraduationCap, Edit2, Trash2, Plus, Download, Mail, History, CreditCard, Eye, Calendar } from "lucide-react";
+import { Search, Users, UserCheck, UserMinus, GraduationCap, Edit2, Trash2, Plus, Download, Mail, History, CreditCard, Eye, Calendar, Upload, MessageSquare, Heart, Send, Filter, Clock, DollarSign, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface AttendanceRecord {
@@ -49,6 +50,49 @@ interface Contact {
   created_at: string;
 }
 
+interface PaymentRecord {
+  id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  description: string | null;
+  payment_date: string;
+  created_at: string;
+}
+
+interface CommunicationLog {
+  id: string;
+  message_type: string;
+  subject: string | null;
+  content: string;
+  sent_by: string | null;
+  sent_at: string;
+  status: string;
+}
+
+interface FamilyRelationship {
+  id: string;
+  related_contact_id: string;
+  relationship_type: string;
+  is_emergency_contact: boolean;
+  notes: string | null;
+  related_contact: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+  };
+}
+
+interface ContactActivity {
+  id: string;
+  activity_type: string;
+  activity_title: string;
+  activity_description: string | null;
+  activity_data: any;
+  created_at: string;
+}
+
 export const ContactManagement = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +116,47 @@ export const ContactManagement = () => {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [loadingAttendance, setLoadingAttendance] = useState(false);
+  
+  // New state for enhanced features
+  const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([]);
+  const [communicationLogs, setCommunicationLogs] = useState<CommunicationLog[]>([]);
+  const [familyRelationships, setFamilyRelationships] = useState<FamilyRelationship[]>([]);
+  const [contactActivities, setContactActivities] = useState<ContactActivity[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+  const [loadingCommunications, setLoadingCommunications] = useState(false);
+  const [loadingFamily, setLoadingFamily] = useState(false);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+  
+  // Communication form state
+  const [isAddCommunicationOpen, setIsAddCommunicationOpen] = useState(false);
+  const [communicationForm, setCommunicationForm] = useState({
+    message_type: "note",
+    subject: "",
+    content: ""
+  });
+  
+  // Family relationship form state
+  const [isAddFamilyOpen, setIsAddFamilyOpen] = useState(false);
+  const [familyForm, setFamilyForm] = useState({
+    related_contact_id: "",
+    relationship_type: "parent",
+    is_emergency_contact: false,
+    notes: ""
+  });
+  
+  // Import/Export state
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  
+  // Advanced filtering state
+  const [advancedFilters, setAdvancedFilters] = useState({
+    belt_level: "",
+    date_from: "",
+    date_to: "",
+    has_family: false,
+    recent_activity: false
+  });
 
   useEffect(() => {
     fetchContacts();
@@ -341,7 +426,265 @@ export const ContactManagement = () => {
   const handleViewContact = async (contact: Contact) => {
     setViewingContact(contact);
     setIsViewDialogOpen(true);
-    await fetchAttendanceHistory(contact.id);
+    await Promise.all([
+      fetchAttendanceHistory(contact.id),
+      fetchPaymentHistory(contact.id),
+      fetchCommunicationLogs(contact.id),
+      fetchFamilyRelationships(contact.id),
+      fetchContactActivities(contact.id)
+    ]);
+  };
+
+  // New fetch functions for enhanced features
+  const fetchPaymentHistory = async (studentId: string) => {
+    setLoadingPayments(true);
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('payment_date', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setPaymentHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
+
+  const fetchCommunicationLogs = async (contactId: string) => {
+    setLoadingCommunications(true);
+    try {
+      const { data, error } = await supabase
+        .from('communication_logs')
+        .select('*')
+        .eq('contact_id', contactId)
+        .order('sent_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setCommunicationLogs(data || []);
+    } catch (error) {
+      console.error('Error fetching communication logs:', error);
+    } finally {
+      setLoadingCommunications(false);
+    }
+  };
+
+  const fetchFamilyRelationships = async (contactId: string) => {
+    setLoadingFamily(true);
+    try {
+      const { data, error } = await supabase
+        .from('family_relationships')
+        .select(`
+          *,
+          related_contact:profiles!family_relationships_related_contact_id_fkey(
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        `)
+        .eq('primary_contact_id', contactId);
+
+      if (error) throw error;
+      setFamilyRelationships(data || []);
+    } catch (error) {
+      console.error('Error fetching family relationships:', error);
+    } finally {
+      setLoadingFamily(false);
+    }
+  };
+
+  const fetchContactActivities = async (contactId: string) => {
+    setLoadingActivities(true);
+    try {
+      const { data, error } = await supabase
+        .from('contact_activities')
+        .select('*')
+        .eq('contact_id', contactId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setContactActivities(data || []);
+    } catch (error) {
+      console.error('Error fetching contact activities:', error);
+    } finally {
+      setLoadingActivities(false);
+    }
+  };
+
+  // Communication handlers
+  const handleAddCommunication = async () => {
+    if (!viewingContact || !communicationForm.content) return;
+
+    try {
+      const { error } = await supabase
+        .from('communication_logs')
+        .insert({
+          contact_id: viewingContact.id,
+          message_type: communicationForm.message_type,
+          subject: communicationForm.subject || null,
+          content: communicationForm.content
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Communication logged successfully",
+      });
+
+      setCommunicationForm({ message_type: "note", subject: "", content: "" });
+      setIsAddCommunicationOpen(false);
+      fetchCommunicationLogs(viewingContact.id);
+    } catch (error) {
+      console.error('Error adding communication:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log communication",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Family relationship handlers
+  const handleAddFamilyRelationship = async () => {
+    if (!viewingContact || !familyForm.related_contact_id || !familyForm.relationship_type) return;
+
+    try {
+      const { error } = await supabase
+        .from('family_relationships')
+        .insert({
+          primary_contact_id: viewingContact.id,
+          related_contact_id: familyForm.related_contact_id,
+          relationship_type: familyForm.relationship_type,
+          is_emergency_contact: familyForm.is_emergency_contact,
+          notes: familyForm.notes || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Family relationship added successfully",
+      });
+
+      setFamilyForm({ related_contact_id: "", relationship_type: "parent", is_emergency_contact: false, notes: "" });
+      setIsAddFamilyOpen(false);
+      fetchFamilyRelationships(viewingContact.id);
+    } catch (error) {
+      console.error('Error adding family relationship:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add family relationship",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Import/Export handlers
+  const handleImportContacts = async () => {
+    if (!importFile) return;
+
+    setImporting(true);
+    try {
+      const fileText = await importFile.text();
+      const lines = fileText.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      const contacts = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const contact: any = {};
+        
+        headers.forEach((header, index) => {
+          if (values[index]) {
+            switch (header) {
+              case 'first name':
+              case 'firstname':
+                contact.first_name = values[index];
+                break;
+              case 'last name':
+              case 'lastname':
+                contact.last_name = values[index];
+                break;
+              case 'email':
+                contact.email = values[index];
+                break;
+              case 'phone':
+                contact.phone = values[index];
+                break;
+              case 'belt level':
+              case 'belt':
+                contact.belt_level = values[index];
+                break;
+            }
+          }
+        });
+        
+        if (contact.first_name && contact.last_name && contact.email) {
+          contacts.push(contact);
+        }
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const contact of contacts) {
+        try {
+          const { error } = await supabase.auth.admin.createUser({
+            email: contact.email,
+            email_confirm: true,
+            user_metadata: {
+              first_name: contact.first_name,
+              last_name: contact.last_name
+            }
+          });
+
+          if (!error) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+
+      // Log import to database
+      await supabase
+        .from('contact_imports')
+        .insert({
+          file_name: importFile.name,
+          total_records: contacts.length,
+          successful_imports: successCount,
+          failed_imports: errorCount,
+          import_status: 'completed'
+        });
+
+      toast({
+        title: "Import Complete",
+        description: `${successCount} contacts imported successfully, ${errorCount} failed`,
+      });
+
+      setIsImportOpen(false);
+      setImportFile(null);
+      fetchContacts();
+    } catch (error) {
+      console.error('Error importing contacts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to import contacts",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const fetchAttendanceHistory = async (studentId: string) => {
@@ -563,6 +906,10 @@ export const ContactManagement = () => {
           <p className="text-muted-foreground">View and manage all contacts in the system</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsImportOpen(true)} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
           <Button onClick={() => exportContacts(getFilteredContacts(activeTab))} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -609,17 +956,88 @@ export const ContactManagement = () => {
         </Card>
       </div>
 
-      {/* Search */}
+      {/* Search and Advanced Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search contacts by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search contacts by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            {/* Advanced Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <Label className="text-sm font-medium">Belt Level</Label>
+                <Select value={advancedFilters.belt_level} onValueChange={(value) => setAdvancedFilters({...advancedFilters, belt_level: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any Belt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any Belt</SelectItem>
+                    <SelectItem value="white">White Belt</SelectItem>
+                    <SelectItem value="yellow">Yellow Belt</SelectItem>
+                    <SelectItem value="orange">Orange Belt</SelectItem>
+                    <SelectItem value="green">Green Belt</SelectItem>
+                    <SelectItem value="blue">Blue Belt</SelectItem>
+                    <SelectItem value="purple">Purple Belt</SelectItem>
+                    <SelectItem value="brown">Brown Belt</SelectItem>
+                    <SelectItem value="black">Black Belt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">From Date</Label>
+                <Input
+                  type="date"
+                  value={advancedFilters.date_from}
+                  onChange={(e) => setAdvancedFilters({...advancedFilters, date_from: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium">To Date</Label>
+                <Input
+                  type="date"
+                  value={advancedFilters.date_to}
+                  onChange={(e) => setAdvancedFilters({...advancedFilters, date_to: e.target.value})}
+                />
+              </div>
+              <div className="flex items-end">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={advancedFilters.has_family}
+                    onCheckedChange={(checked) => setAdvancedFilters({...advancedFilters, has_family: checked as boolean})}
+                  />
+                  <Label className="text-sm">Has Family</Label>
+                </div>
+              </div>
+              <div className="flex items-end">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={advancedFilters.recent_activity}
+                    onCheckedChange={(checked) => setAdvancedFilters({...advancedFilters, recent_activity: checked as boolean})}
+                  />
+                  <Label className="text-sm">Recent Activity</Label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Clear Filters */}
+            {(advancedFilters.belt_level || advancedFilters.date_from || advancedFilters.date_to || advancedFilters.has_family || advancedFilters.recent_activity) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAdvancedFilters({ belt_level: "", date_from: "", date_to: "", has_family: false, recent_activity: false })}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Clear Filters
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -749,7 +1167,7 @@ export const ContactManagement = () => {
 
       {/* View Contact Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Contact Details - {viewingContact?.first_name} {viewingContact?.last_name}
@@ -757,107 +1175,326 @@ export const ContactManagement = () => {
           </DialogHeader>
           
           {viewingContact && (
-            <div className="space-y-6">
-              {/* Contact Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">Name</Label>
-                    <p>{viewingContact.first_name} {viewingContact.last_name}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Email</Label>
-                    <p>{viewingContact.email}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Phone</Label>
-                    <p>{viewingContact.phone || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Belt Level</Label>
-                    <p>{viewingContact.belt_level || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Status</Label>
-                    <div>{getStatusBadge(viewingContact.membership_status)}</div>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Member Since</Label>
-                    <p>{new Date(viewingContact.created_at).toLocaleDateString()}</p>
-                  </div>
-                </CardContent>
-              </Card>
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="payments">Payments</TabsTrigger>
+                <TabsTrigger value="communications">Communications</TabsTrigger>
+                <TabsTrigger value="family">Family</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+                <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              </TabsList>
 
-              {/* Membership Management */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                {/* Contact Info */}
+                <Card>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      Membership Management
+                      <Users className="h-5 w-5" />
+                      Contact Information
                     </CardTitle>
-                    <Button onClick={() => setIsAddMembershipOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Membership
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Current Status: {getStatusBadge(viewingContact.membership_status)}
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Attendance History */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Recent Attendance History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loadingAttendance ? (
-                    <div className="text-center py-4">Loading attendance history...</div>
-                  ) : attendanceHistory.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Notes</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {attendanceHistory.map((record) => (
-                          <TableRow key={record.id}>
-                            <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                              <Badge variant={record.status === 'present' ? 'default' : 'secondary'}>
-                                {record.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{record.notes || '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No attendance records found</p>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="font-semibold">Name</Label>
+                      <p>{viewingContact.first_name} {viewingContact.last_name}</p>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    <div>
+                      <Label className="font-semibold">Email</Label>
+                      <p>{viewingContact.email}</p>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Phone</Label>
+                      <p>{viewingContact.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Belt Level</Label>
+                      <p>{viewingContact.belt_level || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Status</Label>
+                      <div>{getStatusBadge(viewingContact.membership_status)}</div>
+                    </div>
+                    <div>
+                      <Label className="font-semibold">Member Since</Label>
+                      <p>{new Date(viewingContact.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Membership Management */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Membership Management
+                      </CardTitle>
+                      <Button onClick={() => setIsAddMembershipOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Membership
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Current Status: {getStatusBadge(viewingContact.membership_status)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Payment History Tab */}
+              <TabsContent value="payments">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Payment History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingPayments ? (
+                      <div className="text-center py-4">Loading payment history...</div>
+                    ) : paymentHistory.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Description</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paymentHistory.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                              <TableCell>${(payment.amount / 100).toFixed(2)}</TableCell>
+                              <TableCell>{payment.payment_method}</TableCell>
+                              <TableCell>
+                                <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
+                                  {payment.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{payment.description || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No payment records found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Communications Tab */}
+              <TabsContent value="communications">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5" />
+                        Communication Logs
+                      </CardTitle>
+                      <Button onClick={() => setIsAddCommunicationOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Communication
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCommunications ? (
+                      <div className="text-center py-4">Loading communications...</div>
+                    ) : communicationLogs.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Subject</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {communicationLogs.map((log) => (
+                            <TableRow key={log.id}>
+                              <TableCell>{new Date(log.sent_at).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{log.message_type}</Badge>
+                              </TableCell>
+                              <TableCell>{log.subject || log.content.substring(0, 50) + '...'}</TableCell>
+                              <TableCell>
+                                <Badge variant={log.status === 'sent' ? 'default' : 'secondary'}>
+                                  {log.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No communication records found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Family Relationships Tab */}
+              <TabsContent value="family">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Heart className="h-5 w-5" />
+                        Family Relationships
+                      </CardTitle>
+                      <Button onClick={() => setIsAddFamilyOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Relationship
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingFamily ? (
+                      <div className="text-center py-4">Loading family relationships...</div>
+                    ) : familyRelationships.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Relationship</TableHead>
+                            <TableHead>Emergency Contact</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {familyRelationships.map((relationship) => (
+                            <TableRow key={relationship.id}>
+                              <TableCell>{relationship.related_contact.first_name} {relationship.related_contact.last_name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{relationship.relationship_type}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                {relationship.is_emergency_contact ? (
+                                  <Badge variant="default">Yes</Badge>
+                                ) : (
+                                  <Badge variant="secondary">No</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>{relationship.related_contact.phone || 'N/A'}</TableCell>
+                              <TableCell>{relationship.notes || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No family relationships found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Activity Timeline Tab */}
+              <TabsContent value="activity">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Activity Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingActivities ? (
+                      <div className="text-center py-4">Loading activity timeline...</div>
+                    ) : contactActivities.length > 0 ? (
+                      <div className="space-y-4">
+                        {contactActivities.map((activity) => (
+                          <div key={activity.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                            <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">{activity.activity_title}</h4>
+                                <Badge variant="outline">{activity.activity_type}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {activity.activity_description}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {new Date(activity.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No activities found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Attendance History Tab */}
+              <TabsContent value="attendance">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="h-5 w-5" />
+                      Attendance History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingAttendance ? (
+                      <div className="text-center py-4">Loading attendance history...</div>
+                    ) : attendanceHistory.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {attendanceHistory.map((record) => (
+                            <TableRow key={record.id}>
+                              <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                              <TableCell>
+                                <Badge variant={record.status === 'present' ? 'default' : 'secondary'}>
+                                  {record.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{record.notes || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No attendance records found</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
@@ -891,6 +1528,155 @@ export const ContactManagement = () => {
               </Button>
               <Button onClick={handleAddMembership} disabled={!selectedPlan}>
                 Add Membership
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Communication Dialog */}
+      <Dialog open={isAddCommunicationOpen} onOpenChange={setIsAddCommunicationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Communication</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Communication Type</Label>
+              <Select value={communicationForm.message_type} onValueChange={(value) => setCommunicationForm({...communicationForm, message_type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="phone">Phone Call</SelectItem>
+                  <SelectItem value="in_person">In Person</SelectItem>
+                  <SelectItem value="note">Note</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Subject (Optional)</Label>
+              <Input
+                value={communicationForm.subject}
+                onChange={(e) => setCommunicationForm({...communicationForm, subject: e.target.value})}
+                placeholder="Enter subject"
+              />
+            </div>
+            <div>
+              <Label>Content</Label>
+              <Textarea
+                value={communicationForm.content}
+                onChange={(e) => setCommunicationForm({...communicationForm, content: e.target.value})}
+                placeholder="Enter communication details"
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddCommunicationOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddCommunication} disabled={!communicationForm.content}>
+                <Send className="h-4 w-4 mr-2" />
+                Add Communication
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Family Relationship Dialog */}
+      <Dialog open={isAddFamilyOpen} onOpenChange={setIsAddFamilyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Family Relationship</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Related Contact</Label>
+              <Select value={familyForm.related_contact_id} onValueChange={(value) => setFamilyForm({...familyForm, related_contact_id: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a contact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contacts.filter(c => c.id !== viewingContact?.id).map((contact) => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      {contact.first_name} {contact.last_name} ({contact.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Relationship Type</Label>
+              <Select value={familyForm.relationship_type} onValueChange={(value) => setFamilyForm({...familyForm, relationship_type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="parent">Parent</SelectItem>
+                  <SelectItem value="child">Child</SelectItem>
+                  <SelectItem value="sibling">Sibling</SelectItem>
+                  <SelectItem value="guardian">Guardian</SelectItem>
+                  <SelectItem value="spouse">Spouse</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                checked={familyForm.is_emergency_contact}
+                onCheckedChange={(checked) => setFamilyForm({...familyForm, is_emergency_contact: checked as boolean})}
+              />
+              <Label>Emergency Contact</Label>
+            </div>
+            <div>
+              <Label>Notes (Optional)</Label>
+              <Textarea
+                value={familyForm.notes}
+                onChange={(e) => setFamilyForm({...familyForm, notes: e.target.value})}
+                placeholder="Additional notes"
+                rows={2}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddFamilyOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddFamilyRelationship} disabled={!familyForm.related_contact_id}>
+                <Link2 className="h-4 w-4 mr-2" />
+                Add Relationship
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Contacts Dialog */}
+      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Contacts</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>CSV File</Label>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                CSV should include columns: first name, last name, email, phone (optional), belt level (optional)
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleImportContacts} disabled={!importFile || importing}>
+                <Upload className="h-4 w-4 mr-2" />
+                {importing ? "Importing..." : "Import Contacts"}
               </Button>
             </div>
           </div>
