@@ -22,7 +22,6 @@ interface AutomationSettings {
 }
 
 interface HighLevelConfig {
-  apiKey: string;
   subaccountId: string;
   webhookUrl: string;
   isConnected: boolean;
@@ -45,7 +44,6 @@ export const AutomationManagement = () => {
   });
 
   const [hlConfig, setHlConfig] = useState<HighLevelConfig>({
-    apiKey: '',
     subaccountId: '',
     webhookUrl: '',
     isConnected: false
@@ -88,7 +86,6 @@ export const AutomationManagement = () => {
           console.error('Error loading HighLevel config:', hlError);
         } else if (hlData) {
           setHlConfig({
-            apiKey: hlData.api_key || '',
             subaccountId: hlData.subaccount_id || '',
             webhookUrl: hlData.webhook_url || '',
             isConnected: hlData.is_connected || false
@@ -138,7 +135,6 @@ export const AutomationManagement = () => {
       const { error } = await supabase
         .from('highlevel_config')
         .upsert({
-          api_key: config.apiKey,
           subaccount_id: config.subaccountId,
           webhook_url: config.webhookUrl,
           is_connected: config.isConnected
@@ -187,10 +183,10 @@ export const AutomationManagement = () => {
   };
 
   const handleConfigSave = async () => {
-    if (!hlConfig.apiKey || !hlConfig.subaccountId) {
+    if (!hlConfig.subaccountId) {
       toast({
         title: "Missing Configuration",
-        description: "Please provide both API Key and Subaccount ID.",
+        description: "Please provide the Subaccount ID.",
         variant: "destructive"
       });
       return;
@@ -222,7 +218,6 @@ export const AutomationManagement = () => {
       setSaving(true);
       
       const newConfig = {
-        apiKey: '',
         subaccountId: '',
         webhookUrl: '',
         isConnected: false
@@ -356,43 +351,40 @@ export const AutomationManagement = () => {
         <CardContent className="space-y-4">
           {!hlConfig.isConnected ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">HighLevel API Key</Label>
-                  <Input
-                    id="apiKey"
-                    type={showApiKey ? "text" : "password"}
-                    value={hlConfig.apiKey}
-                    onChange={(e) => setHlConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                    placeholder="Enter your HighLevel API key"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="subaccountId">Subaccount ID</Label>
-                  <Input
-                    id="subaccountId"
-                    value={hlConfig.subaccountId}
-                    onChange={(e) => setHlConfig(prev => ({ ...prev, subaccountId: e.target.value }))}
-                    placeholder="Enter your subaccount ID"
-                  />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900">API Key Configured</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Your HighLevel API key has been securely stored. Just enter your Subaccount ID to complete the connection.
+                    </p>
+                  </div>
                 </div>
               </div>
+              
               <div className="space-y-2">
-                <Label htmlFor="webhookUrl">Webhook URL (Optional)</Label>
+                <Label htmlFor="subaccountId">Subaccount ID</Label>
                 <Input
-                  id="webhookUrl"
-                  value={hlConfig.webhookUrl}
-                  onChange={(e) => setHlConfig(prev => ({ ...prev, webhookUrl: e.target.value }))}
-                  placeholder="Enter webhook URL for incoming data"
+                  id="subaccountId"
+                  value={hlConfig.subaccountId}
+                  onChange={(e) => setHlConfig(prev => ({ ...prev, subaccountId: e.target.value }))}
+                  placeholder="Enter your subaccount ID"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={showApiKey}
-                  onCheckedChange={setShowApiKey}
-                />
-                <Label>Show API Key</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="webhookUrl">Webhook URL for HighLevel</Label>
+                <div className="bg-gray-50 border rounded-lg p-3">
+                  <code className="text-sm">
+                    https://yhriiykdnpuutzexjdee.supabase.co/functions/v1/highlevel-webhook
+                  </code>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Configure this URL in your HighLevel account to receive appointment bookings
+                </p>
               </div>
+              
               <Button onClick={handleConfigSave} className="w-full">
                 Connect to HighLevel
               </Button>
