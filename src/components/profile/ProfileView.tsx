@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const ProfileView = () => {
+  const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { subscriptionInfo, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
@@ -387,7 +389,7 @@ export const ProfileView = () => {
                   </p>
                 </div>
                 <Button
-                  onClick={() => window.location.href = '/subscription'}
+                  onClick={() => navigate('/subscription')}
                   className="gap-2"
                 >
                   <Crown className="h-4 w-4" />

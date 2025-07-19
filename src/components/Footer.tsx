@@ -1,6 +1,17 @@
 import { Shield, Twitter, Github, Linkedin, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const handleSocialClick = (platform: string) => {
+    const urls = {
+      twitter: "https://twitter.com/dojomaster",
+      github: "https://github.com/dojomaster",
+      linkedin: "https://linkedin.com/company/dojomaster",
+      email: "mailto:contact@dojomaster.com"
+    };
+    window.open(urls[platform as keyof typeof urls], '_blank');
+  };
+
   return (
     <footer className="bg-card/50 border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -16,10 +27,22 @@ const Footer = () => {
               Streamline operations and focus on what matters most - your students.
             </p>
             <div className="flex space-x-4">
-              <Twitter className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" />
-              <Github className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" />
-              <Linkedin className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" />
-              <Mail className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" />
+              <Twitter 
+                className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" 
+                onClick={() => handleSocialClick('twitter')}
+              />
+              <Github 
+                className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" 
+                onClick={() => handleSocialClick('github')}
+              />
+              <Linkedin 
+                className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" 
+                onClick={() => handleSocialClick('linkedin')}
+              />
+              <Mail 
+                className="h-5 w-5 text-muted-foreground hover:text-secondary transition-colors cursor-pointer" 
+                onClick={() => handleSocialClick('email')}
+              />
             </div>
           </div>
           
@@ -27,11 +50,11 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground transition-colors">Features</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Pricing</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Mobile Apps</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Integrations</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">API</a></li>
+              <li><Link to="/subscription" className="hover:text-foreground transition-colors">Features</Link></li>
+              <li><Link to="/subscription" className="hover:text-foreground transition-colors">Pricing</Link></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Mobile Apps</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Integrations</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">API</span></li>
             </ul>
           </div>
           
@@ -39,11 +62,11 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground transition-colors">Documentation</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Academy Blog</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Case Studies</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Webinars</a></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Documentation</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Help Center</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Academy Blog</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Case Studies</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Webinars</span></li>
             </ul>
           </div>
           
@@ -51,11 +74,11 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">About Us</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Careers</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Contact</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Privacy Policy</span></li>
+              <li><span className="hover:text-foreground transition-colors cursor-pointer">Terms of Service</span></li>
             </ul>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -119,11 +120,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
       
       // Force page reload to clear any cached state
-      window.location.href = '/';
+      window.location.reload();
     } catch (error) {
       console.error('Error signing out:', error);
       // Force reload even if sign out fails
-      window.location.href = '/';
+      window.location.reload();
     }
   };
 

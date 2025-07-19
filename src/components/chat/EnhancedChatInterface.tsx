@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -38,6 +39,7 @@ interface UserPresence {
 }
 
 export const EnhancedChatInterface = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState<string>('general');
@@ -313,7 +315,7 @@ export const EnhancedChatInterface = () => {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.location.href = '/subscription'}
+            onClick={() => navigate('/subscription')}
           >
             Upgrade
           </Button>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ interface ClassSession {
 }
 
 export const AttendanceTracker = () => {
+  const navigate = useNavigate();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [classSessions, setClassSessions] = useState<ClassSession[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -314,7 +316,7 @@ export const AttendanceTracker = () => {
                     <Button 
                       variant="outline" 
                       className="w-full"
-                      onClick={() => window.location.href = '/classes'}
+                      onClick={() => navigate('/classes')}
                     >
                       View Schedule
                     </Button>

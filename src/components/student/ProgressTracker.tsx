@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ const beltLevels = [
 ];
 
 export const ProgressTracker = () => {
+  const navigate = useNavigate();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [progressStats, setProgressStats] = useState<ProgressStats>({
     totalClasses: 0,
@@ -208,7 +210,7 @@ export const ProgressTracker = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = '/subscription'}
+                onClick={() => navigate('/subscription')}
                 className="border-amber-300 text-amber-700 hover:bg-amber-100"
               >
                 <Crown className="h-4 w-4 mr-2" />
@@ -351,7 +353,7 @@ export const ProgressTracker = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.location.href = '/subscription'}
+                  onClick={() => navigate('/subscription')}
                 >
                   <Crown className="h-4 w-4 mr-2" />
                   View Plans

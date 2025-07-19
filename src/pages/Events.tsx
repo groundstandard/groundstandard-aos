@@ -393,7 +393,7 @@ const Events = () => {
                         <p className="text-sm text-muted-foreground">
                           Registration deadline: {comp.deadline}
                         </p>
-                        <Button size="sm">Register</Button>
+                        <Button size="sm" onClick={() => handleRegisterForEvent('competition-' + index)}>Register</Button>
                       </div>
                     </div>
                   </CardContent>
@@ -450,7 +450,7 @@ const Events = () => {
                     </div>
                     <div className="flex justify-between items-center mt-4">
                       <p className="text-sm text-muted-foreground">{workshop.spots}</p>
-                      <Button variant="outline" size="sm">Register</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleRegisterForEvent('workshop-' + index)}>Register</Button>
                     </div>
                   </CardContent>
                 </Card>

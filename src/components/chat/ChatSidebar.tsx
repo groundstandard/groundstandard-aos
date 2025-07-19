@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ export const ChatSidebar = ({
   onCreateChannel,
   className = ""
 }: ChatSidebarProps) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
@@ -63,7 +65,7 @@ export const ChatSidebar = ({
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.location.href = '/subscription'}
+            onClick={() => navigate('/subscription')}
           >
             Upgrade
           </Button>
