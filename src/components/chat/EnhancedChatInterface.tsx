@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChatSidebar } from './ChatSidebar';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
+import { MobileMessageInput } from './MobileMessageInput';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { ChannelSettingsModal } from './ChannelSettingsModal';
 import { StartDMModal } from './StartDMModal';
@@ -797,150 +798,150 @@ export const EnhancedChatInterface = () => {
 
   if (isMobile) {
     return (
-      <div className="h-full w-full overflow-hidden bg-background">
-        <div className="relative h-full">
-          {/* Mobile Channel List */}
-          <div className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out ${
-            showChannels ? 'translate-x-0' : '-translate-x-full'
-          }`}>
-            <ChatSidebar
-              channels={channels}
-              activeChannel={activeChannel}
-              onChannelSelect={handleChannelSwitch}
-              onCreateChannel={() => setShowCreateChannel(true)}
-              onStartDM={() => setShowStartDM(true)}
-              onDirectMessageSelect={handleDirectMessageSelect}
-              directMessageUsers={directMessageUsers}
-              className="h-full"
-            />
-          </div>
+      <>
+        <div className="h-[calc(100vh-16rem)] w-full overflow-hidden bg-background">
+          <div className="relative h-full">
+            {/* Mobile Channel List */}
+            <div className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out ${
+              showChannels ? 'translate-x-0' : '-translate-x-full'
+            }`}>
+              <ChatSidebar
+                channels={channels}
+                activeChannel={activeChannel}
+                onChannelSelect={handleChannelSwitch}
+                onCreateChannel={() => setShowCreateChannel(true)}
+                onStartDM={() => setShowStartDM(true)}
+                onDirectMessageSelect={handleDirectMessageSelect}
+                directMessageUsers={directMessageUsers}
+                className="h-full"
+              />
+            </div>
 
-          {/* Mobile Chat View */}
-          <div className={`absolute inset-0 transform transition-transform duration-300 ease-in-out ${
-            showChannels ? 'translate-x-full' : 'translate-x-0'
-          }`}>
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="p-4 border-b bg-background/95 backdrop-blur">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowChannels(true)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
-                    {currentChannel && getChannelIcon(currentChannel)}
-                  </div>
-                  
-                  <div>
-                    <h1 className="font-semibold">
-                      {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                      {currentChannel?.member_count} members • {onlineUsers.length} online
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div 
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-                className="flex-1 overflow-y-auto p-4"
-              >
-                {isNewChannel() ? (
-                  <ChannelSetup 
-                    channel={currentChannel!} 
-                    onDescriptionAdded={handleDescriptionAdded}
-                    isDM={activeChannel.startsWith('dm-')}
-                  />
-                ) : (
-                  <div className="space-y-1">
-                    {getMessagesWithDividers().map((item, index) => {
-                       if ('type' in item && item.type === 'date-divider') {
-                         return <DateDivider key={`divider-${item.date}`} date={item.date} />;
-                       }
-                       
-                       const message = item as Message;
-                       const messagesWithDividers = getMessagesWithDividers();
-                       const prevItem = messagesWithDividers[index - 1];
-                       const prevMessage = prevItem && !('type' in prevItem) ? prevItem as Message : null;
-                       const messageWithThreadCount = getMessageWithThreadCount(message);
-                       const isOwnMessage = message.sender_id === profile?.id;
-                       const showAvatar = !prevMessage || 
-                         prevMessage.sender_id !== message.sender_id || 
-                         isOwnMessage !== (prevMessage.sender_id === profile?.id);
-
-                       return (
-                         <MessageBubble
-                           key={message.id}
-                           message={messageWithThreadCount}
-                           isOwnMessage={isOwnMessage}
-                           showAvatar={showAvatar}
-                           onReaction={handleReaction}
-                           onReply={handleReply}
-                           onEdit={handleEdit}
-                           onDelete={handleDelete}
-                           onPin={handlePin}
-                           onReport={handleReport}
-                           onToggleThread={handleToggleThread}
-                           showThread={expandedThreads.has(message.id)}
-                           threadReplies={getThreadReplies(message.id)}
-                           currentUserId={profile?.id}
-                         />
-                       );
-                    })}
-                    <div ref={messagesEndRef} className="h-4" id="messages-end" />
-                  </div>
-                )}
-              </div>
-
-              {/* Reply Indicator */}
-              {replyingTo && (
-                <div className="px-4 py-2 bg-muted/50 border-t">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Replying to message</span>
+            {/* Mobile Chat View */}
+            <div className={`absolute inset-0 transform transition-transform duration-300 ease-in-out ${
+              showChannels ? 'translate-x-full' : 'translate-x-0'
+            }`}>
+              <div className="flex flex-col h-full">
+                {/* Header */}
+                <div className="p-4 border-b bg-background/95 backdrop-blur">
+                  <div className="flex items-center gap-3">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setReplyingTo(null)}
-                      className="h-5 w-5 p-0"
+                      onClick={() => setShowChannels(true)}
+                      className="h-8 w-8 p-0"
                     >
-                      ×
+                      <ArrowLeft className="h-4 w-4" />
                     </Button>
+                    
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
+                      {currentChannel && getChannelIcon(currentChannel)}
+                    </div>
+                    
+                    <div>
+                      <h1 className="font-semibold">
+                        {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
+                      </h1>
+                      <p className="text-sm text-muted-foreground">
+                        {currentChannel?.member_count} members • {onlineUsers.length} online
+                      </p>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Input - Fixed at bottom */}
-              <div className="border-t bg-background">
-                <MessageInput
-                  newMessage={newMessage}
-                  onNewMessageChange={setNewMessage}
-                  onSendMessage={handleSendMessage}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-                  channelName={currentChannel?.name}
-                />
+                {/* Messages */}
+                <div 
+                  ref={messagesContainerRef}
+                  onScroll={handleScroll}
+                  className="flex-1 overflow-y-auto p-4 pb-28"
+                >
+                  {isNewChannel() ? (
+                    <ChannelSetup 
+                      channel={currentChannel!} 
+                      onDescriptionAdded={handleDescriptionAdded}
+                      isDM={activeChannel.startsWith('dm-')}
+                    />
+                  ) : (
+                    <div className="space-y-1">
+                      {getMessagesWithDividers().map((item, index) => {
+                         if ('type' in item && item.type === 'date-divider') {
+                           return <DateDivider key={`divider-${item.date}`} date={item.date} />;
+                         }
+                         
+                         const message = item as Message;
+                         const messagesWithDividers = getMessagesWithDividers();
+                         const prevItem = messagesWithDividers[index - 1];
+                         const prevMessage = prevItem && !('type' in prevItem) ? prevItem as Message : null;
+                         const messageWithThreadCount = getMessageWithThreadCount(message);
+                         const isOwnMessage = message.sender_id === profile?.id;
+                         const showAvatar = !prevMessage || 
+                           prevMessage.sender_id !== message.sender_id || 
+                           isOwnMessage !== (prevMessage.sender_id === profile?.id);
+
+                         return (
+                           <MessageBubble
+                             key={message.id}
+                             message={messageWithThreadCount}
+                             isOwnMessage={isOwnMessage}
+                             showAvatar={showAvatar}
+                             onReaction={handleReaction}
+                             onReply={handleReply}
+                             onEdit={handleEdit}
+                             onDelete={handleDelete}
+                             onPin={handlePin}
+                             onReport={handleReport}
+                             onToggleThread={handleToggleThread}
+                             showThread={expandedThreads.has(message.id)}
+                             threadReplies={getThreadReplies(message.id)}
+                             currentUserId={profile?.id}
+                           />
+                         );
+                      })}
+                      <div ref={messagesEndRef} className="h-4" id="messages-end" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Reply Indicator */}
+                {replyingTo && (
+                  <div className="px-4 py-2 bg-muted/50 border-t">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Replying to message</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setReplyingTo(null)}
+                        className="h-5 w-5 p-0"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        <CreateChannelDialog
-          open={showCreateChannel}
-          onOpenChange={setShowCreateChannel}
-          onChannelCreated={(newChannel) => {
-            setChannels(prev => [...prev, newChannel]);
-            setActiveChannel(newChannel.name);
-            setShowCreateChannel(false);
-          }}
+          <CreateChannelDialog
+            open={showCreateChannel}
+            onOpenChange={setShowCreateChannel}
+            onChannelCreated={(newChannel) => {
+              setChannels(prev => [...prev, newChannel]);
+              setActiveChannel(newChannel.name);
+              setShowCreateChannel(false);
+            }}
+          />
+        </div>
+        
+        {/* Mobile Input Component */}
+        <MobileMessageInput
+          newMessage={newMessage}
+          onNewMessageChange={setNewMessage}
+          onSendMessage={handleSendMessage}
+          onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
+          channelName={currentChannel?.name}
         />
-      </div>
+      </>
     );
   }
 
