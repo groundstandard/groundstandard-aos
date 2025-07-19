@@ -5,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -134,12 +135,73 @@ const Admin = () => {
               <Bell className="h-4 w-4 mr-2" />
               Notifications
             </Button>
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Profile
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Profile Management</DialogTitle>
+                  <DialogDescription>Manage your admin profile and account settings</DialogDescription>
+                </DialogHeader>
+                <ProfileView />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
+
+        {/* Quick Actions - Moved to top and made smaller */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Target className="h-4 w-4" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => handleQuickAction("Add Student")}
+                className="h-16 flex-col space-y-1 p-3"
+                size="sm"
+              >
+                <Users className="h-4 w-4" />
+                <span className="text-xs">Add Student</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleQuickAction("Schedule Class")}
+                className="h-16 flex-col space-y-1 p-3"
+                size="sm"
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="text-xs">Schedule Class</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleQuickAction("Process Payment")}
+                className="h-16 flex-col space-y-1 p-3"
+                size="sm"
+              >
+                <DollarSign className="h-4 w-4" />
+                <span className="text-xs">Process Payment</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleQuickAction("Generate Report")}
+                className="h-16 flex-col space-y-1 p-3"
+                size="sm"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span className="text-xs">Generate Report</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -168,7 +230,7 @@ const Admin = () => {
           })}
         </div>
 
-        {/* Recent Activity & Quick Actions */}
+        {/* Recent Activity & Performance Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activity */}
           <Card>
@@ -220,113 +282,52 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Performance Overview */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Quick Actions
-              </CardTitle>
-              <CardDescription>Frequently used administrative tasks</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Performance Overview
+                  </CardTitle>
+                  <CardDescription>Key metrics for this month</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
+                  <Activity className="h-4 w-4 mr-2" />
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleQuickAction("Add Student")}
-                  className="h-auto flex-col space-y-2 p-4"
-                >
-                  <Users className="h-6 w-6" />
-                  <span>Add Student</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleQuickAction("Schedule Class")}
-                  className="h-auto flex-col space-y-2 p-4"
-                >
-                  <Calendar className="h-6 w-6" />
-                  <span>Schedule Class</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleQuickAction("Process Payment")}
-                  className="h-auto flex-col space-y-2 p-4"
-                >
-                  <DollarSign className="h-6 w-6" />
-                  <span>Process Payment</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleQuickAction("Generate Report")}
-                  className="h-auto flex-col space-y-2 p-4"
-                >
-                  <BarChart3 className="h-6 w-6" />
-                  <span>Generate Report</span>
-                </Button>
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Student Retention</span>
+                    <span className="text-sm text-muted-foreground">96%</span>
+                  </div>
+                  <Progress value={96} className="h-2" />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Class Capacity</span>
+                    <span className="text-sm text-muted-foreground">78%</span>
+                  </div>
+                  <Progress value={78} className="h-2" />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Revenue Goal</span>
+                    <span className="text-sm text-muted-foreground">84%</span>
+                  </div>
+                  <Progress value={84} className="h-2" />
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Performance Overview */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Performance Overview
-                </CardTitle>
-                <CardDescription>Key metrics for this month</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
-                <Activity className="h-4 w-4 mr-2" />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Student Retention</span>
-                  <span className="text-sm text-muted-foreground">96%</span>
-                </div>
-                <Progress value={96} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Class Capacity</span>
-                  <span className="text-sm text-muted-foreground">78%</span>
-                </div>
-                <Progress value={78} className="h-2" />
-              </div>
-              
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Revenue Goal</span>
-                  <span className="text-sm text-muted-foreground">84%</span>
-                </div>
-                <Progress value={84} className="h-2" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Profile Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Profile Management
-            </CardTitle>
-            <CardDescription>Manage your admin profile and account settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProfileView />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
