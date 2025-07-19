@@ -325,16 +325,14 @@ export const ChatSidebar = ({
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Messages</h2>
-          {profile?.role === 'admin' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onCreateChannel}
-              className="h-8 w-8 p-0 rounded-full hover:bg-muted"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onStartDM}
+            className="h-8 w-8 p-0 rounded-full hover:bg-muted"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
         
         <div className="relative">
