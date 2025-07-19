@@ -278,6 +278,130 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_channels: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_admin_only: boolean | null
+          member_count: number | null
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_admin_only?: boolean | null
+          member_count?: number | null
+          name: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_admin_only?: boolean | null
+          member_count?: number | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_channels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          attachments: Json | null
+          channel_id: string | null
+          content: string | null
+          created_at: string | null
+          dm_channel_id: string | null
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          mentioned_users: string[] | null
+          message_type: string | null
+          parent_message_id: string | null
+          sender_id: string
+          thread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          dm_channel_id?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          mentioned_users?: string[] | null
+          message_type?: string | null
+          parent_message_id?: string | null
+          sender_id: string
+          thread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          dm_channel_id?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          mentioned_users?: string[] | null
+          message_type?: string | null
+          parent_message_id?: string | null
+          sender_id?: string
+          thread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_dm_channel_id_fkey"
+            columns: ["dm_channel_id"]
+            isOneToOne: false
+            referencedRelation: "direct_message_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_enrollments: {
         Row: {
           class_id: string
@@ -542,6 +666,45 @@ export type Database = {
           {
             foreignKeyName: "contact_imports_imported_by_fkey"
             columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_message_channels: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_message_channels_user1_id_fkey"
+            columns: ["user1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_message_channels_user2_id_fkey"
+            columns: ["user2_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1038,6 +1201,45 @@ export type Database = {
           waived_by?: string | null
         }
         Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_templates: {
         Row: {
@@ -1549,6 +1751,10 @@ export type Database = {
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_or_create_dm_channel: {
+        Args: { other_user_id: string }
         Returns: string
       }
       update_payment_analytics: {
