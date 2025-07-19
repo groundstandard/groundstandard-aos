@@ -125,11 +125,11 @@ export const ChatLayout = ({
     );
   }
 
-  // Desktop layout with simple flex
+  // Desktop layout with responsive sidebar
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex h-[calc(100vh-12rem)] w-full overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="w-80 min-w-80 flex-shrink-0 border-r border-border bg-background">
+      <div className="w-72 md:w-80 min-w-72 md:min-w-80 flex-shrink-0 border-r border-border bg-background">
         <ChatSidebar
           channels={channels}
           activeChannel={activeChannel}
