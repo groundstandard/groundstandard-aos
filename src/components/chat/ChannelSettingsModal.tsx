@@ -31,6 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -103,6 +104,7 @@ export const ChannelSettingsModal = ({
   
   const { profile } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const isAdmin = profile?.role === 'admin';
   const isChannelCreator = profile?.id === channel?.created_by;
@@ -427,13 +429,19 @@ export const ChannelSettingsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0 fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className={`
+        ${isMobile 
+          ? 'w-[calc(100vw-2rem)] h-[calc(100vh-4rem)] max-w-none max-h-none fixed inset-4 rounded-2xl shadow-2xl border-0' 
+          : 'max-w-3xl max-h-[85vh] fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0'
+        } 
+        overflow-hidden p-0 bg-background
+      `}>
+        <DialogHeader className={`${isMobile ? 'p-4 pb-0' : 'p-6 pb-0'} border-b`}>
+          <DialogTitle className="flex items-center gap-3">
             {isDM ? (
               <>
                 <Users className="h-5 w-5 text-muted-foreground" />
-                {dmUserName || 'Direct Message'}
+                <span className="text-lg font-semibold">{dmUserName || 'Direct Message'}</span>
               </>
             ) : (
               <>
@@ -442,26 +450,32 @@ export const ChannelSettingsModal = ({
                   {channel?.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
                   <Hash className="h-5 w-5 text-muted-foreground" />
                 </div>
-                {channel?.name}
+                <span className="text-lg font-semibold">{channel?.name}</span>
               </>
             )}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <div className="border-b px-6">
+          <div className={`border-b ${isMobile ? 'px-4' : 'px-6'}`}>
             <TabsList className={`grid w-full bg-transparent h-auto p-0 ${isDM ? 'grid-cols-2' : 'grid-cols-4'}`}>
               {!isDM && (
                 <>
                   <TabsTrigger 
                     value="about" 
-                    className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                    className={`
+                      border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                      ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                    `}
                   >
                     About
                   </TabsTrigger>
                   <TabsTrigger 
                     value="members"
-                    className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                    className={`
+                      border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                      ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                    `}
                   >
                     Members {members.length}
                   </TabsTrigger>
@@ -469,13 +483,19 @@ export const ChannelSettingsModal = ({
               )}
               <TabsTrigger 
                 value="files"
-                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                className={`
+                  border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                  ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                `}
               >
                 Files
               </TabsTrigger>
               <TabsTrigger 
                 value="settings"
-                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                className={`
+                  border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                  ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                `}
               >
                 Settings
               </TabsTrigger>
@@ -483,11 +503,11 @@ export const ChannelSettingsModal = ({
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <TabsContent value="about" className="p-6 space-y-6 mt-0">
+            <TabsContent value="about" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
               {/* Channel Name */}
-              <div className="bg-muted/30 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Channel name</h3>
+              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Channel name</h3>
                   {(isAdmin || isChannelCreator) && (
                     <Button
                       variant="ghost"
@@ -511,15 +531,15 @@ export const ChannelSettingsModal = ({
                 ) : (
                   <div className="flex items-center gap-2">
                     {channel?.type === 'private' && <Lock className="h-4 w-4" />}
-                    <span className="font-mono">{channel?.name}</span>
+                    <span className="font-mono text-sm">{channel?.name}</span>
                   </div>
                 )}
               </div>
 
               {/* Topic */}
-              <div className="bg-muted/30 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Topic</h3>
+              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Topic</h3>
                   {(isAdmin || isChannelCreator) && (
                     <Button
                       variant="ghost"
@@ -542,16 +562,16 @@ export const ChannelSettingsModal = ({
                     <Button onClick={() => setEditingTopic(false)} size="sm">Save</Button>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {channelTopic || 'Add a topic'}
                   </p>
                 )}
               </div>
 
               {/* Description */}
-              <div className="bg-muted/30 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">Description</h3>
+              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Description</h3>
                   {(isAdmin || isChannelCreator) && (
                     <Button
                       variant="ghost"
@@ -564,7 +584,7 @@ export const ChannelSettingsModal = ({
                   )}
                 </div>
                 {editingDescription ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Textarea
                       value={channelDescription}
                       onChange={(e) => setChannelDescription(e.target.value)}
@@ -574,23 +594,24 @@ export const ChannelSettingsModal = ({
                     <Button onClick={handleSaveChanges} size="sm">Save</Button>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {channelDescription || 'Add a description'}
                   </p>
                 )}
               </div>
 
               {/* Created by */}
-              <div className="space-y-2">
-                <h3 className="font-medium">Created by</h3>
+              <div className="space-y-3">
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Created by</h3>
                 <p className="text-sm text-muted-foreground">
                   {profile?.first_name} {profile?.last_name} on {formatDate(new Date().toISOString())}
                 </p>
               </div>
             </TabsContent>
-            <TabsContent value="members" className="p-6 space-y-4 mt-0">
+
+            <TabsContent value="members" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Members ({members.length})</h3>
+                <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Members ({members.length})</h3>
                 {(isAdmin || isChannelCreator) && (
                   <Button
                     variant="outline"
@@ -606,13 +627,13 @@ export const ChannelSettingsModal = ({
 
               {/* Add Users Section */}
               {showAddUsers && (isAdmin || isChannelCreator) && (
-                <div className="border rounded-lg p-4 bg-muted/50">
-                  <h4 className="text-sm font-medium mb-3">Add New Members</h4>
-                  <div className="grid gap-2 max-h-32 overflow-y-auto">
+                <div className={`border rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-muted/50`}>
+                  <h4 className="text-sm font-medium mb-4">Add New Members</h4>
+                  <div className="grid gap-3 max-h-32 overflow-y-auto">
                     {availableUsers
                       .filter(user => !members.find(member => member.id === user.id))
                       .map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-2 hover:bg-background rounded">
+                      <div key={user.id} className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-2'} hover:bg-background rounded`}>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
@@ -641,9 +662,9 @@ export const ChannelSettingsModal = ({
               )}
 
               {/* Current Members */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {members.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={member.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg`}>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
@@ -675,29 +696,29 @@ export const ChannelSettingsModal = ({
               </div>
             </TabsContent>
 
-            <TabsContent value="files" className="p-6 space-y-4 mt-0">
-              <h3 className="text-lg font-semibold">Files ({channelFiles.length})</h3>
+            <TabsContent value="files" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+              <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Files ({channelFiles.length})</h3>
               
               {channelFiles.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-12 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No files have been shared in this channel yet.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {channelFiles.map((file) => (
-                    <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                    <div key={file.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg hover:bg-muted/50`}>
                       <div className="flex items-center gap-3">
                         <div className="text-2xl">{getFileIcon(file.type)}</div>
-                        <div>
-                          <p className="font-medium">{file.name}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{file.name}</p>
                           <p className="text-sm text-muted-foreground">
                             {formatFileSize(file.size)} • Shared by {file.uploadedBy} • {formatDate(file.uploadedAt)}
                           </p>
                         </div>
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ml-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -723,11 +744,11 @@ export const ChannelSettingsModal = ({
               )}
             </TabsContent>
 
-            <TabsContent value="settings" className="p-6 space-y-6 mt-0">
-              <div className="space-y-4">
+            <TabsContent value="settings" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+              <div className="space-y-6">
                 {/* DM specific settings */}
                 {isDM ? (
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
                     <div className="flex items-center gap-3">
                       <X className="h-5 w-5 text-muted-foreground" />
                       <div>
@@ -754,17 +775,17 @@ export const ChannelSettingsModal = ({
                   <>
                     {/* Change to Public Channel */}
                     {channel?.type === 'private' && (isAdmin || isChannelCreator) && (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
                         <div className="flex items-center gap-3">
                           <Globe className="h-5 w-5 text-muted-foreground" />
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-medium">Change to a public channel</h4>
                             <p className="text-sm text-muted-foreground">
                               Anyone in your workspace will be able to view and join this channel.
                             </p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className={isMobile ? 'shrink-0' : ''}>
                           Change to public
                         </Button>
                       </div>
@@ -772,17 +793,17 @@ export const ChannelSettingsModal = ({
 
                     {/* Archive Channel */}
                     {(isAdmin || isChannelCreator) && (
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
                         <div className="flex items-center gap-3">
                           <Archive className="h-5 w-5 text-muted-foreground" />
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-medium">Archive channel for everyone</h4>
                             <p className="text-sm text-muted-foreground">
                               Hide this channel from the channel list for all workspace members.
                             </p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" onClick={handleArchiveChannel}>
+                        <Button variant="outline" size="sm" onClick={handleArchiveChannel} className={isMobile ? 'shrink-0' : ''}>
                           Archive channel
                         </Button>
                       </div>
@@ -790,11 +811,11 @@ export const ChannelSettingsModal = ({
 
                     {/* Delete Channel */}
                     {(isAdmin || isChannelCreator) && (
-                      <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
-                        <div className="flex items-center justify-between">
+                      <div className={`border border-destructive/20 rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-destructive/5`}>
+                        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'}`}>
                           <div className="flex items-center gap-3">
                             <Trash2 className="h-5 w-5 text-destructive" />
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-medium text-destructive">Delete this channel</h4>
                               <p className="text-sm text-muted-foreground">
                                 Permanently delete this channel and all its messages. This cannot be undone.
@@ -806,11 +827,12 @@ export const ChannelSettingsModal = ({
                               variant="destructive"
                               size="sm"
                               onClick={() => setShowDeleteConfirm(true)}
+                              className={isMobile ? 'self-start' : ''}
                             >
                               Delete channel
                             </Button>
                           ) : (
-                            <div className="flex gap-2">
+                            <div className={`flex gap-2 ${isMobile ? 'self-start' : ''}`}>
                               <Button
                                 variant="destructive"
                                 size="sm"
@@ -834,17 +856,17 @@ export const ChannelSettingsModal = ({
                     <Separator />
                     
                     {/* Leave Channel */}
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
                       <div className="flex items-center gap-3">
                         <LogOut className="h-5 w-5 text-muted-foreground" />
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-medium text-destructive">Leave channel</h4>
                           <p className="text-sm text-muted-foreground">
                             You will no longer receive messages from this channel.
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={handleLeaveChannel}>
+                      <Button variant="outline" size="sm" onClick={handleLeaveChannel} className={isMobile ? 'shrink-0' : ''}>
                         Leave channel
                       </Button>
                     </div>
