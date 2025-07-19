@@ -368,6 +368,22 @@ export const EnhancedChatInterface = () => {
     };
   }, [activeChannel, profile]);
 
+  // Listen for channel switching from message input
+  useEffect(() => {
+    const handleChannelSwitch = (event: CustomEvent) => {
+      const { channelName } = event.detail;
+      if (channelName && channels.find(ch => ch.name === channelName)) {
+        setActiveChannel(channelName);
+      }
+    };
+
+    window.addEventListener('channelSwitch', handleChannelSwitch as EventListener);
+    
+    return () => {
+      window.removeEventListener('channelSwitch', handleChannelSwitch as EventListener);
+    };
+  }, [channels]);
+
   // More aggressive scroll to bottom approach
   useEffect(() => {
     if (shouldScrollToBottom && messagesContainerRef.current) {

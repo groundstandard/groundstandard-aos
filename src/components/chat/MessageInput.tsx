@@ -197,13 +197,19 @@ export const MessageInput = ({
   const handleInputChange = (value: string) => {
     onNewMessageChange(value);
     
-    // Check for @ mentions
+    // Check for @ mentions and # channels
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
     
-    if (lastAtSymbol !== -1 && lastAtSymbol === cursorPosition - 1) {
-      // User just typed @, show mention search
+    // Determine which symbol is more recent
+    const lastSymbol = Math.max(lastAtSymbol, lastHashSymbol);
+    const isAtMention = lastAtSymbol === lastSymbol;
+    const isChannelMention = lastHashSymbol === lastSymbol;
+    
+    if (lastSymbol !== -1 && lastSymbol === cursorPosition - 1) {
+      // User just typed @ or #, show search
       const rect = textareaRef.current?.getBoundingClientRect();
       if (rect) {
         setMentionPosition({
@@ -213,15 +219,15 @@ export const MessageInput = ({
       }
       setMentionSearchQuery('');
       setShowMentionSearch(true);
-    } else if (lastAtSymbol !== -1) {
-      // Check if we're still in a mention context
-      const textAfterAt = textBeforeCursor.slice(lastAtSymbol + 1);
-      const hasSpace = textAfterAt.includes(' ');
+    } else if (lastSymbol !== -1) {
+      // Check if we're still in a mention/channel context
+      const textAfterSymbol = textBeforeCursor.slice(lastSymbol + 1);
+      const hasSpace = textAfterSymbol.includes(' ');
       
-      if (!hasSpace && textAfterAt.length > 0) {
-        setMentionSearchQuery(textAfterAt);
+      if (!hasSpace && textAfterSymbol.length > 0) {
+        setMentionSearchQuery(textAfterSymbol);
         setShowMentionSearch(true);
-      } else if (hasSpace || textAfterAt.length === 0) {
+      } else if (hasSpace || textAfterSymbol.length === 0) {
         setShowMentionSearch(false);
       }
     } else {
@@ -233,19 +239,37 @@ export const MessageInput = ({
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = newMessage.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
+    const lastSymbol = Math.max(lastAtSymbol, lastHashSymbol);
     
-    if (lastAtSymbol !== -1) {
-      const textBeforeAt = newMessage.slice(0, lastAtSymbol);
+    if (lastSymbol !== -1) {
+      const textBeforeSymbol = newMessage.slice(0, lastSymbol);
       const textAfterCursor = newMessage.slice(cursorPosition);
-      const newText = `${textBeforeAt}${user.profileName} ${textAfterCursor}`;
       
-      onNewMessageChange(newText);
-      
-      // Add user to mentioned users list
-      if (user.id === 'everyone') {
-        setMentionedUsers(prev => [...prev, 'everyone']);
+      // For channel selection, clear the input and switch channel
+      if (lastHashSymbol === lastSymbol && user.name) {
+        // This is a channel selection, trigger channel switch
+        onNewMessageChange(''); // Clear the input
+        
+        // Notify parent component about channel switch
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('channelSwitch', { 
+            detail: { channelName: user.name } 
+          }));
+        }
       } else {
-        setMentionedUsers(prev => [...prev, user.id]);
+        // This is a user mention, add to message
+        const newText = `${textBeforeSymbol}${user.profileName} ${textAfterCursor}`;
+        onNewMessageChange(newText);
+        
+        // Add user to mentioned users list (only for @ mentions)
+        if (lastAtSymbol === lastSymbol) {
+          if (user.id === 'everyone') {
+            setMentionedUsers(prev => [...prev, 'everyone']);
+          } else {
+            setMentionedUsers(prev => [...prev, user.id]);
+          }
+        }
       }
     }
     
@@ -499,6 +523,13 @@ export const MessageInput = ({
           onSelectUser={handleUserSelect}
           currentUserRole={profile?.role || 'student'}
           position={mentionPosition}
+          searchType={(() => {
+            const cursorPosition = textareaRef.current?.selectionStart || 0;
+            const textBeforeCursor = newMessage.slice(0, cursorPosition);
+            const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+            const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
+            return lastHashSymbol > lastAtSymbol ? 'channel' : 'user';
+          })()}
         />
       )}
 

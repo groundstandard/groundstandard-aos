@@ -134,13 +134,17 @@ export const MobileMessageInput = ({
   const handleInputChange = (value: string) => {
     onNewMessageChange(value);
     
-    // Check for @ mentions
+    // Check for @ mentions and # channels
     const cursorPosition = inputRef.current?.selectionStart || 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
     
-    if (lastAtSymbol !== -1 && lastAtSymbol === cursorPosition - 1) {
-      // User just typed @, show mention search
+    // Determine which symbol is more recent
+    const lastSymbol = Math.max(lastAtSymbol, lastHashSymbol);
+    
+    if (lastSymbol !== -1 && lastSymbol === cursorPosition - 1) {
+      // User just typed @ or #, show search
       const rect = inputRef.current?.getBoundingClientRect();
       if (rect) {
         setMentionPosition({
@@ -150,15 +154,15 @@ export const MobileMessageInput = ({
       }
       setMentionSearchQuery('');
       setShowMentionSearch(true);
-    } else if (lastAtSymbol !== -1) {
-      // Check if we're still in a mention context
-      const textAfterAt = textBeforeCursor.slice(lastAtSymbol + 1);
-      const hasSpace = textAfterAt.includes(' ');
+    } else if (lastSymbol !== -1) {
+      // Check if we're still in a mention/channel context
+      const textAfterSymbol = textBeforeCursor.slice(lastSymbol + 1);
+      const hasSpace = textAfterSymbol.includes(' ');
       
-      if (!hasSpace && textAfterAt.length > 0) {
-        setMentionSearchQuery(textAfterAt);
+      if (!hasSpace && textAfterSymbol.length > 0) {
+        setMentionSearchQuery(textAfterSymbol);
         setShowMentionSearch(true);
-      } else if (hasSpace || textAfterAt.length === 0) {
+      } else if (hasSpace || textAfterSymbol.length === 0) {
         setShowMentionSearch(false);
       }
     } else {
@@ -170,19 +174,23 @@ export const MobileMessageInput = ({
     const cursorPosition = inputRef.current?.selectionStart || 0;
     const textBeforeCursor = newMessage.slice(0, cursorPosition);
     const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
+    const lastSymbol = Math.max(lastAtSymbol, lastHashSymbol);
     
-    if (lastAtSymbol !== -1) {
-      const textBeforeAt = newMessage.slice(0, lastAtSymbol);
+    if (lastSymbol !== -1) {
+      const textBeforeSymbol = newMessage.slice(0, lastSymbol);
       const textAfterCursor = newMessage.slice(cursorPosition);
-      const newText = `${textBeforeAt}${user.profileName} ${textAfterCursor}`;
+      const newText = `${textBeforeSymbol}${user.profileName} ${textAfterCursor}`;
       
       onNewMessageChange(newText);
       
-      // Add user to mentioned users list
-      if (user.id === 'everyone') {
-        setMentionedUsers(prev => [...prev, 'everyone']);
-      } else {
-        setMentionedUsers(prev => [...prev, user.id]);
+      // Add user to mentioned users list (only for @ mentions, not # channels)
+      if (lastAtSymbol === lastSymbol) {
+        if (user.id === 'everyone') {
+          setMentionedUsers(prev => [...prev, 'everyone']);
+        } else {
+          setMentionedUsers(prev => [...prev, user.id]);
+        }
       }
     }
     
@@ -263,6 +271,13 @@ export const MobileMessageInput = ({
             onSelectUser={handleUserSelect}
             currentUserRole={profile?.role || 'student'}
             position={mentionPosition}
+            searchType={(() => {
+              const cursorPosition = inputRef.current?.selectionStart || 0;
+              const textBeforeCursor = newMessage.slice(0, cursorPosition);
+              const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+              const lastHashSymbol = textBeforeCursor.lastIndexOf('#');
+              return lastHashSymbol > lastAtSymbol ? 'channel' : 'user';
+            })()}
           />
         </div>
       )}
