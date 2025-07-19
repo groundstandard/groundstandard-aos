@@ -12,7 +12,9 @@ import {
   Crown, 
   Plus, 
   MessageCircle,
-  Users
+  Users,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -62,10 +64,18 @@ export const ChatSidebar = ({
 }: ChatSidebarProps) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({});
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
 
   const getChannelIcon = (channel: Channel) => {
     if (channel.type === 'premium') {
@@ -119,14 +129,14 @@ export const ChatSidebar = ({
   const ChannelItem = ({ channel }: { channel: Channel }) => (
     <button
       onClick={() => handleChannelSwitch(channel.id)}
-      className={`w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 group ${
+      className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center space-x-3 group ${
         activeChannel === channel.id
           ? 'bg-primary text-primary-foreground shadow-md'
           : 'hover:bg-muted/60 active:bg-muted/80'
       }`}
     >
       <div className="relative">
-        <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
           activeChannel === channel.id 
             ? 'bg-primary-foreground/20' 
             : 'bg-gradient-to-br from-blue-500/10 to-purple-600/10'
@@ -136,8 +146,8 @@ export const ChatSidebar = ({
       </div>
       
       <div className="flex-1 text-left min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <p className={`font-semibold truncate text-sm ${
+        <div className="flex items-center justify-between">
+          <p className={`font-medium truncate text-sm ${
             activeChannel === channel.id ? 'text-primary-foreground' : 'text-foreground'
           }`}>
             {channel.type === 'public' ? '#' : ''}{channel.name}
@@ -145,17 +155,19 @@ export const ChatSidebar = ({
           {channel.unread_count && channel.unread_count > 0 && (
             <Badge 
               variant={activeChannel === channel.id ? "secondary" : "default"} 
-              className="h-5 min-w-5 text-xs rounded-full ml-2"
+              className="h-4 min-w-4 text-xs rounded-full ml-2"
             >
               {channel.unread_count > 99 ? '99+' : channel.unread_count}
             </Badge>
           )}
         </div>
-        <p className={`text-xs truncate ${
-          activeChannel === channel.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
-        }`}>
-          {channel.last_message || channel.description}
-        </p>
+        {channel.last_message && (
+          <p className={`text-xs truncate ${
+            activeChannel === channel.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
+          }`}>
+            {channel.last_message}
+          </p>
+        )}
       </div>
     </button>
   );
@@ -164,39 +176,55 @@ export const ChatSidebar = ({
     title, 
     channels, 
     icon, 
-    showCreateButton = false 
+    showCreateButton = false,
+    sectionId
   }: { 
     title: string; 
     channels: Channel[]; 
     icon: React.ReactNode;
     showCreateButton?: boolean;
-  }) => (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center space-x-2">
-          {icon}
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-            {title}
-          </h3>
-        </div>
-        {showCreateButton && profile?.role === 'admin' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCreateChannel}
-            className="h-7 w-7 p-0 rounded-full hover:bg-muted"
+    sectionId: string;
+  }) => {
+    const isCollapsed = collapsedSections[sectionId];
+    
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-4">
+          <button
+            onClick={() => toggleSection(sectionId)}
+            className="flex items-center space-x-2 hover:bg-muted/50 rounded p-1 -ml-1 transition-colors"
           >
-            <Plus className="h-4 w-4" />
-          </Button>
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+            {icon}
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+              {title}
+            </h3>
+          </button>
+          {showCreateButton && profile?.role === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCreateChannel}
+              className="h-7 w-7 p-0 rounded-full hover:bg-muted"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        {!isCollapsed && (
+          <div className="space-y-1 px-2">
+            {channels.map((channel) => (
+              <ChannelItem key={channel.id} channel={channel} />
+            ))}
+          </div>
         )}
       </div>
-      <div className="space-y-2 px-2">
-        {channels.map((channel) => (
-          <ChannelItem key={channel.id} channel={channel} />
-        ))}
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (isMobile) {
     return (
@@ -225,28 +253,31 @@ export const ChatSidebar = ({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="channels" className="p-0 mt-0 space-y-6 overflow-y-auto h-full">
+          <TabsContent value="channels" className="p-0 mt-0 space-y-4 overflow-y-auto h-full">
             <div className="py-4">
               <ChannelSection 
-                title="Public Channels" 
+                title="Channels" 
                 channels={groupChannels.filter(c => c.type === 'public')}
                 icon={<Hash className="h-4 w-4" />}
                 showCreateButton={true}
+                sectionId="public-channels"
               />
               
               {groupChannels.some(c => c.type === 'premium') && (
                 <ChannelSection 
-                  title="Premium" 
+                  title="Premium Channels" 
                   channels={groupChannels.filter(c => c.type === 'premium')}
                   icon={<Crown className="h-4 w-4 text-amber-500" />}
+                  sectionId="premium-channels"
                 />
               )}
               
               {profile?.role === 'admin' && groupChannels.some(c => c.is_admin_only) && (
                 <ChannelSection 
-                  title="Private" 
+                  title="Private Channels" 
                   channels={groupChannels.filter(c => c.is_admin_only)}
                   icon={<Lock className="h-4 w-4" />}
+                  sectionId="private-channels"
                 />
               )}
             </div>
@@ -254,20 +285,20 @@ export const ChatSidebar = ({
 
           <TabsContent value="direct" className="p-4 space-y-4 overflow-y-auto h-full">
             {directMessageUsers.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {directMessageUsers.map((user) => (
                   <button
                     key={user.user_id}
                     onClick={() => onDirectMessageSelect(user.user_id)}
-                    className="w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
+                    className="w-full p-2 rounded-lg transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
                   >
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs bg-gradient-to-br from-green-500/10 to-blue-600/10">
                         {getInitials(user.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left">
-                      <p className="font-semibold text-sm">{user.name}</p>
+                      <p className="font-medium text-sm">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.status}</p>
                     </div>
                   </button>
@@ -316,12 +347,13 @@ export const ChatSidebar = ({
       </div>
 
       {/* Desktop Content */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto py-4 space-y-4">
         <ChannelSection 
           title="Channels" 
           channels={groupChannels.filter(c => c.type === 'public')}
           icon={<Hash className="h-4 w-4" />}
           showCreateButton={true}
+          sectionId="public-channels"
         />
         
         {groupChannels.some(c => c.type === 'premium') && (
@@ -329,6 +361,7 @@ export const ChatSidebar = ({
             title="Premium Channels" 
             channels={groupChannels.filter(c => c.type === 'premium')}
             icon={<Crown className="h-4 w-4 text-amber-500" />}
+            sectionId="premium-channels"
           />
         )}
         
@@ -337,40 +370,55 @@ export const ChatSidebar = ({
             title="Private Channels" 
             channels={groupChannels.filter(c => c.is_admin_only)}
             icon={<Lock className="h-4 w-4" />}
+            sectionId="private-channels"
           />
         )}
 
-        <div className="px-4">
-          <div className="flex items-center space-x-2 mb-3">
-            <MessageCircle className="h-4 w-4" />
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-              Direct Messages
-            </h3>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-4">
+            <button
+              onClick={() => toggleSection('direct-messages')}
+              className="flex items-center space-x-2 hover:bg-muted/50 rounded p-1 -ml-1 transition-colors"
+            >
+              {collapsedSections['direct-messages'] ? (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              )}
+              <MessageCircle className="h-4 w-4" />
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                Direct Messages
+              </h3>
+            </button>
           </div>
-          {directMessageUsers.length > 0 ? (
-            <div className="space-y-2">
-              {directMessageUsers.map((user) => (
-                <button
-                  key={user.user_id}
-                  onClick={() => onDirectMessageSelect(user.user_id)}
-                  className="w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-xs bg-gradient-to-br from-green-500/10 to-blue-600/10">
-                      {getInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="font-semibold text-sm">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.status}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Start a conversation with someone!</p>
+          {!collapsedSections['direct-messages'] && (
+            <div className="px-2">
+              {directMessageUsers.length > 0 ? (
+                <div className="space-y-1">
+                  {directMessageUsers.map((user) => (
+                    <button
+                      key={user.user_id}
+                      onClick={() => onDirectMessageSelect(user.user_id)}
+                      className="w-full p-2 rounded-lg transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs bg-gradient-to-br from-green-500/10 to-blue-600/10">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <p className="font-medium text-sm">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.status}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Start a conversation with someone!</p>
+                </div>
+              )}
             </div>
           )}
         </div>
