@@ -23,8 +23,11 @@ import {
   Activity,
   MessageCircle,
   CreditCard,
-  FileText
+  FileText,
+  ContactRound,
+  ChevronDown
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const AdminDashboard = () => {
   const { profile } = useAuth();
@@ -204,7 +207,78 @@ export const AdminDashboard = () => {
             <Activity className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-        </div>
+      </div>
+
+      {/* Admin Navigation */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => handleQuickAction("Contacts")}
+            >
+              <ContactRound className="h-4 w-4" />
+              Contacts
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/payments')}
+            >
+              <CreditCard className="h-4 w-4" />
+              Payments
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/attendance')}
+            >
+              <Activity className="h-4 w-4" />
+              Attendance
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/reports')}
+            >
+              <FileText className="h-4 w-4" />
+              Reporting
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Admin
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate('/events')}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Events
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/belt-testing')}>
+                  <Award className="h-4 w-4 mr-2" />
+                  Belt Testing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickAction("Memberships")}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Memberships
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleQuickAction("Settings")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardContent>
+      </Card>
       </div>
 
 
