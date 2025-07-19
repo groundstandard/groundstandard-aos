@@ -527,11 +527,7 @@ export const EnhancedChatInterface = () => {
         // Still show message locally even if database save fails
       }
 
-      // Add to local state (this will show immediately)
-      setChannelMessages(prev => ({
-        ...prev,
-        [activeChannel]: [...(prev[activeChannel] || []), message]
-      }));
+      // Don't add to local state - let the real-time subscription handle it to prevent duplicates
 
       // Clear the input immediately
       setNewMessage('');
