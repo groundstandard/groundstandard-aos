@@ -18,7 +18,7 @@ interface Channel {
 }
 
 interface ChannelSetupProps {
-  channel: Channel;
+  channel: Channel | undefined;
   onDescriptionAdded: (description: string) => void;
 }
 
@@ -64,6 +64,7 @@ export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps)
   };
 
   const getChannelIcon = () => {
+    if (!channel) return <span className="text-lg">#</span>;
     if (channel.type === 'premium') return <Lock className="h-5 w-5 text-amber-500" />;
     if (channel.type === 'private' || channel.is_admin_only) return <Lock className="h-5 w-5 text-muted-foreground" />;
     return <span className="text-lg">#</span>;
@@ -78,10 +79,10 @@ export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps)
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            {channel.name}
+            {channel?.name || 'Loading...'}
           </h2>
           <p className="text-sm text-muted-foreground">
-            You created this channel on {formatDate(new Date().toISOString())}. This is the very beginning of the <Lock className="h-4 w-4 inline" /> {channel.name} channel.
+            You created this channel on {formatDate(new Date().toISOString())}. This is the very beginning of the <Lock className="h-4 w-4 inline" /> {channel?.name || 'channel'} channel.
           </p>
         </div>
       </div>
