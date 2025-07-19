@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Zap, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Settings, Zap, AlertTriangle, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AutomationSettings {
   bookedLead: boolean;
@@ -29,6 +30,8 @@ interface HighLevelConfig {
 
 export const AutomationManagement = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   const [automations, setAutomations] = useState<AutomationSettings>({
     bookedLead: false,
@@ -50,7 +53,105 @@ export const AutomationManagement = () => {
 
   const [showApiKey, setShowApiKey] = useState(false);
 
-  const handleAutomationToggle = (automation: keyof AutomationSettings, value: boolean) => {
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        // Load automation settings
+        const { data: automationData, error: automationError } = await supabase
+          .from('automation_settings')
+          .select('*')
+          .maybeSingle();
+
+        if (automationError) {
+          console.error('Error loading automation settings:', automationError);
+        } else if (automationData) {
+          setAutomations({
+            bookedLead: automationData.booked_lead,
+            memberSigned: automationData.member_signed,
+            memberCancelled: automationData.member_cancelled,
+            memberAbsent: automationData.member_absent,
+            memberPresent: automationData.member_present,
+            memberDelinquent: automationData.member_delinquent,
+            memberCurrent: automationData.member_current,
+            absentDaysThreshold: automationData.absent_days_threshold
+          });
+        }
+
+        // Load HighLevel config
+        const { data: hlData, error: hlError } = await supabase
+          .from('highlevel_config')
+          .select('*')
+          .maybeSingle();
+
+        if (hlError) {
+          console.error('Error loading HighLevel config:', hlError);
+        } else if (hlData) {
+          setHlConfig({
+            apiKey: hlData.api_key || '',
+            subaccountId: hlData.subaccount_id || '',
+            webhookUrl: hlData.webhook_url || '',
+            isConnected: hlData.is_connected || false
+          });
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        toast({
+          title: "Error Loading Settings",
+          description: "Failed to load automation settings. Please refresh the page.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [toast]);
+
+  // Save automation settings to database
+  const saveAutomationSettings = async (newSettings: AutomationSettings) => {
+    try {
+      const { error } = await supabase
+        .from('automation_settings')
+        .upsert({
+          booked_lead: newSettings.bookedLead,
+          member_signed: newSettings.memberSigned,
+          member_cancelled: newSettings.memberCancelled,
+          member_absent: newSettings.memberAbsent,
+          member_present: newSettings.memberPresent,
+          member_delinquent: newSettings.memberDelinquent,
+          member_current: newSettings.memberCurrent,
+          absent_days_threshold: newSettings.absentDaysThreshold
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving automation settings:', error);
+      throw error;
+    }
+  };
+
+  // Save HighLevel config to database
+  const saveHighLevelConfig = async (config: HighLevelConfig) => {
+    try {
+      const { error } = await supabase
+        .from('highlevel_config')
+        .upsert({
+          api_key: config.apiKey,
+          subaccount_id: config.subaccountId,
+          webhook_url: config.webhookUrl,
+          is_connected: config.isConnected
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving HighLevel config:', error);
+      throw error;
+    }
+  };
+
+  const handleAutomationToggle = async (automation: keyof AutomationSettings, value: boolean) => {
     if (!hlConfig.isConnected && value) {
       toast({
         title: "HighLevel Not Connected",
@@ -60,18 +161,32 @@ export const AutomationManagement = () => {
       return;
     }
 
-    setAutomations(prev => ({
-      ...prev,
+    const newSettings = {
+      ...automations,
       [automation]: value
-    }));
+    };
 
-    toast({
-      title: `Automation ${value ? 'Enabled' : 'Disabled'}`,
-      description: `${automation} automation has been ${value ? 'activated' : 'deactivated'}.`
-    });
+    try {
+      setSaving(true);
+      await saveAutomationSettings(newSettings);
+      setAutomations(newSettings);
+
+      toast({
+        title: `Automation ${value ? 'Enabled' : 'Disabled'}`,
+        description: `${automation} automation has been ${value ? 'activated' : 'deactivated'}.`
+      });
+    } catch (error) {
+      toast({
+        title: "Error Saving Settings",
+        description: "Failed to save automation settings. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleConfigSave = () => {
+  const handleConfigSave = async () => {
     if (!hlConfig.apiKey || !hlConfig.subaccountId) {
       toast({
         title: "Missing Configuration",
@@ -81,37 +196,70 @@ export const AutomationManagement = () => {
       return;
     }
 
-    setHlConfig(prev => ({ ...prev, isConnected: true }));
-    toast({
-      title: "HighLevel Connected",
-      description: "Successfully connected to HighLevel. You can now enable automations.",
-    });
+    try {
+      setSaving(true);
+      const newConfig = { ...hlConfig, isConnected: true };
+      await saveHighLevelConfig(newConfig);
+      setHlConfig(newConfig);
+
+      toast({
+        title: "HighLevel Connected",
+        description: "Successfully connected to HighLevel. You can now enable automations.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Saving Configuration",
+        description: "Failed to save HighLevel configuration. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDisconnect = () => {
-    setHlConfig({
-      apiKey: '',
-      subaccountId: '',
-      webhookUrl: '',
-      isConnected: false
-    });
-    
-    // Disable all automations when disconnecting
-    setAutomations(prev => ({
-      ...prev,
-      bookedLead: false,
-      memberSigned: false,
-      memberCancelled: false,
-      memberAbsent: false,
-      memberPresent: false,
-      memberDelinquent: false,
-      memberCurrent: false
-    }));
+  const handleDisconnect = async () => {
+    try {
+      setSaving(true);
+      
+      const newConfig = {
+        apiKey: '',
+        subaccountId: '',
+        webhookUrl: '',
+        isConnected: false
+      };
+      
+      const newSettings = {
+        ...automations,
+        bookedLead: false,
+        memberSigned: false,
+        memberCancelled: false,
+        memberAbsent: false,
+        memberPresent: false,
+        memberDelinquent: false,
+        memberCurrent: false
+      };
 
-    toast({
-      title: "HighLevel Disconnected",
-      description: "All automations have been disabled.",
-    });
+      await Promise.all([
+        saveHighLevelConfig(newConfig),
+        saveAutomationSettings(newSettings)
+      ]);
+
+      setHlConfig(newConfig);
+      setAutomations(newSettings);
+
+      toast({
+        title: "HighLevel Disconnected",
+        description: "All automations have been disabled.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Disconnecting",
+        description: "Failed to disconnect from HighLevel. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const automationItems = [
@@ -166,11 +314,32 @@ export const AutomationManagement = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Settings className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Automation Management</h1>
+        </div>
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading automation settings...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Settings className="h-6 w-6" />
         <h1 className="text-2xl font-bold">Automation Management</h1>
+        {saving && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Saving...
+          </div>
+        )}
       </div>
 
       {/* HighLevel Connection Status */}

@@ -128,6 +128,81 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          automation_type: string
+          contact_id: string | null
+          created_at: string
+          error_message: string | null
+          highlevel_response: Json | null
+          id: string
+          status: string
+          trigger_data: Json | null
+        }
+        Insert: {
+          automation_type: string
+          contact_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          highlevel_response?: Json | null
+          id?: string
+          status?: string
+          trigger_data?: Json | null
+        }
+        Update: {
+          automation_type?: string
+          contact_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          highlevel_response?: Json | null
+          id?: string
+          status?: string
+          trigger_data?: Json | null
+        }
+        Relationships: []
+      }
+      automation_settings: {
+        Row: {
+          absent_days_threshold: number
+          booked_lead: boolean
+          created_at: string
+          id: string
+          member_absent: boolean
+          member_cancelled: boolean
+          member_current: boolean
+          member_delinquent: boolean
+          member_present: boolean
+          member_signed: boolean
+          updated_at: string
+        }
+        Insert: {
+          absent_days_threshold?: number
+          booked_lead?: boolean
+          created_at?: string
+          id?: string
+          member_absent?: boolean
+          member_cancelled?: boolean
+          member_current?: boolean
+          member_delinquent?: boolean
+          member_present?: boolean
+          member_signed?: boolean
+          updated_at?: string
+        }
+        Update: {
+          absent_days_threshold?: number
+          booked_lead?: boolean
+          created_at?: string
+          id?: string
+          member_absent?: boolean
+          member_cancelled?: boolean
+          member_current?: boolean
+          member_delinquent?: boolean
+          member_present?: boolean
+          member_signed?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       belt_tests: {
         Row: {
           created_at: string
@@ -740,6 +815,36 @@ export type Database = {
           tax_amount?: number | null
           total_expenses?: number | null
           total_revenue?: number
+        }
+        Relationships: []
+      }
+      highlevel_config: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          subaccount_id: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          subaccount_id?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          subaccount_id?: string | null
+          updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
