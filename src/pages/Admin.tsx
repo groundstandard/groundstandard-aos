@@ -14,7 +14,10 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { CommunicationCenter } from "@/components/admin/CommunicationCenter";
 import { EventManagement } from "@/components/admin/EventManagement";
 import { InventoryManagement } from "@/components/admin/InventoryManagement";
-import { 
+import { PaymentManagement } from "@/components/admin/PaymentManagement";
+import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
+import { AdvancedAttendance } from "@/components/admin/AdvancedAttendance";
+import {
   Settings, 
   Users, 
   Calendar, 
@@ -22,9 +25,12 @@ import {
   Shield, 
   CreditCard,
   Home,
-  Bell,
+  DollarSign,
   MessageSquare,
-  Package
+  Package,
+  Bell,
+  FileText,
+  CheckCircle
 } from "lucide-react";
 
 const Admin = () => {
@@ -69,7 +75,7 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9 bg-background/50 backdrop-blur">
+          <TabsList className="grid w-full grid-cols-12 bg-background/50 backdrop-blur">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Dashboard
@@ -86,6 +92,10 @@ const Admin = () => {
               <Calendar className="h-4 w-4" />
               Classes
             </TabsTrigger>
+            <TabsTrigger value="attendance" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Attendance
+            </TabsTrigger>
             <TabsTrigger value="events" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Events
@@ -97,6 +107,14 @@ const Admin = () => {
             <TabsTrigger value="communication" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Communication
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Payments
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Invoices
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -124,6 +142,10 @@ const Admin = () => {
             <ClassManagement />
           </TabsContent>
 
+          <TabsContent value="attendance" className="space-y-6">
+            <AdvancedAttendance />
+          </TabsContent>
+
           <TabsContent value="events" className="space-y-6">
             <EventManagement />
           </TabsContent>
@@ -134,6 +156,14 @@ const Admin = () => {
 
           <TabsContent value="communication" className="space-y-6">
             <CommunicationCenter />
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            <PaymentManagement />
+          </TabsContent>
+
+          <TabsContent value="invoices" className="space-y-6">
+            <InvoiceManagement />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
