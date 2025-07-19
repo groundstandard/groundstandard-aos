@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreateChannelDialogProps {
   open: boolean;
@@ -36,36 +37,78 @@ export const CreateChannelDialog = ({ open, onOpenChange, onChannelCreated }: Cr
       return;
     }
 
-    // Create mock channel for now
-    const newChannel = {
-      id: `channel-${Date.now()}`,
-      name: formData.name.toLowerCase().replace(/\s+/g, '-'),
-      description: formData.description,
-      type: formData.isPrivate ? 'private' : 'public',
-      is_admin_only: formData.isAdminOnly,
-      created_by: profile?.id,
-      member_count: 1,
-      unread_count: 0,
-      last_message: 'Channel created',
-      last_activity: new Date().toISOString()
-    };
+    try {
+      // Save to database
+      const { data: channelData, error } = await supabase
+        .from('chat_channels')
+        .insert({
+          name: formData.name.toLowerCase().replace(/\s+/g, '-'),
+          description: formData.description,
+          type: formData.isPrivate ? 'private' : 'public',
+          is_admin_only: formData.isAdminOnly,
+          created_by: profile?.id
+        })
+        .select()
+        .single();
 
-    onChannelCreated(newChannel);
-    
-    toast({
-      title: 'Success',
-      description: `Channel #${formData.name} created successfully`
-    });
+      if (error) {
+        console.error('Error creating channel:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to create channel. Please try again.'
+        });
+        return;
+      }
 
-    // Reset form
-    setFormData({
-      name: '',
-      description: '',
-      isPrivate: false,
-      isAdminOnly: false
-    });
-    
-    onOpenChange(false);
+      // Create channel object for local state
+      const newChannel = {
+        id: channelData.id,
+        name: channelData.name,
+        description: channelData.description || '',
+        type: channelData.type as 'public' | 'private' | 'premium',
+        is_admin_only: channelData.is_admin_only || false,
+        created_by: channelData.created_by || '',
+        member_count: 1,
+        unread_count: 0,
+        last_message: '',
+        last_activity: channelData.created_at
+      };
+
+      // If it's a private channel, add creator to channel membership
+      if (formData.isPrivate && profile?.id) {
+        await supabase
+          .from('channel_memberships')
+          .insert({
+            channel_id: channelData.id,
+            user_id: profile.id
+          });
+      }
+
+      onChannelCreated(newChannel);
+      
+      toast({
+        title: 'Success',
+        description: `Channel #${channelData.name} created successfully`
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        isPrivate: false,
+        isAdminOnly: false
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating channel:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Something went wrong. Please try again.'
+      });
+    }
   };
 
   return (

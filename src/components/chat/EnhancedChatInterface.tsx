@@ -114,17 +114,39 @@ export const EnhancedChatInterface = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Check user role for permissions
+  const isOwner = profile?.role === 'admin'; // admin is effectively owner in current system
+  const isStaff = profile?.role === 'instructor'; // instructor is staff level
+  const isMember = profile?.role === 'student';
+  
+  // Channel management permissions
+  const canCreateChannels = isOwner;
+  const canArchiveChannels = isOwner;
+  const canDeleteChannels = isOwner;
+
   // Load channels and messages from database
   useEffect(() => {
     const loadData = async () => {
       if (!profile) return;
 
       try {
-        // Load channels from database
-        const { data: channelData, error: channelError } = await supabase
+        // Load channels from database with membership filtering
+        let channelQuery = supabase
           .from('chat_channels')
-          .select('*')
-          .order('name');
+          .select(`
+            *,
+            channel_memberships!left(user_id)
+          `);
+
+        // If not owner, filter channels based on access
+        if (!isOwner) {
+          channelQuery = channelQuery.or(`
+            type.eq.public,
+            channel_memberships.user_id.eq.${profile.id}
+          `);
+        }
+
+        const { data: channelData, error: channelError } = await channelQuery.order('name');
 
         if (channelError) {
           console.error('Error loading channels:', channelError);
