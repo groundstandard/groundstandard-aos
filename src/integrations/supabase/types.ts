@@ -826,6 +826,7 @@ export type Database = {
           is_connected: boolean
           subaccount_id: string | null
           updated_at: string
+          user_id: string | null
           webhook_url: string | null
         }
         Insert: {
@@ -835,6 +836,7 @@ export type Database = {
           is_connected?: boolean
           subaccount_id?: string | null
           updated_at?: string
+          user_id?: string | null
           webhook_url?: string | null
         }
         Update: {
@@ -844,6 +846,7 @@ export type Database = {
           is_connected?: boolean
           subaccount_id?: string | null
           updated_at?: string
+          user_id?: string | null
           webhook_url?: string | null
         }
         Relationships: []

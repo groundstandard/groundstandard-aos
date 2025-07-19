@@ -24,6 +24,7 @@ interface AutomationSettings {
 interface HighLevelConfig {
   subaccountId: string;
   webhookUrl: string;
+  apiKey: string;
   isConnected: boolean;
 }
 
@@ -46,6 +47,7 @@ export const AutomationManagement = () => {
   const [hlConfig, setHlConfig] = useState<HighLevelConfig>({
     subaccountId: '',
     webhookUrl: '',
+    apiKey: '',
     isConnected: false
   });
 
@@ -88,6 +90,7 @@ export const AutomationManagement = () => {
           setHlConfig({
             subaccountId: hlData.subaccount_id || '',
             webhookUrl: hlData.webhook_url || '',
+            apiKey: hlData.api_key || '',
             isConnected: hlData.is_connected || false
           });
         }
@@ -137,7 +140,9 @@ export const AutomationManagement = () => {
         .upsert({
           subaccount_id: config.subaccountId,
           webhook_url: config.webhookUrl,
-          is_connected: config.isConnected
+          api_key: config.apiKey,
+          is_connected: config.isConnected,
+          user_id: (await supabase.auth.getUser()).data.user?.id
         });
 
       if (error) throw error;
@@ -183,10 +188,10 @@ export const AutomationManagement = () => {
   };
 
   const handleConfigSave = async () => {
-    if (!hlConfig.subaccountId) {
+    if (!hlConfig.subaccountId || !hlConfig.apiKey) {
       toast({
         title: "Missing Configuration",
-        description: "Please provide the Subaccount ID.",
+        description: "Please provide both Subaccount ID and API Key.",
         variant: "destructive"
       });
       return;
@@ -220,6 +225,7 @@ export const AutomationManagement = () => {
       const newConfig = {
         subaccountId: '',
         webhookUrl: '',
+        apiKey: '',
         isConnected: false
       };
       
@@ -250,6 +256,43 @@ export const AutomationManagement = () => {
       toast({
         title: "Error Disconnecting",
         description: "Failed to disconnect from HighLevel. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestContact = async () => {
+    if (!hlConfig.isConnected) {
+      toast({
+        title: "HighLevel Not Connected",
+        description: "Please configure HighLevel connection before testing.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const { error } = await supabase.functions.invoke('test-highlevel-contact', {
+        body: {
+          subaccountId: hlConfig.subaccountId,
+          apiKey: hlConfig.apiKey
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test Contact Created",
+        description: "Successfully created test contact in HighLevel with tags 'adult' and 'member'.",
+      });
+    } catch (error) {
+      console.error('Test contact error:', error);
+      toast({
+        title: "Test Failed",
+        description: "Failed to create test contact. Please check your configuration.",
         variant: "destructive"
       });
     } finally {
@@ -351,15 +394,25 @@ export const AutomationManagement = () => {
         <CardContent className="space-y-4">
           {!hlConfig.isConnected ? (
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-900">API Key Configured</h4>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Your HighLevel API key has been securely stored. Just enter your Subaccount ID to complete the connection.
-                    </p>
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">HighLevel API Key</Label>
+                <Input
+                  id="apiKey"
+                  type={showApiKey ? "text" : "password"}
+                  value={hlConfig.apiKey}
+                  onChange={(e) => setHlConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                  placeholder="Enter your HighLevel API key"
+                />
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showApiKey"
+                    checked={showApiKey}
+                    onChange={(e) => setShowApiKey(e.target.checked)}
+                  />
+                  <label htmlFor="showApiKey" className="text-sm text-muted-foreground">
+                    Show API key
+                  </label>
                 </div>
               </div>
               
@@ -385,9 +438,16 @@ export const AutomationManagement = () => {
                 </p>
               </div>
               
-              <Button onClick={handleConfigSave} className="w-full">
-                Connect to HighLevel
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleConfigSave} className="flex-1">
+                  Connect to HighLevel
+                </Button>
+                {hlConfig.apiKey && hlConfig.subaccountId && (
+                  <Button onClick={handleTestContact} variant="outline" disabled={saving}>
+                    Test Connection
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-between">

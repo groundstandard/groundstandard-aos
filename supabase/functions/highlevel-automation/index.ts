@@ -21,11 +21,6 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const highlevelApiKey = Deno.env.get('HIGHLEVEL_API_KEY');
-    
-    if (!highlevelApiKey) {
-      throw new Error('HighLevel API key not configured');
-    }
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -33,24 +28,43 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[HIGHLEVEL-AUTOMATION] Processing ${type} for contact ${contactId}`);
 
-    // Get automation settings
-    const { data: settings, error: settingsError } = await supabase
-      .from('automation_settings')
+    // Get contact information first to find user's HighLevel config
+    const { data: contact, error: contactError } = await supabase
+      .from('profiles')
       .select('*')
+      .eq('id', contactId)
       .single();
 
-    if (settingsError) {
-      throw new Error(`Failed to load automation settings: ${settingsError.message}`);
+    if (contactError) {
+      throw new Error(`Failed to load contact: ${contactError.message}`);
     }
 
-    // Get HighLevel configuration
-    const { data: hlConfig, error: hlError } = await supabase
-      .from('highlevel_config')
-      .select('*')
-      .single();
+    // Get automation settings and user's HighLevel config
+    const [settingsResponse, hlConfigResponse] = await Promise.all([
+      supabase.from('automation_settings').select('*').single(),
+      supabase.from('highlevel_config').select('*').eq('user_id', contact.id).single()
+    ]);
 
-    if (hlError || !hlConfig?.is_connected) {
-      throw new Error('HighLevel is not configured or connected');
+    if (settingsResponse.error) {
+      throw new Error(`Failed to load automation settings: ${settingsResponse.error.message}`);
+    }
+
+    if (hlConfigResponse.error || !hlConfigResponse.data) {
+      console.log(`[HIGHLEVEL-AUTOMATION] No HighLevel config found for user ${contact.id}`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'No HighLevel config found for user' 
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    const settings = settingsResponse.data;
+    const hlConfig = hlConfigResponse.data;
+
+    if (!hlConfig.api_key || !hlConfig.subaccount_id || !hlConfig.is_connected) {
+      throw new Error('Incomplete HighLevel configuration for user');
     }
 
     // Check if automation is enabled for this type
@@ -74,21 +88,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Get contact information
-    const { data: contact, error: contactError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', contactId)
-      .single();
-
-    if (contactError) {
-      throw new Error(`Failed to load contact: ${contactError.message}`);
-    }
-
     // Prepare HighLevel API request
     const hlApiUrl = `https://services.leadconnectorhq.com/contacts/`;
     const hlHeaders = {
-      'Authorization': `Bearer ${highlevelApiKey}`,
+      'Authorization': `Bearer ${hlConfig.api_key}`,
       'Content-Type': 'application/json',
       'Version': '2021-07-28'
     };
@@ -105,6 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
           email: contact.email,
           phone: contact.phone,
           source: 'Martial Arts Academy',
+          locationId: hlConfig.subaccount_id,
           tags: ['new-member', 'active'],
           customFields: [
             {
