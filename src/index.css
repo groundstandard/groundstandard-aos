@@ -279,51 +279,64 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Mobile-specific optimizations */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    /* Enhanced touch targets for mobile */
+    .mobile-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Mobile-first spacing */
+    .mobile-space-y-2 > * + * {
+      margin-top: 0.5rem;
+    }
+    
+    .mobile-space-y-4 > * + * {
+      margin-top: 1rem;
+    }
+    
+    /* Mobile typography scaling */
+    .mobile-text-sm {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    
+    .mobile-text-xs {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    
+    /* Mobile-optimized scrollable areas */
+    .mobile-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    .mobile-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Ensure tabs are scrollable on mobile */
+    .mobile-tabs-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    .mobile-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
   }
-  
-  /* Enhanced touch targets for mobile */
-  .mobile-touch {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
-  /* Mobile-first spacing */
-  .mobile-space-y-2 > * + * {
-    margin-top: 0.5rem;
-  }
-  
-  .mobile-space-y-4 > * + * {
-    margin-top: 1rem;
-  }
-  
-  /* Mobile typography scaling */
-  .mobile-text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-  
-  .mobile-text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-  }
-  
-  /* Mobile-optimized scrollable areas */
-  .mobile-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  
-  .mobile-scroll::-webkit-scrollbar {
-    display: none;
-  }
-}
 
 @layer base {
   * {
