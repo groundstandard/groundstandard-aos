@@ -306,6 +306,40 @@ export const EnhancedChatInterface = () => {
     // Focus input would go here
   };
 
+  const handleEdit = (messageId: string, newContent: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId ? { ...msg, content: newContent } : msg
+    ));
+    toast({
+      title: "Message edited",
+      description: "Your message has been updated successfully."
+    });
+  };
+
+  const handleDelete = (messageId: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    toast({
+      title: "Message deleted",
+      description: "The message has been removed from the chat."
+    });
+  };
+
+  const handlePin = (messageId: string) => {
+    // In a real app, this would update the message in the database
+    toast({
+      title: "Message pinned",
+      description: "The message has been pinned to the channel."
+    });
+  };
+
+  const handleReport = (messageId: string, reason: string) => {
+    // In a real app, this would send a report to admins
+    toast({
+      title: "Message reported",
+      description: "Thank you for your report. We'll review it shortly."
+    });
+  };
+
   const currentChannel = channels.find(c => c.id === activeChannel);
 
   const getChannelIcon = (channel: Channel) => {
@@ -403,6 +437,10 @@ export const EnhancedChatInterface = () => {
                         showAvatar={showAvatar}
                         onReaction={handleReaction}
                         onReply={handleReply}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onPin={handlePin}
+                        onReport={handleReport}
                         currentUserId={profile?.id}
                       />
                     );
@@ -508,6 +546,10 @@ export const EnhancedChatInterface = () => {
                   showAvatar={showAvatar}
                   onReaction={handleReaction}
                   onReply={handleReply}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onPin={handlePin}
+                  onReport={handleReport}
                   currentUserId={profile?.id}
                 />
               );

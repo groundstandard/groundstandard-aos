@@ -25,6 +25,10 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   onReaction: (messageId: string, emoji: string) => void;
   onReply: (messageId: string) => void;
+  onEdit?: (messageId: string, newContent: string) => void;
+  onDelete?: (messageId: string) => void;
+  onPin?: (messageId: string) => void;
+  onReport?: (messageId: string, reason: string) => void;
   currentUserId?: string;
 }
 
@@ -34,32 +38,54 @@ export const MessageBubble = ({
   showAvatar,
   onReaction,
   onReply,
+  onEdit,
+  onDelete,
+  onPin,
+  onReport,
   currentUserId
 }: MessageBubbleProps) => {
   const [showReactions, setShowReactions] = useState(false);
 
-  const handleCopyMessage = () => {
-    navigator.clipboard.writeText(message.content);
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      // Could add a toast notification here
+    } catch (error) {
+      console.error('Failed to copy message:', error);
+    }
   };
 
   const handleEditMessage = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit message:', message.id);
+    if (onEdit) {
+      const newContent = prompt('Edit message:', message.content);
+      if (newContent && newContent !== message.content) {
+        onEdit(message.id, newContent);
+      }
+    }
   };
 
   const handleDeleteMessage = () => {
-    // TODO: Implement delete functionality
-    console.log('Delete message:', message.id);
+    if (onDelete) {
+      const confirmed = confirm('Are you sure you want to delete this message?');
+      if (confirmed) {
+        onDelete(message.id);
+      }
+    }
   };
 
   const handlePinMessage = () => {
-    // TODO: Implement pin functionality
-    console.log('Pin message:', message.id);
+    if (onPin) {
+      onPin(message.id);
+    }
   };
 
   const handleReportMessage = () => {
-    // TODO: Implement report functionality
-    console.log('Report message:', message.id);
+    if (onReport) {
+      const reason = prompt('Why are you reporting this message?');
+      if (reason) {
+        onReport(message.id, reason);
+      }
+    }
   };
 
   const getMessageTime = (timestamp: string) => {
