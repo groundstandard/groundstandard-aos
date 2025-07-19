@@ -35,6 +35,7 @@ import {
   Activity
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface RetentionData {
   month: string;
@@ -114,55 +115,224 @@ export const EnhancedAnalytics = () => {
   };
 
   const fetchRetentionAnalysis = async () => {
-    // Simulate retention analysis data
-    const mockData: RetentionData[] = [
-      { month: "Jan", new_students: 25, retained_students: 180, churned_students: 12, retention_rate: 93.8 },
-      { month: "Feb", new_students: 30, retained_students: 195, churned_students: 8, retention_rate: 96.1 },
-      { month: "Mar", new_students: 22, retained_students: 205, churned_students: 15, retention_rate: 93.2 },
-      { month: "Apr", new_students: 28, retained_students: 215, churned_students: 10, retention_rate: 95.6 },
-      { month: "May", new_students: 35, retained_students: 235, churned_students: 18, retention_rate: 92.9 },
-      { month: "Jun", new_students: 40, retained_students: 252, churned_students: 14, retention_rate: 94.7 },
-    ];
-    setRetentionData(mockData);
+    try {
+      // Get students created in the last 6 months for retention analysis
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('created_at, membership_status')
+        .gte('created_at', sixMonthsAgo.toISOString());
+
+      if (error) throw error;
+
+      // Generate retention data by month
+      const retentionData: RetentionData[] = [];
+      const now = new Date();
+      
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+        
+        const newStudents = profiles?.filter(p => {
+          const createdDate = new Date(p.created_at);
+          return createdDate >= monthDate && createdDate < nextMonth;
+        }).length || 0;
+        
+        const retainedStudents = profiles?.filter(p => {
+          const createdDate = new Date(p.created_at);
+          return createdDate < nextMonth && p.membership_status === 'active';
+        }).length || 0;
+        
+        const churned = profiles?.filter(p => {
+          const createdDate = new Date(p.created_at);
+          return createdDate < monthDate && p.membership_status === 'cancelled';
+        }).length || 0;
+        
+        const retentionRate = retainedStudents > 0 ? ((retainedStudents / (retainedStudents + churned)) * 100) : 0;
+        
+        retentionData.push({
+          month: monthName,
+          new_students: newStudents,
+          retained_students: retainedStudents,
+          churned_students: churned,
+          retention_rate: Math.round(retentionRate * 10) / 10
+        });
+      }
+      
+      setRetentionData(retentionData);
+    } catch (error) {
+      console.error('Error fetching retention data:', error);
+      // Fallback to simplified data if error
+      const fallbackData: RetentionData[] = [
+        { month: "Jan", new_students: 0, retained_students: 0, churned_students: 0, retention_rate: 0 },
+      ];
+      setRetentionData(fallbackData);
+    }
   };
 
   const fetchRevenueForecasting = async () => {
-    // Simulate revenue forecasting data
-    const mockData: RevenueData[] = [
-      { month: "Jan", revenue: 15000, forecast: 15200, target: 16000 },
-      { month: "Feb", revenue: 16200, forecast: 16500, target: 17000 },
-      { month: "Mar", revenue: 14800, forecast: 15000, target: 16500 },
-      { month: "Apr", revenue: 17500, forecast: 17800, target: 18000 },
-      { month: "May", revenue: 18200, forecast: 18500, target: 19000 },
-      { month: "Jun", revenue: 19100, forecast: 19500, target: 20000 },
-    ];
-    setRevenueData(mockData);
+    try {
+      // Get payment data for the last 6 months
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const { data: payments, error } = await supabase
+        .from('payments')
+        .select('amount, payment_date, status')
+        .gte('payment_date', sixMonthsAgo.toISOString())
+        .eq('status', 'completed');
+
+      if (error) throw error;
+
+      // Generate revenue data by month
+      const revenueData: RevenueData[] = [];
+      const now = new Date();
+      
+      for (let i = 5; i >= 0; i--) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+        
+        const monthPayments = payments?.filter(p => {
+          const paymentDate = new Date(p.payment_date);
+          return paymentDate >= monthDate && paymentDate < nextMonth;
+        }) || [];
+        
+        const revenue = Math.round(monthPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0) / 100);
+        const forecast = Math.round(revenue * 1.05); // 5% growth forecast
+        const target = Math.round(revenue * 1.15); // 15% growth target
+        
+        revenueData.push({
+          month: monthName,
+          revenue,
+          forecast,
+          target
+        });
+      }
+      
+      setRevenueData(revenueData);
+    } catch (error) {
+      console.error('Error fetching revenue data:', error);
+      // Fallback to simplified data
+      const fallbackData: RevenueData[] = [
+        { month: "Jan", revenue: 0, forecast: 0, target: 0 },
+      ];
+      setRevenueData(fallbackData);
+    }
   };
 
   const fetchClassPopularity = async () => {
-    // Simulate class popularity data  
-    const mockData: ClassPopularityData[] = [
-      { class_name: "Beginner Karate", enrollments: 45, attendance_rate: 92, satisfaction: 4.8 },
-      { class_name: "Advanced Sparring", enrollments: 32, attendance_rate: 88, satisfaction: 4.6 },
-      { class_name: "Kids Martial Arts", enrollments: 60, attendance_rate: 95, satisfaction: 4.9 },
-      { class_name: "Self Defense", enrollments: 28, attendance_rate: 85, satisfaction: 4.4 },
-      { class_name: "Competition Team", enrollments: 18, attendance_rate: 96, satisfaction: 4.7 },
-    ];
-    setClassPopularityData(mockData);
+    try {
+      // Get class enrollment and attendance data
+      const { data: classes, error: classError } = await supabase
+        .from('classes')
+        .select('id, name, is_active')
+        .eq('is_active', true);
+
+      if (classError) throw classError;
+
+      // Get enrollments and attendance for each class
+      const classData: ClassPopularityData[] = [];
+      
+      for (const cls of classes || []) {
+        const { data: enrollments } = await supabase
+          .from('class_enrollments')
+          .select('id')
+          .eq('class_id', cls.id)
+          .eq('status', 'active');
+
+        const { data: attendance } = await supabase
+          .from('attendance')
+          .select('status')
+          .eq('class_id', cls.id);
+
+        const enrollmentCount = enrollments?.length || 0;
+        const totalAttendance = attendance?.length || 0;
+        const presentCount = attendance?.filter(a => a.status === 'present').length || 0;
+        const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
+        
+        classData.push({
+          class_name: cls.name,
+          enrollments: enrollmentCount,
+          attendance_rate: attendanceRate,
+          satisfaction: 4.5 // Default satisfaction score since we don't have reviews yet
+        });
+      }
+      
+      setClassPopularityData(classData);
+    } catch (error) {
+      console.error('Error fetching class data:', error);
+      // Fallback to simplified data
+      setClassPopularityData([]);
+    }
   };
 
   const fetchLifetimeValue = async () => {
-    // Simulate lifetime value data
-    const mockData: LifetimeValueData[] = [
-      { belt_level: "White", avg_ltv: 2400, avg_duration_months: 8, total_students: 45 },
-      { belt_level: "Yellow", avg_ltv: 3600, avg_duration_months: 12, total_students: 38 },
-      { belt_level: "Orange", avg_ltv: 4800, avg_duration_months: 16, total_students: 32 },
-      { belt_level: "Green", avg_ltv: 6000, avg_duration_months: 20, total_students: 28 },
-      { belt_level: "Blue", avg_ltv: 7200, avg_duration_months: 24, total_students: 22 },
-      { belt_level: "Brown", avg_ltv: 9600, avg_duration_months: 32, total_students: 15 },
-      { belt_level: "Black", avg_ltv: 12000, avg_duration_months: 40, total_students: 8 },
-    ];
-    setLifetimeValueData(mockData);
+    try {
+      // Get student data with belt levels and payment history
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, belt_level, created_at, membership_status');
+
+      if (error) throw error;
+
+      // Get payment data
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('student_id, amount, payment_date, status')
+        .eq('status', 'completed');
+
+      // Calculate LTV by belt level
+      const beltLevels = ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Brown', 'Black'];
+      const lifetimeData: LifetimeValueData[] = [];
+
+      for (const belt of beltLevels) {
+        const beltStudents = profiles?.filter(p => p.belt_level === belt) || [];
+        const totalStudents = beltStudents.length;
+        
+        if (totalStudents === 0) {
+          lifetimeData.push({
+            belt_level: belt,
+            avg_ltv: 0,
+            avg_duration_months: 0,
+            total_students: 0
+          });
+          continue;
+        }
+
+        // Calculate average LTV and duration for this belt level
+        let totalLTV = 0;
+        let totalDuration = 0;
+
+        for (const student of beltStudents) {
+          const studentPayments = payments?.filter(p => p.student_id === student.id) || [];
+          const studentLTV = studentPayments.reduce((sum, p) => sum + (p.amount || 0), 0) / 100;
+          
+          const createdDate = new Date(student.created_at);
+          const now = new Date();
+          const durationMonths = Math.max(1, Math.round((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+          
+          totalLTV += studentLTV;
+          totalDuration += durationMonths;
+        }
+
+        lifetimeData.push({
+          belt_level: belt,
+          avg_ltv: Math.round(totalLTV / totalStudents),
+          avg_duration_months: Math.round(totalDuration / totalStudents),
+          total_students: totalStudents
+        });
+      }
+      
+      setLifetimeValueData(lifetimeData);
+    } catch (error) {
+      console.error('Error fetching lifetime value data:', error);
+      // Fallback to simplified data
+      setLifetimeValueData([]);
+    }
   };
 
   const fetchSummaryStats = async () => {

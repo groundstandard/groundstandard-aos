@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AnalyticsData {
   totalStudents: number;
@@ -42,6 +44,7 @@ export const AdminAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -49,62 +52,234 @@ export const AdminAnalytics = () => {
 
   const fetchAnalyticsData = async () => {
     try {
-      // Mock analytics data
-      const mockAnalytics: AnalyticsData = {
-        totalStudents: 127,
-        activeStudents: 98,
-        totalClasses: 24,
-        attendanceRate: 85,
-        monthlyRevenue: 15420,
-        newEnrollments: 12,
-        beltPromotions: 8,
-        upcomingEvents: 3
+      // For now, we'll get data for the current user since academy structure isn't fully set up yet
+      // We'll filter by admin role to get academy-wide data
+      
+      if (!profile || profile.role !== 'admin') {
+        toast({
+          title: "Access Restricted",
+          description: "Analytics are only available to administrators.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch all the data in parallel
+      const [
+        profilesResponse,
+        classesResponse,
+        attendanceResponse,
+        paymentsResponse,
+        eventsResponse,
+        beltTestsResponse
+      ] = await Promise.all([
+        // Total and active students
+        supabase
+          .from('profiles')
+          .select('id, membership_status, created_at'),
+        
+        // Total classes
+        supabase
+          .from('classes')
+          .select('id')
+          .eq('is_active', true),
+        
+        // Attendance data for current month
+        supabase
+          .from('attendance')
+          .select('id, status, date')
+          .gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
+        
+        // Payments for current month
+        supabase
+          .from('payments')
+          .select('amount, status, payment_date')
+          .gte('payment_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+          .eq('status', 'completed'),
+        
+        // Upcoming events
+        supabase
+          .from('events')
+          .select('id, date')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .order('date', { ascending: true })
+          .limit(10),
+        
+        // Belt tests this month
+        supabase
+          .from('belt_tests')
+          .select('id, result')
+          .gte('test_date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+      ]);
+
+      // Check for errors
+      if (profilesResponse.error) throw profilesResponse.error;
+      if (classesResponse.error) throw classesResponse.error;
+      if (attendanceResponse.error) throw attendanceResponse.error;
+      if (paymentsResponse.error) throw paymentsResponse.error;
+      if (eventsResponse.error) throw eventsResponse.error;
+      if (beltTestsResponse.error) throw beltTestsResponse.error;
+
+      const profiles = profilesResponse.data || [];
+      const classes = classesResponse.data || [];
+      const attendance = attendanceResponse.data || [];
+      const payments = paymentsResponse.data || [];
+      const events = eventsResponse.data || [];
+      const beltTests = beltTestsResponse.data || [];
+
+      // Calculate analytics
+      const totalStudents = profiles.length;
+      const activeStudents = profiles.filter(p => p.membership_status === 'active').length;
+      const totalClasses = classes.length;
+      
+      // Calculate attendance rate
+      const presentAttendance = attendance.filter(a => a.status === 'present').length;
+      const attendanceRate = attendance.length > 0 ? Math.round((presentAttendance / attendance.length) * 100) : 0;
+      
+      // Calculate monthly revenue (convert from cents to dollars)
+      const monthlyRevenue = Math.round(payments.reduce((sum, payment) => sum + (payment.amount || 0), 0) / 100);
+      
+      // New enrollments this month
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const newEnrollments = profiles.filter(p => new Date(p.created_at) >= startOfMonth).length;
+      
+      // Belt promotions this month (passed tests)
+      const beltPromotions = beltTests.filter(bt => bt.result === 'pass').length;
+      
+      const upcomingEvents = events.length;
+
+      const analyticsData: AnalyticsData = {
+        totalStudents,
+        activeStudents,
+        totalClasses,
+        attendanceRate,
+        monthlyRevenue,
+        newEnrollments,
+        beltPromotions,
+        upcomingEvents
       };
 
-      const mockActivity: RecentActivity[] = [
-        {
-          id: '1',
-          type: 'enrollment',
-          message: 'New student Alex Chen enrolled in Beginner Karate',
-          timestamp: '2 hours ago',
-          user: 'Alex Chen'
-        },
-        {
-          id: '2',
-          type: 'promotion',
-          message: 'Sarah Kim promoted to Yellow Belt',
-          timestamp: '4 hours ago',
-          user: 'Sarah Kim'
-        },
-        {
-          id: '3',
-          type: 'class',
-          message: 'Advanced Martial Arts class completed',
-          timestamp: '6 hours ago',
-          user: 'Sensei Martinez'
-        },
-        {
-          id: '4',
-          type: 'payment',
-          message: 'Monthly payment received from Mike Johnson',
-          timestamp: '1 day ago',
-          user: 'Mike Johnson'
-        },
-        {
-          id: '5',
-          type: 'enrollment',
-          message: 'Emily Davis enrolled in Teen Martial Arts',
-          timestamp: '1 day ago',
-          user: 'Emily Davis'
-        }
-      ];
+      // Fetch recent activity
+      const recentActivityData = await fetchRecentActivity();
 
-      setAnalytics(mockAnalytics);
-      setRecentActivity(mockActivity);
+      setAnalytics(analyticsData);
+      setRecentActivity(recentActivityData);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
+      toast({
+        title: "Error Loading Analytics",
+        description: "Failed to load analytics data. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecentActivity = async (): Promise<RecentActivity[]> => {
+    try {
+      const activities: RecentActivity[] = [];
+
+      // Get recent enrollments
+      const { data: recentProfiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (recentProfiles) {
+        recentProfiles.forEach(profile => {
+          activities.push({
+            id: `enrollment-${profile.id}`,
+            type: 'enrollment',
+            message: `New student ${profile.first_name} ${profile.last_name} enrolled`,
+            timestamp: formatTimestamp(profile.created_at),
+            user: `${profile.first_name} ${profile.last_name}`
+          });
+        });
+      }
+
+      // Get recent payments - we'll fetch payments first, then get profile data separately
+      const { data: recentPayments } = await supabase
+        .from('payments')
+        .select('id, amount, payment_date, student_id')
+        .eq('status', 'completed')
+        .order('payment_date', { ascending: false })
+        .limit(3);
+
+      if (recentPayments && recentPayments.length > 0) {
+        // Get profile names for the payment students
+        const studentIds = recentPayments.map(p => p.student_id);
+        const { data: paymentStudents } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', studentIds);
+
+        recentPayments.forEach(payment => {
+          const student = paymentStudents?.find(s => s.id === payment.student_id);
+          if (student) {
+            activities.push({
+              id: `payment-${payment.id}`,
+              type: 'payment',
+              message: `Payment of $${(payment.amount / 100).toFixed(2)} received from ${student.first_name} ${student.last_name}`,
+              timestamp: formatTimestamp(payment.payment_date),
+              user: `${student.first_name} ${student.last_name}`
+            });
+          }
+        });
+      }
+
+      // Get recent belt promotions - same approach
+      const { data: recentBeltTests } = await supabase
+        .from('belt_tests')
+        .select('id, target_belt, test_date, student_id')
+        .eq('result', 'pass')
+        .order('test_date', { ascending: false })
+        .limit(2);
+
+      if (recentBeltTests && recentBeltTests.length > 0) {
+        // Get profile names for the belt test students
+        const testStudentIds = recentBeltTests.map(t => t.student_id);
+        const { data: testStudents } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', testStudentIds);
+
+        recentBeltTests.forEach(test => {
+          const student = testStudents?.find(s => s.id === test.student_id);
+          if (student) {
+            activities.push({
+              id: `promotion-${test.id}`,
+              type: 'promotion',
+              message: `${student.first_name} ${student.last_name} promoted to ${test.target_belt}`,
+              timestamp: formatTimestamp(test.test_date),
+              user: `${student.first_name} ${student.last_name}`
+            });
+          }
+        });
+      }
+
+      // Sort by timestamp (most recent first)
+      return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5);
+    } catch (error) {
+      console.error('Failed to fetch recent activity:', error);
+      return [];
+    }
+  };
+
+  const formatTimestamp = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+    
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minutes ago`;
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
     }
   };
 
