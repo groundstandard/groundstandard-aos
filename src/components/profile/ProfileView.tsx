@@ -6,13 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Camera, Edit, Save, X, Phone, Shield } from 'lucide-react';
+import { User, Camera, Edit, Save, X, Phone, Shield, Crown, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const ProfileView = () => {
   const { profile, user } = useAuth();
+  const { subscriptionInfo, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -179,6 +181,12 @@ export const ProfileView = () => {
                   <Shield className="h-3 w-3" />
                   {profile.role === 'admin' ? 'Admin' : 'Member'}
                 </Badge>
+                {subscriptionInfo?.subscribed && (
+                  <Badge variant="default" className="gap-1 bg-gradient-primary text-white">
+                    <Crown className="h-3 w-3" />
+                    {subscriptionInfo.subscription_tier || 'Premium'}
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground">{profile.email}</p>
               {profile.belt_level && (
@@ -316,6 +324,91 @@ export const ProfileView = () => {
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Subscription Status */}
+      <Card className="card-minimal shadow-soft">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5" />
+            Subscription Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {subscriptionInfo?.subscribed ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default" className="bg-gradient-primary">
+                      Active Subscription
+                    </Badge>
+                    <Badge variant="outline">
+                      {subscriptionInfo.subscription_tier}
+                    </Badge>
+                  </div>
+                  {subscriptionInfo.subscription_end && (
+                    <p className="text-sm text-muted-foreground">
+                      Renews on {new Date(subscriptionInfo.subscription_end).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => openCustomerPortal()}
+                  className="gap-2"
+                >
+                  <Star className="h-4 w-4" />
+                  Manage Plan
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-subtle rounded-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">✓</div>
+                  <p className="text-sm font-medium">Premium Access</p>
+                  <p className="text-xs text-muted-foreground">All features unlocked</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">∞</div>
+                  <p className="text-sm font-medium">Unlimited Classes</p>
+                  <p className="text-xs text-muted-foreground">Book any class</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Badge variant="secondary">Free Plan</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Upgrade to unlock premium features
+                  </p>
+                </div>
+                <Button
+                  onClick={() => window.location.href = '/subscription'}
+                  className="gap-2"
+                >
+                  <Crown className="h-4 w-4" />
+                  Upgrade Now
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+                <div className="text-center opacity-60">
+                  <div className="text-2xl font-bold text-muted-foreground">3</div>
+                  <p className="text-sm font-medium">Classes/Month</p>
+                  <p className="text-xs text-muted-foreground">Limited access</p>
+                </div>
+                <div className="text-center opacity-60">
+                  <div className="text-2xl font-bold text-muted-foreground">📚</div>
+                  <p className="text-sm font-medium">Basic Content</p>
+                  <p className="text-xs text-muted-foreground">Essential features only</p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Calendar, Target, TrendingUp, Award } from 'lucide-react';
+import { Trophy, Calendar, Target, TrendingUp, Award, Crown, Lock, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, subDays, startOfMonth } from 'date-fns';
@@ -47,6 +49,7 @@ export const ProgressTracker = () => {
   });
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
+  const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -170,6 +173,52 @@ export const ProgressTracker = () => {
 
   return (
     <div className="space-y-6">
+      {/* Subscription Benefits Banner */}
+      {subscriptionInfo?.subscribed ? (
+        <Card className="border-primary bg-gradient-primary text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5" />
+              <div>
+                <p className="font-medium">
+                  Premium Member - Advanced Analytics
+                </p>
+                <p className="text-sm opacity-90">
+                  Detailed progress tracking and personalized insights available
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">
+                    Limited Progress Tracking
+                  </p>
+                  <p className="text-sm text-amber-600">
+                    Upgrade to premium for detailed analytics and personalized training plans
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/subscription'}
+                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Upgrade
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Progress Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="card-minimal hover-lift">
@@ -235,6 +284,12 @@ export const ProgressTracker = () => {
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
             Belt Progression
+            {subscriptionInfo?.subscribed && (
+              <Badge variant="default" className="ml-2 bg-gradient-primary">
+                <Crown className="h-3 w-3 mr-1" />
+                Premium Tracking
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -263,6 +318,47 @@ export const ProgressTracker = () => {
               Keep attending classes regularly to progress to your next belt level!
             </p>
           </div>
+
+          {/* Premium Features */}
+          {subscriptionInfo?.subscribed ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gradient-subtle rounded-lg">
+              <div className="text-center">
+                <Star className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium">Technique Analysis</p>
+                <p className="text-xs text-muted-foreground">AI-powered feedback</p>
+              </div>
+              <div className="text-center">
+                <Trophy className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium">Achievement Tracking</p>
+                <p className="text-xs text-muted-foreground">Milestone rewards</p>
+              </div>
+              <div className="text-center">
+                <Target className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium">Custom Goals</p>
+                <p className="text-xs text-muted-foreground">Personalized targets</p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-muted/20 rounded-lg border-2 border-dashed border-muted">
+              <div className="text-center">
+                <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  Premium Features Locked
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Upgrade to unlock advanced analytics and personalized training insights
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.href = '/subscription'}
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  View Plans
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

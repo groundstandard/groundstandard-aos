@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Users, MapPin } from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, Crown, Lock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, addDays, startOfWeek } from 'date-fns';
@@ -42,7 +43,9 @@ export const ClassSchedule = () => {
   const [classes, setClasses] = useState<ClassWithSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
   const { profile } = useAuth();
+  const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,6 +105,42 @@ export const ClassSchedule = () => {
   };
 
   const enrollInClass = async (classId: string) => {
+    // Check subscription limits for free users
+    if (!subscriptionInfo?.subscribed) {
+      const { data: userEnrollments, error: enrollmentError } = await supabase
+        .from('class_enrollments')
+        .select('id')
+        .eq('student_id', profile?.id)
+        .eq('status', 'active');
+
+      if (enrollmentError) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to check enrollment limits'
+        });
+        return;
+      }
+
+      if (userEnrollments && userEnrollments.length >= 3) {
+        toast({
+          variant: 'destructive',
+          title: 'Upgrade Required',
+          description: 'Free plan allows up to 3 classes. Upgrade to premium for unlimited access.',
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.href = '/subscription'}
+            >
+              Upgrade
+            </Button>
+          )
+        });
+        return;
+      }
+    }
+
     try {
       const { error } = await supabase
         .from('class_enrollments')
@@ -166,6 +205,16 @@ export const ClassSchedule = () => {
     return format(date, 'h:mm a');
   };
 
+  const getUserEnrollmentCount = () => {
+    return classes.reduce((count, classItem) => {
+      return count + (classItem.is_enrolled ? 1 : 0);
+    }, 0);
+  };
+
+  const isEnrollmentLimited = () => {
+    return !subscriptionInfo?.subscribed && getUserEnrollmentCount() >= 3;
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -180,11 +229,48 @@ export const ClassSchedule = () => {
 
   return (
     <div className="space-y-6">
+      {/* Subscription Status Banner */}
+      {!subscriptionInfo?.subscribed && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-amber-600" />
+                <div>
+                  <p className="font-medium text-amber-800">
+                    Free Plan - Limited to 3 Classes
+                  </p>
+                  <p className="text-sm text-amber-600">
+                    You're using {getUserEnrollmentCount()}/3 free enrollments. 
+                    Upgrade for unlimited access.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.href = '/subscription'}
+                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Upgrade
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="card-minimal">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Weekly Class Schedule
+            {subscriptionInfo?.subscribed && (
+              <Badge variant="default" className="ml-2 bg-gradient-primary">
+                <Crown className="h-3 w-3 mr-1" />
+                Premium
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -243,13 +329,26 @@ export const ClassSchedule = () => {
                                 Unenroll
                               </Button>
                             ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => enrollInClass(classItem.id)}
-                                disabled={classItem.enrollment_count >= classItem.max_students}
-                              >
-                                {classItem.enrollment_count >= classItem.max_students ? 'Full' : 'Enroll'}
-                              </Button>
+                              <div className="space-y-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => enrollInClass(classItem.id)}
+                                  disabled={
+                                    classItem.enrollment_count >= classItem.max_students ||
+                                    isEnrollmentLimited()
+                                  }
+                                  className={isEnrollmentLimited() ? "opacity-60" : ""}
+                                >
+                                  {classItem.enrollment_count >= classItem.max_students ? 'Full' : 
+                                   isEnrollmentLimited() ? 'Upgrade Required' : 'Enroll'}
+                                </Button>
+                                {isEnrollmentLimited() && (
+                                  <div className="flex items-center gap-1 text-xs text-amber-600">
+                                    <Lock className="h-3 w-3" />
+                                    <span>Free limit reached</span>
+                                  </div>
+                                )}
+                              </div>
                             )
                           )}
                         </div>
@@ -277,10 +376,16 @@ export const ClassSchedule = () => {
                       </div>
 
                       {classItem.is_enrolled && (
-                        <div className="mt-3">
+                        <div className="mt-3 flex items-center gap-2">
                           <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
                             Enrolled
                           </Badge>
+                          {subscriptionInfo?.subscribed && (
+                            <Badge variant="secondary" className="bg-gradient-primary text-white">
+                              <Crown className="h-3 w-3 mr-1" />
+                              Premium Access
+                            </Badge>
+                          )}
                         </div>
                       )}
                     </CardContent>
