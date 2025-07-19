@@ -80,11 +80,11 @@ export const ChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-12rem)] w-full overflow-hidden">
+      <div className="h-[calc(100vh-12rem)] w-full overflow-hidden bg-background">
         <div className="relative h-full">
           {/* Mobile Channel List */}
           <div 
-            className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out bg-background ${
+            className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out ${
               showChannels ? 'translate-x-0' : '-translate-x-full'
             }`}
           >

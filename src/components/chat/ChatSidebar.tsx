@@ -3,11 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Hash, Lock, Crown, Plus, MessageCircle } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Search, 
+  Hash, 
+  Lock, 
+  Crown, 
+  Plus, 
+  MessageCircle,
+  Users
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Channel {
   id: string;
@@ -42,15 +52,20 @@ export const ChatSidebar = ({
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const getChannelIcon = (channel: Channel) => {
     if (channel.type === 'premium') {
-      return <Crown className="h-4 w-4 text-primary" />;
+      return <Crown className="h-4 w-4 text-amber-500" />;
     }
     if (channel.type === 'private' || channel.is_admin_only) {
-      return <Lock className="h-4 w-4" />;
+      return <Lock className="h-4 w-4 text-muted-foreground" />;
     }
-    return <Hash className="h-4 w-4" />;
+    return <Hash className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const handleChannelSwitch = (channelId: string) => {
@@ -82,154 +97,227 @@ export const ChatSidebar = ({
     channel.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const groupChannels = filteredChannels.filter(channel => 
+    channel.type === 'public' || channel.type === 'private' || channel.type === 'premium'
+  );
+  
+  const directMessages = []; // We'll add direct messages later when that feature is implemented
+
+  const ChannelItem = ({ channel }: { channel: Channel }) => (
+    <button
+      onClick={() => handleChannelSwitch(channel.id)}
+      className={`w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 group ${
+        activeChannel === channel.id
+          ? 'bg-primary text-primary-foreground shadow-md'
+          : 'hover:bg-muted/60 active:bg-muted/80'
+      }`}
+    >
+      <div className="relative">
+        <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+          activeChannel === channel.id 
+            ? 'bg-primary-foreground/20' 
+            : 'bg-gradient-to-br from-blue-500/10 to-purple-600/10'
+        }`}>
+          {getChannelIcon(channel)}
+        </div>
+      </div>
+      
+      <div className="flex-1 text-left min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <p className={`font-semibold truncate text-sm ${
+            activeChannel === channel.id ? 'text-primary-foreground' : 'text-foreground'
+          }`}>
+            {channel.type === 'public' ? '#' : ''}{channel.name}
+          </p>
+          {channel.unread_count && channel.unread_count > 0 && (
+            <Badge 
+              variant={activeChannel === channel.id ? "secondary" : "default"} 
+              className="h-5 min-w-5 text-xs rounded-full ml-2"
+            >
+              {channel.unread_count > 99 ? '99+' : channel.unread_count}
+            </Badge>
+          )}
+        </div>
+        <p className={`text-xs truncate ${
+          activeChannel === channel.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
+        }`}>
+          {channel.last_message || channel.description}
+        </p>
+      </div>
+    </button>
+  );
+
+  const ChannelSection = ({ 
+    title, 
+    channels, 
+    icon, 
+    showCreateButton = false 
+  }: { 
+    title: string; 
+    channels: Channel[]; 
+    icon: React.ReactNode;
+    showCreateButton?: boolean;
+  }) => (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-4">
+        <div className="flex items-center space-x-2">
+          {icon}
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+            {title}
+          </h3>
+        </div>
+        {showCreateButton && profile?.role === 'admin' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCreateChannel}
+            className="h-7 w-7 p-0 rounded-full hover:bg-muted"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <div className="space-y-2 px-2">
+        {channels.map((channel) => (
+          <ChannelItem key={channel.id} channel={channel} />
+        ))}
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className={`h-full bg-background ${className}`}>
+        {/* Mobile Header */}
+        <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <h1 className="text-2xl font-bold mb-4">Messages</h1>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 rounded-full bg-muted/50 border-0 h-10"
+            />
+          </div>
+        </div>
+
+        <Tabs defaultValue="channels" className="flex-1">
+          <TabsList className="grid w-full grid-cols-2 rounded-none border-b bg-background h-12">
+            <TabsTrigger value="channels" className="rounded-none font-semibold">
+              Channels
+            </TabsTrigger>
+            <TabsTrigger value="direct" className="rounded-none font-semibold">
+              Direct
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="channels" className="p-0 mt-0 space-y-6 overflow-y-auto h-full">
+            <div className="py-4">
+              <ChannelSection 
+                title="Public Channels" 
+                channels={groupChannels.filter(c => c.type === 'public')}
+                icon={<Hash className="h-4 w-4" />}
+                showCreateButton={true}
+              />
+              
+              {groupChannels.some(c => c.type === 'premium') && (
+                <ChannelSection 
+                  title="Premium" 
+                  channels={groupChannels.filter(c => c.type === 'premium')}
+                  icon={<Crown className="h-4 w-4 text-amber-500" />}
+                />
+              )}
+              
+              {profile?.role === 'admin' && groupChannels.some(c => c.is_admin_only) && (
+                <ChannelSection 
+                  title="Private" 
+                  channels={groupChannels.filter(c => c.is_admin_only)}
+                  icon={<Lock className="h-4 w-4" />}
+                />
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="direct" className="p-4 space-y-4 overflow-y-auto h-full">
+            <div className="text-center py-8">
+              <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-semibold text-muted-foreground mb-2">No Direct Messages</h3>
+              <p className="text-sm text-muted-foreground">Direct messaging coming soon!</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
   return (
-    <Card className={`card-minimal shadow-soft flex flex-col h-full ${className}`}>
-      <CardHeader className="pb-3 border-b shrink-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            <span className="truncate">Academy Chat</span>
-          </CardTitle>
+    <div className={`h-full bg-background flex flex-col ${className}`}>
+      {/* Desktop Header */}
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Messages</h2>
           {profile?.role === 'admin' && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onCreateChannel}
-              className="h-8 w-8 p-0 shrink-0"
+              className="h-8 w-8 p-0 rounded-full hover:bg-muted"
             >
               <Plus className="h-4 w-4" />
             </Button>
           )}
         </div>
         
-        {/* Search */}
-        <div className="relative mt-2">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search channels..."
+            placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-8 text-sm"
+            className="pl-10 rounded-full bg-muted/50 border-0"
           />
         </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 overflow-y-auto p-0 min-h-0">
-        <div className="space-y-1 p-2">
-          {/* Public Channels */}
-          <div className="px-2 py-1">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Channels
+      </div>
+
+      {/* Desktop Content */}
+      <div className="flex-1 overflow-y-auto py-4 space-y-6">
+        <ChannelSection 
+          title="Channels" 
+          channels={groupChannels.filter(c => c.type === 'public')}
+          icon={<Hash className="h-4 w-4" />}
+          showCreateButton={true}
+        />
+        
+        {groupChannels.some(c => c.type === 'premium') && (
+          <ChannelSection 
+            title="Premium Channels" 
+            channels={groupChannels.filter(c => c.type === 'premium')}
+            icon={<Crown className="h-4 w-4 text-amber-500" />}
+          />
+        )}
+        
+        {profile?.role === 'admin' && groupChannels.some(c => c.is_admin_only) && (
+          <ChannelSection 
+            title="Private Channels" 
+            channels={groupChannels.filter(c => c.is_admin_only)}
+            icon={<Lock className="h-4 w-4" />}
+          />
+        )}
+
+        <div className="px-4">
+          <div className="flex items-center space-x-2 mb-3">
+            <MessageCircle className="h-4 w-4" />
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+              Direct Messages
             </h3>
           </div>
-          
-          {filteredChannels
-            .filter(channel => channel.type === 'public')
-            .map((channel) => (
-              <Button
-                key={channel.id}
-                variant={activeChannel === channel.id ? "secondary" : "ghost"}
-                className="w-full justify-start text-left h-auto p-2 font-normal"
-                onClick={() => handleChannelSwitch(channel.id)}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  {getChannelIcon(channel)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm truncate">#{channel.name}</span>
-                      {(channel.unread_count || 0) > 0 && (
-                        <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs min-w-0">
-                          {channel.unread_count}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {channel.last_message}
-                    </div>
-                  </div>
-                </div>
-              </Button>
-            ))}
-
-          {/* Premium Channels */}
-          {filteredChannels.some(c => c.type === 'premium') && (
-            <>
-              <div className="px-2 py-1 mt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Crown className="h-3 w-3 text-primary" />
-                  Premium Channels
-                </h3>
-              </div>
-              
-              {filteredChannels
-                .filter(channel => channel.type === 'premium')
-                .map((channel) => (
-                  <Button
-                    key={channel.id}
-                    variant={activeChannel === channel.id ? "secondary" : "ghost"}
-                    className="w-full justify-start text-left h-auto p-2 font-normal"
-                    onClick={() => handleChannelSwitch(channel.id)}
-                    disabled={!subscriptionInfo?.subscribed}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      {getChannelIcon(channel)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm truncate">{channel.name}</span>
-                          {!subscriptionInfo?.subscribed && (
-                            <Lock className="h-3 w-3 text-muted-foreground ml-2" />
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {channel.last_message}
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-            </>
-          )}
-
-          {/* Private Channels */}
-          {profile?.role === 'admin' && filteredChannels.some(c => c.is_admin_only) && (
-            <>
-              <div className="px-2 py-1 mt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Private Channels
-                </h3>
-              </div>
-              
-              {filteredChannels
-                .filter(channel => channel.is_admin_only)
-                .map((channel) => (
-                  <Button
-                    key={channel.id}
-                    variant={activeChannel === channel.id ? "secondary" : "ghost"}
-                    className="w-full justify-start text-left h-auto p-2 font-normal"
-                    onClick={() => handleChannelSwitch(channel.id)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      {getChannelIcon(channel)}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm truncate">{channel.name}</span>
-                          {(channel.unread_count || 0) > 0 && (
-                            <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
-                              {channel.unread_count}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {channel.last_message}
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-            </>
-          )}
+          <div className="text-center py-6">
+            <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Direct messaging coming soon!</p>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
