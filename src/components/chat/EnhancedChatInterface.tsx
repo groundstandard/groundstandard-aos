@@ -262,15 +262,20 @@ export const EnhancedChatInterface = () => {
     };
   }, [activeChannel, profile]);
 
-  // Smart auto-scroll: only scroll to bottom if user is near bottom or when switching channels
+  // Remove the complex auto-scroll logic and use a simpler approach
   useEffect(() => {
-    if (shouldAutoScroll && messagesEndRef.current) {
-      // Use setTimeout to ensure DOM is updated before scrolling
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }, 50);
+    // Always scroll to bottom when messages change for the active channel
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (wasAtBottom || shouldAutoScroll) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 0);
+      }
     }
-  }, [channelMessages, activeChannel, shouldAutoScroll]);
+  }, [channelMessages[activeChannel]]);
 
   // Check if user is near bottom when they scroll
   const handleScroll = () => {
@@ -290,6 +295,8 @@ export const EnhancedChatInterface = () => {
   const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>, mentionedUsers?: string[]) => {
     if (!newMessage.trim() && (!attachments || attachments.length === 0)) return;
     if (!profile) return;
+
+    console.log('Sending message, current shouldAutoScroll:', shouldAutoScroll);
 
     if (editingMessageId) {
       // Update existing message
@@ -320,20 +327,22 @@ export const EnhancedChatInterface = () => {
         mentioned_users: mentionedUsers || []
       };
 
+      console.log('Adding new message:', message.id);
+
       setChannelMessages(prev => ({
         ...prev,
         [activeChannel]: [...(prev[activeChannel] || []), message]
       }));
 
-      // Force auto-scroll for new messages from current user
-      setShouldAutoScroll(true);
-      
-      // Additional scroll insurance - scroll immediately and after a brief delay
+      // Force scroll to bottom immediately after state update
       setTimeout(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        console.log('Attempting to scroll to bottom');
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
+          container.scrollTop = container.scrollHeight;
+          console.log('Scrolled to:', container.scrollTop, 'of', container.scrollHeight);
         }
-      }, 100);
+      }, 0);
 
       // If this is a reply, auto-expand the thread to show the new message
       if (replyingTo) {
@@ -641,7 +650,7 @@ export const EnhancedChatInterface = () => {
                     onDescriptionAdded={handleDescriptionAdded}
                   />
                 ) : (
-                  <div className="space-y-1 min-h-full flex flex-col">
+                  <div className="space-y-1">
                     {getMessagesWithDividers().map((item, index) => {
                        if ('type' in item && item.type === 'date-divider') {
                          return <DateDivider key={`divider-${item.date}`} date={item.date} />;
@@ -676,7 +685,7 @@ export const EnhancedChatInterface = () => {
                          />
                        );
                     })}
-                    <div ref={messagesEndRef} />
+                    <div ref={messagesEndRef} className="h-4" />
                   </div>
                 )}
               </div>
@@ -811,7 +820,7 @@ export const EnhancedChatInterface = () => {
               onDescriptionAdded={handleDescriptionAdded}
             />
           ) : (
-            <div className="space-y-1 min-h-full flex flex-col">
+            <div className="space-y-1">
               {getMessagesWithDividers().map((item, index) => {
                 if ('type' in item && item.type === 'date-divider') {
                   return <DateDivider key={`divider-${item.date}`} date={item.date} />;
@@ -846,7 +855,7 @@ export const EnhancedChatInterface = () => {
                   />
                 );
               })}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} className="h-4" />
             </div>
           )}
         </div>
