@@ -95,13 +95,16 @@ export const EnhancedAnalytics = () => {
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
+      // First fetch base data
       await Promise.all([
         fetchRetentionAnalysis(),
         fetchRevenueForecasting(),
         fetchClassPopularity(),
-        fetchLifetimeValue(),
-        fetchSummaryStats()
+        fetchLifetimeValue()
       ]);
+      
+      // Then fetch summary stats that depend on the class data
+      await fetchSummaryStats();
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast({
@@ -336,16 +339,99 @@ export const EnhancedAnalytics = () => {
   };
 
   const fetchSummaryStats = async () => {
-    // Calculate summary statistics
-    setStats({
-      churnRate: 5.8,
-      avgLifetimeValue: 5400,
-      monthlyRecurringRevenue: 18500,
-      revenueGrowth: 12.3,
-      predictedChurn: 8,
-      topPerformingClass: "Kids Martial Arts",
-      lowestRetention: "Self Defense",
-    });
+    try {
+      // Calculate real summary statistics from database
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+
+      // Get all profiles for churn calculation
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, created_at, membership_status');
+
+      // Get payments for revenue calculations
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, payment_date, student_id, status')
+        .eq('status', 'completed');
+
+      // Calculate churn rate
+      const activeStudents = allProfiles?.filter(p => p.membership_status === 'active').length || 0;
+      const cancelledStudents = allProfiles?.filter(p => p.membership_status === 'cancelled').length || 0;
+      const churnRate = activeStudents > 0 ? Math.round((cancelledStudents / (activeStudents + cancelledStudents)) * 100 * 10) / 10 : 0;
+
+      // Calculate average lifetime value
+      const studentsWithPayments = new Map();
+      payments?.forEach(payment => {
+        if (!studentsWithPayments.has(payment.student_id)) {
+          studentsWithPayments.set(payment.student_id, 0);
+        }
+        studentsWithPayments.set(payment.student_id, 
+          studentsWithPayments.get(payment.student_id) + (payment.amount || 0)
+        );
+      });
+      
+      const totalLTV = Array.from(studentsWithPayments.values()).reduce((sum, ltv) => sum + ltv, 0);
+      const avgLifetimeValue = studentsWithPayments.size > 0 ? Math.round(totalLTV / studentsWithPayments.size / 100) : 0;
+
+      // Calculate monthly recurring revenue
+      const currentMonthPayments = payments?.filter(p => {
+        const paymentDate = new Date(p.payment_date);
+        return paymentDate >= lastMonth && paymentDate < now;
+      }) || [];
+      const monthlyRecurringRevenue = Math.round(
+        currentMonthPayments.reduce((sum, p) => sum + (p.amount || 0), 0) / 100
+      );
+
+      // Calculate revenue growth
+      const previousMonthPayments = payments?.filter(p => {
+        const paymentDate = new Date(p.payment_date);
+        return paymentDate >= twoMonthsAgo && paymentDate < lastMonth;
+      }) || [];
+      const previousMonthRevenue = previousMonthPayments.reduce((sum, p) => sum + (p.amount || 0), 0) / 100;
+      
+      const revenueGrowth = previousMonthRevenue > 0 
+        ? Math.round(((monthlyRecurringRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 * 10) / 10 
+        : 0;
+
+      // Predict churn based on inactive students
+      const predictedChurn = Math.max(1, Math.round(activeStudents * (churnRate / 100)));
+
+      // Find top performing class from classPopularityData
+      const topClass = classPopularityData.reduce((top, current) => 
+        current.enrollments > top.enrollments ? current : top, 
+        { class_name: "No classes", enrollments: 0 }
+      );
+
+      // Find lowest retention class
+      const lowestClass = classPopularityData.reduce((lowest, current) => 
+        current.attendance_rate < lowest.attendance_rate ? current : lowest,
+        { class_name: "No classes", attendance_rate: 100 }
+      );
+
+      setStats({
+        churnRate,
+        avgLifetimeValue,
+        monthlyRecurringRevenue,
+        revenueGrowth,
+        predictedChurn,
+        topPerformingClass: topClass.class_name,
+        lowestRetention: lowestClass.class_name,
+      });
+    } catch (error) {
+      console.error('Error calculating summary stats:', error);
+      // Fallback stats
+      setStats({
+        churnRate: 0,
+        avgLifetimeValue: 0,
+        monthlyRecurringRevenue: 0,
+        revenueGrowth: 0,
+        predictedChurn: 0,
+        topPerformingClass: "No data",
+        lowestRetention: "No data",
+      });
+    }
   };
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088fe'];
