@@ -23,7 +23,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
     profile?.role === 'admin' ? 'admin' : 'student'
   );
   
-  const canSwitchView = profile?.role === 'admin';
+  const canSwitchView = profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'instructor';
 
   return (
     <ViewContext.Provider value={{ currentView, setCurrentView, canSwitchView }}>
