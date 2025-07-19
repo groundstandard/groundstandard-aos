@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Plus, MessageSquare, Send, Users } from "lucide-react";
+import { Calendar, Plus, MessageSquare, Send, Users, Settings, Hash, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
 
@@ -44,6 +44,69 @@ const Chat = () => {
   const [selectedChannel, setSelectedChannel] = useState<string>('general');
   const [newMessage, setNewMessage] = useState('');
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState<string[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedChannel]);
+
+  // Real-time presence tracking
+  useEffect(() => {
+    const channel = supabase.channel(`chat-presence-${selectedChannel}`, {
+      config: {
+        presence: {
+          key: profile?.id || 'anonymous'
+        }
+      }
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const newState = channel.presenceState();
+        const users = Object.values(newState).flat();
+        setOnlineUsers(users);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User joined:', key, newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User left:', key, leftPresences);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && profile) {
+          await channel.track({
+            user_id: profile.id,
+            name: `${profile.first_name} ${profile.last_name}`,
+            online_at: new Date().toISOString(),
+            channel: selectedChannel
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedChannel, profile]);
+
+  // Typing indicator
+  const handleTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Simulate typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping([]);
+    }, 3000);
+  };
 
   const { data: channels, isLoading: channelsLoading } = useQuery({
     queryKey: ['chat-channels'],
@@ -313,34 +376,68 @@ const Chat = () => {
             {/* Messages */}
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
               {messagesLoading ? (
-                <div className="text-center text-muted-foreground">Loading messages...</div>
+                <div className="text-center text-muted-foreground">
+                  <div className="animate-pulse">Loading messages...</div>
+                </div>
               ) : (
-                messages?.map((message) => (
-                  <div key={message.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-                      {message.sender_name.split(' ').map(n => n[0]).join('')}
+                <>
+                  {messages?.map((message, index) => (
+                    <div 
+                      key={message.id} 
+                      className={`flex gap-3 animate-fade-in ${
+                        index === messages.length - 1 ? 'animate-scale-in' : ''
+                      }`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm hover-scale">
+                        {message.sender_name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-sm">{message.sender_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(message.created_at)} at {formatTime(message.created_at)}
+                          </span>
+                          {message.sender_id === profile?.id && (
+                            <Badge variant="outline" className="text-xs">You</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm bg-muted/30 rounded-lg p-2 inline-block max-w-lg">
+                          {message.content}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{message.sender_name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(message.created_at)} at {formatTime(message.created_at)}
+                  ))}
+                  
+                  {/* Typing indicator */}
+                  {isTyping.length > 0 && (
+                    <div className="flex gap-3 animate-fade-in">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm">
+                        ...
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-sm text-muted-foreground italic">
+                          {isTyping.join(', ')} {isTyping.length === 1 ? 'is' : 'are'} typing...
                         </span>
                       </div>
-                      <p className="text-sm">{message.content}</p>
                     </div>
-                  </div>
-                ))
+                  )}
+                  
+                  <div ref={messagesEndRef} />
+                </>
               )}
             </CardContent>
 
             {/* Message Input */}
-            <div className="border-t p-4">
+            <div className="border-t p-4 bg-background/50 backdrop-blur">
               <div className="flex gap-2">
                 <Input
                   placeholder={`Message #${channels?.find(c => c.id === selectedChannel)?.name}...`}
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value);
+                    handleTyping();
+                  }}
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -348,15 +445,47 @@ const Chat = () => {
                     }
                   }}
                   disabled={sendMessageMutation.isPending}
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
                 <Button 
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendMessageMutation.isPending}
                   size="sm"
+                  className="hover-scale"
                 >
-                  <Send className="h-4 w-4" />
+                  {sendMessageMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
+              
+              {/* Online users indicator */}
+              {onlineUsers.length > 0 && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>{onlineUsers.length} online</span>
+                  </div>
+                  <div className="flex -space-x-1">
+                    {onlineUsers.slice(0, 5).map((user: any, index) => (
+                      <div
+                        key={user.user_id}
+                        className="w-6 h-6 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center text-xs font-medium hover-scale"
+                        title={user.name}
+                      >
+                        {user.name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+                      </div>
+                    ))}
+                    {onlineUsers.length > 5 && (
+                      <div className="w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs">
+                        +{onlineUsers.length - 5}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
