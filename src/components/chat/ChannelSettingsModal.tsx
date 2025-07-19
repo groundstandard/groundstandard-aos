@@ -5,6 +5,12 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -427,455 +433,468 @@ export const ChannelSettingsModal = ({
     });
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`
-        ${isMobile 
-          ? 'w-screen h-screen max-w-none max-h-none fixed inset-0 rounded-none shadow-none border-0 m-0' 
-          : 'max-w-3xl max-h-[85vh] fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0'
-        } 
-        overflow-hidden p-0 bg-background flex flex-col
-      `}>
-        <DialogHeader className={`${isMobile ? 'p-4 pb-0' : 'p-6 pb-0'} border-b`}>
-          <DialogTitle className="flex items-center gap-3">
-            {isDM ? (
+  const ModalContent = () => (
+    <>
+      <div className={`border-b ${isMobile ? 'px-4' : 'px-6'}`}>
+        <div className={`flex items-center gap-3 ${isMobile ? 'py-4' : 'py-6'}`}>
+          {isDM ? (
+            <>
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <span className="text-lg font-semibold">{dmUserName || 'Direct Message'}</span>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center">
+                {channel?.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
+                {channel?.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
+                <Hash className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <span className="text-lg font-semibold">{channel?.name}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
+        <div className={`border-b ${isMobile ? 'px-4' : 'px-6'}`}>
+          <TabsList className={`grid w-full bg-transparent h-auto p-0 ${isDM ? 'grid-cols-2' : 'grid-cols-4'}`}>
+            {!isDM && (
               <>
-                <Users className="h-5 w-5 text-muted-foreground" />
-                <span className="text-lg font-semibold">{dmUserName || 'Direct Message'}</span>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center">
-                  {channel?.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
-                  {channel?.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
-                  <Hash className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <span className="text-lg font-semibold">{channel?.name}</span>
+                <TabsTrigger 
+                  value="about" 
+                  className={`
+                    border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                    ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                  `}
+                >
+                  About
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="members"
+                  className={`
+                    border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                    ${isMobile ? 'py-4 text-sm' : 'py-3'}
+                  `}
+                >
+                  Members {members.length}
+                </TabsTrigger>
               </>
             )}
-          </DialogTitle>
-        </DialogHeader>
+            <TabsTrigger 
+              value="files"
+              className={`
+                border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                ${isMobile ? 'py-4 text-sm' : 'py-3'}
+              `}
+            >
+              Files
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings"
+              className={`
+                border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
+                ${isMobile ? 'py-4 text-sm' : 'py-3'}
+              `}
+            >
+              Settings
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
-          <div className={`border-b ${isMobile ? 'px-4' : 'px-6'}`}>
-            <TabsList className={`grid w-full bg-transparent h-auto p-0 ${isDM ? 'grid-cols-2' : 'grid-cols-4'}`}>
-              {!isDM && (
-                <>
-                  <TabsTrigger 
-                    value="about" 
-                    className={`
-                      border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
-                      ${isMobile ? 'py-4 text-sm' : 'py-3'}
-                    `}
-                  >
-                    About
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="members"
-                    className={`
-                      border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
-                      ${isMobile ? 'py-4 text-sm' : 'py-3'}
-                    `}
-                  >
-                    Members {members.length}
-                  </TabsTrigger>
-                </>
-              )}
-              <TabsTrigger 
-                value="files"
-                className={`
-                  border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
-                  ${isMobile ? 'py-4 text-sm' : 'py-3'}
-                `}
-              >
-                Files
-              </TabsTrigger>
-              <TabsTrigger 
-                value="settings"
-                className={`
-                  border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none
-                  ${isMobile ? 'py-4 text-sm' : 'py-3'}
-                `}
-              >
-                Settings
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            <TabsContent value="about" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
-              {/* Channel Name */}
-              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Channel name</h3>
-                  {(isAdmin || isChannelCreator) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingName(!editingName)}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      {editingName ? 'Cancel' : 'Edit'}
-                    </Button>
-                  )}
-                </div>
-                {editingName ? (
-                  <div className="flex gap-2">
-                    <Input
-                      value={channelName}
-                      onChange={(e) => setChannelName(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button onClick={handleSaveChanges} size="sm">Save</Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {channel?.type === 'private' && <Lock className="h-4 w-4" />}
-                    <span className="font-mono text-sm">{channel?.name}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Topic */}
-              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Topic</h3>
-                  {(isAdmin || isChannelCreator) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingTopic(!editingTopic)}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      {editingTopic ? 'Cancel' : 'Edit'}
-                    </Button>
-                  )}
-                </div>
-                {editingTopic ? (
-                  <div className="flex gap-2">
-                    <Input
-                      value={channelTopic}
-                      onChange={(e) => setChannelTopic(e.target.value)}
-                      placeholder="Add a topic"
-                      className="flex-1"
-                    />
-                    <Button onClick={() => setEditingTopic(false)} size="sm">Save</Button>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    {channelTopic || 'Add a topic'}
-                  </p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Description</h3>
-                  {(isAdmin || isChannelCreator) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingDescription(!editingDescription)}
-                      className="text-primary hover:text-primary/80"
-                    >
-                      {editingDescription ? 'Cancel' : 'Edit'}
-                    </Button>
-                  )}
-                </div>
-                {editingDescription ? (
-                  <div className="space-y-3">
-                    <Textarea
-                      value={channelDescription}
-                      onChange={(e) => setChannelDescription(e.target.value)}
-                      placeholder="Add a description"
-                      rows={3}
-                    />
-                    <Button onClick={handleSaveChanges} size="sm">Save</Button>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {channelDescription || 'Add a description'}
-                  </p>
-                )}
-              </div>
-
-              {/* Created by */}
-              <div className="space-y-3">
-                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Created by</h3>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.first_name} {profile?.last_name} on {formatDate(new Date().toISOString())}
-                </p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="members" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
-              <div className="flex items-center justify-between">
-                <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Members ({members.length})</h3>
+        <div className="flex-1 overflow-y-auto">
+          <TabsContent value="about" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+            {/* Channel Name */}
+            <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Channel name</h3>
                 {(isAdmin || isChannelCreator) && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => setShowAddUsers(!showAddUsers)}
-                    className="flex items-center gap-2"
+                    onClick={() => setEditingName(!editingName)}
+                    className="text-primary hover:text-primary/80"
                   >
-                    <UserPlus className="h-4 w-4" />
-                    Add Members
+                    {editingName ? 'Cancel' : 'Edit'}
                   </Button>
                 )}
               </div>
-
-              {/* Add Users Section */}
-              {showAddUsers && (isAdmin || isChannelCreator) && (
-                <div className={`border rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-muted/50`}>
-                  <h4 className="text-sm font-medium mb-4">Add New Members</h4>
-                  <div className="grid gap-3 max-h-32 overflow-y-auto">
-                    {availableUsers
-                      .filter(user => !members.find(member => member.id === user.id))
-                      .map((user) => (
-                      <div key={user.id} className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-2'} hover:bg-background rounded`}>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                              {getInitials(user.first_name, user.last_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium">{user.first_name} {user.last_name}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                          </div>
-                          <Badge variant="outline" className={`text-xs ${getRoleColor(user.role)}`}>
-                            {user.role}
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddMember(user)}
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+              {editingName ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={channelName}
+                    onChange={(e) => setChannelName(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleSaveChanges} size="sm">Save</Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {channel?.type === 'private' && <Lock className="h-4 w-4" />}
+                  <span className="font-mono text-sm">{channel?.name}</span>
                 </div>
               )}
+            </div>
 
-              {/* Current Members */}
-              <div className="space-y-3">
-                {members.map((member) => (
-                  <div key={member.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg`}>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                          {getInitials(member.first_name, member.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{member.first_name} {member.last_name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+            {/* Topic */}
+            <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Topic</h3>
+                {(isAdmin || isChannelCreator) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingTopic(!editingTopic)}
+                    className="text-primary hover:text-primary/80"
+                  >
+                    {editingTopic ? 'Cancel' : 'Edit'}
+                  </Button>
+                )}
+              </div>
+              {editingTopic ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={channelTopic}
+                    onChange={(e) => setChannelTopic(e.target.value)}
+                    placeholder="Add a topic"
+                    className="flex-1"
+                  />
+                  <Button onClick={() => setEditingTopic(false)} size="sm">Save</Button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  {channelTopic || 'Add a topic'}
+                </p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className={`bg-muted/30 rounded-lg ${isMobile ? 'p-4' : 'p-4'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Description</h3>
+                {(isAdmin || isChannelCreator) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingDescription(!editingDescription)}
+                    className="text-primary hover:text-primary/80"
+                  >
+                    {editingDescription ? 'Cancel' : 'Edit'}
+                  </Button>
+                )}
+              </div>
+              {editingDescription ? (
+                <div className="space-y-3">
+                  <Textarea
+                    value={channelDescription}
+                    onChange={(e) => setChannelDescription(e.target.value)}
+                    placeholder="Add a description"
+                    rows={3}
+                  />
+                  <Button onClick={handleSaveChanges} size="sm">Save</Button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {channelDescription || 'Add a description'}
+                </p>
+              )}
+            </div>
+
+            {/* Created by */}
+            <div className="space-y-3">
+              <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-base'}`}>Created by</h3>
+              <p className="text-sm text-muted-foreground">
+                {profile?.first_name} {profile?.last_name} on {formatDate(new Date().toISOString())}
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="members" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+            <div className="flex items-center justify-between">
+              <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Members ({members.length})</h3>
+              {(isAdmin || isChannelCreator) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddUsers(!showAddUsers)}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add Members
+                </Button>
+              )}
+            </div>
+
+            {/* Add Users Section */}
+            {showAddUsers && (isAdmin || isChannelCreator) && (
+              <div className={`border rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-muted/50`}>
+                <h4 className="text-sm font-medium mb-4">Add New Members</h4>
+                <div className="grid gap-3 max-h-32 overflow-y-auto">
+                  {availableUsers
+                    .filter(user => !members.find(member => member.id === user.id))
+                    .map((user) => (
+                    <div key={user.id} className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-2'} hover:bg-background rounded`}>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                            {getInitials(user.first_name, user.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{user.first_name} {user.last_name}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                        </div>
+                        <Badge variant="outline" className={`text-xs ${getRoleColor(user.role)}`}>
+                          {user.role}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className={`text-xs ${getRoleColor(member.role)}`}>
-                        {member.role}
-                        {member.role === 'admin' && <Crown className="h-3 w-3 ml-1" />}
-                      </Badge>
-                    </div>
-                    
-                    {(isAdmin || isChannelCreator) && member.id !== profile?.id && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRemoveMember(member.id)}
-                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleAddMember(user)}
                       >
-                        <UserMinus className="h-4 w-4" />
+                        Add
                       </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="files" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
-              <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Files ({channelFiles.length})</h3>
-              
-              {channelFiles.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No files have been shared in this channel yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {channelFiles.map((file) => (
-                    <div key={file.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg hover:bg-muted/50`}>
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{getFileIcon(file.type)}</div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{file.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatFileSize(file.size)} • Shared by {file.uploadedBy} • {formatDate(file.uploadedAt)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2 ml-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          title="Preview"
-                          onClick={() => handlePreviewFile(file)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          title="Download"
-                          onClick={() => handleDownloadFile(file)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </TabsContent>
+              </div>
+            )}
 
-            <TabsContent value="settings" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
-              <div className="space-y-6">
-                {/* DM specific settings */}
-                {isDM ? (
-                  <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
+            {/* Current Members */}
+            <div className="space-y-3">
+              {members.map((member) => (
+                <div key={member.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg`}>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                        {getInitials(member.first_name, member.last_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{member.first_name} {member.last_name}</p>
+                      <p className="text-sm text-muted-foreground">{member.email}</p>
+                    </div>
+                    <Badge variant="outline" className={`text-xs ${getRoleColor(member.role)}`}>
+                      {member.role}
+                      {member.role === 'admin' && <Crown className="h-3 w-3 ml-1" />}
+                    </Badge>
+                  </div>
+                  
+                  {(isAdmin || isChannelCreator) && member.id !== profile?.id && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="files" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+            <h3 className={`font-semibold ${isMobile ? 'text-lg' : 'text-lg'}`}>Files ({channelFiles.length})</h3>
+            
+            {channelFiles.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No files have been shared in this channel yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {channelFiles.map((file) => (
+                  <div key={file.id} className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-3'} border rounded-lg hover:bg-muted/50`}>
                     <div className="flex items-center gap-3">
-                      <X className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <h4 className="font-medium text-destructive">Close Direct Message</h4>
+                      <div className="text-2xl">{getFileIcon(file.type)}</div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{file.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          This will close the direct message conversation.
+                          {formatFileSize(file.size)} • Shared by {file.uploadedBy} • {formatDate(file.uploadedAt)}
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        if (onCloseDM) {
-                          onCloseDM();
-                          onOpenChange(false);
-                        }
-                      }}
-                    >
-                      Close DM
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Change to Public Channel */}
-                    {channel?.type === 'private' && (isAdmin || isChannelCreator) && (
-                      <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
-                        <div className="flex items-center gap-3">
-                          <Globe className="h-5 w-5 text-muted-foreground" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Change to a public channel</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Anyone in your workspace will be able to view and join this channel.
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" className={isMobile ? 'shrink-0' : ''}>
-                          Change to public
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Archive Channel */}
-                    {(isAdmin || isChannelCreator) && (
-                      <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
-                        <div className="flex items-center gap-3">
-                          <Archive className="h-5 w-5 text-muted-foreground" />
-                          <div className="flex-1">
-                            <h4 className="font-medium">Archive channel for everyone</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Hide this channel from the channel list for all workspace members.
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={handleArchiveChannel} className={isMobile ? 'shrink-0' : ''}>
-                          Archive channel
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Delete Channel */}
-                    {(isAdmin || isChannelCreator) && (
-                      <div className={`border border-destructive/20 rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-destructive/5`}>
-                        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'}`}>
-                          <div className="flex items-center gap-3">
-                            <Trash2 className="h-5 w-5 text-destructive" />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-destructive">Delete this channel</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Permanently delete this channel and all its messages. This cannot be undone.
-                              </p>
-                            </div>
-                          </div>
-                          {!showDeleteConfirm ? (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setShowDeleteConfirm(true)}
-                              className={isMobile ? 'self-start' : ''}
-                            >
-                              Delete channel
-                            </Button>
-                          ) : (
-                            <div className={`flex gap-2 ${isMobile ? 'self-start' : ''}`}>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={handleDeleteChannel}
-                              >
-                                Confirm delete
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowDeleteConfirm(false)}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <Separator />
                     
-                    {/* Leave Channel */}
+                    <div className="flex gap-2 ml-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Preview"
+                        onClick={() => handlePreviewFile(file)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Download"
+                        onClick={() => handleDownloadFile(file)}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="settings" className={`${isMobile ? 'p-4' : 'p-6'} space-y-6 mt-0`}>
+            <div className="space-y-6">
+              {/* DM specific settings */}
+              {isDM ? (
+                <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
+                  <div className="flex items-center gap-3">
+                    <X className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <h4 className="font-medium text-destructive">Close Direct Message</h4>
+                      <p className="text-sm text-muted-foreground">
+                        This will close the direct message conversation.
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      if (onCloseDM) {
+                        onCloseDM();
+                        onOpenChange(false);
+                      }
+                    }}
+                  >
+                    Close DM
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Change to Public Channel */}
+                  {channel?.type === 'private' && (isAdmin || isChannelCreator) && (
                     <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
                       <div className="flex items-center gap-3">
-                        <LogOut className="h-5 w-5 text-muted-foreground" />
+                        <Globe className="h-5 w-5 text-muted-foreground" />
                         <div className="flex-1">
-                          <h4 className="font-medium text-destructive">Leave channel</h4>
+                          <h4 className="font-medium">Change to a public channel</h4>
                           <p className="text-sm text-muted-foreground">
-                            You will no longer receive messages from this channel.
+                            Anyone in your workspace will be able to view and join this channel.
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={handleLeaveChannel} className={isMobile ? 'shrink-0' : ''}>
-                        Leave channel
+                      <Button variant="outline" size="sm" className={isMobile ? 'shrink-0' : ''}>
+                        Change to public
                       </Button>
                     </div>
-                  </>
-                )}
-              </div>
-            </TabsContent>
-          </div>
-        </Tabs>
+                  )}
+
+                  {/* Archive Channel */}
+                  {(isAdmin || isChannelCreator) && (
+                    <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
+                      <div className="flex items-center gap-3">
+                        <Archive className="h-5 w-5 text-muted-foreground" />
+                        <div className="flex-1">
+                          <h4 className="font-medium">Archive channel for everyone</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Hide this channel from the channel list for all workspace members.
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleArchiveChannel} className={isMobile ? 'shrink-0' : ''}>
+                        Archive channel
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Delete Channel */}
+                  {(isAdmin || isChannelCreator) && (
+                    <div className={`border border-destructive/20 rounded-lg ${isMobile ? 'p-4' : 'p-4'} bg-destructive/5`}>
+                      <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'}`}>
+                        <div className="flex items-center gap-3">
+                          <Trash2 className="h-5 w-5 text-destructive" />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-destructive">Delete this channel</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Permanently delete this channel and all its messages. This cannot be undone.
+                            </p>
+                          </div>
+                        </div>
+                        {!showDeleteConfirm ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className={isMobile ? 'self-start' : ''}
+                          >
+                            Delete channel
+                          </Button>
+                        ) : (
+                          <div className={`flex gap-2 ${isMobile ? 'self-start' : ''}`}>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={handleDeleteChannel}
+                            >
+                              Confirm delete
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(false)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
+                  
+                  {/* Leave Channel */}
+                  <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-4'} border rounded-lg`}>
+                    <div className="flex items-center gap-3">
+                      <LogOut className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-destructive">Leave channel</h4>
+                        <p className="text-sm text-muted-foreground">
+                          You will no longer receive messages from this channel.
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleLeaveChannel} className={isMobile ? 'shrink-0' : ''}>
+                      Leave channel
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+        </div>
+      </Tabs>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[95vh] rounded-t-2xl p-0 flex flex-col"
+        >
+          <ModalContent />
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0 bg-background flex flex-col">
+        <ModalContent />
       </DialogContent>
     </Dialog>
   );
