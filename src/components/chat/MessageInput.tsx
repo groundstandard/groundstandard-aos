@@ -145,10 +145,7 @@ export const MessageInput = ({
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
         
-        toast({
-          title: "Recording stopped",
-          description: "Voice message ready to send"
-        });
+        // Don't show toast when recording stops to avoid blocking UI
       };
 
       mediaRecorderRef.current = mediaRecorder;
