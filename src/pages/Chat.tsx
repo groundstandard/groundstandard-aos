@@ -19,18 +19,18 @@ const Chat = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex flex-col">
-      <div className="container mx-auto p-4 lg:p-6 flex-1 flex flex-col max-w-none">
+    <div className="h-screen bg-gradient-subtle flex flex-col overflow-hidden">
+      <div className="container mx-auto p-4 lg:p-6 flex-shrink-0 max-w-none">
         <div className="mb-4 lg:mb-6">
           <BackButton />
         </div>
         <div className="flex items-center justify-between mb-4 lg:mb-6">
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Academy Chat</h1>
         </div>
-        
-        <div className="flex-1 min-h-0">
-          <EnhancedChatInterface />
-        </div>
+      </div>
+      
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <EnhancedChatInterface />
       </div>
     </div>
   );
