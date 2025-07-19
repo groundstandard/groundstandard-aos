@@ -251,10 +251,10 @@ export const ContactTableFilters = ({
 
         {/* Quick Filters */}
         <Select 
-          value={filters.hasPhone === null ? '' : filters.hasPhone.toString()}
+          value={filters.hasPhone === null ? 'all' : filters.hasPhone.toString()}
           onValueChange={(value) => 
             updateFilters({ 
-              hasPhone: value === '' ? null : value === 'true' 
+              hasPhone: value === 'all' ? null : value === 'true' 
             })
           }
         >
@@ -262,17 +262,17 @@ export const ContactTableFilters = ({
             <SelectValue placeholder="Phone" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="true">Has Phone</SelectItem>
             <SelectItem value="false">No Phone</SelectItem>
           </SelectContent>
         </Select>
 
         <Select 
-          value={filters.hasEmergencyContact === null ? '' : filters.hasEmergencyContact.toString()}
+          value={filters.hasEmergencyContact === null ? 'all' : filters.hasEmergencyContact.toString()}
           onValueChange={(value) => 
             updateFilters({ 
-              hasEmergencyContact: value === '' ? null : value === 'true' 
+              hasEmergencyContact: value === 'all' ? null : value === 'true' 
             })
           }
         >
@@ -280,7 +280,7 @@ export const ContactTableFilters = ({
             <SelectValue placeholder="Emergency" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="true">Has Emergency</SelectItem>
             <SelectItem value="false">No Emergency</SelectItem>
           </SelectContent>
