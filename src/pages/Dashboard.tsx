@@ -175,56 +175,55 @@ const Dashboard = () => {
         </div>
 
         {/* Member Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Member Since</h3>
-              <User className="h-4 w-4 text-blue-500" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <Card className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-xs font-medium text-muted-foreground">Member Since</h3>
+              <User className="h-3 w-3 text-blue-500" />
             </div>
-            <div className="space-y-1">
-              <p className="text-2xl font-bold">
+            <div className="space-y-0.5">
+              <p className="text-lg font-bold">
                 {new Date(profile.created_at).toLocaleDateString('en-US', { 
                   month: 'short', 
-                  day: 'numeric',
-                  year: 'numeric'
+                  day: 'numeric'
                 })}
               </p>
               <p className="text-xs text-muted-foreground">
-                {Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))} days ago
+                {Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))} days
               </p>
             </div>
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Total Classes</h3>
-              <BarChart3 className="h-4 w-4 text-green-500" />
+          <Card className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-xs font-medium text-muted-foreground">Total Classes</h3>
+              <BarChart3 className="h-3 w-3 text-green-500" />
             </div>
-            <div className="space-y-1">
-              <p className="text-2xl font-bold">42</p>
+            <div className="space-y-0.5">
+              <p className="text-lg font-bold">42</p>
               <p className="text-xs text-muted-foreground">+3 This month</p>
             </div>
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Current Belt</h3>
-              <Award className="h-4 w-4 text-purple-500" />
+          <Card className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-xs font-medium text-muted-foreground">Current Belt</h3>
+              <Award className="h-3 w-3 text-purple-500" />
             </div>
-            <div className="space-y-1">
-              <p className="text-2xl font-bold">{profile.belt_level || 'White'}</p>
-              <p className="text-xs text-muted-foreground">Next: Yellow Belt</p>
+            <div className="space-y-0.5">
+              <p className="text-lg font-bold">{profile.belt_level || 'White'}</p>
+              <p className="text-xs text-muted-foreground">Next: Yellow</p>
             </div>
           </Card>
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Next Class</h3>
-              <Calendar className="h-4 w-4 text-orange-500" />
+          <Card className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-xs font-medium text-muted-foreground">Next Class</h3>
+              <Calendar className="h-3 w-3 text-orange-500" />
             </div>
-            <div className="space-y-1">
-              <p className="text-2xl font-bold">Today</p>
-              <p className="text-xs text-muted-foreground">7:00 PM - Karate</p>
+            <div className="space-y-0.5">
+              <p className="text-lg font-bold">Today</p>
+              <p className="text-xs text-muted-foreground">7:00 PM</p>
             </div>
           </Card>
         </div>
