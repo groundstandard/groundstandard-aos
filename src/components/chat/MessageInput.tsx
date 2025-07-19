@@ -19,7 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface MessageInputProps {
   newMessage: string;
   onNewMessageChange: (value: string) => void;
-  onSendMessage: () => void;
+  onSendMessage: (attachments?: Array<{url: string; type: string; name: string}>) => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   channelName?: string;
   disabled?: boolean;
@@ -100,31 +100,23 @@ export const MessageInput = ({
       const uploadPromises = attachments.map(uploadFile);
       const uploadedUrls = await Promise.all(uploadPromises);
       
-      // Filter out failed uploads
-      const successfulUploads = uploadedUrls.filter(url => url !== null);
+      // Filter out failed uploads and create attachment objects
+      const successfulAttachments = uploadedUrls
+        .map((url, index) => url ? {
+          url,
+          type: attachments[index].type,
+          name: attachments[index].name
+        } : null)
+        .filter(Boolean);
       
-      if (successfulUploads.length > 0) {
-        // Add attachment info to message content
-        const attachmentText = successfulUploads.map(url => `[Attachment: ${url}]`).join('\n');
-        const messageWithAttachments = newMessage + (newMessage ? '\n' : '') + attachmentText;
-        
-        // Send the message directly with attachments
-        onNewMessageChange(messageWithAttachments);
-        
-        // Clear attachments first
-        setAttachments([]);
-        
-        // Send the message immediately
-        setTimeout(() => {
-          onSendMessage();
-          onNewMessageChange(''); // Clear the input after sending
-        }, 0);
-        
-        return;
-      }
+      // Clear attachments
+      setAttachments([]);
+      
+      // Send message with attachments
+      onSendMessage(successfulAttachments);
+    } else {
+      onSendMessage();
     }
-    
-    onSendMessage();
   };
 
   const startRecording = async () => {

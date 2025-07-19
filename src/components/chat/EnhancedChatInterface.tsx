@@ -255,8 +255,9 @@ export const EnhancedChatInterface = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [channelMessages, activeChannel]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !profile) return;
+  const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>) => {
+    if (!newMessage.trim() && (!attachments || attachments.length === 0)) return;
+    if (!profile) return;
 
     if (editingMessageId) {
       // Update existing message
@@ -274,19 +275,16 @@ export const EnhancedChatInterface = () => {
         description: "Your message has been edited successfully."
       });
     } else {
-      // Parse attachments from message content
-      const { cleanContent, attachments } = parseAttachments(newMessage.trim());
-      
-      // Create new message
+      // Create new message with direct attachments
       const message: Message = {
         id: Date.now().toString(),
-        content: cleanContent,
+        content: newMessage.trim(),
         sender_id: profile.id,
         sender_name: `${profile.first_name} ${profile.last_name}`,
         sender_role: profile.role,
         created_at: new Date().toISOString(),
         parent_message_id: replyingTo || undefined,
-        attachments: attachments.length > 0 ? attachments : undefined
+        attachments: attachments && attachments.length > 0 ? attachments : undefined
       };
 
       setChannelMessages(prev => ({
@@ -302,7 +300,11 @@ export const EnhancedChatInterface = () => {
       // Update channel's last activity
       setChannels(prev => prev.map(channel => 
         channel.id === activeChannel 
-          ? { ...channel, last_message: cleanContent || '📎 Attachment', last_activity: new Date().toISOString() }
+          ? { 
+              ...channel, 
+              last_message: newMessage.trim() || (attachments && attachments.length > 0 ? '📎 Attachment' : ''), 
+              last_activity: new Date().toISOString() 
+            }
           : channel
       ));
     }
