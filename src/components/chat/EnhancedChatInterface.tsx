@@ -384,6 +384,40 @@ export const EnhancedChatInterface = () => {
 
       console.log('Adding new message:', message.id);
 
+      // Save message to database
+      try {
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert({
+            channel_id: activeChannel.startsWith('dm-') ? null : activeChannel,
+            dm_channel_id: activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : null,
+            sender_id: profile.id,
+            content: message.content,
+            parent_message_id: message.parent_message_id,
+            mentioned_users: message.mentioned_users,
+            attachments: message.attachments || [],
+            message_type: 'text'
+          });
+
+        if (error) {
+          console.error('Error saving message:', error);
+          toast({
+            variant: "destructive",
+            title: "Failed to send message",
+            description: "Your message could not be saved."
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Error saving message:', error);
+        toast({
+          variant: "destructive", 
+          title: "Failed to send message",
+          description: "Your message could not be saved."
+        });
+        return;
+      }
+
       setChannelMessages(prev => ({
         ...prev,
         [activeChannel]: [...(prev[activeChannel] || []), message]

@@ -124,9 +124,84 @@ export const ChannelSettingsModal = ({
     try {
       setLoading(true);
       
-      // Currently no real file attachments are stored in the database
-      // This will be populated when file upload functionality is implemented
-      setChannelFiles([]);
+      if (!channel && !isDM) {
+        setChannelFiles([]);
+        return;
+      }
+      
+      // Query for messages with attachments
+      let query = supabase
+        .from('chat_messages')
+        .select(`
+          id,
+          attachments,
+          created_at,
+          sender_id,
+          profiles!inner(first_name, last_name)
+        `)
+        .not('attachments', 'eq', '[]')
+        .order('created_at', { ascending: false });
+
+      if (isDM && dmChannelId) {
+        query = query.eq('dm_channel_id', dmChannelId);
+      } else if (channel) {
+        query = query.eq('channel_id', channel.id);
+      }
+
+      const { data: messages, error } = await query;
+
+      if (error) {
+        console.error('Error fetching messages with attachments:', error);
+        setChannelFiles([]);
+        return;
+      }
+
+      const files: ChannelFile[] = [];
+      
+      messages?.forEach((message) => {
+        try {
+          const attachments = Array.isArray(message.attachments) ? message.attachments : [];
+          
+          attachments.forEach((attachment: any, index: number) => {
+            if (attachment && attachment.url) {
+              const senderName = message.profiles 
+                ? `${message.profiles.first_name} ${message.profiles.last_name}`.trim()
+                : 'Unknown User';
+
+              // Determine file type from URL or name
+              let fileType = 'file';
+              const fileName = attachment.name || attachment.url?.split('/').pop() || 'Unknown File';
+              const fileExtension = fileName.split('.').pop()?.toLowerCase();
+              
+              if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '')) {
+                fileType = 'image';
+              } else if (['mp4', 'avi', 'mov', 'wmv'].includes(fileExtension || '')) {
+                fileType = 'video';
+              } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(fileExtension || '')) {
+                fileType = 'audio';
+              } else if (fileExtension === 'pdf') {
+                fileType = 'pdf';
+              } else if (['doc', 'docx'].includes(fileExtension || '')) {
+                fileType = 'document';
+              }
+
+              files.push({
+                id: `${message.id}-${index}`,
+                name: fileName,
+                type: fileType,
+                size: attachment.size || 0,
+                url: attachment.url,
+                uploadedBy: senderName,
+                uploadedAt: message.created_at
+              });
+            }
+          });
+        } catch (err) {
+          console.error('Error processing message attachments:', err);
+        }
+      });
+      
+      setChannelFiles(files);
     } catch (error) {
       console.error('Error fetching files:', error);
       setChannelFiles([]);
