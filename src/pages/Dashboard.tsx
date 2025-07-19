@@ -93,6 +93,26 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {!isAdmin && (
+            <Card 
+              className="card-minimal hover-lift cursor-pointer"
+              onClick={() => navigate('/progress')}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  My Progress
+                </CardTitle>
+                <CardDescription>Track your martial arts journey</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/progress'); }}>
+                  View Progress
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="card-minimal hover-lift">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

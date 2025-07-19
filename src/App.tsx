@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Classes from "./pages/Classes";
 import Attendance from "./pages/Attendance";
 import Admin from "./pages/Admin";
+import Progress from "./pages/Progress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const AppRoutes = () => {
       <Route path="/classes" element={user ? <Classes /> : <Auth />} />
       <Route path="/attendance" element={user ? <Attendance /> : <Auth />} />
       <Route path="/admin" element={user ? <Admin /> : <Auth />} />
+      <Route path="/progress" element={user ? <Progress /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
