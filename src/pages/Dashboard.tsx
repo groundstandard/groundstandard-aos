@@ -133,9 +133,6 @@ const Dashboard = () => {
               Welcome, {profile.first_name}
             </h1>
             <div className={`flex items-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
-              <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
-                Student
-              </Badge>
               <Badge variant="outline" className={isMobile ? "text-xs" : ""}>{profile.membership_status}</Badge>
               {profile.belt_level && (
                 <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>{profile.belt_level}</Badge>
@@ -171,6 +168,9 @@ const Dashboard = () => {
               <MessageCircle className="h-4 w-4" />
               Chat
             </Button>
+            <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
+              Student Active
+            </Badge>
           </div>
         </div>
 
@@ -291,13 +291,13 @@ const Dashboard = () => {
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <CreditCard className="h-4 w-4" />
-                Payments
+                History
               </CardTitle>
               <CardDescription className="text-xs">View payment history</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/payments'); }}>
-                Payment History
+                View History
               </Button>
             </CardContent>
           </Card>
