@@ -203,17 +203,69 @@ export const MessageInput = ({
           <p className="text-xs text-muted-foreground mb-2">Attachments ({attachments.length})</p>
           <div className="flex flex-wrap gap-2">
             {attachments.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 bg-background rounded px-2 py-1">
-                <FileText className="h-3 w-3" />
-                <span className="text-xs truncate max-w-20">{file.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeAttachment(index)}
-                  className="h-4 w-4 p-0 hover:bg-destructive/20"
-                >
-                  ×
-                </Button>
+              <div key={index} className="relative group">
+                {file.type.startsWith('image/') ? (
+                  <div className="relative">
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={file.name}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ) : file.type.startsWith('video/') ? (
+                  <div className="relative">
+                    <video 
+                      src={URL.createObjectURL(file)}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                      <Video className="h-6 w-6 text-white" />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ) : file.type.startsWith('audio/') ? (
+                  <div className="relative flex items-center gap-2 bg-background rounded-lg px-3 py-2 border min-w-32">
+                    <Mic className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-medium">Voice Message</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
+                    <FileText className="h-4 w-4" />
+                    <span className="text-xs truncate max-w-20">{file.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
