@@ -57,6 +57,7 @@ export const EnhancedChatInterface = () => {
   const [showChannels, setShowChannels] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
@@ -354,6 +355,22 @@ export const EnhancedChatInterface = () => {
     });
   };
 
+  const handleToggleThread = (messageId: string) => {
+    setExpandedThreads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const getThreadReplies = (messageId: string): Message[] => {
+    return messages.filter(msg => msg.parent_message_id === messageId);
+  };
+
   const currentChannel = channels.find(c => c.id === activeChannel);
 
   const getChannelIcon = (channel: Channel) => {
@@ -443,21 +460,24 @@ export const EnhancedChatInterface = () => {
                       prevMessage.sender_id !== message.sender_id || 
                       isOwnMessage !== (prevMessage.sender_id === profile?.id);
 
-                    return (
-                      <MessageBubble
-                        key={message.id}
-                        message={message}
-                        isOwnMessage={isOwnMessage}
-                        showAvatar={showAvatar}
-                        onReaction={handleReaction}
-                        onReply={handleReply}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onPin={handlePin}
-                        onReport={handleReport}
-                        currentUserId={profile?.id}
-                      />
-                    );
+                     return (
+                       <MessageBubble
+                         key={message.id}
+                         message={message}
+                         isOwnMessage={isOwnMessage}
+                         showAvatar={showAvatar}
+                         onReaction={handleReaction}
+                         onReply={handleReply}
+                         onEdit={handleEdit}
+                         onDelete={handleDelete}
+                         onPin={handlePin}
+                         onReport={handleReport}
+                         onToggleThread={handleToggleThread}
+                         showThread={expandedThreads.has(message.id)}
+                         threadReplies={getThreadReplies(message.id)}
+                         currentUserId={profile?.id}
+                       />
+                     );
                   })}
                 </div>
                 <div ref={messagesEndRef} />
@@ -564,6 +584,9 @@ export const EnhancedChatInterface = () => {
                   onDelete={handleDelete}
                   onPin={handlePin}
                   onReport={handleReport}
+                  onToggleThread={handleToggleThread}
+                  showThread={expandedThreads.has(message.id)}
+                  threadReplies={getThreadReplies(message.id)}
                   currentUserId={profile?.id}
                 />
               );

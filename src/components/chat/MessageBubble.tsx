@@ -29,6 +29,9 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
   onReport?: (messageId: string, reason: string) => void;
+  onToggleThread?: (messageId: string) => void;
+  showThread?: boolean;
+  threadReplies?: Message[];
   currentUserId?: string;
 }
 
@@ -42,6 +45,9 @@ export const MessageBubble = ({
   onDelete,
   onPin,
   onReport,
+  onToggleThread,
+  showThread,
+  threadReplies,
   currentUserId
 }: MessageBubbleProps) => {
   const [showReactions, setShowReactions] = useState(false);
@@ -342,11 +348,31 @@ export const MessageBubble = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onReply(message.id)}
+              onClick={() => onToggleThread?.(message.id)}
               className="h-6 px-3 text-xs text-primary hover:bg-primary/10 mt-1 rounded-full"
             >
-              💬 {message.thread_count} replies
+              💬 {message.thread_count} {showThread ? 'Hide' : 'View'} replies
             </Button>
+          )}
+
+          {/* Thread replies */}
+          {showThread && threadReplies && threadReplies.length > 0 && (
+            <div className="mt-2 ml-4 border-l-2 border-muted pl-4 space-y-2">
+              {threadReplies.map((reply) => (
+                <div key={reply.id} className="bg-muted/50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium">{reply.sender_name}</span>
+                    <Badge variant="outline" className={`text-xs h-4 ${getRoleColor(reply.sender_role)}`}>
+                      {reply.sender_role}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {getMessageTime(reply.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm">{reply.content}</p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
