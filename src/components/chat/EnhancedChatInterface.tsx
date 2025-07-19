@@ -938,7 +938,7 @@ export const EnhancedChatInterface = () => {
           onOpenChange={setShowCreateChannel}
           onChannelCreated={(newChannel) => {
             setChannels(prev => [...prev, newChannel]);
-            setActiveChannel(newChannel.id);
+            setActiveChannel(newChannel.name);
             setShowCreateChannel(false);
           }}
         />
@@ -1129,7 +1129,7 @@ export const EnhancedChatInterface = () => {
             ...prev,
             [newChannel.id]: [systemMessage]
           }));
-          setActiveChannel(newChannel.id);
+          setActiveChannel(newChannel.name);
           setShowCreateChannel(false);
           
           toast({
