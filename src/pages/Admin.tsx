@@ -66,6 +66,7 @@ const Admin = () => {
   };
 
   const categories: Record<string, CategoryConfig> = {
+    // First row
     dashboard: {
       label: "Admin Dashboard",
       icon: Home,
@@ -81,6 +82,7 @@ const Admin = () => {
       icon: BarChart3,
       component: <EnhancedAnalytics />
     },
+    // Second row
     chat: {
       label: "Academy Chat",
       icon: MessageSquare,
@@ -96,6 +98,7 @@ const Admin = () => {
       icon: CheckCircle,
       component: <BeltTestManagement />
     },
+    // Third row
     events: {
       label: "Events",
       icon: Bell,
