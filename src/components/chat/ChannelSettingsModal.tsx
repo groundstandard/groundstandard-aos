@@ -399,8 +399,8 @@ export const ChannelSettingsModal = ({
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    {channel.type === 'private' && <Lock className="h-4 w-4" />}
-                    <span className="font-mono">{channel.name}</span>
+                    {channel?.type === 'private' && <Lock className="h-4 w-4" />}
+                    <span className="font-mono">{channel?.name}</span>
                   </div>
                 )}
               </div>
