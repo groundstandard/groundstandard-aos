@@ -113,116 +113,114 @@ export const EnhancedChatInterface = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Initialize channels with subscription-aware features
+  // Load channels and messages from database
   useEffect(() => {
-    const mockChannels: Channel[] = [
-      {
-        id: 'general',
-        name: 'general',
-        description: 'Academy-wide announcements and discussions',
-        type: 'public',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 25,
-        unread_count: 2,
-        last_message: 'Welcome to the academy! 🥋',
-        last_activity: new Date(Date.now() - 300000).toISOString()
-      },
-      {
-        id: 'beginners',
-        name: 'beginners',
-        description: 'Support for new students',
-        type: 'public',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 12,
-        unread_count: 0,
-        last_message: 'Great progress in class today!',
-        last_activity: new Date(Date.now() - 600000).toISOString()
+    const loadData = async () => {
+      if (!profile) return;
+
+      try {
+        // Load channels from database
+        const { data: channelData, error: channelError } = await supabase
+          .from('chat_channels')
+          .select('*')
+          .order('name');
+
+        if (channelError) {
+          console.error('Error loading channels:', channelError);
+          setLoading(false);
+          return;
+        }
+
+        // Filter channels based on user role and subscriptions
+        const filteredChannels = channelData?.filter(channel => {
+          if (channel.is_admin_only && profile.role !== 'admin') return false;
+          if (channel.type === 'premium' && !subscriptionInfo?.subscribed) return false;
+          return true;
+        }) || [];
+
+        const loadedChannels: Channel[] = filteredChannels.map(channel => ({
+          id: channel.id,
+          name: channel.name,
+          description: channel.description || '',
+          type: channel.type as 'public' | 'private' | 'premium',
+          is_admin_only: channel.is_admin_only || false,
+          created_by: channel.created_by || '',
+          member_count: channel.member_count || 0,
+          unread_count: 0,
+          last_message: '',
+          last_activity: channel.created_at
+        }));
+
+        setChannels(loadedChannels);
+        
+        // Set first channel as active if none selected and no active channel set
+        if (loadedChannels.length > 0 && !activeChannel) {
+          setActiveChannel(loadedChannels[0].name);
+        }
+
+        // Load messages for all channels
+        const { data: messageData, error: messageError } = await supabase
+          .from('chat_messages')
+          .select(`
+            *,
+            profiles!inner(first_name, last_name, role)
+          `)
+          .order('created_at', { ascending: true });
+
+        if (messageError) {
+          console.error('Error loading messages:', messageError);
+          setChannelMessages({});
+          setLoading(false);
+          return;
+        }
+
+        // Group messages by channel
+        const messagesByChannel: { [key: string]: Message[] } = {};
+        
+        messageData?.forEach(msg => {
+          // Find the channel name for this message
+          let channelKey = '';
+          if (msg.channel_id) {
+            const channel = loadedChannels.find(c => c.id === msg.channel_id);
+            channelKey = channel?.name || '';
+          } else if (msg.dm_channel_id) {
+            channelKey = `dm-${msg.dm_channel_id}`;
+          }
+
+          if (channelKey) {
+            if (!messagesByChannel[channelKey]) {
+              messagesByChannel[channelKey] = [];
+            }
+
+            const { cleanContent, attachments } = parseAttachments(msg.content || '');
+            
+            // Ensure attachments from database are properly typed
+            const dbAttachments = Array.isArray(msg.attachments) ? msg.attachments as Array<{ url: string; type: string; name: string }> : [];
+            
+            messagesByChannel[channelKey].push({
+              id: msg.id,
+              content: cleanContent,
+              sender_id: msg.sender_id,
+              sender_name: `${msg.profiles.first_name} ${msg.profiles.last_name}`,
+              sender_role: msg.profiles.role,
+              created_at: msg.created_at,
+              parent_message_id: msg.parent_message_id,
+              attachments: dbAttachments.length > 0 ? dbAttachments : (attachments.length > 0 ? attachments : undefined),
+              mentioned_users: msg.mentioned_users || []
+            });
+          }
+        });
+
+        setChannelMessages(messagesByChannel);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setChannelMessages({});
+      } finally {
+        setLoading(false);
       }
-    ];
-
-    // Add premium channels for subscribers
-    if (subscriptionInfo?.subscribed) {
-      mockChannels.push({
-        id: 'premium-techniques',
-        name: 'premium-techniques',
-        description: 'Advanced techniques and masterclasses',
-        type: 'premium',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 8,
-        unread_count: 0,
-        last_message: 'New advanced kata breakdown available',
-        last_activity: new Date(Date.now() - 420000).toISOString()
-      });
-    }
-
-    // Add admin channels if user is admin
-    if (profile?.role === 'admin') {
-      mockChannels.push({
-        id: 'admin-team',
-        name: 'admin-team',
-        description: 'Private admin discussions',
-        type: 'private',
-        is_admin_only: true,
-        created_by: 'admin',
-        member_count: 3,
-        unread_count: 0,
-        last_message: 'Staff meeting notes',
-        last_activity: new Date(Date.now() - 1200000).toISOString()
-      });
-    }
-
-    // Initialize messages for each channel
-    const initialChannelMessages: Record<string, Message[]> = {
-      'general': [
-        {
-          id: '1',
-          content: 'Welcome to the academy chat! Feel free to ask questions and connect with fellow martial artists. 🥋',
-          sender_id: 'instructor-1',
-          sender_name: 'Sensei Johnson',
-          sender_role: 'admin',
-          created_at: new Date(Date.now() - 7200000).toISOString(),
-          reactions: [
-            { emoji: '👋', count: 5, users: ['user1', 'user2'] },
-            { emoji: '🥋', count: 3, users: ['user3'] }
-          ]
-        },
-        {
-          id: '2',
-          content: 'Thank you! Excited to be part of this community.',
-          sender_id: 'student-1',
-          sender_name: 'Alex Chen',
-          sender_role: 'student',
-          created_at: new Date(Date.now() - 6900000).toISOString()
-        }
-      ],
-      'beginners': [
-        {
-          id: '3',
-          content: 'Welcome beginners! This is a safe space to ask any questions about basic techniques.',
-          sender_id: 'instructor-2',
-          sender_name: 'Instructor Sarah',
-          sender_role: 'instructor',
-          created_at: new Date(Date.now() - 3600000).toISOString()
-        }
-      ],
-      'admin-team': [
-        {
-          id: '4',
-          content: 'Staff meeting scheduled for next Wednesday at 7 PM.',
-          sender_id: 'instructor-1',
-          sender_name: 'Sensei Johnson',
-          sender_role: 'admin',
-          created_at: new Date(Date.now() - 1800000).toISOString()
-        }
-      ]
     };
 
-    setChannels(mockChannels);
-    setChannelMessages(initialChannelMessages);
-    setLoading(false);
+    loadData();
   }, [profile, subscriptionInfo]);
 
   // Real-time presence tracking
