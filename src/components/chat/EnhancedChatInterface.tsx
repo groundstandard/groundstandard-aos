@@ -264,8 +264,11 @@ export const EnhancedChatInterface = () => {
 
   // Smart auto-scroll: only scroll to bottom if user is near bottom or when switching channels
   useEffect(() => {
-    if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (shouldAutoScroll && messagesEndRef.current) {
+      // Use setTimeout to ensure DOM is updated before scrolling
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 50);
     }
   }, [channelMessages, activeChannel, shouldAutoScroll]);
 
@@ -322,8 +325,15 @@ export const EnhancedChatInterface = () => {
         [activeChannel]: [...(prev[activeChannel] || []), message]
       }));
 
-      // Always auto-scroll when the current user sends a message
+      // Force auto-scroll for new messages from current user
       setShouldAutoScroll(true);
+      
+      // Additional scroll insurance - scroll immediately and after a brief delay
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      }, 100);
 
       // If this is a reply, auto-expand the thread to show the new message
       if (replyingTo) {
@@ -631,7 +641,7 @@ export const EnhancedChatInterface = () => {
                     onDescriptionAdded={handleDescriptionAdded}
                   />
                 ) : (
-                  <div className="space-y-1 min-h-full flex flex-col justify-end">
+                  <div className="space-y-1 min-h-full flex flex-col">
                     {getMessagesWithDividers().map((item, index) => {
                        if ('type' in item && item.type === 'date-divider') {
                          return <DateDivider key={`divider-${item.date}`} date={item.date} />;
@@ -801,7 +811,7 @@ export const EnhancedChatInterface = () => {
               onDescriptionAdded={handleDescriptionAdded}
             />
           ) : (
-            <div className="space-y-1 min-h-full flex flex-col justify-end">
+            <div className="space-y-1 min-h-full flex flex-col">
               {getMessagesWithDividers().map((item, index) => {
                 if ('type' in item && item.type === 'date-divider') {
                   return <DateDivider key={`divider-${item.date}`} date={item.date} />;
