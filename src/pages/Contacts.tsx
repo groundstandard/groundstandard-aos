@@ -66,7 +66,7 @@ const Contacts = () => {
     last_name: "",
     email: "",
     phone: "",
-    role: "student",
+    role: "member",
     belt_level: "",
     emergency_contact: "",
     membership_status: "active"
@@ -82,7 +82,7 @@ const Contacts = () => {
       last_name: "",
       email: "",
       phone: "",
-      role: "student",
+      role: "member",
       belt_level: "",
       emergency_contact: "",
       membership_status: "active"
@@ -119,9 +119,12 @@ const Contacts = () => {
   });
 
   const roleColors = {
+    visitor: "bg-gray-100 text-gray-800",
+    member: "bg-green-100 text-green-800",
+    alumni: "bg-purple-100 text-purple-800",
+    staff: "bg-blue-100 text-blue-800",
+    instructor: "bg-orange-100 text-orange-800",
     admin: "bg-red-100 text-red-800",
-    instructor: "bg-blue-100 text-blue-800",
-    student: "bg-green-100 text-green-800",
   };
 
   const handleAddContact = async () => {
@@ -239,7 +242,10 @@ const Contacts = () => {
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="visitor">Visitor</SelectItem>
+              <SelectItem value="member">Member</SelectItem>
+              <SelectItem value="alumni">Alumni</SelectItem>
+              <SelectItem value="staff">Staff</SelectItem>
               <SelectItem value="instructor">Instructor</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
@@ -359,11 +365,32 @@ const Contacts = () => {
                   All ({contacts.length})
                 </Button>
                 <Button
-                  variant={filterRole === "student" ? "default" : "outline"}
+                  variant={filterRole === "member" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterRole("student")}
+                  onClick={() => setFilterRole("member")}
                 >
-                  Students ({contacts.filter(c => c.role === "student").length})
+                  Members ({contacts.filter(c => c.role === "member").length})
+                </Button>
+                <Button
+                  variant={filterRole === "visitor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterRole("visitor")}
+                >
+                  Visitors ({contacts.filter(c => c.role === "visitor").length})
+                </Button>
+                <Button
+                  variant={filterRole === "alumni" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterRole("alumni")}
+                >
+                  Alumni ({contacts.filter(c => c.role === "alumni").length})
+                </Button>
+                <Button
+                  variant={filterRole === "staff" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterRole("staff")}
+                >
+                  Staff ({contacts.filter(c => c.role === "staff").length})
                 </Button>
                 <Button
                   variant={filterRole === "instructor" ? "default" : "outline"}
