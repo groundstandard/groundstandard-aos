@@ -384,7 +384,7 @@ export const EnhancedChatInterface = () => {
 
       console.log('Adding new message:', message.id);
 
-      // Save message to database
+      // Save message to database first
       try {
         // Find the actual channel UUID for named channels
         let channelId = null;
@@ -402,41 +402,38 @@ export const EnhancedChatInterface = () => {
           
           if (channelData) {
             channelId = channelData.id;
+          } else {
+            // If channel doesn't exist, don't save to database but show locally
+            console.log('Channel not found in database, showing locally only');
           }
         }
 
-        const { error } = await supabase
-          .from('chat_messages')
-          .insert({
-            channel_id: channelId,
-            dm_channel_id: dmChannelId,
-            sender_id: profile.id,
-            content: message.content,
-            parent_message_id: message.parent_message_id,
-            mentioned_users: message.mentioned_users,
-            attachments: message.attachments || [],
-            message_type: 'text'
-          });
+        // Only save to database if we have valid channel/dm info
+        if (channelId || dmChannelId) {
+          const { error } = await supabase
+            .from('chat_messages')
+            .insert({
+              channel_id: channelId,
+              dm_channel_id: dmChannelId,
+              sender_id: profile.id,
+              content: message.content,
+              parent_message_id: message.parent_message_id,
+              mentioned_users: message.mentioned_users,
+              attachments: message.attachments || [],
+              message_type: 'text'
+            });
 
-        if (error) {
-          console.error('Error saving message:', error);
-          toast({
-            variant: "destructive",
-            title: "Failed to send message",
-            description: "Your message could not be saved."
-          });
-          return;
+          if (error) {
+            console.error('Error saving message:', error);
+            // Still show message locally even if database save fails
+          }
         }
       } catch (error) {
         console.error('Error saving message:', error);
-        toast({
-          variant: "destructive", 
-          title: "Failed to send message",
-          description: "Your message could not be saved."
-        });
-        return;
+        // Still show message locally even if database save fails
       }
 
+      // Add to local state (this will show immediately)
       setChannelMessages(prev => ({
         ...prev,
         [activeChannel]: [...(prev[activeChannel] || []), message]

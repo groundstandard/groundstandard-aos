@@ -129,6 +129,12 @@ export const ChannelSettingsModal = ({
         return;
       }
       
+      // For mock channels that aren't in database, just show empty
+      if (channel && !channel.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
+        setChannelFiles([]);
+        return;
+      }
+      
       // Query for messages with attachments
       let query = supabase
         .from('chat_messages')
