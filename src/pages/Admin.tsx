@@ -65,8 +65,17 @@ const Admin = () => {
     subTabs?: Record<string, { label: string; component: JSX.Element }>;
   };
 
+  // Define categories in the exact order requested: 3 rows of 3
+  const categoriesOrder = [
+    // Row 1: Admin Dashboard, Payments, Reports
+    'dashboard', 'payments', 'reports',
+    // Row 2: Academy Chat, Classes, Belt Testing  
+    'chat', 'classes', 'belt_testing',
+    // Row 3: Events, Users, Attendance
+    'events', 'users', 'attendance'
+  ];
+
   const categories: Record<string, CategoryConfig> = {
-    // First row
     dashboard: {
       label: "Admin Dashboard",
       icon: Home,
@@ -82,7 +91,6 @@ const Admin = () => {
       icon: BarChart3,
       component: <EnhancedAnalytics />
     },
-    // Second row
     chat: {
       label: "Academy Chat",
       icon: MessageSquare,
@@ -98,7 +106,6 @@ const Admin = () => {
       icon: CheckCircle,
       component: <BeltTestManagement />
     },
-    // Third row
     events: {
       label: "Events",
       icon: Bell,
@@ -154,7 +161,8 @@ const Admin = () => {
           <Card>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Object.entries(categories).map(([key, category]) => {
+                {categoriesOrder.map((key) => {
+                  const category = categories[key];
                   const IconComponent = category.icon;
                   return (
                     <Button
