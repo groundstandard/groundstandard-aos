@@ -566,8 +566,8 @@ export const EnhancedChatInterface = () => {
     ));
   };
 
-  const handleChannelSwitch = (channelId: string) => {
-    const channel = channels.find(c => c.id === channelId);
+  const handleChannelSwitch = (channelName: string) => {
+    const channel = channels.find(c => c.name === channelName);
     
     if (channel?.type === 'premium' && !subscriptionInfo?.subscribed) {
       toast({
@@ -582,9 +582,9 @@ export const EnhancedChatInterface = () => {
       return;
     }
 
-    setActiveChannel(channelId);
+    setActiveChannel(channelName);
     setChannels(prev => prev.map(c => 
-      c.id === channelId ? { ...c, unread_count: 0 } : c
+      c.name === channelName ? { ...c, unread_count: 0 } : c
     ));
     setReplyingTo(null);
     setEditingMessageId(null);
@@ -783,7 +783,7 @@ export const EnhancedChatInterface = () => {
     return { ...message, thread_count: threadCount > 0 ? threadCount : undefined };
   };
 
-  const currentChannel = channels.find(c => c.id === activeChannel);
+  const currentChannel = channels.find(c => c.name === activeChannel);
 
   const getChannelIcon = (channel: Channel) => {
     if (channel.type === 'premium') return <Crown className="h-4 w-4 text-amber-500" />;

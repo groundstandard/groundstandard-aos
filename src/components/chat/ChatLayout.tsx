@@ -55,7 +55,7 @@ export const ChatLayout = ({
   const [showChannels, setShowChannels] = useState(true);
   const isMobile = useIsMobile();
 
-  const currentChannel = channels.find(c => c.id === activeChannel);
+  const currentChannel = channels.find(c => c.name === activeChannel);
 
   const handleChannelSelect = (channelId: string) => {
     onChannelSelect(channelId);

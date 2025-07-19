@@ -194,7 +194,7 @@ export const ChatInterface = () => {
 
     // Update channel's last activity
     setChannels(prev => prev.map(channel => 
-      channel.id === activeChannel 
+      channel.name === activeChannel 
         ? { ...channel, last_message: newMessage.trim(), last_activity: new Date().toISOString() }
         : channel
     ));
@@ -256,7 +256,7 @@ export const ChatInterface = () => {
 
   const handleChannelCreated = (newChannel: Channel) => {
     setChannels(prev => [...prev, newChannel]);
-    setActiveChannel(newChannel.id);
+    setActiveChannel(newChannel.name);
   };
 
   if (loading) {
@@ -271,7 +271,7 @@ export const ChatInterface = () => {
     );
   }
 
-  const currentChannel = channels.find(c => c.id === activeChannel);
+  const currentChannel = channels.find(c => c.name === activeChannel);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-12rem)]">
@@ -320,9 +320,9 @@ export const ChatInterface = () => {
               .map((channel) => (
                 <Button
                   key={channel.id}
-                  variant={activeChannel === channel.id ? "secondary" : "ghost"}
+                  variant={activeChannel === channel.name ? "secondary" : "ghost"}
                   className="w-full justify-start text-left h-auto p-2 font-normal"
-                  onClick={() => setActiveChannel(channel.id)}
+                  onClick={() => setActiveChannel(channel.name)}
                 >
                   <div className="flex items-center gap-2 w-full">
                     {getChannelIcon(channel)}
@@ -357,9 +357,9 @@ export const ChatInterface = () => {
                   .map((channel) => (
                     <Button
                       key={channel.id}
-                      variant={activeChannel === channel.id ? "secondary" : "ghost"}
+                      variant={activeChannel === channel.name ? "secondary" : "ghost"}
                       className="w-full justify-start text-left h-auto p-2 font-normal"
-                      onClick={() => setActiveChannel(channel.id)}
+                      onClick={() => setActiveChannel(channel.name)}
                     >
                       <div className="flex items-center gap-2 w-full">
                         {getChannelIcon(channel)}

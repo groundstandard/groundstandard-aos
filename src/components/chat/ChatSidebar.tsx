@@ -93,8 +93,8 @@ export const ChatSidebar = ({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const handleChannelSwitch = (channelId: string) => {
-    const channel = channels.find(c => c.id === channelId);
+  const handleChannelSwitch = (channelName: string) => {
+    const channel = channels.find(c => c.name === channelName);
     
     // Check if premium channel and user doesn't have subscription
     if (channel?.type === 'premium' && !subscriptionInfo?.subscribed) {
@@ -114,7 +114,7 @@ export const ChatSidebar = ({
       return;
     }
 
-    onChannelSelect(channelId);
+    onChannelSelect(channelName);
   };
 
   const filteredChannels = channels.filter(channel =>
@@ -130,16 +130,16 @@ export const ChatSidebar = ({
 
   const ChannelItem = ({ channel }: { channel: Channel }) => (
     <button
-      onClick={() => handleChannelSwitch(channel.id)}
+      onClick={() => handleChannelSwitch(channel.name)}
       className={`w-full p-2 rounded-lg transition-all duration-200 flex items-center space-x-3 group ${
-        activeChannel === channel.id
+        activeChannel === channel.name
           ? 'bg-primary text-primary-foreground shadow-md'
           : 'hover:bg-muted/60 active:bg-muted/80'
       }`}
     >
       <div className="relative">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-          activeChannel === channel.id 
+          activeChannel === channel.name
             ? 'bg-primary-foreground/20' 
             : 'bg-gradient-to-br from-blue-500/10 to-purple-600/10'
         }`}>
@@ -150,13 +150,13 @@ export const ChatSidebar = ({
       <div className="flex-1 text-left min-w-0">
         <div className="flex items-center justify-between">
           <p className={`font-medium truncate text-sm ${
-            activeChannel === channel.id ? 'text-primary-foreground' : 'text-foreground'
+            activeChannel === channel.name ? 'text-primary-foreground' : 'text-foreground'
           }`}>
             {channel.type === 'public' ? '#' : ''}{channel.name}
           </p>
           {channel.unread_count && channel.unread_count > 0 && (
             <Badge 
-              variant={activeChannel === channel.id ? "secondary" : "default"} 
+              variant={activeChannel === channel.name ? "secondary" : "default"} 
               className="h-4 min-w-4 text-xs rounded-full ml-2"
             >
               {channel.unread_count > 99 ? '99+' : channel.unread_count}
@@ -165,7 +165,7 @@ export const ChatSidebar = ({
         </div>
         {channel.last_message && (
           <p className={`text-xs truncate ${
-            activeChannel === channel.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            activeChannel === channel.name ? 'text-primary-foreground/70' : 'text-muted-foreground'
           }`}>
             {channel.last_message}
           </p>
