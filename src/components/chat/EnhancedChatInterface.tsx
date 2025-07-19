@@ -577,7 +577,7 @@ export const EnhancedChatInterface = () => {
                          currentUserId={profile?.id}
                        />
                      );
-                  })}
+                   })}
                 </div>
                 <div ref={messagesEndRef} />
               </div>
@@ -599,14 +599,16 @@ export const EnhancedChatInterface = () => {
                 </div>
               )}
 
-              {/* Input */}
-              <MessageInput
-                newMessage={newMessage}
-                onNewMessageChange={setNewMessage}
-                onSendMessage={handleSendMessage}
-                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-                channelName={currentChannel?.name}
-              />
+              {/* Input - Fixed at bottom */}
+              <div className="border-t bg-background">
+                <MessageInput
+                  newMessage={newMessage}
+                  onNewMessageChange={setNewMessage}
+                  onSendMessage={handleSendMessage}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
+                  channelName={currentChannel?.name}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -718,14 +720,16 @@ export const EnhancedChatInterface = () => {
           </div>
         )}
 
-        {/* Input */}
-        <MessageInput
-          newMessage={newMessage}
-          onNewMessageChange={setNewMessage}
-          onSendMessage={handleSendMessage}
-          onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
-          channelName={currentChannel?.name}
-        />
+        {/* Input - Fixed at bottom */}
+        <div className="border-t bg-background">
+          <MessageInput
+            newMessage={newMessage}
+            onNewMessageChange={setNewMessage}
+            onSendMessage={handleSendMessage}
+            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
+            channelName={currentChannel?.name}
+          />
+        </div>
       </div>
 
       <CreateChannelDialog
