@@ -25,6 +25,41 @@ interface Message {
   parent_message_id?: string;
 }
 
+// Utility function to parse attachments from message content
+const parseAttachments = (content: string): { cleanContent: string; attachments: Array<{ url: string; type: string; name: string }> } => {
+  const attachmentRegex = /\[Attachment: (https:\/\/[^\]]+)\]/g;
+  const attachments: Array<{ url: string; type: string; name: string }> = [];
+  
+  let match;
+  while ((match = attachmentRegex.exec(content)) !== null) {
+    const url = match[1];
+    let type = 'file';
+    let name = 'Attachment';
+    
+    // Determine type based on URL
+    if (url.includes('/chat-images/')) {
+      type = 'image/jpeg';
+      name = 'Image';
+    } else if (url.includes('/chat-videos/')) {
+      type = 'video/mp4';
+      name = 'Video';
+    } else if (url.includes('/chat-audio/')) {
+      type = 'audio/webm';
+      name = 'Audio Message';
+    } else if (url.includes('/chat-files/')) {
+      type = 'file';
+      name = 'File';
+    }
+    
+    attachments.push({ url, type, name });
+  }
+  
+  // Remove attachment URLs from content
+  const cleanContent = content.replace(attachmentRegex, '').trim();
+  
+  return { cleanContent, attachments };
+};
+
 interface Channel {
   id: string;
   name: string;
@@ -222,15 +257,19 @@ export const EnhancedChatInterface = () => {
         description: "Your message has been edited successfully."
       });
     } else {
+      // Parse attachments from message content
+      const { cleanContent, attachments } = parseAttachments(newMessage.trim());
+      
       // Create new message
       const message: Message = {
         id: Date.now().toString(),
-        content: newMessage.trim(),
+        content: cleanContent,
         sender_id: profile.id,
         sender_name: `${profile.first_name} ${profile.last_name}`,
         sender_role: profile.role,
         created_at: new Date().toISOString(),
-        parent_message_id: replyingTo || undefined
+        parent_message_id: replyingTo || undefined,
+        attachments: attachments.length > 0 ? attachments : undefined
       };
 
       setMessages(prev => [...prev, message]);
@@ -238,7 +277,7 @@ export const EnhancedChatInterface = () => {
       // Update channel's last activity
       setChannels(prev => prev.map(channel => 
         channel.id === activeChannel 
-          ? { ...channel, last_message: newMessage.trim(), last_activity: new Date().toISOString() }
+          ? { ...channel, last_message: cleanContent || '📎 Attachment', last_activity: new Date().toISOString() }
           : channel
       ));
     }
