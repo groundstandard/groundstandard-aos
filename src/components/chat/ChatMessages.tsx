@@ -235,7 +235,7 @@ export const ChatMessages = ({
       </div>
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4 flex flex-col justify-end">
         {/* Channel description */}
         {currentChannel && (
           <div className="text-center mb-6 py-4">
