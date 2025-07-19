@@ -25,7 +25,7 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   onReaction: (messageId: string, emoji: string) => void;
   onReply: (messageId: string) => void;
-  onEdit?: (messageId: string, newContent: string) => void;
+  onEdit?: (messageId: string, content: string) => void;
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string) => void;
   onReport?: (messageId: string, reason: string) => void;
@@ -57,10 +57,7 @@ export const MessageBubble = ({
 
   const handleEditMessage = () => {
     if (onEdit) {
-      const newContent = prompt('Edit message:', message.content);
-      if (newContent && newContent !== message.content) {
-        onEdit(message.id, newContent);
-      }
+      onEdit(message.id, message.content);
     }
   };
 
@@ -221,68 +218,70 @@ export const MessageBubble = ({
               </div>
             )}
 
-            {/* Action buttons (show on hover) */}
-            <div className={`absolute top-1 ${isOwnMessage ? 'left-1' : 'right-1'} opacity-0 group-hover:opacity-100 transition-opacity`}>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowReactions(!showReactions)}
-                  className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
-                >
-                  <Smile className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onReply(message.id)}
-                  className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
-                >
-                  <Reply className="h-3 w-3" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
+            {/* Action buttons (show on hover) - positioned outside bubble to prevent cutoff */}
+          </div>
+
+          {/* Action buttons positioned outside message bubble */}
+          <div className={`absolute ${isOwnMessage ? '-left-20' : '-right-20'} top-2 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+            <div className="flex gap-1 bg-background/95 backdrop-blur-sm border rounded-lg p-1 shadow-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowReactions(!showReactions)}
+                className="h-7 w-7 p-0 hover:bg-muted text-foreground border border-transparent hover:border-border"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onReply(message.id)}
+                className="h-7 w-7 p-0 hover:bg-muted text-foreground border border-transparent hover:border-border"
+              >
+                <Reply className="h-4 w-4" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-muted text-foreground border border-transparent hover:border-border"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background border shadow-lg">
+                  <DropdownMenuItem onClick={handleCopyMessage}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy message
+                  </DropdownMenuItem>
+                  {isOwnMessage && (
+                    <DropdownMenuItem onClick={handleEditMessage}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit message
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handlePinMessage}>
+                    <Pin className="mr-2 h-4 w-4" />
+                    Pin message
+                  </DropdownMenuItem>
+                  {isOwnMessage && (
+                    <DropdownMenuItem 
+                      onClick={handleDeleteMessage}
+                      className="text-destructive focus:text-destructive"
                     >
-                      <MoreVertical className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem onClick={handleCopyMessage}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy message
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete message
                     </DropdownMenuItem>
-                    {isOwnMessage && (
-                      <DropdownMenuItem onClick={handleEditMessage}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit message
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={handlePinMessage}>
-                      <Pin className="mr-2 h-4 w-4" />
-                      Pin message
+                  )}
+                  {!isOwnMessage && (
+                    <DropdownMenuItem onClick={handleReportMessage}>
+                      <Flag className="mr-2 h-4 w-4" />
+                      Report message
                     </DropdownMenuItem>
-                    {isOwnMessage && (
-                      <DropdownMenuItem 
-                        onClick={handleDeleteMessage}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete message
-                      </DropdownMenuItem>
-                    )}
-                    {!isOwnMessage && (
-                      <DropdownMenuItem onClick={handleReportMessage}>
-                        <Flag className="mr-2 h-4 w-4" />
-                        Report message
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

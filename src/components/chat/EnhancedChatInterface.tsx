@@ -56,6 +56,7 @@ export const EnhancedChatInterface = () => {
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [showChannels, setShowChannels] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
@@ -207,26 +208,42 @@ export const EnhancedChatInterface = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !profile) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage.trim(),
-      sender_id: profile.id,
-      sender_name: `${profile.first_name} ${profile.last_name}`,
-      sender_role: profile.role,
-      created_at: new Date().toISOString(),
-      parent_message_id: replyingTo || undefined
-    };
+    if (editingMessageId) {
+      // Update existing message
+      setMessages(prev => prev.map(msg => 
+        msg.id === editingMessageId 
+          ? { ...msg, content: newMessage.trim() }
+          : msg
+      ));
+      setEditingMessageId(null);
+      toast({
+        title: "Message updated",
+        description: "Your message has been edited successfully."
+      });
+    } else {
+      // Create new message
+      const message: Message = {
+        id: Date.now().toString(),
+        content: newMessage.trim(),
+        sender_id: profile.id,
+        sender_name: `${profile.first_name} ${profile.last_name}`,
+        sender_role: profile.role,
+        created_at: new Date().toISOString(),
+        parent_message_id: replyingTo || undefined
+      };
 
-    setMessages(prev => [...prev, message]);
+      setMessages(prev => [...prev, message]);
+
+      // Update channel's last activity
+      setChannels(prev => prev.map(channel => 
+        channel.id === activeChannel 
+          ? { ...channel, last_message: newMessage.trim(), last_activity: new Date().toISOString() }
+          : channel
+      ));
+    }
+
     setNewMessage('');
     setReplyingTo(null);
-
-    // Update channel's last activity
-    setChannels(prev => prev.map(channel => 
-      channel.id === activeChannel 
-        ? { ...channel, last_message: newMessage.trim(), last_activity: new Date().toISOString() }
-        : channel
-    ));
   };
 
   const handleChannelSwitch = (channelId: string) => {
@@ -306,14 +323,11 @@ export const EnhancedChatInterface = () => {
     // Focus input would go here
   };
 
-  const handleEdit = (messageId: string, newContent: string) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, content: newContent } : msg
-    ));
-    toast({
-      title: "Message edited",
-      description: "Your message has been updated successfully."
-    });
+  const handleEdit = (messageId: string, content: string) => {
+    // Set the message content to the input for editing
+    setNewMessage(content);
+    setEditingMessageId(messageId);
+    // Focus the input (would need ref in real implementation)
   };
 
   const handleDelete = (messageId: string) => {
