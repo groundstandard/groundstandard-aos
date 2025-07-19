@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Download, Users, TrendingUp, Award } from "lucide-react";
 import { format, subMonths } from "date-fns";
 
 export const StudentReports = () => {
+  const isMobile = useIsMobile();
   const { data: studentData, isLoading } = useQuery({
     queryKey: ['student-reports'],
     queryFn: async () => {
@@ -83,74 +86,76 @@ export const StudentReports = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
       {/* Summary Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+        <Card className="max-w-full overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`}>Total Students</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentData?.summary.totalStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">All registered members</p>
+            <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`}>{studentData?.summary.totalStudents || 0}</div>
+            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground truncate`}>All registered members</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="max-w-full overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Members</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`}>Active Members</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{studentData?.summary.activeStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">Currently training</p>
+            <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-green-600`}>{studentData?.summary.activeStudents || 0}</div>
+            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground truncate`}>Currently training</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="max-w-full overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`}>Inactive Members</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{studentData?.summary.inactiveStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">Temporarily inactive</p>
+            <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-orange-600`}>{studentData?.summary.inactiveStudents || 0}</div>
+            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground truncate`}>Temporarily inactive</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="max-w-full overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alumni</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium truncate`}>Alumni</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentData?.summary.alumniStudents || 0}</div>
-            <p className="text-xs text-muted-foreground">Former members</p>
+            <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`}>{studentData?.summary.alumniStudents || 0}</div>
+            <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground truncate`}>Former members</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Belt Distribution */}
-      <Card>
+      <Card className="max-w-full overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Belt Level Distribution</span>
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
+          <CardTitle className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
+            <span className={isMobile ? 'text-base' : ''}>Belt Level Distribution</span>
+            {!isMobile && (
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            )}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className={isMobile ? 'text-sm' : ''}>
             Current belt levels across all students
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'md:grid-cols-3 lg:grid-cols-4'}`}>
             {Object.entries(studentData?.beltDistribution || {}).map(([belt, count]) => (
-              <div key={belt} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <span className="font-medium">{belt}</span>
-                <Badge variant="secondary">{count}</Badge>
+              <div key={belt} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg min-w-0">
+                <span className={`font-medium truncate ${isMobile ? 'text-sm' : ''}`}>{belt}</span>
+                <Badge variant="secondary" className={`${isMobile ? 'text-xs' : ''} flex-shrink-0 ml-2`}>{count}</Badge>
               </div>
             ))}
           </div>
@@ -158,81 +163,89 @@ export const StudentReports = () => {
       </Card>
 
       {/* Detailed Student List */}
-      <Card>
+      <Card className="max-w-full overflow-hidden">
         <CardHeader>
-          <CardTitle>Detailed Student Analysis</CardTitle>
-          <CardDescription>
+          <CardTitle className={isMobile ? 'text-base' : ''}>Detailed Student Analysis</CardTitle>
+          <CardDescription className={isMobile ? 'text-sm' : ''}>
             Individual student profiles with attendance and enrollment data
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Belt Level</TableHead>
-                <TableHead>Enrolled Classes</TableHead>
-                <TableHead>Attendance Rate (3mo)</TableHead>
-                <TableHead>Join Date</TableHead>
-                <TableHead>Contact</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {studentData?.students.map((student: any) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium">
-                    {student.first_name} {student.last_name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        student.membership_status === 'active' ? 'default' :
-                        student.membership_status === 'inactive' ? 'secondary' : 'outline'
-                      }
-                    >
-                      {student.membership_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{student.belt_level || 'No Belt'}</Badge>
-                  </TableCell>
-                  <TableCell>{student.enrolledClasses}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={
-                        student.recentAttendanceRate >= 80 ? 'default' :
-                        student.recentAttendanceRate >= 60 ? 'secondary' : 'destructive'
-                      }
-                    >
-                      {student.recentAttendanceRate}%
-                    </Badge>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      ({student.totalRecentSessions} sessions)
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(student.joinDate), 'MMM dd, yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>{student.email}</div>
-                      {student.phone && (
-                        <div className="text-muted-foreground">{student.phone}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!studentData?.students || studentData.students.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No students found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="p-0">
+          <ScrollArea className="w-full">
+            <div className="min-w-[800px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px]">Name</TableHead>
+                    <TableHead className="w-[80px]">Status</TableHead>
+                    <TableHead className="w-[100px]">Belt Level</TableHead>
+                    <TableHead className="w-[60px]">Classes</TableHead>
+                    <TableHead className="w-[120px]">Attendance (3mo)</TableHead>
+                    <TableHead className="w-[100px]">Join Date</TableHead>
+                    <TableHead className="w-[180px]">Contact</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {studentData?.students.map((student: any) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium truncate">
+                        {student.first_name} {student.last_name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            student.membership_status === 'active' ? 'default' :
+                            student.membership_status === 'inactive' ? 'secondary' : 'outline'
+                          }
+                          className="text-xs"
+                        >
+                          {student.membership_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">{student.belt_level || 'No Belt'}</Badge>
+                      </TableCell>
+                      <TableCell>{student.enrolledClasses}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <Badge 
+                            variant={
+                              student.recentAttendanceRate >= 80 ? 'default' :
+                              student.recentAttendanceRate >= 60 ? 'secondary' : 'destructive'
+                            }
+                            className="text-xs mb-1"
+                          >
+                            {student.recentAttendanceRate}%
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            ({student.totalRecentSessions} sessions)
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {format(new Date(student.joinDate), 'MMM dd, yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm max-w-[180px]">
+                          <div className="truncate">{student.email}</div>
+                          {student.phone && (
+                            <div className="text-muted-foreground truncate">{student.phone}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!studentData?.students || studentData.students.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        No students found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
