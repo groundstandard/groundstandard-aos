@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Trash2, 
   Archive, 
@@ -21,7 +22,13 @@ import {
   Users,
   Settings,
   Crown,
-  AlertTriangle
+  AlertTriangle,
+  FileText,
+  Download,
+  Eye,
+  Globe,
+  Lock,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +52,16 @@ interface User {
   email: string;
 }
 
+interface ChannelFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 interface ChannelSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -64,10 +81,16 @@ export const ChannelSettingsModal = ({
 }: ChannelSettingsModalProps) => {
   const [channelName, setChannelName] = useState(channel.name);
   const [channelDescription, setChannelDescription] = useState(channel.description);
+  const [channelTopic, setChannelTopic] = useState('');
   const [members, setMembers] = useState<User[]>([]);
+  const [channelFiles, setChannelFiles] = useState<ChannelFile[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [showAddUsers, setShowAddUsers] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState('about');
+  const [editingName, setEditingName] = useState(false);
+  const [editingTopic, setEditingTopic] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const { profile } = useAuth();
@@ -80,7 +103,9 @@ export const ChannelSettingsModal = ({
     if (open) {
       setChannelName(channel.name);
       setChannelDescription(channel.description);
+      setChannelTopic('');
       fetchChannelMembers();
+      fetchChannelFiles();
       fetchAvailableUsers();
     }
   }, [open, channel]);
@@ -107,6 +132,35 @@ export const ChannelSettingsModal = ({
       setMembers(mockMembers);
     } catch (error) {
       console.error('Error fetching members:', error);
+    }
+  };
+
+  const fetchChannelFiles = async () => {
+    try {
+      // Mock data for now - in real app would fetch from message attachments
+      const mockFiles: ChannelFile[] = [
+        {
+          id: '1',
+          name: 'Training_Schedule.pdf',
+          type: 'application/pdf',
+          size: 245760,
+          url: '/mock-file.pdf',
+          uploadedBy: 'John Sensei',
+          uploadedAt: '2024-01-15T10:30:00Z'
+        },
+        {
+          id: '2',
+          name: 'Belt_Requirements.docx',
+          type: 'application/msword',
+          size: 128000,
+          url: '/mock-file.docx',
+          uploadedBy: 'Sarah Instructor',
+          uploadedAt: '2024-01-14T14:20:00Z'
+        }
+      ];
+      setChannelFiles(mockFiles);
+    } catch (error) {
+      console.error('Error fetching files:', error);
     }
   };
 
@@ -224,11 +278,436 @@ export const ChannelSettingsModal = ({
     onOpenChange(false);
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getRoleColor = (role: string) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('image')) return '🖼️';
+    if (type.includes('video')) return '🎥';
+    if (type.includes('audio')) return '🎵';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    if (type.includes('excel') || type.includes('spreadsheet')) return '📊';
+    return '📎';
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0">
+        <DialogHeader className="p-6 pb-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex items-center">
+                {channel.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
+                {channel.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
+                <Hash className="h-5 w-5 text-muted-foreground" />
+              </div>
+              {channel.name}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
+          <div className="border-b px-6">
+            <TabsList className="grid w-full grid-cols-4 bg-transparent h-auto p-0">
+              <TabsTrigger 
+                value="about" 
+                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+              >
+                About
+              </TabsTrigger>
+              <TabsTrigger 
+                value="members"
+                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+              >
+                Members {members.length}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="files"
+                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+              >
+                Files
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings"
+                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+              >
+                Settings
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <TabsContent value="about" className="p-6 space-y-6 mt-0">
+              {/* Channel Name */}
+              <div className="bg-muted/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Channel name</h3>
+                  {(isAdmin || isChannelCreator) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingName(!editingName)}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {editingName ? 'Cancel' : 'Edit'}
+                    </Button>
+                  )}
+                </div>
+                {editingName ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={channelName}
+                      onChange={(e) => setChannelName(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleSaveChanges} size="sm">Save</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {channel.type === 'private' && <Lock className="h-4 w-4" />}
+                    <span className="font-mono">{channel.name}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Topic */}
+              <div className="bg-muted/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Topic</h3>
+                  {(isAdmin || isChannelCreator) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingTopic(!editingTopic)}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {editingTopic ? 'Cancel' : 'Edit'}
+                    </Button>
+                  )}
+                </div>
+                {editingTopic ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={channelTopic}
+                      onChange={(e) => setChannelTopic(e.target.value)}
+                      placeholder="Add a topic"
+                      className="flex-1"
+                    />
+                    <Button onClick={() => setEditingTopic(false)} size="sm">Save</Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {channelTopic || 'Add a topic'}
+                  </p>
+                )}
+              </div>
+
+              {/* Description */}
+              <div className="bg-muted/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium">Description</h3>
+                  {(isAdmin || isChannelCreator) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingDescription(!editingDescription)}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {editingDescription ? 'Cancel' : 'Edit'}
+                    </Button>
+                  )}
+                </div>
+                {editingDescription ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={channelDescription}
+                      onChange={(e) => setChannelDescription(e.target.value)}
+                      placeholder="Add a description"
+                      rows={3}
+                    />
+                    <Button onClick={handleSaveChanges} size="sm">Save</Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {channelDescription || 'Add a description'}
+                  </p>
+                )}
+              </div>
+
+              {/* Created by */}
+              <div className="space-y-2">
+                <h3 className="font-medium">Created by</h3>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.first_name} {profile?.last_name} on {formatDate(new Date().toISOString())}
+                </p>
+              </div>
+            </TabsContent>
+            <TabsContent value="members" className="p-6 space-y-4 mt-0">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Members ({members.length})</h3>
+                {(isAdmin || isChannelCreator) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddUsers(!showAddUsers)}
+                    className="flex items-center gap-2"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Add Members
+                  </Button>
+                )}
+              </div>
+
+              {/* Add Users Section */}
+              {showAddUsers && (isAdmin || isChannelCreator) && (
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <h4 className="text-sm font-medium mb-3">Add New Members</h4>
+                  <div className="grid gap-2 max-h-32 overflow-y-auto">
+                    {availableUsers
+                      .filter(user => !members.find(member => member.id === user.id))
+                      .map((user) => (
+                      <div key={user.id} className="flex items-center justify-between p-2 hover:bg-background rounded">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                              {getInitials(user.first_name, user.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">{user.first_name} {user.last_name}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                          <Badge variant="outline" className={`text-xs ${getRoleColor(user.role)}`}>
+                            {user.role}
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddMember(user)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Members */}
+              <div className="space-y-2">
+                {members.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                          {getInitials(member.first_name, member.last_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{member.first_name} {member.last_name}</p>
+                        <p className="text-sm text-muted-foreground">{member.email}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-xs ${getRoleColor(member.role)}`}>
+                        {member.role}
+                        {member.role === 'admin' && <Crown className="h-3 w-3 ml-1" />}
+                      </Badge>
+                    </div>
+                    
+                    {(isAdmin || isChannelCreator) && member.id !== profile?.id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveMember(member.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="files" className="p-6 space-y-4 mt-0">
+              <h3 className="text-lg font-semibold">Files ({channelFiles.length})</h3>
+              
+              {channelFiles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No files have been shared in this channel yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {channelFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{getFileIcon(file.type)}</div>
+                        <div>
+                          <p className="font-medium">{file.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(file.size)} • Shared by {file.uploadedBy} • {formatDate(file.uploadedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          title="Preview"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="p-6 space-y-6 mt-0">
+              <div className="space-y-4">
+                {/* Change to Public Channel */}
+                {channel.type === 'private' && (isAdmin || isChannelCreator) && (
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h4 className="font-medium">Change to a public channel</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Anyone in your workspace will be able to view and join this channel.
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Change to public
+                    </Button>
+                  </div>
+                )}
+
+                {/* Archive Channel */}
+                {(isAdmin || isChannelCreator) && (
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Archive className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h4 className="font-medium">Archive channel for everyone</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Hide this channel from the channel list for all workspace members.
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleArchiveChannel}>
+                      Archive channel
+                    </Button>
+                  </div>
+                )}
+
+                {/* Delete Channel */}
+                {(isAdmin || isChannelCreator) && (
+                  <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Trash2 className="h-5 w-5 text-destructive" />
+                        <div>
+                          <h4 className="font-medium text-destructive">Delete this channel</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Permanently delete this channel and all its messages. This cannot be undone.
+                          </p>
+                        </div>
+                      </div>
+                      {!showDeleteConfirm ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setShowDeleteConfirm(true)}
+                        >
+                          Delete channel
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={handleDeleteChannel}
+                          >
+                            Confirm delete
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowDeleteConfirm(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+              
+              {/* Leave Channel */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <LogOut className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <h4 className="font-medium text-destructive">Leave channel</h4>
+                    <p className="text-sm text-muted-foreground">
+                      You will no longer receive messages from this channel.
+                    </p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleLeaveChannel}>
+                  Leave channel
+                </Button>
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  );
+
+  function getInitials(firstName: string, lastName: string) {
+    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
+  }
+
+  function getRoleColor(role: string) {
     switch (role) {
       case 'admin':
         return 'bg-red-500/10 text-red-700 border-red-200';
@@ -237,218 +716,5 @@ export const ChannelSettingsModal = ({
       default:
         return 'bg-green-500/10 text-green-700 border-green-200';
     }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Hash className="h-5 w-5" />
-            {channel.name} Settings
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Channel Details */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Channel Name</label>
-              <Input
-                value={channelName}
-                onChange={(e) => setChannelName(e.target.value)}
-                disabled={!isAdmin && !isChannelCreator}
-                placeholder="Enter channel name"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium mb-2 block">Description</label>
-              <Textarea
-                value={channelDescription}
-                onChange={(e) => setChannelDescription(e.target.value)}
-                disabled={!isAdmin && !isChannelCreator}
-                placeholder="Enter channel description"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Members Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Members ({members.length})
-              </h3>
-              {(isAdmin || isChannelCreator) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAddUsers(!showAddUsers)}
-                  className="flex items-center gap-2"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Add Members
-                </Button>
-              )}
-            </div>
-
-            {/* Add Users Section */}
-            {showAddUsers && (isAdmin || isChannelCreator) && (
-              <div className="border rounded-lg p-4 bg-muted/50">
-                <h4 className="text-sm font-medium mb-3">Add New Members</h4>
-                <div className="grid gap-2 max-h-32 overflow-y-auto">
-                  {availableUsers
-                    .filter(user => !members.find(member => member.id === user.id))
-                    .map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-2 hover:bg-background rounded">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            {getInitials(user.first_name, user.last_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">{user.first_name} {user.last_name}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
-                        </div>
-                        <Badge variant="outline" className={`text-xs ${getRoleColor(user.role)}`}>
-                          {user.role}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddMember(user)}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Current Members */}
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {members.map((member) => (
-                <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {getInitials(member.first_name, member.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{member.first_name} {member.last_name}</p>
-                      <p className="text-sm text-muted-foreground">{member.email}</p>
-                    </div>
-                    <Badge variant="outline" className={`text-xs ${getRoleColor(member.role)}`}>
-                      {member.role}
-                      {member.role === 'admin' && <Crown className="h-3 w-3 ml-1" />}
-                    </Badge>
-                  </div>
-                  
-                  {(isAdmin || isChannelCreator) && member.id !== profile?.id && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRemoveMember(member.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Actions */}
-          <div className="space-y-3">
-            <div className="flex gap-2 flex-wrap">
-              {(isAdmin || isChannelCreator) && (
-                <Button
-                  onClick={handleSaveChanges}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  Save Changes
-                </Button>
-              )}
-              
-              <Button
-                variant="outline"
-                onClick={handleLeaveChannel}
-                className="flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Leave Channel
-              </Button>
-              
-              {(isAdmin || isChannelCreator) && (
-                <Button
-                  variant="outline"
-                  onClick={handleArchiveChannel}
-                  className="flex items-center gap-2"
-                >
-                  <Archive className="h-4 w-4" />
-                  Archive
-                </Button>
-              )}
-            </div>
-            
-            {/* Danger Zone */}
-            {(isAdmin || isChannelCreator) && (
-              <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
-                <h4 className="text-sm font-medium text-destructive mb-2 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Danger Zone
-                </h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Once you delete a channel, there is no going back. All messages will be permanently lost.
-                </p>
-                {!showDeleteConfirm ? (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete Channel
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleDeleteChannel}
-                      className="flex items-center gap-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Confirm Delete
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDeleteConfirm(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  }
 };
