@@ -108,14 +108,18 @@ export const MessageInput = ({
         const attachmentText = successfulUploads.map(url => `[Attachment: ${url}]`).join('\n');
         const messageWithAttachments = newMessage + (newMessage ? '\n' : '') + attachmentText;
         
-        // Update the message content temporarily
+        // Send the message directly with attachments
         onNewMessageChange(messageWithAttachments);
         
-        // Send the message
-        onSendMessage();
-        
-        // Clear attachments
+        // Clear attachments first
         setAttachments([]);
+        
+        // Send the message immediately
+        setTimeout(() => {
+          onSendMessage();
+          onNewMessageChange(''); // Clear the input after sending
+        }, 0);
+        
         return;
       }
     }
