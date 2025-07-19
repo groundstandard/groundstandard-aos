@@ -67,65 +67,59 @@ const Admin = () => {
 
   const categories: Record<string, CategoryConfig> = {
     dashboard: {
-      label: "Dashboard",
+      label: "Admin Dashboard",
       icon: Home,
       component: <AdminDashboard />
     },
-    core: {
-      label: "Core Management", 
+    payments: {
+      label: "Payments", 
+      icon: DollarSign,
+      component: <EnhancedPaymentManagement />
+    },
+    reports: {
+      label: "Reports",
+      icon: BarChart3,
+      component: <EnhancedAnalytics />
+    },
+    chat: {
+      label: "Academy Chat",
+      icon: MessageSquare,
+      component: <EnhancedCommunications />
+    },
+    classes: {
+      label: "Classes",
+      icon: Calendar,
+      component: <ClassManagement />
+    },
+    belt_testing: {
+      label: "Belt Testing",
+      icon: CheckCircle,
+      component: <BeltTestManagement />
+    },
+    events: {
+      label: "Events",
+      icon: Bell,
+      component: <EventManagement />
+    },
+    users: {
+      label: "Users",
       icon: Users,
-      subTabs: {
-        users: { label: "Users", component: <UserManagement /> },
-        contacts: { label: "Contacts", component: <ContactManagement /> },
-        classes: { label: "Classes", component: <ClassManagement /> },
-        attendance: { label: "Attendance", component: <AdvancedAttendance /> },
-        belt_tests: { label: "Belt Tests", component: <BeltTestManagement /> }
-      }
+      component: <UserManagement />
     },
-    business: {
-      label: "Business Operations",
-      icon: DollarSign, 
-      subTabs: {
-        payments: { label: "Payments", component: <EnhancedPaymentManagement /> },
-        invoices: { label: "Invoices", component: <InvoiceManagement /> },
-        subscriptions: { label: "Subscriptions", component: <SubscriptionManagement /> },
-        events: { label: "Events", component: <EventManagement /> }
-      }
-    },
-    system: {
-      label: "System Management",
-      icon: Settings,
-      subTabs: {
-        inventory: { label: "Inventory", component: <InventoryManagement /> },
-        stock_history: { label: "Stock History", component: <StockMovementHistory /> },
-        communication: { label: "Communication", component: <EnhancedCommunications /> },
-        analytics: { label: "Analytics", component: <EnhancedAnalytics /> },
-        security: { label: "Security", component: <SecurityAudit /> },
-        audit_logs: { label: "Audit Logs", component: <AuditLogViewer /> }
-      }
+    attendance: {
+      label: "Attendance",
+      icon: CheckCircle,
+      component: <AdvancedAttendance />
     }
   };
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
-    const categoryConfig = categories[category];
-    if (categoryConfig?.subTabs) {
-      const firstSubTab = Object.keys(categoryConfig.subTabs)[0];
-      setActiveSubTab(firstSubTab);
-    } else {
-      setActiveSubTab("");
-    }
   };
 
   const renderContent = () => {
     const category = categories[activeCategory];
-    if (category?.component) {
-      return category.component;
-    }
-    if (category?.subTabs && activeSubTab) {
-      return category.subTabs[activeSubTab]?.component;
-    }
-    return null;
+    return category?.component || null;
   };
 
   return (
@@ -156,7 +150,7 @@ const Admin = () => {
           {/* Main Category Navigation */}
           <Card>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {Object.entries(categories).map(([key, category]) => {
                   const IconComponent = category.icon;
                   return (
@@ -175,26 +169,6 @@ const Admin = () => {
             </CardContent>
           </Card>
 
-          {/* Sub-category Navigation */}
-          {categories[activeCategory]?.subTabs && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(categories[activeCategory]?.subTabs || {}).map(([key, subTab]) => (
-                    <Button
-                      key={key}
-                      variant={activeSubTab === key ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setActiveSubTab(key)}
-                      className="min-w-24"
-                    >
-                      {subTab.label}
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Content Area */}
           <div className="min-h-[600px]">

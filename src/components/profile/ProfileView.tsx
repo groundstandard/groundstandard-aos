@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const ProfileView = () => {
   const navigate = useNavigate();
-  const { profile, user } = useAuth();
+  const { profile, user, signOut } = useAuth();
   const { subscriptionInfo, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -411,6 +411,25 @@ export const ProfileView = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Account Actions */}
+      <Card className="card-minimal shadow-soft">
+        <CardHeader>
+          <CardTitle>Account Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-start">
+            <Button
+              variant="destructive"
+              onClick={signOut}
+              className="gap-2"
+            >
+              <User className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

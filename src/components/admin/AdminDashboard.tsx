@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ProfileView } from "@/components/profile/ProfileView";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -358,6 +359,20 @@ export const AdminDashboard = () => {
               <span>Send Notifications</span>
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Profile Management
+          </CardTitle>
+          <CardDescription>Manage your admin profile and account settings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProfileView />
         </CardContent>
       </Card>
     </div>
