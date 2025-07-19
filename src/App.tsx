@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const AppRoutes = () => {
       <Route path="/progress" element={user ? <Progress /> : <Auth />} />
       <Route path="/profile" element={user ? <Profile /> : <Auth />} />
       <Route path="/chat" element={user ? <Chat /> : <Auth />} />
+      <Route path="/reports" element={user ? <Reports /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

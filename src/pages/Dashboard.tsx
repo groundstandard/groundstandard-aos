@@ -4,7 +4,7 @@ import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle } from "lucide-react";
+import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -163,16 +163,21 @@ const Dashboard = () => {
 
           {isAdmin && (
             <>
-              <Card className="card-minimal hover-lift">
+              <Card 
+                className="card-minimal hover-lift cursor-pointer"
+                onClick={() => navigate('/reports')}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
+                    <FileText className="h-5 w-5" />
                     Reports
                   </CardTitle>
-                  <CardDescription>View academy analytics</CardDescription>
+                  <CardDescription>Comprehensive analytics & insights</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">View Reports</Button>
+                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/reports'); }}>
+                    View Reports
+                  </Button>
                 </CardContent>
               </Card>
 
