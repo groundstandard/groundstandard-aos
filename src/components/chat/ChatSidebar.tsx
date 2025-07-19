@@ -17,6 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleTesting } from '@/contexts/RoleTestingContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -68,9 +69,14 @@ export const ChatSidebar = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({});
   const { profile } = useAuth();
+  const { effectiveRole } = useRoleTesting();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  // Check effective role for permissions (includes role switching for owners)
+  const canCreateChannels = effectiveRole === 'admin';
+  const canSeeAdminChannels = effectiveRole === 'admin';
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({
@@ -206,7 +212,7 @@ export const ChatSidebar = ({
               {title}
             </h3>
           </button>
-          {showCreateButton && profile?.role === 'admin' && (
+          {showCreateButton && canCreateChannels && (
             <Button
               variant="ghost"
               size="sm"
@@ -274,7 +280,7 @@ export const ChatSidebar = ({
                 />
               )}
               
-              {profile?.role === 'admin' && groupChannels.some(c => c.is_admin_only) && (
+              {canSeeAdminChannels && groupChannels.some(c => c.is_admin_only) && (
                 <ChannelSection 
                   title="Private Channels" 
                   channels={groupChannels.filter(c => c.is_admin_only)}
@@ -365,7 +371,7 @@ export const ChatSidebar = ({
           />
         )}
         
-        {profile?.role === 'admin' && groupChannels.some(c => c.is_admin_only) && (
+        {canSeeAdminChannels && groupChannels.some(c => c.is_admin_only) && (
           <ChannelSection 
             title="Private Channels" 
             channels={groupChannels.filter(c => c.is_admin_only)}

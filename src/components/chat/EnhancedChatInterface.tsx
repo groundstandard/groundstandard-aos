@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleTesting } from '@/contexts/RoleTestingContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -110,14 +111,15 @@ export const EnhancedChatInterface = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { profile } = useAuth();
+  const { effectiveRole } = useRoleTesting();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Check user role for permissions
-  const isOwner = profile?.role === 'admin'; // admin is effectively owner in current system
-  const isStaff = profile?.role === 'instructor'; // instructor is staff level
-  const isMember = profile?.role === 'student';
+  // Check user role for permissions using effective role (for testing)
+  const isOwner = effectiveRole === 'admin'; // admin is effectively owner in current system
+  const isStaff = effectiveRole === 'instructor'; // instructor is staff level
+  const isMember = effectiveRole === 'student';
   
   // Channel management permissions
   const canCreateChannels = isOwner;
