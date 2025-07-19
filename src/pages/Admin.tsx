@@ -158,271 +158,76 @@ const Admin = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto p-6 space-y-6">
-        <BackButton />
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Complete overview of your martial arts academy
-            </p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 space-y-8">
+        {/* Header Section */}
+        <div className="space-y-6">
+          <BackButton />
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <BarChart3 className="h-8 w-8 text-primary" />
+                <h1 className="text-4xl font-bold text-foreground">Admin Dashboard</h1>
+              </div>
+              <p className="text-lg text-muted-foreground">
+                Complete management and analytics for your martial arts academy
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Profile Management</DialogTitle>
+                    <DialogDescription>Manage your admin profile and account settings</DialogDescription>
+                  </DialogHeader>
+                  <ProfileView />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-8 border-b border-border pb-4">
+            <Button variant="ghost" className="flex items-center gap-2 text-primary border-b-2 border-primary pb-2">
+              <TrendingUp className="h-4 w-4" />
+              Overview
             </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Profile Management</DialogTitle>
-                  <DialogDescription>Manage your admin profile and account settings</DialogDescription>
-                </DialogHeader>
-                <ProfileView />
-              </DialogContent>
-            </Dialog>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/reports')}>
+              <BarChart3 className="h-4 w-4" />
+              Reports
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/contacts')}>
+              <Users className="h-4 w-4" />
+              Students
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/classes')}>
+              <Calendar className="h-4 w-4" />
+              Classes
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/payments')}>
+              <DollarSign className="h-4 w-4" />
+              Payments
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/automations')}>
+              <Settings className="h-4 w-4" />
+              Automations
+            </Button>
           </div>
         </div>
 
-        {/* Quick Actions - Moved to top and made smaller */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="h-4 w-4" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Dialog open={addStudentOpen} onOpenChange={setAddStudentOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="h-16 flex-col space-y-1 p-3"
-                    size="sm"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span className="text-xs">Add Student</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Student</DialogTitle>
-                    <DialogDescription>Enter student information to add them to the academy</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" placeholder="Enter first name" />
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" placeholder="Enter last name" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="Enter email address" />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" placeholder="Enter phone number" />
-                    </div>
-                    <div>
-                      <Label htmlFor="beltLevel">Belt Level</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select belt level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="white">White Belt</SelectItem>
-                          <SelectItem value="yellow">Yellow Belt</SelectItem>
-                          <SelectItem value="orange">Orange Belt</SelectItem>
-                          <SelectItem value="green">Green Belt</SelectItem>
-                          <SelectItem value="blue">Blue Belt</SelectItem>
-                          <SelectItem value="brown">Brown Belt</SelectItem>
-                          <SelectItem value="black">Black Belt</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setAddStudentOpen(false)}>Cancel</Button>
-                      <Button onClick={() => {
-                        toast({ title: "Student added successfully!" });
-                        setAddStudentOpen(false);
-                      }}>Add Student</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={scheduleClassOpen} onOpenChange={setScheduleClassOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="h-16 flex-col space-y-1 p-3"
-                    size="sm"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-xs">Schedule Class</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Schedule New Class</DialogTitle>
-                    <DialogDescription>Create a new class session</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="className">Class Name</Label>
-                      <Input id="className" placeholder="e.g., Advanced Karate" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="classDate">Date</Label>
-                        <Input id="classDate" type="date" />
-                      </div>
-                      <div>
-                        <Label htmlFor="classTime">Time</Label>
-                        <Input id="classTime" type="time" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="instructor">Instructor</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select instructor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sensei-johnson">Sensei Johnson</SelectItem>
-                          <SelectItem value="master-chen">Master Chen</SelectItem>
-                          <SelectItem value="instructor-smith">Instructor Smith</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="maxStudents">Max Students</Label>
-                      <Input id="maxStudents" type="number" placeholder="20" />
-                    </div>
-                    <div>
-                      <Label htmlFor="classDescription">Description</Label>
-                      <Textarea id="classDescription" placeholder="Class description..." />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setScheduleClassOpen(false)}>Cancel</Button>
-                      <Button onClick={() => {
-                        toast({ title: "Class scheduled successfully!" });
-                        setScheduleClassOpen(false);
-                      }}>Schedule Class</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={processPaymentOpen} onOpenChange={setProcessPaymentOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="h-16 flex-col space-y-1 p-3"
-                    size="sm"
-                  >
-                    <DollarSign className="h-4 w-4" />
-                    <span className="text-xs">Process Payment</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Process Payment</DialogTitle>
-                    <DialogDescription>Record a payment from a student</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="studentSelect">Student</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select student" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="john-doe">John Doe</SelectItem>
-                          <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                          <SelectItem value="mike-chen">Mike Chen</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="amount">Amount</Label>
-                        <Input id="amount" type="number" placeholder="150.00" />
-                      </div>
-                      <div>
-                        <Label htmlFor="paymentMethod">Payment Method</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select method" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cash">Cash</SelectItem>
-                            <SelectItem value="credit">Credit Card</SelectItem>
-                            <SelectItem value="debit">Debit Card</SelectItem>
-                            <SelectItem value="check">Check</SelectItem>
-                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="paymentDescription">Description</Label>
-                      <Input id="paymentDescription" placeholder="e.g., Monthly membership fee" />
-                    </div>
-                    <div>
-                      <Label htmlFor="paymentNotes">Notes (Optional)</Label>
-                      <Textarea id="paymentNotes" placeholder="Additional notes..." />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setProcessPaymentOpen(false)}>Cancel</Button>
-                      <Button onClick={() => {
-                        toast({ title: "Payment processed successfully!" });
-                        setProcessPaymentOpen(false);
-                      }}>Process Payment</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Button 
-                variant="outline" 
-                onClick={() => handleQuickAction("Generate Report")}
-                className="h-16 flex-col space-y-1 p-3"
-                size="sm"
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="text-xs">Generate Report</span>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/automations')}
-                className="h-16 flex-col space-y-1 p-3"
-                size="sm"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="text-xs">Automations</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Performance Overview - Moved up */}
+        {/* Performance Overview */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
