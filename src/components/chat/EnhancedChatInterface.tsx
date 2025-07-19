@@ -839,16 +839,16 @@ export const EnhancedChatInterface = () => {
         onChannelCreated={(newChannel) => {
           setChannels(prev => [...prev, newChannel]);
           
-          // Create initial system message for channel creation
-          const systemMessage: Message = {
-            id: `system-${Date.now()}`,
-            content: "joined accounts. Also, Kurt joined via invite.",
-            sender_id: profile?.id || 'system',
-            sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
-            sender_role: profile?.role || 'student',
-            created_at: new Date().toISOString(),
-            is_system_message: true
-          };
+    // Create initial system message for channel creation
+    const systemMessage: Message = {
+      id: `system-${Date.now()}`,
+      content: `joined #${newChannel.name}.`,
+      sender_id: profile?.id || 'system',
+      sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
+      sender_role: profile?.role || 'student',
+      created_at: new Date().toISOString(),
+      is_system_message: true
+    };
           
           setChannelMessages(prev => ({
             ...prev,
