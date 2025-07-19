@@ -92,6 +92,42 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_messages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          template_id: string | null
+          trigger_conditions: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          template_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          template_id?: string | null
+          trigger_conditions?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       belt_tests: {
         Row: {
           created_at: string
@@ -354,6 +390,81 @@ export type Database = {
         }
         Relationships: []
       }
+      export_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          download_url: string | null
+          export_type: string
+          exported_by: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          download_url?: string | null
+          export_type: string
+          exported_by?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          download_url?: string | null
+          export_type?: string
+          exported_by?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      family_discounts: {
+        Row: {
+          created_at: string
+          discount_amount: number | null
+          discount_percentage: number
+          family_name: string
+          id: string
+          is_active: boolean
+          max_family_members: number | null
+          notes: string | null
+          primary_student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_amount?: number | null
+          discount_percentage: number
+          family_name: string
+          id?: string
+          is_active?: boolean
+          max_family_members?: number | null
+          notes?: string | null
+          primary_student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number | null
+          discount_percentage?: number
+          family_name?: string
+          id?: string
+          is_active?: boolean
+          max_family_members?: number | null
+          notes?: string | null
+          primary_student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           category: string
@@ -450,6 +561,81 @@ export type Database = {
           stripe_invoice_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      message_templates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          message_type: string
+          name: string
+          subject: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message_type: string
+          name: string
+          subject: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message_type?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
+      payment_plans: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          interval_count: number
+          interval_type: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          interval_count?: number
+          interval_type: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          interval_count?: number
+          interval_type?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -3,11 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, Target, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Calendar, Target, TrendingUp, TrendingDown, DollarSign, Download } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useExport } from "@/hooks/useExport";
 
 export const OverviewReports = () => {
   const isMobile = useIsMobile();
+  const { exportData, loading: exportLoading } = useExport();
   const { data: stats, isLoading } = useQuery({
     queryKey: ['overview-stats'],
     queryFn: async () => {
@@ -172,6 +175,47 @@ export const OverviewReports = () => {
             )}
           </div>
         </CardContent>
+      </Card>
+
+      {/* Export Actions */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className={isMobile ? "text-base" : "text-lg"}>Data Export</CardTitle>
+            <CardDescription className={isMobile ? "text-sm" : ""}>
+              Export your data in CSV format
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportData('students')}
+              disabled={exportLoading}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Students
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportData('payments')}
+              disabled={exportLoading}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Payments
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => exportData('attendance')}
+              disabled={exportLoading}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Attendance
+            </Button>
+          </div>
+        </CardHeader>
       </Card>
 
       {/* Quick Actions */}

@@ -45,21 +45,32 @@ interface Payment {
 
 interface PaymentPlan {
   id: string;
-  student_id: string;
-  total_amount: number;
-  installments: number;
-  installment_amount: number;
-  start_date: string;
-  status: string;
-  next_payment_date: string;
+  name: string;
+  amount: number;
+  currency: string;
+  interval_type: string;
+  interval_count: number;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface FamilyDiscount {
   id: string;
-  family_id: string;
-  discount_type: string;
-  discount_value: number;
-  active: boolean;
+  family_name: string;
+  primary_student_id: string;
+  discount_percentage: number;
+  discount_amount: number;
+  max_family_members: number;
+  is_active: boolean;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
 }
 
 export const EnhancedPaymentManagement = () => {
@@ -139,15 +150,48 @@ export const EnhancedPaymentManagement = () => {
   };
 
   const fetchPaymentPlans = async () => {
-    // This would require a new table in the database
-    // For now, we'll simulate this data
-    setPaymentPlans([]);
+    try {
+      const { data, error } = await supabase
+        .from('payment_plans')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setPaymentPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching payment plans:', error);
+    }
   };
 
   const fetchFamilyDiscounts = async () => {
-    // This would require a new table in the database
-    // For now, we'll simulate this data
-    setFamilyDiscounts([]);
+    try {
+      const { data, error } = await supabase
+        .from('family_discounts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Fetch profile data separately for each discount
+      const discountsWithProfiles = await Promise.all(
+        (data || []).map(async (discount) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', discount.primary_student_id)
+            .single();
+          
+          return {
+            ...discount,
+            profiles: profile || { first_name: 'Unknown', last_name: 'User' }
+          };
+        })
+      );
+      
+      setFamilyDiscounts(discountsWithProfiles);
+    } catch (error) {
+      console.error('Error fetching family discounts:', error);
+    }
   };
 
   const handleCreatePaymentPlan = async () => {
@@ -161,14 +205,28 @@ export const EnhancedPaymentManagement = () => {
     }
 
     try {
-      // This would require implementing the payment_plans table
+      const installmentAmount = Math.round((parseFloat(planAmount) / parseInt(planInstallments)) * 100); // Convert to cents
+      
+      const { error } = await supabase
+        .from('payment_plans')
+        .insert({
+          name: `Payment Plan - ${planInstallments} installments`,
+          amount: installmentAmount,
+          interval_type: 'monthly',
+          interval_count: 1,
+          description: `${planInstallments} monthly installments of $${(installmentAmount / 100).toFixed(2)}`
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Payment Plan Created",
-        description: `Payment plan created for ${planInstallments} installments of $${(parseFloat(planAmount) / parseInt(planInstallments)).toFixed(2)}`,
+        description: `Payment plan created for ${planInstallments} installments of $${(installmentAmount / 100).toFixed(2)}`,
       });
       
       setIsPaymentPlanDialogOpen(false);
       resetPaymentPlanForm();
+      fetchPaymentPlans();
     } catch (error) {
       console.error('Error creating payment plan:', error);
       toast({

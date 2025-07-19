@@ -156,34 +156,39 @@ export const EnhancedCommunications = () => {
   };
 
   const fetchTemplates = async () => {
-    // Simulate communication templates
-    const mockData: CommunicationTemplate[] = [
-      {
-        id: "1",
-        name: "Welcome Email",
-        type: "email",
-        subject: "Welcome to {{dojo_name}}, {{student_name}}!",
-        content: "Dear {{student_name}}, welcome to our martial arts family...",
-        variables: ["dojo_name", "student_name", "class_schedule"]
-      },
-      {
-        id: "2",
-        name: "Payment Reminder",
-        type: "email", 
-        subject: "Payment Reminder - {{amount}} Due",
-        content: "Hi {{student_name}}, your payment of {{amount}} is due...",
-        variables: ["student_name", "amount", "due_date"]
-      },
-      {
-        id: "3",
-        name: "Class Reminder SMS",
-        type: "sms",
-        subject: "",
-        content: "Hi {{student_name}}, reminder: {{class_name}} starts in 1 hour!",
-        variables: ["student_name", "class_name", "class_time"]
-      }
-    ];
-    setTemplates(mockData);
+    try {
+      const { data, error } = await supabase
+        .from('message_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const formattedData: CommunicationTemplate[] = (data || []).map(template => ({
+        id: template.id,
+        name: template.name,
+        type: (template.message_type as 'email' | 'sms' | 'push') || 'email',
+        subject: template.subject,
+        content: template.content,
+        variables: template.variables ? Object.keys(template.variables) : []
+      }));
+      
+      setTemplates(formattedData);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      // Fallback to mock data if error
+      const mockData: CommunicationTemplate[] = [
+        {
+          id: "1",
+          name: "Welcome Email",
+          type: "email",
+          subject: "Welcome to {{dojo_name}}, {{student_name}}!",
+          content: "Dear {{student_name}}, welcome to our martial arts family...",
+          variables: ["dojo_name", "student_name", "class_schedule"]
+        }
+      ];
+      setTemplates(mockData);
+    }
   };
 
   const fetchScheduledMessages = async () => {
@@ -250,7 +255,17 @@ export const EnhancedCommunications = () => {
     }
 
     try {
-      // This would require implementing templates table
+      const { error } = await supabase
+        .from('message_templates')
+        .insert({
+          name: templateName,
+          subject: templateSubject,
+          content: templateContent,
+          message_type: templateType as 'email' | 'sms' | 'push'
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Template Created", 
         description: `Template "${templateName}" has been created`,

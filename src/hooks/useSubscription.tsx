@@ -72,6 +72,8 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
         throw new Error('Failed to create checkout session');
       }
 
+      // After successful checkout creation, user will be redirected to Stripe
+      // The subscription will be updated when they return and the page refreshes
       return data?.url || null;
     } catch (error) {
       console.error('Error creating checkout:', error);
