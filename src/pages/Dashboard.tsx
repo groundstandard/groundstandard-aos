@@ -126,21 +126,32 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        {/* Header with View Toggle, Welcome, and Profile */}
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <div className="flex-1">
+        {/* Header with reorganized layout */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/chat')}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Chat
+            </Button>
+          </div>
+          
+          <div className="text-center">
             <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-display font-bold text-primary`}>
               Welcome, {profile.first_name}
             </h1>
-            <div className={`flex items-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
-              <Badge variant="outline" className={isMobile ? "text-xs" : ""}>{profile.membership_status}</Badge>
+            <div className={`flex items-center justify-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
               {profile.belt_level && (
                 <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>{profile.belt_level}</Badge>
               )}
             </div>
           </div>
-          <ViewToggle />
-          <div className="flex-1 flex justify-end gap-2">
+
+          <div className="flex items-center gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button 
@@ -159,19 +170,15 @@ const Dashboard = () => {
                 <ProfileView />
               </DialogContent>
             </Dialog>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/chat')}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chat
-            </Button>
             <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
               Student Active
             </Badge>
           </div>
+        </div>
+
+        {/* View Toggle in lower middle */}
+        <div className="flex justify-center mb-6">
+          <ViewToggle />
         </div>
 
         {/* Student Statistics */}
