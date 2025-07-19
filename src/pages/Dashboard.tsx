@@ -29,9 +29,21 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-          {/* View Toggle for Admins */}
-          <div className="flex justify-center mb-4 sm:mb-6">
+          {/* Header with View Toggle and Profile */}
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <div className="flex-1"></div>
             <ViewToggle />
+            <div className="flex-1 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                Profile
+              </Button>
+            </div>
           </div>
 
           {/* Quick Navigation Actions */}
