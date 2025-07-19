@@ -264,6 +264,73 @@ export const AdminDashboard = () => {
         </CardContent>
       </Card>
 
+      {/* Quick Stats */}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4 mb-6">
+        <Card className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Total Students</CardTitle>
+            <Users className="h-3 w-3 text-blue-600" />
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold">247</div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-2 w-2 text-green-500" />
+              <span className="text-green-500">+12</span>
+              <span>Active members</span>
+            </div>
+          </CardContent>
+          <div className="absolute right-0 top-0 w-1 h-full bg-blue-600" />
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Monthly Revenue</CardTitle>
+            <DollarSign className="h-3 w-3 text-green-600" />
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold">$18,540</div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-2 w-2 text-green-500" />
+              <span className="text-green-500">+8.2%</span>
+              <span>This month</span>
+            </div>
+          </CardContent>
+          <div className="absolute right-0 top-0 w-1 h-full bg-green-600" />
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Class Attendance</CardTitle>
+            <Target className="h-3 w-3 text-purple-600" />
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold">89%</div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-2 w-2 text-green-500" />
+              <span className="text-green-500">+5.1%</span>
+              <span>Weekly average</span>
+            </div>
+          </CardContent>
+          <div className="absolute right-0 top-0 w-1 h-full bg-purple-600" />
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium">Belt Promotions</CardTitle>
+            <Award className="h-3 w-3 text-orange-600" />
+          </CardHeader>
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold">23</div>
+            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-2 w-2 text-green-500" />
+              <span className="text-green-500">+3</span>
+              <span>This quarter</span>
+            </div>
+          </CardContent>
+          <div className="absolute right-0 top-0 w-1 h-full bg-orange-600" />
+        </Card>
+      </div>
+
 
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
