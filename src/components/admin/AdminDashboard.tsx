@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { 
   Calendar,
   Users,
@@ -19,13 +20,17 @@ import {
   Clock,
   Target,
   Award,
-  Activity
+  Activity,
+  MessageCircle,
+  CreditCard,
+  FileText
 } from "lucide-react";
 
 export const AdminDashboard = () => {
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleQuickAction = (action: string) => {
@@ -224,6 +229,66 @@ export const AdminDashboard = () => {
           </Card>
         ))}
       </div>
+
+      {/* Quick Navigation Actions */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Quick Navigation</CardTitle>
+          <CardDescription>Access key admin functions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/classes')}
+            >
+              <Calendar className="h-4 w-4" />
+              Classes
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/chat')}
+            >
+              <MessageCircle className="h-4 w-4" />
+              Academy Chat
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/payments')}
+            >
+              <CreditCard className="h-4 w-4" />
+              Payments
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/reports')}
+            >
+              <FileText className="h-4 w-4" />
+              Reports
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/belt-testing')}
+            >
+              <Award className="h-4 w-4" />
+              Belt Testing
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+              onClick={() => navigate('/events')}
+            >
+              <Calendar className="h-4 w-4" />
+              Events
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* System Health */}
