@@ -151,7 +151,7 @@ export const ContactManagement = () => {
   
   // Advanced filtering state
   const [advancedFilters, setAdvancedFilters] = useState({
-    belt_level: "",
+    belt_level: "all",
     date_from: "",
     date_to: "",
     has_family: false,
@@ -231,11 +231,29 @@ export const ContactManagement = () => {
         filtered = contacts;
     }
 
+    // Apply search term filter
     if (searchTerm) {
       filtered = filtered.filter(contact =>
         contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         contact.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         contact.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply advanced filters
+    if (advancedFilters.belt_level && advancedFilters.belt_level !== "all") {
+      filtered = filtered.filter(contact => contact.belt_level === advancedFilters.belt_level);
+    }
+
+    if (advancedFilters.date_from) {
+      filtered = filtered.filter(contact => 
+        new Date(contact.created_at) >= new Date(advancedFilters.date_from)
+      );
+    }
+
+    if (advancedFilters.date_to) {
+      filtered = filtered.filter(contact => 
+        new Date(contact.created_at) <= new Date(advancedFilters.date_to)
       );
     }
 
@@ -979,7 +997,7 @@ export const ContactManagement = () => {
                     <SelectValue placeholder="Any Belt" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any Belt</SelectItem>
+                    <SelectItem value="all">Any Belt</SelectItem>
                     <SelectItem value="white">White Belt</SelectItem>
                     <SelectItem value="yellow">Yellow Belt</SelectItem>
                     <SelectItem value="orange">Orange Belt</SelectItem>
@@ -1028,11 +1046,11 @@ export const ContactManagement = () => {
             </div>
             
             {/* Clear Filters */}
-            {(advancedFilters.belt_level || advancedFilters.date_from || advancedFilters.date_to || advancedFilters.has_family || advancedFilters.recent_activity) && (
+            {(advancedFilters.belt_level !== "all" || advancedFilters.date_from || advancedFilters.date_to || advancedFilters.has_family || advancedFilters.recent_activity) && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setAdvancedFilters({ belt_level: "", date_from: "", date_to: "", has_family: false, recent_activity: false })}
+                onClick={() => setAdvancedFilters({ belt_level: "all", date_from: "", date_to: "", has_family: false, recent_activity: false })}
               >
                 <Filter className="h-4 w-4 mr-2" />
                 Clear Filters
