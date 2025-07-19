@@ -207,12 +207,13 @@ export const AdminDashboard = () => {
             <Activity className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
+        </div>
       </div>
 
       {/* Admin Navigation */}
       <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-5 gap-4">
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
@@ -279,7 +280,6 @@ export const AdminDashboard = () => {
           </div>
         </CardContent>
       </Card>
-      </div>
 
 
 

@@ -31,10 +31,9 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-          {/* Header with View Toggle and Profile */}
+          {/* Header with Profile */}
           <div className="flex justify-between items-center mb-4 sm:mb-6">
             <div className="flex-1"></div>
-            <ViewToggle />
             <div className="flex-1 flex justify-end">
               <Dialog>
                 <DialogTrigger asChild>
@@ -125,6 +124,11 @@ const Dashboard = () => {
           </div>
 
           <AdminDashboard />
+
+          {/* View Toggle at bottom center */}
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10">
+            <ViewToggle />
+          </div>
         </div>
       </div>
     );
