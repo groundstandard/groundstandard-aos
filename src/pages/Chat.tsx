@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { BackButton } from "@/components/ui/BackButton";
-import { EnhancedChatInterface } from "@/components/chat/EnhancedChatInterface";
+import { SimpleChatInterface } from "@/components/chat/SimpleChatInterface";
 import { Navigate } from "react-router-dom";
 
 const Chat = () => {
@@ -29,7 +29,7 @@ const Chat = () => {
         </div>
         
         <div className="flex-1 min-h-0">
-          <EnhancedChatInterface />
+          <SimpleChatInterface />
         </div>
       </div>
     </div>
