@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ interface Message {
 
 const Chat = () => {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedChannel, setSelectedChannel] = useState<string>('general');
@@ -283,27 +285,29 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
+    <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full">
+        <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
           <BackButton />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <MessageSquare className="h-8 w-8 text-primary" />
-              Academy Chat
+          <div className="flex-1 min-w-0">
+            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-foreground flex items-center gap-2 flex-wrap`}>
+              <MessageSquare className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary flex-shrink-0`} />
+              <span className="truncate">Academy Chat</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Connect with instructors and fellow students
-            </p>
+            {!isMobile && (
+              <p className="text-muted-foreground mt-1">
+                Connect with instructors and fellow students
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[600px]">
+        <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1 h-[calc(100vh-200px)]' : 'lg:grid-cols-4 h-[600px]'} max-w-full`}>
           {/* Channels Sidebar */}
-          <Card className="lg:col-span-1">
+          <Card className={`${isMobile ? 'order-2' : 'lg:col-span-1'} flex flex-col max-w-full`}>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Channels</CardTitle>
+                <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'} truncate`}>Channels</CardTitle>
                 {profile?.role === 'admin' && (
                   <Dialog open={isCreateChannelOpen} onOpenChange={setIsCreateChannelOpen}>
                     <DialogTrigger asChild>
@@ -327,8 +331,8 @@ const Chat = () => {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="space-y-1">
+            <CardContent className="p-0 flex-1 overflow-hidden">
+              <div className={`space-y-1 ${isMobile ? 'max-h-32 overflow-y-auto' : ''}`}>
                 {channels?.map((channel) => (
                   <div
                     key={channel.id}
@@ -338,13 +342,15 @@ const Chat = () => {
                     onClick={() => setSelectedChannel(channel.id)}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-medium text-sm">#{channel.name}</h4>
-                      <Badge variant="outline" className="text-xs">
+                      <h4 className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'} truncate flex-1`}>
+                        #{channel.name}
+                      </h4>
+                      <Badge variant="outline" className={`${isMobile ? 'text-xs' : 'text-xs'} flex-shrink-0 ml-2`}>
                         {channel.member_count}
                       </Badge>
                     </div>
                     {channel.last_message && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground truncate`}>
                         {channel.last_message.sender_name}: {channel.last_message.content}
                       </p>
                     )}
@@ -355,26 +361,27 @@ const Chat = () => {
           </Card>
 
           {/* Chat Area */}
-          <Card className="lg:col-span-3 flex flex-col">
-            <CardHeader className="border-b">
+          <Card className={`${isMobile ? 'order-1 flex-1' : 'lg:col-span-3'} flex flex-col max-w-full overflow-hidden`}>
+            <CardHeader className="border-b flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'} truncate`}>
                     #{channels?.find(c => c.id === selectedChannel)?.name}
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className={`${isMobile ? 'text-xs' : ''} truncate`}>
                     {channels?.find(c => c.id === selectedChannel)?.description}
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className={`flex items-center gap-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex-shrink-0`}>
                   <Users className="h-4 w-4" />
-                  {channels?.find(c => c.id === selectedChannel)?.member_count} members
+                  {channels?.find(c => c.id === selectedChannel)?.member_count}
+                  {!isMobile && ' members'}
                 </div>
               </div>
             </CardHeader>
             
             {/* Messages */}
-            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 max-w-full">
               {messagesLoading ? (
                 <div className="text-center text-muted-foreground">
                   <div className="animate-pulse">Loading messages...</div>
@@ -384,25 +391,27 @@ const Chat = () => {
                   {messages?.map((message, index) => (
                     <div 
                       key={message.id} 
-                      className={`flex gap-3 animate-fade-in ${
+                      className={`flex gap-3 animate-fade-in max-w-full ${
                         index === messages.length - 1 ? 'animate-scale-in' : ''
                       }`}
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm hover-scale">
+                      <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium ${isMobile ? 'text-xs' : 'text-sm'} hover-scale flex-shrink-0`}>
                         {message.sender_name.split(' ').map(n => n[0]).join('')}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{message.sender_name}</span>
-                          <span className="text-xs text-muted-foreground">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className={`font-medium ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                            {message.sender_name}
+                          </span>
+                          <span className={`${isMobile ? 'text-xs' : 'text-xs'} text-muted-foreground`}>
                             {formatDate(message.created_at)} at {formatTime(message.created_at)}
                           </span>
                           {message.sender_id === profile?.id && (
-                            <Badge variant="outline" className="text-xs">You</Badge>
+                            <Badge variant="outline" className="text-xs flex-shrink-0">You</Badge>
                           )}
                         </div>
-                        <p className="text-sm bg-muted/30 rounded-lg p-2 inline-block max-w-lg">
+                        <p className={`${isMobile ? 'text-sm' : 'text-sm'} bg-muted/30 rounded-lg p-2 inline-block max-w-full break-words`}>
                           {message.content}
                         </p>
                       </div>
@@ -412,11 +421,11 @@ const Chat = () => {
                   {/* Typing indicator */}
                   {isTyping.length > 0 && (
                     <div className="flex gap-3 animate-fade-in">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm">
+                      <div className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium text-sm flex-shrink-0`}>
                         ...
                       </div>
                       <div className="flex-1">
-                        <span className="text-sm text-muted-foreground italic">
+                        <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground italic`}>
                           {isTyping.join(', ')} {isTyping.length === 1 ? 'is' : 'are'} typing...
                         </span>
                       </div>
@@ -429,8 +438,8 @@ const Chat = () => {
             </CardContent>
 
             {/* Message Input */}
-            <div className="border-t p-4 bg-background/50 backdrop-blur">
-              <div className="flex gap-2">
+            <div className="border-t p-4 bg-background/50 backdrop-blur flex-shrink-0">
+              <div className="flex gap-2 max-w-full">
                 <Input
                   placeholder={`Message #${channels?.find(c => c.id === selectedChannel)?.name}...`}
                   value={newMessage}
@@ -445,13 +454,13 @@ const Chat = () => {
                     }
                   }}
                   disabled={sendMessageMutation.isPending}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20 flex-1 min-w-0"
                 />
                 <Button 
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendMessageMutation.isPending}
                   size="sm"
-                  className="hover-scale"
+                  className="hover-scale flex-shrink-0"
                 >
                   {sendMessageMutation.isPending ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

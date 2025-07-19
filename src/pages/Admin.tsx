@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 import { SecurityAudit } from "@/components/admin/SecurityAudit";
@@ -22,6 +24,7 @@ import {
 
 const Admin = () => {
   const { user, profile, loading } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("analytics");
 
   if (loading) {
@@ -37,46 +40,75 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-full">
         <BackButton />
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage your martial arts academy</p>
+        <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
+          <div className="min-w-0 flex-1">
+            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-foreground truncate`}>
+              Admin Dashboard
+            </h1>
+            <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''} mt-1`}>
+              Manage your martial arts academy
+            </p>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
-            </Button>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-          </div>
+          {!isMobile && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+              </Button>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </div>
+          )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="classes" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Classes</span>
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Security</span>
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6 w-full">
+          {isMobile ? (
+            <ScrollArea className="w-full whitespace-nowrap">
+              <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-background/50 backdrop-blur p-1 text-muted-foreground min-w-max">
+                <TabsTrigger value="analytics" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <BarChart3 className="h-4 w-4" />
+                  Analytics
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <Users className="h-4 w-4" />
+                  Users
+                </TabsTrigger>
+                <TabsTrigger value="classes" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <Calendar className="h-4 w-4" />
+                  Classes
+                </TabsTrigger>
+                <TabsTrigger value="security" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <Shield className="h-4 w-4" />
+                  Security
+                </TabsTrigger>
+              </TabsList>
+            </ScrollArea>
+          ) : (
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="classes" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Classes
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Security
+              </TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="analytics" className="space-y-6">
             <AdminAnalytics />
