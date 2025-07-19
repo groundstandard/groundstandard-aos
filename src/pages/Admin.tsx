@@ -1,50 +1,38 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
-import { ClassManagement } from "@/components/admin/ClassManagement";
-import { UserManagement } from "@/components/admin/UserManagement";
-import { SecurityAudit } from "@/components/admin/SecurityAudit";
-import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { CommunicationCenter } from "@/components/admin/CommunicationCenter";
-import { EventManagement } from "@/components/admin/EventManagement";
-import { InventoryManagement } from "@/components/admin/InventoryManagement";
-import { PaymentManagement } from "@/components/admin/PaymentManagement";
-import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
-import { AdvancedAttendance } from "@/components/admin/AdvancedAttendance";
-import { BeltTestManagement } from "@/components/admin/BeltTestManagement";
-import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
-import { StockMovementHistory } from "@/components/admin/StockMovementHistory";
-import { ContactManagement } from "@/components/admin/ContactManagement";
-import { EnhancedPaymentManagement } from "@/components/admin/EnhancedPaymentManagement";
-import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
-import { EnhancedCommunications } from "@/components/admin/EnhancedCommunications";
-import {
-  Settings, 
-  Users, 
-  Calendar, 
-  BarChart3, 
-  Shield, 
-  CreditCard,
-  Home,
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ProfileView } from "@/components/profile/ProfileView";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Calendar,
+  Users,
+  TrendingUp,
   DollarSign,
-  MessageSquare,
-  Package,
+  Settings,
+  BarChart3,
+  Crown,
+  Star,
+  Clock,
+  Target,
+  Award,
+  Activity,
   Bell,
-  FileText,
-  CheckCircle
+  User
 } from "lucide-react";
 
 const Admin = () => {
   const { user, profile, loading } = useAuth();
+  const { subscriptionInfo } = useSubscription();
   const isMobile = useIsMobile();
-  const [activeCategory, setActiveCategory] = useState("dashboard");
-  const [activeSubTab, setActiveSubTab] = useState("");
+  const { toast } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
 
   if (loading) {
     return (
@@ -58,89 +46,86 @@ const Admin = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  type CategoryConfig = {
-    label: string;
-    icon: any;
-    component?: JSX.Element;
-    subTabs?: Record<string, { label: string; component: JSX.Element }>;
+  const handleQuickAction = (action: string) => {
+    toast({
+      title: "Quick Action",
+      description: `${action} feature will be implemented soon`,
+    });
   };
 
-  // Define categories in the exact order requested: 3 rows of 3
-  const categoriesOrder = [
-    // Row 1: Admin Dashboard, Payments, Reports
-    'dashboard', 'payments', 'reports',
-    // Row 2: Academy Chat, Classes, Belt Testing  
-    'chat', 'classes', 'belt_testing',
-    // Row 3: Events, Users, Attendance
-    'events', 'users', 'attendance'
-  ];
+  const handleRefreshStats = async () => {
+    setRefreshing(true);
+    // Simulate refresh
+    setTimeout(() => {
+      setRefreshing(false);
+      toast({
+        title: "Success",
+        description: "Dashboard statistics refreshed",
+      });
+    }, 1000);
+  };
 
-  const categories: Record<string, CategoryConfig> = {
-    dashboard: {
-      label: "Admin Dashboard",
-      icon: Home,
-      component: <AdminDashboard />
-    },
-    payments: {
-      label: "Payments", 
-      icon: DollarSign,
-      component: <EnhancedPaymentManagement />
-    },
-    reports: {
-      label: "Reports",
-      icon: BarChart3,
-      component: <EnhancedAnalytics />
-    },
-    chat: {
-      label: "Academy Chat",
-      icon: MessageSquare,
-      component: <EnhancedCommunications />
-    },
-    classes: {
-      label: "Classes",
-      icon: Calendar,
-      component: <ClassManagement />
-    },
-    belt_testing: {
-      label: "Belt Testing",
-      icon: CheckCircle,
-      component: <BeltTestManagement />
-    },
-    events: {
-      label: "Events",
-      icon: Bell,
-      component: <EventManagement />
-    },
-    users: {
-      label: "Users",
+  const quickStats = [
+    {
+      title: "Total Students",
+      value: "847",
+      change: "+12.5%",
+      trend: "up",
       icon: Users,
-      component: <UserManagement />
+      color: "text-blue-600"
     },
-    attendance: {
-      label: "Attendance",
-      icon: CheckCircle,
-      component: <AdvancedAttendance />
+    {
+      title: "Active Classes",
+      value: "24",
+      change: "+8.2%", 
+      trend: "up",
+      icon: Calendar,
+      color: "text-green-600"
+    },
+    {
+      title: "Monthly Revenue",
+      value: "$18,420",
+      change: "+15.3%",
+      trend: "up", 
+      icon: DollarSign,
+      color: "text-purple-600"
+    },
+    {
+      title: "Attendance Rate",
+      value: "94.2%",
+      change: "+2.1%",
+      trend: "up",
+      icon: TrendingUp,
+      color: "text-orange-600"
+    },
+    {
+      title: "Belt Tests",
+      value: "18",
+      change: "Pending",
+      trend: "neutral",
+      icon: Award,
+      color: "text-yellow-600"
+    },
+    {
+      title: "Active Subscriptions", 
+      value: "743",
+      change: "+5.7%",
+      trend: "up",
+      icon: Crown,
+      color: "text-indigo-600"
     }
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
-  };
-
-  const renderContent = () => {
-    const category = categories[activeCategory];
-    return category?.component || null;
-  };
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto p-6 space-y-6">
         <BackButton />
+        
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your martial arts academy
+              Complete overview of your martial arts academy
             </p>
           </div>
           
@@ -150,42 +135,198 @@ const Admin = () => {
               Notifications
             </Button>
             <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
+              <User className="h-4 w-4 mr-2" />
+              Profile
             </Button>
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* Main Category Navigation */}
+        {/* Quick Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quickStats.map((stat, index) => {
+            const IconComponent = stat.icon;
+            return (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className={`text-xs ${
+                    stat.trend === 'up' ? 'text-green-600' : 
+                    stat.trend === 'down' ? 'text-red-600' : 
+                    'text-muted-foreground'
+                  }`}>
+                    {stat.change} from last month
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Recent Activity & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activity */}
           <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {categoriesOrder.map((key) => {
-                  const category = categories[key];
-                  const IconComponent = category.icon;
-                  return (
-                    <Button
-                      key={key}
-                      variant={activeCategory === key ? "default" : "outline"}
-                      className="h-20 flex flex-col gap-2 text-center"
-                      onClick={() => handleCategoryChange(key)}
-                    >
-                      <IconComponent className="h-6 w-6" />
-                      <span className="text-sm font-medium">{category.label}</span>
-                    </Button>
-                  );
-                })}
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Latest updates from your academy</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  {
+                    action: "New student enrollment",
+                    details: "Sarah Johnson joined Advanced Karate",
+                    time: "2 minutes ago",
+                    type: "enrollment"
+                  },
+                  {
+                    action: "Payment received",
+                    details: "$150 monthly subscription from Mike Chen",
+                    time: "15 minutes ago", 
+                    type: "payment"
+                  },
+                  {
+                    action: "Belt test scheduled",
+                    details: "3 students registered for Black Belt test",
+                    time: "1 hour ago",
+                    type: "test"
+                  },
+                  {
+                    action: "Class completed",
+                    details: "Evening Judo session with 18 participants",
+                    time: "2 hours ago",
+                    type: "class"
+                  }
+                ].map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.action}</p>
+                      <p className="text-xs text-muted-foreground">{activity.details}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-
-          {/* Content Area */}
-          <div className="min-h-[600px]">
-            {renderContent()}
-          </div>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+              <CardDescription>Frequently used administrative tasks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleQuickAction("Add Student")}
+                  className="h-auto flex-col space-y-2 p-4"
+                >
+                  <Users className="h-6 w-6" />
+                  <span>Add Student</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleQuickAction("Schedule Class")}
+                  className="h-auto flex-col space-y-2 p-4"
+                >
+                  <Calendar className="h-6 w-6" />
+                  <span>Schedule Class</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleQuickAction("Process Payment")}
+                  className="h-auto flex-col space-y-2 p-4"
+                >
+                  <DollarSign className="h-6 w-6" />
+                  <span>Process Payment</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleQuickAction("Generate Report")}
+                  className="h-auto flex-col space-y-2 p-4"
+                >
+                  <BarChart3 className="h-6 w-6" />
+                  <span>Generate Report</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Performance Overview */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Performance Overview
+                </CardTitle>
+                <CardDescription>Key metrics for this month</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
+                <Activity className="h-4 w-4 mr-2" />
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Student Retention</span>
+                  <span className="text-sm text-muted-foreground">96%</span>
+                </div>
+                <Progress value={96} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Class Capacity</span>
+                  <span className="text-sm text-muted-foreground">78%</span>
+                </div>
+                <Progress value={78} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Revenue Goal</span>
+                  <span className="text-sm text-muted-foreground">84%</span>
+                </div>
+                <Progress value={84} className="h-2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Profile Management
+            </CardTitle>
+            <CardDescription>Manage your admin profile and account settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileView />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
