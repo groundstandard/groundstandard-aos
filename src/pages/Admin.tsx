@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
@@ -36,7 +36,8 @@ import {
 const Admin = () => {
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeCategory, setActiveCategory] = useState("dashboard");
+  const [activeSubTab, setActiveSubTab] = useState("");
 
   if (loading) {
     return (
@@ -49,6 +50,72 @@ const Admin = () => {
   if (!user || profile?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
+
+  type CategoryConfig = {
+    label: string;
+    icon: any;
+    component?: JSX.Element;
+    subTabs?: Record<string, { label: string; component: JSX.Element }>;
+  };
+
+  const categories: Record<string, CategoryConfig> = {
+    dashboard: {
+      label: "Dashboard",
+      icon: Home,
+      component: <AdminDashboard />
+    },
+    core: {
+      label: "Core Management", 
+      icon: Users,
+      subTabs: {
+        users: { label: "Users", component: <UserManagement /> },
+        classes: { label: "Classes", component: <ClassManagement /> },
+        attendance: { label: "Attendance", component: <AdvancedAttendance /> }
+      }
+    },
+    business: {
+      label: "Business Operations",
+      icon: DollarSign, 
+      subTabs: {
+        payments: { label: "Payments", component: <PaymentManagement /> },
+        invoices: { label: "Invoices", component: <InvoiceManagement /> },
+        subscriptions: { label: "Subscriptions", component: <SubscriptionManagement /> },
+        events: { label: "Events", component: <EventManagement /> }
+      }
+    },
+    system: {
+      label: "System Management",
+      icon: Settings,
+      subTabs: {
+        inventory: { label: "Inventory", component: <InventoryManagement /> },
+        communication: { label: "Communication", component: <CommunicationCenter /> },
+        analytics: { label: "Analytics", component: <AdminAnalytics /> },
+        security: { label: "Security", component: <SecurityAudit /> }
+      }
+    }
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    const categoryConfig = categories[category];
+    if (categoryConfig?.subTabs) {
+      const firstSubTab = Object.keys(categoryConfig.subTabs)[0];
+      setActiveSubTab(firstSubTab);
+    } else {
+      setActiveSubTab("");
+    }
+  };
+
+  const renderContent = () => {
+    const category = categories[activeCategory];
+    if (category?.component) {
+      return category.component;
+    }
+    if (category?.subTabs && activeSubTab) {
+      return category.subTabs[activeSubTab]?.component;
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -74,106 +141,55 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-12 bg-background/50 backdrop-blur">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="classes" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Classes
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Attendance
-            </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Events
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Inventory
-            </TabsTrigger>
-            <TabsTrigger value="communication" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Communication
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Payments
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Invoices
-            </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Subscriptions
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Security
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          {/* Main Category Navigation */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {Object.entries(categories).map(([key, category]) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <Button
+                      key={key}
+                      variant={activeCategory === key ? "default" : "outline"}
+                      className="h-20 flex flex-col gap-2 text-center"
+                      onClick={() => handleCategoryChange(key)}
+                    >
+                      <IconComponent className="h-6 w-6" />
+                      <span className="text-sm font-medium">{category.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <AdminDashboard />
-          </TabsContent>
+          {/* Sub-category Navigation */}
+          {categories[activeCategory]?.subTabs && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(categories[activeCategory]?.subTabs || {}).map(([key, subTab]) => (
+                    <Button
+                      key={key}
+                      variant={activeSubTab === key ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setActiveSubTab(key)}
+                      className="min-w-24"
+                    >
+                      {subTab.label}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-          <TabsContent value="analytics" className="space-y-6">
-            <AdminAnalytics />
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
-            <UserManagement />
-          </TabsContent>
-
-          <TabsContent value="classes" className="space-y-6">
-            <ClassManagement />
-          </TabsContent>
-
-          <TabsContent value="attendance" className="space-y-6">
-            <AdvancedAttendance />
-          </TabsContent>
-
-          <TabsContent value="events" className="space-y-6">
-            <EventManagement />
-          </TabsContent>
-
-          <TabsContent value="inventory" className="space-y-6">
-            <InventoryManagement />
-          </TabsContent>
-
-          <TabsContent value="communication" className="space-y-6">
-            <CommunicationCenter />
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-6">
-            <PaymentManagement />
-          </TabsContent>
-
-          <TabsContent value="invoices" className="space-y-6">
-            <InvoiceManagement />
-          </TabsContent>
-
-          <TabsContent value="subscriptions" className="space-y-6">
-            <SubscriptionManagement />
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <SecurityAudit />
-          </TabsContent>
-        </Tabs>
+          {/* Content Area */}
+          <div className="min-h-[600px]">
+            {renderContent()}
+          </div>
+        </div>
       </div>
     </div>
   );
