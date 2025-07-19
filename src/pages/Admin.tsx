@@ -20,6 +20,7 @@ import { AdvancedAttendance } from "@/components/admin/AdvancedAttendance";
 import { BeltTestManagement } from "@/components/admin/BeltTestManagement";
 import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
 import { StockMovementHistory } from "@/components/admin/StockMovementHistory";
+import { ContactManagement } from "@/components/admin/ContactManagement";
 import {
   Settings, 
   Users, 
@@ -72,6 +73,7 @@ const Admin = () => {
       icon: Users,
       subTabs: {
         users: { label: "Users", component: <UserManagement /> },
+        contacts: { label: "Contacts", component: <ContactManagement /> },
         classes: { label: "Classes", component: <ClassManagement /> },
         attendance: { label: "Attendance", component: <AdvancedAttendance /> },
         belt_tests: { label: "Belt Tests", component: <BeltTestManagement /> }
