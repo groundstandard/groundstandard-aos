@@ -11,6 +11,9 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { SecurityAudit } from "@/components/admin/SecurityAudit";
 import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { CommunicationCenter } from "@/components/admin/CommunicationCenter";
+import { EventManagement } from "@/components/admin/EventManagement";
+import { InventoryManagement } from "@/components/admin/InventoryManagement";
 import { 
   Settings, 
   Users, 
@@ -19,7 +22,9 @@ import {
   Shield, 
   CreditCard,
   Home,
-  Bell
+  Bell,
+  MessageSquare,
+  Package
 } from "lucide-react";
 
 const Admin = () => {
@@ -64,7 +69,7 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 bg-background/50 backdrop-blur">
+          <TabsList className="grid w-full grid-cols-9 bg-background/50 backdrop-blur">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Dashboard
@@ -86,8 +91,12 @@ const Admin = () => {
               Events
             </TabsTrigger>
             <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+              <Package className="h-4 w-4" />
               Inventory
+            </TabsTrigger>
+            <TabsTrigger value="communication" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Communication
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -116,17 +125,15 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="events" className="space-y-6">
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground">Event Management will be available soon</p>
-            </div>
+            <EventManagement />
           </TabsContent>
 
           <TabsContent value="inventory" className="space-y-6">
-            <div className="text-center py-8">
-              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground">Inventory Management will be available soon</p>
-            </div>
+            <InventoryManagement />
+          </TabsContent>
+
+          <TabsContent value="communication" className="space-y-6">
+            <CommunicationCenter />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
