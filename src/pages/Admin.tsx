@@ -11,6 +11,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 import { SecurityAudit } from "@/components/admin/SecurityAudit";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
 import { 
   Users, 
   Calendar, 
@@ -19,7 +20,8 @@ import {
   Settings,
   Bell,
   FileText,
-  Database
+  Database,
+  DollarSign
 } from "lucide-react";
 
 const Admin = () => {
@@ -83,6 +85,10 @@ const Admin = () => {
                   <Calendar className="h-3 w-3" />
                   Classes
                 </TabsTrigger>
+                <TabsTrigger value="subscriptions" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
+                  <DollarSign className="h-3 w-3" />
+                  Plans
+                </TabsTrigger>
                 <TabsTrigger value="security" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
                   <Shield className="h-3 w-3" />
                   Security
@@ -90,7 +96,7 @@ const Admin = () => {
               </TabsList>
             </div>
           ) : (
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Analytics
@@ -102,6 +108,10 @@ const Admin = () => {
               <TabsTrigger value="classes" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Classes
+              </TabsTrigger>
+              <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Subscriptions
               </TabsTrigger>
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
@@ -120,6 +130,10 @@ const Admin = () => {
 
           <TabsContent value="classes" className="space-y-6">
             <ClassManagement />
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="space-y-6">
+            <SubscriptionManagement />
           </TabsContent>
 
           <TabsContent value="security" className="space-y-6">
