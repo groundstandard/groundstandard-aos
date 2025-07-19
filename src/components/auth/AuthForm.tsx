@@ -15,8 +15,7 @@ export const AuthForm = () => {
     password: "",
     confirmPassword: "",
     firstName: "",
-    lastName: "",
-    role: "student" as "student" | "admin"
+    lastName: ""
   });
   const { toast } = useToast();
 
@@ -44,8 +43,7 @@ export const AuthForm = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: formData.firstName,
-            last_name: formData.lastName,
-            role: formData.role
+            last_name: formData.lastName
           }
         }
       });
@@ -160,18 +158,6 @@ export const AuthForm = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <select
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => handleInputChange("role", e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
-                    <option value="student">Student</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="signupEmail">Email</Label>
                   <Input
                     id="signupEmail"
@@ -189,6 +175,7 @@ export const AuthForm = () => {
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
                     required
+                    minLength={8}
                   />
                 </div>
                 <div className="space-y-2">

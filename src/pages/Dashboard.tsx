@@ -125,16 +125,21 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="hover:shadow-elegant transition-shadow">
+              <Card 
+                className="hover:shadow-elegant transition-shadow cursor-pointer"
+                onClick={() => navigate('/admin')}
+              >
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    Student Management
+                    Admin Dashboard
                   </CardTitle>
-                  <CardDescription>Manage student profiles</CardDescription>
+                  <CardDescription>Security & user management</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">Manage Students</Button>
+                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/admin'); }}>
+                    Admin Dashboard
+                  </Button>
                 </CardContent>
               </Card>
             </>
