@@ -386,11 +386,30 @@ export const EnhancedChatInterface = () => {
 
       // Save message to database
       try {
+        // Find the actual channel UUID for named channels
+        let channelId = null;
+        let dmChannelId = null;
+        
+        if (activeChannel.startsWith('dm-')) {
+          dmChannelId = activeChannel.replace('dm-', '');
+        } else {
+          // Look up the channel by name to get its UUID
+          const { data: channelData } = await supabase
+            .from('chat_channels')
+            .select('id')
+            .eq('name', activeChannel)
+            .single();
+          
+          if (channelData) {
+            channelId = channelData.id;
+          }
+        }
+
         const { error } = await supabase
           .from('chat_messages')
           .insert({
-            channel_id: activeChannel.startsWith('dm-') ? null : activeChannel,
-            dm_channel_id: activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : null,
+            channel_id: channelId,
+            dm_channel_id: dmChannelId,
             sender_id: profile.id,
             content: message.content,
             parent_message_id: message.parent_message_id,
