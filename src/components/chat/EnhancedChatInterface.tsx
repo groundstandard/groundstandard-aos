@@ -264,7 +264,8 @@ export const EnhancedChatInterface = () => {
   const handleScroll = () => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      // More generous threshold for auto-scroll detection
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
       setShouldAutoScroll(isNearBottom);
     }
   };
@@ -310,6 +311,9 @@ export const EnhancedChatInterface = () => {
         ...prev,
         [activeChannel]: [...(prev[activeChannel] || []), message]
       }));
+
+      // Always auto-scroll when the current user sends a message
+      setShouldAutoScroll(true);
 
       // If this is a reply, auto-expand the thread to show the new message
       if (replyingTo) {
