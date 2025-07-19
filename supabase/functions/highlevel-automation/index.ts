@@ -21,6 +21,12 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const highlevelApiKey = Deno.env.get('HIGHLEVEL_API_KEY');
+    
+    if (!highlevelApiKey) {
+      throw new Error('HighLevel API key not configured');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { type, contactId, data }: AutomationRequest = await req.json();
@@ -82,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Prepare HighLevel API request
     const hlApiUrl = `https://services.leadconnectorhq.com/contacts/`;
     const hlHeaders = {
-      'Authorization': `Bearer ${hlConfig.api_key}`,
+      'Authorization': `Bearer ${highlevelApiKey}`,
       'Content-Type': 'application/json',
       'Version': '2021-07-28'
     };
