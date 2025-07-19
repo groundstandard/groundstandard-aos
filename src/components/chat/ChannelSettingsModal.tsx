@@ -118,6 +118,59 @@ export const ChannelSettingsModal = ({
     }
   }, [open, channel, isDM]);
 
+  const fetchChannelFiles = async () => {
+    try {
+      setLoading(true);
+      
+      // For now, we'll use mock data since the chat_messages table structure needs to be set up
+      // In a real implementation, you would query the chat_messages table for attachments
+      const mockFiles: ChannelFile[] = [
+        {
+          id: '1',
+          name: 'Training_Schedule.pdf',
+          type: 'pdf',
+          size: 245760,
+          url: 'https://example.com/training-schedule.pdf',
+          uploadedBy: 'John Sensei',
+          uploadedAt: '2024-01-15T10:30:00Z'
+        },
+        {
+          id: '2', 
+          name: 'Belt_Requirements.docx',
+          type: 'document',
+          size: 128000,
+          url: 'https://example.com/belt-requirements.docx',
+          uploadedBy: 'Sarah Instructor', 
+          uploadedAt: '2024-01-14T14:20:00Z'
+        },
+        {
+          id: '3',
+          name: 'Class_Photo.jpg',
+          type: 'image',
+          size: 512000,
+          url: 'https://example.com/class-photo.jpg',
+          uploadedBy: 'Mike Student',
+          uploadedAt: '2024-01-13T16:45:00Z'
+        },
+        {
+          id: '4',
+          name: 'Technique_Demo.mp4',
+          type: 'video',
+          size: 15680000,
+          url: 'https://example.com/technique-demo.mp4',
+          uploadedBy: 'Emma Instructor',
+          uploadedAt: '2024-01-12T11:20:00Z'
+        }
+      ];
+      
+      setChannelFiles(mockFiles);
+    } catch (error) {
+      console.error('Error fetching files:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchChannelMembers = async () => {
     try {
       // Mock data for now - in real app would fetch from channel_members table
@@ -143,34 +196,6 @@ export const ChannelSettingsModal = ({
     }
   };
 
-  const fetchChannelFiles = async () => {
-    try {
-      // Mock data for now - in real app would fetch from message attachments
-      const mockFiles: ChannelFile[] = [
-        {
-          id: '1',
-          name: 'Training_Schedule.pdf',
-          type: 'application/pdf',
-          size: 245760,
-          url: '/mock-file.pdf',
-          uploadedBy: 'John Sensei',
-          uploadedAt: '2024-01-15T10:30:00Z'
-        },
-        {
-          id: '2',
-          name: 'Belt_Requirements.docx',
-          type: 'application/msword',
-          size: 128000,
-          url: '/mock-file.docx',
-          uploadedBy: 'Sarah Instructor',
-          uploadedAt: '2024-01-14T14:20:00Z'
-        }
-      ];
-      setChannelFiles(mockFiles);
-    } catch (error) {
-      console.error('Error fetching files:', error);
-    }
-  };
 
   const fetchAvailableUsers = async () => {
     try {
@@ -312,6 +337,37 @@ export const ChannelSettingsModal = ({
     if (type.includes('word') || type.includes('document')) return '📝';
     if (type.includes('excel') || type.includes('spreadsheet')) return '📊';
     return '📎';
+  };
+
+  const handlePreviewFile = (file: ChannelFile) => {
+    if (file.type === 'image') {
+      // Open image in a new window or modal
+      window.open(file.url, '_blank');
+    } else if (file.type === 'pdf') {
+      // Open PDF in new tab
+      window.open(file.url, '_blank');
+    } else {
+      toast({
+        title: "Preview not available",
+        description: "This file type cannot be previewed."
+      });
+    }
+  };
+
+  const handleDownloadFile = (file: ChannelFile) => {
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${file.name}...`
+    });
   };
 
   return (
@@ -592,6 +648,7 @@ export const ChannelSettingsModal = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           title="Preview"
+                          onClick={() => handlePreviewFile(file)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -600,6 +657,7 @@ export const ChannelSettingsModal = ({
                           size="sm"
                           className="h-8 w-8 p-0"
                           title="Download"
+                          onClick={() => handleDownloadFile(file)}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
