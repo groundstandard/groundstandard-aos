@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/useAuth";
 import { BackButton } from "@/components/ui/BackButton";
 import { AttendanceTracker } from "@/components/attendance/AttendanceTracker";
+import { AttendanceManagement } from "@/components/admin/AttendanceManagement";
 import { Navigate } from "react-router-dom";
 
 const Attendance = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
 
   if (loading) {
     return (
@@ -26,7 +27,11 @@ const Attendance = () => {
           <h1 className="text-3xl font-bold text-foreground">Attendance</h1>
         </div>
         
-        <AttendanceTracker />
+        {profile?.role === 'admin' ? (
+          <AttendanceManagement />
+        ) : (
+          <AttendanceTracker />
+        )}
       </div>
     </div>
   );
