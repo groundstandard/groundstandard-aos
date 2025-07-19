@@ -61,6 +61,44 @@ const Events = () => {
     createEventMutation.mutate(eventData);
   };
 
+  const registerForEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { data, error } = await supabase
+        .from('event_registrations')
+        .insert([{
+          event_id: eventId,
+          student_id: profile?.id,
+          status: 'registered',
+          payment_status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Registration successful!" });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
+    },
+    onError: (error: any) => {
+      console.error('Registration error:', error);
+      if (error.code === '23505') {
+        toast({ title: "You're already registered for this event", variant: "destructive" });
+      } else {
+        toast({ title: "Error registering for event", variant: "destructive" });
+      }
+    }
+  });
+
+  const handleRegisterForEvent = (eventId: string) => {
+    if (!profile?.id) {
+      toast({ title: "Please log in to register for events", variant: "destructive" });
+      return;
+    }
+    registerForEventMutation.mutate(eventId);
+  };
+
   const { data: upcomingEvents } = useQuery({
     queryKey: ['upcoming-events'],
     queryFn: async () => {
@@ -240,16 +278,58 @@ const Events = () => {
                           {event.participants} registered
                         </span>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                         {event.status === 'registration_open' && (
-                           <Button size="sm" onClick={() => toast({ title: "Registration successful!" })}>
-                             Register
-                           </Button>
-                         )}
-                      </div>
+                       <div className="flex gap-2">
+                         <Dialog>
+                           <DialogTrigger asChild>
+                             <Button variant="outline" size="sm">
+                               View Details
+                             </Button>
+                           </DialogTrigger>
+                           <DialogContent>
+                             <DialogHeader>
+                               <DialogTitle>{event.title}</DialogTitle>
+                               <DialogDescription>Event Details</DialogDescription>
+                             </DialogHeader>
+                             <div className="space-y-4">
+                               <div>
+                                 <p className="font-medium">Description</p>
+                                 <p className="text-sm text-muted-foreground">{event.description}</p>
+                               </div>
+                               <div className="grid grid-cols-2 gap-4 text-sm">
+                                 <div>
+                                   <p className="font-medium">Date</p>
+                                   <p className="text-muted-foreground">{new Date(event.date).toLocaleDateString()}</p>
+                                 </div>
+                                 <div>
+                                   <p className="font-medium">Time</p>
+                                   <p className="text-muted-foreground">{event.start_time} - {event.end_time}</p>
+                                 </div>
+                                 <div>
+                                   <p className="font-medium">Location</p>
+                                   <p className="text-muted-foreground">{event.location}</p>
+                                 </div>
+                                 <div>
+                                   <p className="font-medium">Type</p>
+                                   <p className="text-muted-foreground">{event.event_type}</p>
+                                 </div>
+                               </div>
+                               {event.max_participants && (
+                                 <div>
+                                   <p className="font-medium">Capacity</p>
+                                   <p className="text-sm text-muted-foreground">
+                                     {event.participants} / {event.max_participants} registered
+                                   </p>
+                                 </div>
+                               )}
+                             </div>
+                           </DialogContent>
+                         </Dialog>
+                          {(event.status === 'registration_open' || event.status === 'published') && (
+                            <Button size="sm" onClick={() => handleRegisterForEvent(event.id)}>
+                              Register
+                            </Button>
+                          )}
+                       </div>
                     </div>
                   </CardContent>
                 </Card>
