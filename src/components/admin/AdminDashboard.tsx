@@ -207,28 +207,6 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
-              <CardTitle className="text-xs font-medium">{stat.title}</CardTitle>
-              <stat.icon className={`h-3 w-3 ${stat.color}`} />
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              <div className="text-lg font-bold">{stat.value}</div>
-              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                <TrendingUp className="h-2 w-2 text-green-500" />
-                <span className="text-green-500">{stat.change}</span>
-                <span>{stat.description}</span>
-              </div>
-            </CardContent>
-            <div 
-              className={`absolute right-0 top-0 w-1 h-full ${stat.color.replace('text-', 'bg-')}`}
-            />
-          </Card>
-        ))}
-      </div>
 
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
