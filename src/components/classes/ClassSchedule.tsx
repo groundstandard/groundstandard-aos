@@ -196,9 +196,10 @@ export const ClassSchedule = () => {
                 variant={selectedDay === index ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedDay(index)}
-                className="transition-smooth"
+                className="transition-smooth min-w-0 px-3 text-xs sm:text-sm whitespace-nowrap"
               >
-                {day}
+                <span className="sm:hidden">{day.slice(0, 3)}</span>
+                <span className="hidden sm:inline">{day}</span>
               </Button>
             ))}
           </div>
@@ -254,18 +255,24 @@ export const ClassSchedule = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                          <Clock className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          {classItem.enrollment_count || 0} / {classItem.max_students} students
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                          <Users className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            {classItem.enrollment_count || 0} / {classItem.max_students}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {classItem.duration_minutes} minutes
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                          <Clock className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            {classItem.duration_minutes} min
+                          </span>
                         </div>
                       </div>
 

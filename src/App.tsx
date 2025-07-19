@@ -11,6 +11,8 @@ import Classes from "./pages/Classes";
 import Attendance from "./pages/Attendance";
 import Admin from "./pages/Admin";
 import Progress from "./pages/Progress";
+import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const AppRoutes = () => {
       <Route path="/attendance" element={user ? <Attendance /> : <Auth />} />
       <Route path="/admin" element={user ? <Admin /> : <Auth />} />
       <Route path="/progress" element={user ? <Progress /> : <Auth />} />
+      <Route path="/profile" element={user ? <Profile /> : <Auth />} />
+      <Route path="/chat" element={user ? <Chat /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

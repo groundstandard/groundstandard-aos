@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle } from "lucide-react";
+import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -49,7 +49,12 @@ const Dashboard = () => {
               <CardDescription>Manage your personal information</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">View Profile</Button>
+              <Button 
+                className="w-full" 
+                onClick={() => navigate('/profile')}
+              >
+                View Profile
+              </Button>
             </CardContent>
           </Card>
 
@@ -112,6 +117,24 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           )}
+
+          <Card 
+            className="card-minimal hover-lift cursor-pointer"
+            onClick={() => navigate('/chat')}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Academy Chat
+              </CardTitle>
+              <CardDescription>Connect with students and instructors</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}>
+                Open Chat
+              </Button>
+            </CardContent>
+          </Card>
 
           <Card className="card-minimal hover-lift">
             <CardHeader>
