@@ -21,6 +21,9 @@ import { BeltTestManagement } from "@/components/admin/BeltTestManagement";
 import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
 import { StockMovementHistory } from "@/components/admin/StockMovementHistory";
 import { ContactManagement } from "@/components/admin/ContactManagement";
+import { EnhancedPaymentManagement } from "@/components/admin/EnhancedPaymentManagement";
+import { EnhancedAnalytics } from "@/components/admin/EnhancedAnalytics";
+import { EnhancedCommunications } from "@/components/admin/EnhancedCommunications";
 import {
   Settings, 
   Users, 
@@ -83,7 +86,7 @@ const Admin = () => {
       label: "Business Operations",
       icon: DollarSign, 
       subTabs: {
-        payments: { label: "Payments", component: <PaymentManagement /> },
+        payments: { label: "Payments", component: <EnhancedPaymentManagement /> },
         invoices: { label: "Invoices", component: <InvoiceManagement /> },
         subscriptions: { label: "Subscriptions", component: <SubscriptionManagement /> },
         events: { label: "Events", component: <EventManagement /> }
@@ -95,8 +98,8 @@ const Admin = () => {
       subTabs: {
         inventory: { label: "Inventory", component: <InventoryManagement /> },
         stock_history: { label: "Stock History", component: <StockMovementHistory /> },
-        communication: { label: "Communication", component: <CommunicationCenter /> },
-        analytics: { label: "Analytics", component: <AdminAnalytics /> },
+        communication: { label: "Communication", component: <EnhancedCommunications /> },
+        analytics: { label: "Analytics", component: <EnhancedAnalytics /> },
         security: { label: "Security", component: <SecurityAudit /> },
         audit_logs: { label: "Audit Logs", component: <AuditLogViewer /> }
       }
