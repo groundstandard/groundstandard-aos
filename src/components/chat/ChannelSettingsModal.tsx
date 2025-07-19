@@ -145,7 +145,19 @@ export const ChannelSettingsModal = ({
       if (isDM && dmChannelId) {
         query = query.eq('dm_channel_id', dmChannelId);
       } else if (channel) {
-        query = query.eq('channel_id', channel.id);
+        // Look up the channel by name to get its UUID
+        const { data: channelData } = await supabase
+          .from('chat_channels')
+          .select('id')
+          .eq('name', channel.name)
+          .single();
+        
+        if (channelData) {
+          query = query.eq('channel_id', channelData.id);
+        } else {
+          setChannelFiles([]);
+          return;
+        }
       }
 
       const { data: messages, error } = await query;
