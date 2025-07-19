@@ -9,8 +9,9 @@ import { ChatSidebar } from './ChatSidebar';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { CreateChannelDialog } from './CreateChannelDialog';
+import { ChannelSettingsModal } from './ChannelSettingsModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, Hash, Lock, Crown, Users } from 'lucide-react';
+import { ArrowLeft, Hash, Lock, Crown, Users, Settings } from 'lucide-react';
 import { ChannelSetup } from './ChannelSetup';
 import { DateDivider } from './DateDivider';
 import { format, isSameDay } from 'date-fns';
@@ -97,6 +98,7 @@ export const EnhancedChatInterface = () => {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showChannelSettings, setShowChannelSettings] = useState(false);
   const [showChannels, setShowChannels] = useState(false);
   const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -728,27 +730,58 @@ export const EnhancedChatInterface = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="p-4 border-b bg-background/95 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
-                {currentChannel && getChannelIcon(currentChannel)}
-              </div>
-              
-              <div>
-                <h1 className="font-semibold">
-                  {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {currentChannel?.member_count} members • {onlineUsers.length} online
-                </p>
-              </div>
+        {/* Channel Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {activeChannel.startsWith('dm-') ? (
+                <>
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <Users className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">Direct Message</h2>
+                    <p className="text-xs text-muted-foreground">Private conversation</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center">
+                    {currentChannel?.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
+                    {currentChannel?.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
+                    <Hash className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">{currentChannel?.name}</h2>
+                    {currentChannel?.description && (
+                      <p className="text-xs text-muted-foreground">{currentChannel.description}</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {onlineUsers.length > 0 && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                {onlineUsers.length}
+              </div>
+            )}
             
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Users className="h-4 w-4" />
-            </Button>
+            {/* Channel Settings Button */}
+            {!activeChannel.startsWith('dm-') && currentChannel && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowChannelSettings(true)}
+                className="h-8 w-8 p-0"
+                title="Channel settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -839,16 +872,16 @@ export const EnhancedChatInterface = () => {
         onChannelCreated={(newChannel) => {
           setChannels(prev => [...prev, newChannel]);
           
-    // Create initial system message for channel creation
-    const systemMessage: Message = {
-      id: `system-${Date.now()}`,
-      content: `joined #${newChannel.name}.`,
-      sender_id: profile?.id || 'system',
-      sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
-      sender_role: profile?.role || 'student',
-      created_at: new Date().toISOString(),
-      is_system_message: true
-    };
+          // Create initial system message for channel creation
+          const systemMessage: Message = {
+            id: `system-${Date.now()}`,
+            content: `joined #${newChannel.name}.`,
+            sender_id: profile?.id || 'system',
+            sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
+            sender_role: profile?.role || 'student',
+            created_at: new Date().toISOString(),
+            is_system_message: true
+          };
           
           setChannelMessages(prev => ({
             ...prev,
@@ -863,6 +896,28 @@ export const EnhancedChatInterface = () => {
           });
         }}
       />
+
+      {/* Channel Settings Modal */}
+      {currentChannel && (
+        <ChannelSettingsModal
+          open={showChannelSettings}
+          onOpenChange={setShowChannelSettings}
+          channel={currentChannel}
+          onChannelUpdate={(updatedChannel) => {
+            setChannels(prev => prev.map(ch => 
+              ch.id === updatedChannel.id ? updatedChannel : ch
+            ));
+          }}
+          onChannelDelete={(channelId) => {
+            setChannels(prev => prev.filter(ch => ch.id !== channelId));
+            setActiveChannel('general');
+          }}
+          onLeaveChannel={(channelId) => {
+            setChannels(prev => prev.filter(ch => ch.id !== channelId));
+            setActiveChannel('general');
+          }}
+        />
+      )}
     </div>
   );
 };

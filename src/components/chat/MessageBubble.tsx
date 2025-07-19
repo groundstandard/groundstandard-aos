@@ -194,10 +194,10 @@ export const MessageBubble = ({
         return (
           <span 
             key={index} 
-            className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+            className={`px-2 py-1 rounded-md text-sm font-semibold ${
               isEveryone 
-                ? 'bg-purple-500/20 text-purple-700 border border-purple-200' 
-                : 'bg-blue-500/20 text-blue-700 border border-blue-200'
+                ? 'bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-700' 
+                : 'bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-700'
             }`}
           >
             @{part}
