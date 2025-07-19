@@ -913,7 +913,7 @@ export const EnhancedChatInterface = () => {
                     <ChannelSetup 
                       channel={currentChannel!} 
                       onDescriptionAdded={handleDescriptionAdded}
-                      isDM={activeChannel.startsWith('dm-')}
+                      isDM={activeChannel?.startsWith('dm-') || false}
                     />
                   ) : (
                     <div className="space-y-1">
@@ -991,10 +991,10 @@ export const EnhancedChatInterface = () => {
             open={showChannelSettings}
             onOpenChange={setShowChannelSettings}
             channel={currentChannel}
-            isDM={activeChannel.startsWith('dm-')}
-            dmChannelId={activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
+            isDM={activeChannel?.startsWith('dm-') || false}
+            dmChannelId={activeChannel?.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
             dmUserName={(() => {
-              if (activeChannel.startsWith('dm-')) {
+              if (activeChannel?.startsWith('dm-')) {
                 const userId = activeChannel.replace('dm-', '');
                 const dmUser = directMessageUsers.find(u => u.user_id === userId);
                 return dmUser?.name || 'Direct Message';
@@ -1132,7 +1132,7 @@ export const EnhancedChatInterface = () => {
             <ChannelSetup 
               channel={currentChannel!} 
               onDescriptionAdded={handleDescriptionAdded}
-              isDM={activeChannel.startsWith('dm-')}
+              isDM={activeChannel?.startsWith('dm-') || false}
             />
           ) : (
             <div className="space-y-1">
@@ -1240,10 +1240,10 @@ export const EnhancedChatInterface = () => {
         open={showChannelSettings}
         onOpenChange={setShowChannelSettings}
         channel={currentChannel}
-        isDM={activeChannel.startsWith('dm-')}
-        dmChannelId={activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
+        isDM={activeChannel?.startsWith('dm-') || false}
+        dmChannelId={activeChannel?.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
         dmUserName={(() => {
-          if (activeChannel.startsWith('dm-')) {
+          if (activeChannel?.startsWith('dm-')) {
             const userId = activeChannel.replace('dm-', '');
             const dmUser = directMessageUsers.find(u => u.user_id === userId);
             return dmUser?.name || 'Direct Message';
