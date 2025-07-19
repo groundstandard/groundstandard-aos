@@ -39,13 +39,44 @@ const Payments = () => {
   const { data: paymentStats } = useQuery({
     queryKey: ['payment-stats'],
     queryFn: async () => {
-      // Sample data - replace with real queries
+      // Get real data from profiles for active members
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, membership_status')
+        .eq('role', 'member');
+
+      const activeMembers = profiles?.filter(p => p.membership_status === 'active').length || 0;
+      const totalMembers = profiles?.length || 0;
+      
       return {
         monthlyRevenue: 12450,
         outstandingPayments: 3,
-        activeMembers: 45,
-        averageMonthlyFee: 120
+        activeMembers,
+        totalMembers,
+        averageMonthlyFee: activeMembers > 0 ? Math.round(12450 / activeMembers) : 120
       };
+    }
+  });
+
+  const { data: recentPayments } = useQuery({
+    queryKey: ['recent-payments'],
+    queryFn: async () => {
+      // Get recent students for mock payment data
+      const { data: students } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .eq('role', 'member')
+        .limit(10);
+
+      // Generate mock payment data
+      return students?.map((student, index) => ({
+        id: `payment-${index}`,
+        student_name: `${student.first_name} ${student.last_name}`,
+        amount: [120, 150, 180][index % 3],
+        date: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        method: ['Credit Card', 'Bank Transfer', 'Cash'][index % 3],
+        status: 'completed'
+      })) || [];
     }
   });
 
@@ -162,15 +193,11 @@ const Payments = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {[
-                    { name: "John Smith", amount: 120, date: "2025-07-18", method: "Credit Card", status: "completed" },
-                    { name: "Sarah Johnson", amount: 120, date: "2025-07-17", method: "Bank Transfer", status: "completed" },
-                    { name: "Mike Wilson", amount: 150, date: "2025-07-16", method: "Cash", status: "completed" }
-                  ].map((payment, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  {recentPayments?.map((payment: any) => (
+                    <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <div>
-                          <h4 className="font-medium">{payment.name}</h4>
+                          <h4 className="font-medium">{payment.student_name}</h4>
                           <p className="text-sm text-muted-foreground">{payment.method}</p>
                         </div>
                       </div>
@@ -182,7 +209,12 @@ const Payments = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) || (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No recent payments</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

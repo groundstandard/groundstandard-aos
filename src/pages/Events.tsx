@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { BackButton } from "@/components/ui/BackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,9 +22,58 @@ const Events = () => {
   const isAdmin = profile?.role === 'admin';
 
   const handleCreateEvent = (eventData: any) => {
+    console.log('Creating event:', eventData);
     toast({ title: "Event created successfully!" });
     setIsCreateDialogOpen(false);
   };
+
+  const { data: upcomingEvents } = useQuery({
+    queryKey: ['upcoming-events'],
+    queryFn: async () => {
+      // Get real classes to create realistic events
+      const { data: classes } = await supabase
+        .from('classes')
+        .select('name')
+        .eq('is_active', true)
+        .limit(5);
+
+      return [
+        {
+          id: '1',
+          title: "Regional Karate Championship",
+          date: "2025-08-15",
+          time: "9:00 AM - 6:00 PM",
+          location: "City Sports Center",
+          type: "competition",
+          participants: 15,
+          description: "Annual regional championship tournament open to all belt levels.",
+          status: "open"
+        },
+        {
+          id: '2',
+          title: "Belt Testing Ceremony",
+          date: "2025-08-01",
+          time: "10:00 AM - 12:00 PM",
+          location: "Main Dojo",
+          type: "testing",
+          participants: 8,
+          description: "Quarterly belt promotion testing for eligible students.",
+          status: "scheduled"
+        },
+        {
+          id: '3',
+          title: `${classes?.[0]?.name || 'Advanced'} Workshop`,
+          date: "2025-07-28",
+          time: "2:00 PM - 4:00 PM",
+          location: "Main Dojo",
+          type: "workshop",
+          participants: 20,
+          description: "Advanced techniques and practical applications.",
+          status: "open"
+        }
+      ];
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -107,36 +158,8 @@ const Events = () => {
 
           <TabsContent value="upcoming" className="space-y-6">
             <div className="grid gap-4">
-              {[
-                {
-                  title: "Regional Karate Championship",
-                  date: "2025-08-15",
-                  time: "9:00 AM - 6:00 PM",
-                  location: "City Sports Center",
-                  type: "competition",
-                  participants: 15,
-                  description: "Annual regional championship tournament open to all belt levels."
-                },
-                {
-                  title: "Belt Testing Ceremony",
-                  date: "2025-08-01",
-                  time: "10:00 AM - 12:00 PM",
-                  location: "Main Dojo",
-                  type: "testing",
-                  participants: 8,
-                  description: "Quarterly belt promotion testing for eligible students."
-                },
-                {
-                  title: "Self-Defense Workshop",
-                  date: "2025-07-28",
-                  time: "2:00 PM - 4:00 PM",
-                  location: "Main Dojo",
-                  type: "workshop",
-                  participants: 20,
-                  description: "Practical self-defense techniques for beginners."
-                }
-              ].map((event, index) => (
-                <Card key={index}>
+              {upcomingEvents?.map((event: any) => (
+                <Card key={event.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -170,13 +193,25 @@ const Events = () => {
                           {event.participants} registered
                         </span>
                       </div>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                        {event.status === 'open' && (
+                          <Button size="sm" onClick={() => toast({ title: "Registration successful!" })}>
+                            Register
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) || (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No upcoming events</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

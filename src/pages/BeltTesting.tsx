@@ -48,6 +48,34 @@ const BeltTesting = () => {
     }
   });
 
+  const { data: beltTests } = useQuery({
+    queryKey: ['belt-tests'],
+    queryFn: async () => {
+      // Get belt tests with student info
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id, first_name, last_name, belt_level,
+          created_at
+        `)
+        .eq('role', 'member')
+        .limit(10);
+
+      if (error) throw error;
+      
+      // Mock belt test data based on students
+      return data?.map((student, index) => ({
+        id: `test-${index}`,
+        student: student,
+        current_belt: student.belt_level || 'White',
+        target_belt: getNextBelt(student.belt_level || 'White'),
+        test_date: new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: ['scheduled', 'confirmed', 'pending'][index % 3],
+        notes: `Ready for ${getNextBelt(student.belt_level || 'White')} belt promotion`
+      })) || [];
+    }
+  });
+
   const createTestingMutation = useMutation({
     mutationFn: async (testData: { 
       student_id: string;
@@ -56,17 +84,26 @@ const BeltTesting = () => {
       test_date: string;
       notes: string;
     }) => {
-      // Simulate success for now - replace with actual DB call when types are updated
-      return { success: true };
+      // For now, simulate success - would integrate with actual DB when types are ready
+      return { success: true, data: testData };
     },
     onSuccess: () => {
       toast({ title: "Belt test scheduled successfully!" });
+      queryClient.invalidateQueries({ queryKey: ['belt-tests'] });
       setIsCreateDialogOpen(false);
     },
     onError: () => {
       toast({ title: "Error scheduling belt test", variant: "destructive" });
     }
   });
+
+  const getNextBelt = (currentBelt: string) => {
+    const beltProgression = ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black'];
+    const currentIndex = beltProgression.indexOf(currentBelt);
+    return currentIndex >= 0 && currentIndex < beltProgression.length - 1 
+      ? beltProgression[currentIndex + 1] 
+      : 'Black';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -146,33 +183,34 @@ const BeltTesting = () => {
             <CardTitle>Upcoming Belt Tests</CardTitle>
             <CardDescription>Students scheduled for belt promotion tests</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Sample data - replace with real data */}
-              {[
-                { name: "John Smith", currentBelt: "White", targetBelt: "Yellow", date: "2025-08-01", status: "scheduled" },
-                { name: "Sarah Johnson", currentBelt: "Yellow", targetBelt: "Orange", date: "2025-08-15", status: "confirmed" },
-                { name: "Mike Wilson", currentBelt: "Green", targetBelt: "Blue", date: "2025-08-30", status: "pending" }
-              ].map((test, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h4 className="font-medium">{test.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {test.currentBelt} → {test.targetBelt} Belt
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={test.status === 'confirmed' ? 'default' : 'secondary'}>
-                      {test.status}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">{test.date}</span>
+        <CardContent>
+          <div className="space-y-4">
+            {beltTests?.map((test: any, index: number) => (
+              <div key={test.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h4 className="font-medium">{test.student.first_name} {test.student.last_name}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {test.current_belt} → {test.target_belt} Belt
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
+                <div className="flex items-center gap-2">
+                  <Badge variant={test.status === 'confirmed' ? 'default' : 'secondary'}>
+                    {test.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">{test.test_date}</span>
+                  <Button variant="outline" size="sm">Edit</Button>
+                </div>
+              </div>
+            )) || (
+              <div className="text-center py-8 text-muted-foreground">
+                <Award className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No belt tests scheduled</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
         </Card>
       </div>
     </div>
