@@ -42,7 +42,7 @@ const BeltTesting = () => {
       const { data } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'member')
+        .eq('role', 'student')
         .eq('membership_status', 'active');
       return data || [];
     }
@@ -51,28 +51,35 @@ const BeltTesting = () => {
   const { data: beltTests } = useQuery({
     queryKey: ['belt-tests'],
     queryFn: async () => {
-      // Get belt tests with student info
       const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, first_name, last_name, belt_level,
-          created_at
-        `)
-        .eq('role', 'member')
-        .limit(10);
+        .from('belt_tests')
+        .select('*')
+        .order('test_date', { ascending: true });
 
       if (error) throw error;
       
-      // Mock belt test data based on students
-      return data?.map((student, index) => ({
-        id: `test-${index}`,
-        student: student,
-        current_belt: student.belt_level || 'White',
-        target_belt: getNextBelt(student.belt_level || 'White'),
-        test_date: new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: ['scheduled', 'confirmed', 'pending'][index % 3],
-        notes: `Ready for ${getNextBelt(student.belt_level || 'White')} belt promotion`
-      })) || [];
+      // Fetch profile data for each belt test
+      const testsWithProfiles = await Promise.all(
+        (data || []).map(async (test) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, belt_level')
+            .eq('id', test.student_id)
+            .single();
+          
+          return {
+            id: test.id,
+            student: profile || { first_name: 'Unknown', last_name: 'Student', belt_level: 'White' },
+            current_belt: test.current_belt,
+            target_belt: test.target_belt,
+            test_date: test.test_date,
+            status: test.status,
+            notes: test.notes || `Testing for ${test.target_belt} belt promotion`
+          };
+        })
+      );
+
+      return testsWithProfiles;
     }
   });
 
@@ -84,15 +91,29 @@ const BeltTesting = () => {
       test_date: string;
       notes: string;
     }) => {
-      // For now, simulate success - would integrate with actual DB when types are ready
-      return { success: true, data: testData };
+      const { data, error } = await supabase
+        .from('belt_tests')
+        .insert([{
+          student_id: testData.student_id,
+          current_belt: testData.current_belt,
+          target_belt: testData.target_belt,
+          test_date: testData.test_date,
+          status: 'scheduled',
+          notes: testData.notes
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast({ title: "Belt test scheduled successfully!" });
       queryClient.invalidateQueries({ queryKey: ['belt-tests'] });
       setIsCreateDialogOpen(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Belt test creation error:', error);
       toast({ title: "Error scheduling belt test", variant: "destructive" });
     }
   });
@@ -128,19 +149,19 @@ const BeltTesting = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">This month</p>
+              <div className="text-2xl font-bold">{beltTests?.filter(test => test.status === 'scheduled').length || 0}</div>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Students Ready</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">7</div>
-              <p className="text-xs text-muted-foreground">For promotion</p>
+              <div className="text-2xl font-bold">{beltTests?.length || 0}</div>
+              <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
 
@@ -150,8 +171,12 @@ const BeltTesting = () => {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">94%</div>
-              <p className="text-xs text-muted-foreground">Last 6 months</p>
+              <div className="text-2xl font-bold">
+                {beltTests && beltTests.length > 0 
+                  ? Math.round((beltTests.filter(test => test.status === 'completed').length / beltTests.length) * 100)
+                  : 0}%
+              </div>
+              <p className="text-xs text-muted-foreground">Completion rate</p>
             </CardContent>
           </Card>
         </div>
