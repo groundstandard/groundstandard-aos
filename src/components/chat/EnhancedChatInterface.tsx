@@ -27,6 +27,7 @@ interface Message {
   attachments?: Array<{ url: string; type: string; name: string }>;
   parent_message_id?: string;
   is_system_message?: boolean;
+  mentioned_users?: string[];
 }
 
 // Utility function to parse attachments from message content
@@ -279,7 +280,7 @@ export const EnhancedChatInterface = () => {
     setShouldAutoScroll(true);
   }, [activeChannel]);
 
-  const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>) => {
+  const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>, mentionedUsers?: string[]) => {
     if (!newMessage.trim() && (!attachments || attachments.length === 0)) return;
     if (!profile) return;
 
@@ -308,7 +309,8 @@ export const EnhancedChatInterface = () => {
         sender_role: profile.role,
         created_at: new Date().toISOString(),
         parent_message_id: replyingTo || undefined,
-        attachments: attachments && attachments.length > 0 ? attachments : undefined
+        attachments: attachments && attachments.length > 0 ? attachments : undefined,
+        mentioned_users: mentionedUsers || []
       };
 
       setChannelMessages(prev => ({

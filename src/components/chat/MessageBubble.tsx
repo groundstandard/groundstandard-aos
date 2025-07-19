@@ -18,6 +18,7 @@ interface Message {
   attachments?: Array<{ url: string; type: string; name: string }>;
   parent_message_id?: string;
   is_system_message?: boolean;
+  mentioned_users?: string[];
 }
 
 interface MessageBubbleProps {
@@ -181,6 +182,32 @@ export const MessageBubble = ({
     }
   };
 
+  const renderMessageWithMentions = (content: string) => {
+    // Replace @mentions with highlighted spans
+    const mentionRegex = /@(\w+)/g;
+    const parts = content.split(mentionRegex);
+    
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        // This is a mention (the captured group)
+        const isEveryone = part.toLowerCase() === 'everyone';
+        return (
+          <span 
+            key={index} 
+            className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+              isEveryone 
+                ? 'bg-purple-500/20 text-purple-700 border border-purple-200' 
+                : 'bg-blue-500/20 text-blue-700 border border-blue-200'
+            }`}
+          >
+            @{part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   // System message rendering
   if (message.is_system_message) {
     return (
@@ -248,7 +275,9 @@ export const MessageBubble = ({
               </div>
             )}
             
-            <p className="text-sm leading-relaxed">{message.content}</p>
+            <p className="text-sm leading-relaxed">
+              {renderMessageWithMentions(message.content)}
+            </p>
             
             {/* Attachments */}
             {message.attachments && message.attachments.length > 0 && (

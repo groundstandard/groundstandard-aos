@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,11 +15,13 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { MentionSearch } from './MentionSearch';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MessageInputProps {
   newMessage: string;
   onNewMessageChange: (value: string) => void;
-  onSendMessage: (attachments?: Array<{url: string; type: string; name: string}>) => void;
+  onSendMessage: (attachments?: Array<{url: string; type: string; name: string}>, mentionedUsers?: string[]) => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   channelName?: string;
   disabled?: boolean;
@@ -37,13 +39,19 @@ export const MessageInput = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [showMentionSearch, setShowMentionSearch] = useState(false);
+  const [mentionSearchQuery, setMentionSearchQuery] = useState('');
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  const { profile } = useAuth();
 
   const handleFileSelect = async (files: FileList | null, type: 'file' | 'image' | 'video') => {
     if (!files) return;
@@ -113,10 +121,13 @@ export const MessageInput = ({
       setAttachments([]);
       
       // Send message with attachments
-      onSendMessage(successfulAttachments);
+      onSendMessage(successfulAttachments, mentionedUsers);
     } else {
-      onSendMessage();
+      onSendMessage(undefined, mentionedUsers);
     }
+    
+    // Clear mentioned users after sending
+    setMentionedUsers([]);
   };
 
   const startRecording = async () => {
@@ -181,6 +192,80 @@ export const MessageInput = ({
 
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleInputChange = (value: string) => {
+    onNewMessageChange(value);
+    
+    // Check for @ mentions
+    const cursorPosition = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtSymbol !== -1 && lastAtSymbol === cursorPosition - 1) {
+      // User just typed @, show mention search
+      const rect = textareaRef.current?.getBoundingClientRect();
+      if (rect) {
+        setMentionPosition({
+          top: rect.top - 200,
+          left: rect.left
+        });
+      }
+      setMentionSearchQuery('');
+      setShowMentionSearch(true);
+    } else if (lastAtSymbol !== -1) {
+      // Check if we're still in a mention context
+      const textAfterAt = textBeforeCursor.slice(lastAtSymbol + 1);
+      const hasSpace = textAfterAt.includes(' ');
+      
+      if (!hasSpace && textAfterAt.length > 0) {
+        setMentionSearchQuery(textAfterAt);
+        setShowMentionSearch(true);
+      } else if (hasSpace || textAfterAt.length === 0) {
+        setShowMentionSearch(false);
+      }
+    } else {
+      setShowMentionSearch(false);
+    }
+  };
+
+  const handleUserSelect = (user: any) => {
+    const cursorPosition = textareaRef.current?.selectionStart || 0;
+    const textBeforeCursor = newMessage.slice(0, cursorPosition);
+    const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtSymbol !== -1) {
+      const textBeforeAt = newMessage.slice(0, lastAtSymbol);
+      const textAfterCursor = newMessage.slice(cursorPosition);
+      const newText = `${textBeforeAt}${user.profileName} ${textAfterCursor}`;
+      
+      onNewMessageChange(newText);
+      
+      // Add user to mentioned users list
+      if (user.id === 'everyone') {
+        setMentionedUsers(prev => [...prev, 'everyone']);
+      } else {
+        setMentionedUsers(prev => [...prev, user.id]);
+      }
+    }
+    
+    setShowMentionSearch(false);
+    setMentionSearchQuery('');
+    
+    // Focus back to input
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (showMentionSearch && (e.key === 'Escape' || e.key === ' ')) {
+      setShowMentionSearch(false);
+      return;
+    }
+    
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendWithAttachments();
+    }
   };
 
   const emojis = ['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '🔥', '💪', '🥋'];
@@ -348,10 +433,11 @@ export const MessageInput = ({
         {/* Message Input */}
         <div className="flex-1 relative">
           <Textarea
+            ref={textareaRef}
             placeholder={`Message ${channelName}...`}
             value={newMessage}
-            onChange={(e) => onNewMessageChange(e.target.value)}
-            onKeyPress={onKeyPress}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             disabled={disabled}
             className="pr-20 resize-none min-h-[2.5rem] max-h-32 rounded-2xl border-0 bg-muted/50"
             rows={1}
@@ -405,6 +491,16 @@ export const MessageInput = ({
           <Send className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Mention Search Popup */}
+      {showMentionSearch && (
+        <MentionSearch
+          searchQuery={mentionSearchQuery}
+          onSelectUser={handleUserSelect}
+          currentUserRole={profile?.role || 'student'}
+          position={mentionPosition}
+        />
+      )}
 
       {/* Hidden File Inputs */}
       <input
