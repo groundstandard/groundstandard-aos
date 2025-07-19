@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Search, MessageCircle } from 'lucide-react';
 
 interface User {
@@ -17,7 +18,7 @@ interface User {
 interface StartDMModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStartDM: (userId: string) => void;
+  onStartDM: (userId: string, userInfo?: { name: string; role: string }) => void;
 }
 
 export const StartDMModal = ({ open, onOpenChange, onStartDM }: StartDMModalProps) => {
@@ -25,26 +26,49 @@ export const StartDMModal = ({ open, onOpenChange, onStartDM }: StartDMModalProp
   const [users, setUsers] = useState<User[]>([]);
   const { profile } = useAuth();
 
-  // Mock users for demo - in real app, fetch from Supabase
+  // Fetch users from Supabase
   useEffect(() => {
-    const mockUsers: User[] = [
-      { id: 'user1', name: 'Alex Chen', role: 'student', online: true },
-      { id: 'user2', name: 'Sarah Johnson', role: 'instructor', online: false },
-      { id: 'user3', name: 'Mike Rodriguez', role: 'student', online: true },
-      { id: 'user4', name: 'Emma Davis', role: 'admin', online: true },
-      { id: 'user5', name: 'Tom Wilson', role: 'student', online: false },
-      { id: 'user6', name: 'Lisa Anderson', role: 'instructor', online: true },
-    ].filter(user => user.id !== profile?.id); // Don't show current user
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, role')
+          .neq('id', profile?.id); // Don't show current user
 
-    setUsers(mockUsers);
-  }, [profile]);
+        if (error) {
+          console.error('Error fetching users:', error);
+          return;
+        }
+
+        const fetchedUsers: User[] = data.map(user => ({
+          id: user.id,
+          name: `${user.first_name} ${user.last_name}`.trim(),
+          role: user.role,
+          online: Math.random() > 0.5 // Random online status for demo
+        }));
+
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    };
+
+    if (open && profile?.id) {
+      fetchUsers();
+    }
+  }, [open, profile]);
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleStartDM = (userId: string) => {
-    onStartDM(userId);
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      onStartDM(userId, { name: user.name, role: user.role });
+    } else {
+      onStartDM(userId);
+    }
     onOpenChange(false);
     setSearchQuery('');
   };

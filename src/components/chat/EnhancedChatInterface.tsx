@@ -103,6 +103,7 @@ export const EnhancedChatInterface = () => {
   const [showStartDM, setShowStartDM] = useState(false);
   const [showChannels, setShowChannels] = useState(false);
   const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
+  const [dmUserMap, setDmUserMap] = useState<{ [userId: string]: { name: string; role: string } }>({});
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -449,12 +450,32 @@ export const EnhancedChatInterface = () => {
     }
   };
 
-  const handleDirectMessageSelect = (userId: string) => {
+  const handleDirectMessageSelect = (userId: string, userInfo?: { name: string; role: string }) => {
     // Create or switch to a direct message channel with this user
     const dmChannelId = `dm-${userId}`;
     setActiveChannel(dmChannelId);
     setReplyingTo(null);
     setEditingMessageId(null);
+    
+    // Update dmUserMap with user information
+    if (userInfo) {
+      setDmUserMap(prev => ({
+        ...prev,
+        [userId]: userInfo
+      }));
+    }
+    
+    // Add this user to DM users list if not already there
+    const existingDMUser = directMessageUsers.find(u => u.user_id === userId);
+    if (!existingDMUser) {
+      const mockUser: UserPresence = {
+        user_id: userId,
+        name: userInfo?.name || dmUserMap[userId]?.name || `User ${userId.slice(-4)}`,
+        online_at: new Date().toISOString(),
+        status: 'online'
+      };
+      setDirectMessageUsers(prev => [...prev, mockUser]);
+    }
     
     // Initialize DM channel if it doesn't exist
     if (!channelMessages[dmChannelId]) {
@@ -810,10 +831,18 @@ export const EnhancedChatInterface = () => {
                   <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
                     <Users className="h-4 w-4 text-white" />
                   </div>
-                  <div>
-                    <h2 className="font-semibold">Direct Message</h2>
-                    <p className="text-xs text-muted-foreground">Private conversation</p>
-                  </div>
+                   <div>
+                     {(() => {
+                       const userId = activeChannel.replace('dm-', '');
+                       const dmUser = directMessageUsers.find(u => u.user_id === userId);
+                       return (
+                         <>
+                           <h2 className="font-semibold">{dmUser?.name || 'Direct Message'}</h2>
+                           <p className="text-xs text-muted-foreground">Private conversation</p>
+                         </>
+                       );
+                     })()}
+                   </div>
                 </>
               ) : (
                 <>
