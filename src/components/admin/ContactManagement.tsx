@@ -18,8 +18,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, UserCheck, UserMinus, GraduationCap, Edit2, Trash2, Plus, Download, Mail } from "lucide-react";
+import { Search, Users, UserCheck, UserMinus, GraduationCap, Edit2, Trash2, Plus, Download, Mail, History, CreditCard, Eye, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+interface AttendanceRecord {
+  id: string;
+  date: string;
+  status: string;
+  notes: string | null;
+  class_id: string;
+  created_at: string;
+}
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval_type: string;
+  description: string | null;
+}
 
 interface Contact {
   id: string;
@@ -48,10 +65,32 @@ export const ContactManagement = () => {
     belt_level: "",
     membership_status: "active"
   });
+  const [viewingContact, setViewingContact] = useState<Contact | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
+  const [isAddMembershipOpen, setIsAddMembershipOpen] = useState(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
   useEffect(() => {
     fetchContacts();
+    fetchSubscriptionPlans();
   }, []);
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true);
+
+      if (error) throw error;
+      setSubscriptionPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+    }
+  };
 
   const fetchContacts = async () => {
     try {
@@ -299,6 +338,75 @@ export const ContactManagement = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleViewContact = async (contact: Contact) => {
+    setViewingContact(contact);
+    setIsViewDialogOpen(true);
+    await fetchAttendanceHistory(contact.id);
+  };
+
+  const fetchAttendanceHistory = async (studentId: string) => {
+    setLoadingAttendance(true);
+    try {
+      const { data, error } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('date', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setAttendanceHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching attendance history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load attendance history",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  const handleAddMembership = async () => {
+    if (!viewingContact || !selectedPlan) return;
+
+    try {
+      const plan = subscriptionPlans.find(p => p.id === selectedPlan);
+      if (!plan) return;
+
+      // Format the subscription end date as ISO string
+      const subscriptionEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await supabase
+        .from('subscribers')
+        .insert({
+          email: viewingContact.email,
+          subscribed: true,
+          subscription_tier: plan.name,
+          subscription_end: subscriptionEndDate
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Membership added successfully",
+      });
+
+      setIsAddMembershipOpen(false);
+      setSelectedPlan("");
+      fetchContacts(); // Refresh the contact list
+    } catch (error) {
+      console.error('Error adding membership:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add membership",
+        variant: "destructive",
+      });
+    }
+  };
+
   const ContactTable = ({ contacts }: { contacts: Contact[] }) => {
     const contactIds = contacts.map(c => c.id);
     const allSelected = contactIds.length > 0 && contactIds.every(id => selectedContacts.has(id));
@@ -366,7 +474,7 @@ export const ContactManagement = () => {
               <TableHead>Belt Level</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Joined</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead className="w-32">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -391,13 +499,22 @@ export const ContactManagement = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => handleViewContact(contact)}
+                      title="View Details & Attendance"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEditContact(contact)}
+                      title="Edit Contact"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="Delete Contact">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -626,6 +743,156 @@ export const ContactManagement = () => {
             <Button onClick={handleSaveContact}>
               Save Changes
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Contact Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Contact Details - {viewingContact?.first_name} {viewingContact?.last_name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingContact && (
+            <div className="space-y-6">
+              {/* Contact Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Name</Label>
+                    <p>{viewingContact.first_name} {viewingContact.last_name}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Email</Label>
+                    <p>{viewingContact.email}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Phone</Label>
+                    <p>{viewingContact.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Belt Level</Label>
+                    <p>{viewingContact.belt_level || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Status</Label>
+                    <div>{getStatusBadge(viewingContact.membership_status)}</div>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Member Since</Label>
+                    <p>{new Date(viewingContact.created_at).toLocaleDateString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Membership Management */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Membership Management
+                    </CardTitle>
+                    <Button onClick={() => setIsAddMembershipOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Membership
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Current Status: {getStatusBadge(viewingContact.membership_status)}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Attendance History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Recent Attendance History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loadingAttendance ? (
+                    <div className="text-center py-4">Loading attendance history...</div>
+                  ) : attendanceHistory.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {attendanceHistory.map((record) => (
+                          <TableRow key={record.id}>
+                            <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <Badge variant={record.status === 'present' ? 'default' : 'secondary'}>
+                                {record.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{record.notes || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No attendance records found</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Membership Dialog */}
+      <Dialog open={isAddMembershipOpen} onOpenChange={setIsAddMembershipOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Membership</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Select Subscription Plan</Label>
+              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} - ${plan.price}/{plan.interval_type}
+                      {plan.description && ` - ${plan.description}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddMembershipOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddMembership} disabled={!selectedPlan}>
+                Add Membership
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
