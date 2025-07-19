@@ -22,6 +22,7 @@ import Events from "./pages/Events";
 import Subscription from "./pages/Subscription";
 import Contacts from "./pages/Contacts";
 import ContactTable from "./pages/ContactTable";
+import Automations from "./pages/Automations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const AppRoutes = () => {
       <Route path="/subscription" element={user ? <Subscription /> : <Auth />} />
       <Route path="/contacts" element={user ? <Contacts /> : <Auth />} />
       <Route path="/contacts/table" element={user ? <ContactTable /> : <Auth />} />
+      <Route path="/automations" element={user ? <Automations /> : <Auth />} />
       <Route path="/events" element={user ? <Events /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />

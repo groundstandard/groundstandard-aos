@@ -408,6 +408,16 @@ const Admin = () => {
                 <BarChart3 className="h-4 w-4" />
                 <span className="text-xs">Generate Report</span>
               </Button>
+
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/automations')}
+                className="h-16 flex-col space-y-1 p-3"
+                size="sm"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-xs">Automations</span>
+              </Button>
             </div>
           </CardContent>
         </Card>
