@@ -308,24 +308,14 @@ export const ChannelSettingsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0 fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0">
         <DialogHeader className="p-6 pb-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <div className="flex items-center">
-                {channel.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
-                {channel.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
-                <Hash className="h-5 w-5 text-muted-foreground" />
-              </div>
-              {channel.name}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="flex items-center">
+              {channel.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
+              {channel.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
+              <Hash className="h-5 w-5 text-muted-foreground" />
+            </div>
+            {channel.name}
+          </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
