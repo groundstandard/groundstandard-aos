@@ -2,10 +2,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Calendar, CreditCard, BarChart3 } from "lucide-react";
+import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
 
   if (!user || !profile) {
     return <div>Loading...</div>;
@@ -51,7 +53,10 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-elegant transition-shadow">
+          <Card 
+            className="hover:shadow-elegant transition-shadow cursor-pointer"
+            onClick={() => navigate('/classes')}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
@@ -62,11 +67,31 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
+              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/classes'); }}>
                 {isAdmin ? "Manage Classes" : "View Classes"}
               </Button>
             </CardContent>
           </Card>
+
+          {!isAdmin && (
+            <Card 
+              className="hover:shadow-elegant transition-shadow cursor-pointer"
+              onClick={() => navigate('/attendance')}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Attendance
+                </CardTitle>
+                <CardDescription>Track your class attendance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/attendance'); }}>
+                  View Attendance
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="hover:shadow-elegant transition-shadow">
             <CardHeader>
