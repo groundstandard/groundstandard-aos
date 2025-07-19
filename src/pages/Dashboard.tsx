@@ -10,6 +10,7 @@ import {
   FileText, Award, DollarSign
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -22,6 +23,82 @@ const Dashboard = () => {
   }
 
   const isAdmin = profile?.role === 'admin' && currentView === 'admin';
+
+  // Show Admin Dashboard for admin users
+  if (isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle">
+        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+          {/* View Toggle for Admins */}
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <ViewToggle />
+          </div>
+
+          {/* Quick Navigation Actions */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Quick Navigation</CardTitle>
+              <CardDescription>Access key admin functions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/classes')}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Classes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/chat')}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Academy Chat
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/payments')}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Payments
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/reports')}
+                >
+                  <FileText className="h-4 w-4" />
+                  Reports
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/belt-testing')}
+                >
+                  <Award className="h-4 w-4" />
+                  Belt Testing
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center text-xs gap-1"
+                  onClick={() => navigate('/events')}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Events
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <AdminDashboard />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
