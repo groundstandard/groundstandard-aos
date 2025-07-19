@@ -103,7 +103,7 @@ export const EnhancedChatInterface = () => {
   const [showStartDM, setShowStartDM] = useState(false);
   const [showChannels, setShowChannels] = useState(false);
   const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -262,42 +262,58 @@ export const EnhancedChatInterface = () => {
     };
   }, [activeChannel, profile]);
 
-  // Force scroll to bottom when new messages are added
+  // More aggressive scroll to bottom approach
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        container.scrollTop = container.scrollHeight;
-        console.log('Force scrolled to:', container.scrollTop, 'total height:', container.scrollHeight);
-      }
-    };
-
-    // Use requestAnimationFrame to ensure DOM is fully updated
-    requestAnimationFrame(() => {
+    if (shouldScrollToBottom && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      
+      // Use multiple strategies to ensure scroll happens
+      const scrollToBottom = () => {
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        
+        console.log('Scrolling - scrollHeight:', scrollHeight, 'clientHeight:', clientHeight, 'maxScrollTop:', maxScrollTop);
+        
+        container.scrollTop = maxScrollTop;
+        
+        // Double-check and force if needed
+        setTimeout(() => {
+          if (container.scrollTop < maxScrollTop - 10) {
+            container.scrollTop = maxScrollTop;
+            console.log('Force corrected scroll to:', container.scrollTop);
+          }
+        }, 100);
+      };
+      
+      // Try multiple times with increasing delays
       scrollToBottom();
-    });
-  }, [channelMessages[activeChannel]?.length]); // Trigger when message count changes
+      setTimeout(scrollToBottom, 50);
+      setTimeout(scrollToBottom, 150);
+      
+      setShouldScrollToBottom(false);
+    }
+  }, [shouldScrollToBottom]);
 
   // Check if user is near bottom when they scroll
   const handleScroll = () => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-      // More generous threshold for auto-scroll detection
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
-      setShouldAutoScroll(isNearBottom);
+      // Don't use shouldAutoScroll state anymore, just track if user is near bottom
     }
   };
 
-  // Reset auto-scroll when switching channels
+  // Always scroll to bottom when switching channels
   useEffect(() => {
-    setShouldAutoScroll(true);
+    setShouldScrollToBottom(true);
   }, [activeChannel]);
 
   const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>, mentionedUsers?: string[]) => {
     if (!newMessage.trim() && (!attachments || attachments.length === 0)) return;
     if (!profile) return;
 
-    console.log('Sending message, current shouldAutoScroll:', shouldAutoScroll);
+    console.log('Sending message');
 
     if (editingMessageId) {
       // Update existing message
@@ -338,6 +354,9 @@ export const EnhancedChatInterface = () => {
       // Clear the input immediately
       setNewMessage('');
       setReplyingTo(null);
+      
+      // Trigger scroll to bottom after message is added
+      setShouldScrollToBottom(true);
 
       // If this is a reply, auto-expand the thread to show the new message
       if (replyingTo) {
@@ -677,7 +696,7 @@ export const EnhancedChatInterface = () => {
                          />
                        );
                     })}
-                    <div ref={messagesEndRef} className="h-4" />
+                    <div ref={messagesEndRef} className="h-4" id="messages-end" />
                   </div>
                 )}
               </div>
@@ -847,7 +866,7 @@ export const EnhancedChatInterface = () => {
                   />
                 );
               })}
-              <div ref={messagesEndRef} className="h-4" />
+              <div ref={messagesEndRef} className="h-4" id="messages-end" />
             </div>
           )}
         </div>
