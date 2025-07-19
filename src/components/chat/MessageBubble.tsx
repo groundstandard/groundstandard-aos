@@ -145,11 +145,26 @@ export const MessageBubble = ({
       );
     } else if (attachment.type.startsWith('audio/')) {
       return (
-        <audio 
-          src={attachment.url}
-          controls
-          className="max-w-xs"
-        />
+        <div className="flex items-center gap-3 bg-muted/30 rounded-2xl px-4 py-3 min-w-48 max-w-64">
+          <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-primary-foreground" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 mb-1">
+              {/* Waveform visualization */}
+              {[1, 0.3, 0.8, 0.6, 1, 0.4, 0.9, 0.7, 0.5, 0.8, 0.3, 0.6].map((height, i) => (
+                <div 
+                  key={i} 
+                  className="w-1 bg-muted-foreground rounded-full transition-all duration-200" 
+                  style={{ height: `${height * 16}px` }}
+                />
+              ))}
+            </div>
+            <div className="text-xs text-muted-foreground">0:02</div>
+          </div>
+        </div>
       );
     } else {
       return (

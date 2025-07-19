@@ -167,10 +167,7 @@ export const MessageInput = ({
         });
       }, 1000);
       
-      toast({
-        title: "Recording started",
-        description: "Tap the mic again to stop (max 5 minutes)"
-      });
+      // Don't show toast when recording starts to avoid UI clutter
       
     } catch (error) {
       toast({
@@ -244,9 +241,25 @@ export const MessageInput = ({
                     </Button>
                   </div>
                 ) : file.type.startsWith('audio/') ? (
-                  <div className="relative flex items-center gap-2 bg-background rounded-lg px-3 py-2 border min-w-32">
-                    <Mic className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-medium">Voice Message</span>
+                  <div className="relative flex items-center gap-3 bg-background rounded-2xl px-4 py-3 border min-w-48 max-w-64">
+                    <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-primary-foreground" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 mb-1">
+                        {/* Waveform visualization */}
+                        {[1, 0.3, 0.8, 0.6, 1, 0.4, 0.9, 0.7, 0.5, 0.8, 0.3, 0.6].map((height, i) => (
+                          <div 
+                            key={i} 
+                            className="w-1 bg-muted-foreground rounded-full transition-all duration-200" 
+                            style={{ height: `${height * 16}px` }}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-xs text-muted-foreground">0:02</div>
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -355,11 +368,13 @@ export const MessageInput = ({
             rows={1}
           />
           
-      {/* Recording Timer */}
+          {/* Recording Status */}
           {isRecording && (
-            <div className="absolute top-1 left-3 flex items-center gap-1 text-xs text-red-500">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 5:00
+            <div className="absolute inset-x-0 -top-8 flex items-center justify-center">
+              <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                Recording {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 5:00
+              </div>
             </div>
           )}
           
