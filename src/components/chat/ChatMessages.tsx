@@ -97,33 +97,33 @@ export const ChatMessages = ({
   };
 
   return (
-    <Card className={`card-minimal shadow-elegant flex flex-col ${className}`}>
+    <Card className={`card-minimal shadow-elegant flex flex-col h-full ${className}`}>
       {/* Channel Header */}
-      <CardHeader className="pb-3 border-b">
+      <CardHeader className="pb-3 border-b shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {isMobile && onBackToChannels && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onBackToChannels}
-                className="h-8 w-8 p-0 lg:hidden"
+                className="h-8 w-8 p-0 lg:hidden shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
             {currentChannel && getChannelIcon(currentChannel)}
-            <div>
-              <CardTitle className="text-lg">
+            <div className="min-w-0">
+              <CardTitle className="text-lg truncate">
                 {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground truncate">
                 {currentChannel?.description} • {currentChannel?.member_count} members
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <Settings className="h-4 w-4" />
             </Button>
@@ -135,7 +135,7 @@ export const ChatMessages = ({
       </CardHeader>
       
       {/* Messages Area */}
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((message, index) => {
           const prevMessage = messages[index - 1];
           const showAvatar = !prevMessage || prevMessage.sender_id !== message.sender_id;
@@ -222,7 +222,7 @@ export const ChatMessages = ({
       </CardContent>
 
       {/* Message Input */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t shrink-0">
         <div className="flex gap-2">
           <Input
             placeholder={`Message #${currentChannel?.name}`}

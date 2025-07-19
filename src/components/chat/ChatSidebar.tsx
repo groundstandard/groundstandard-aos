@@ -81,19 +81,19 @@ export const ChatSidebar = ({
   );
 
   return (
-    <Card className={`card-minimal shadow-soft flex flex-col ${className}`}>
-      <CardHeader className="pb-3 border-b">
+    <Card className={`card-minimal shadow-soft flex flex-col h-full ${className}`}>
+      <CardHeader className="pb-3 border-b shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            Academy Chat
+            <span className="truncate">Academy Chat</span>
           </CardTitle>
           {profile?.role === 'admin' && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onCreateChannel}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 shrink-0"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -112,7 +112,7 @@ export const ChatSidebar = ({
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 overflow-y-auto p-0">
+      <CardContent className="flex-1 overflow-y-auto p-0 min-h-0">
         <div className="space-y-1 p-2">
           {/* Public Channels */}
           <div className="px-2 py-1">

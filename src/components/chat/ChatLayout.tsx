@@ -81,27 +81,41 @@ export const ChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-12rem)]">
-        {showChannels ? (
-          <ChatSidebar
-            channels={channels}
-            activeChannel={activeChannel}
-            onChannelSelect={handleChannelSelect}
-            onCreateChannel={handleCreateChannel}
-            className="h-full"
-          />
-        ) : (
-          <ChatMessages
-            messages={messages}
-            currentChannel={currentChannel}
-            newMessage={newMessage}
-            onNewMessageChange={onNewMessageChange}
-            onSendMessage={onSendMessage}
-            onKeyPress={onKeyPress}
-            onBackToChannels={handleBackToChannels}
-            className="h-full"
-          />
-        )}
+      <div className="h-[calc(100vh-12rem)] w-full overflow-hidden">
+        <div className="relative h-full">
+          {/* Mobile Channel List */}
+          <div 
+            className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out bg-background ${
+              showChannels ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <ChatSidebar
+              channels={channels}
+              activeChannel={activeChannel}
+              onChannelSelect={handleChannelSelect}
+              onCreateChannel={handleCreateChannel}
+              className="h-full"
+            />
+          </div>
+
+          {/* Mobile Chat Messages */}
+          <div 
+            className={`absolute inset-0 transform transition-transform duration-300 ease-in-out ${
+              showChannels ? 'translate-x-full' : 'translate-x-0'
+            }`}
+          >
+            <ChatMessages
+              messages={messages}
+              currentChannel={currentChannel}
+              newMessage={newMessage}
+              onNewMessageChange={onNewMessageChange}
+              onSendMessage={onSendMessage}
+              onKeyPress={onKeyPress}
+              onBackToChannels={handleBackToChannels}
+              className="h-full"
+            />
+          </div>
+        </div>
 
         <CreateChannelDialog
           open={showCreateChannel}
@@ -115,8 +129,8 @@ export const ChatLayout = ({
   // Desktop layout with sidebar
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-[calc(100vh-12rem)] w-full">
-        <Sidebar className="w-80 border-r">
+      <div className="flex h-[calc(100vh-12rem)] w-full max-w-full overflow-hidden">
+        <Sidebar className="w-80 min-w-80 max-w-80 border-r hidden lg:flex">
           <SidebarContent className="p-0">
             <ChatSidebar
               channels={channels}
@@ -128,7 +142,7 @@ export const ChatLayout = ({
           </SidebarContent>
         </Sidebar>
 
-        <main className="flex-1">
+        <main className="flex-1 min-w-0 overflow-hidden">
           <ChatMessages
             messages={messages}
             currentChannel={currentChannel}
