@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessages } from './ChatMessages';
@@ -126,33 +125,31 @@ export const ChatLayout = ({
     );
   }
 
-  // Desktop layout with sidebar
+  // Desktop layout with simple flex
   return (
-    <SidebarProvider defaultOpen>
-      <div className="flex h-[calc(100vh-12rem)] w-full max-w-full overflow-hidden">
-        <Sidebar className="w-80 min-w-80 max-w-80 border-r hidden lg:flex">
-          <SidebarContent className="p-0">
-            <ChatSidebar
-              channels={channels}
-              activeChannel={activeChannel}
-              onChannelSelect={onChannelSelect}
-              onCreateChannel={handleCreateChannel}
-              className="h-full border-0 shadow-none"
-            />
-          </SidebarContent>
-        </Sidebar>
+    <div className="flex h-full w-full overflow-hidden">
+      {/* Desktop Sidebar */}
+      <div className="w-80 min-w-80 flex-shrink-0 border-r border-border bg-background">
+        <ChatSidebar
+          channels={channels}
+          activeChannel={activeChannel}
+          onChannelSelect={onChannelSelect}
+          onCreateChannel={handleCreateChannel}
+          className="h-full"
+        />
+      </div>
 
-        <main className="flex-1 min-w-0 overflow-hidden">
-          <ChatMessages
-            messages={messages}
-            currentChannel={currentChannel}
-            newMessage={newMessage}
-            onNewMessageChange={onNewMessageChange}
-            onSendMessage={onSendMessage}
-            onKeyPress={onKeyPress}
-            className="h-full"
-          />
-        </main>
+      {/* Desktop Messages */}
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <ChatMessages
+          messages={messages}
+          currentChannel={currentChannel}
+          newMessage={newMessage}
+          onNewMessageChange={onNewMessageChange}
+          onSendMessage={onSendMessage}
+          onKeyPress={onKeyPress}
+          className="h-full"
+        />
       </div>
 
       <CreateChannelDialog
@@ -160,6 +157,6 @@ export const ChatLayout = ({
         onOpenChange={setShowCreateChannel}
         onChannelCreated={handleChannelCreated}
       />
-    </SidebarProvider>
+    </div>
   );
 };
