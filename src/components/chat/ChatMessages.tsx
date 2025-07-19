@@ -235,7 +235,7 @@ export const ChatMessages = ({
       </div>
       
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
         {/* Channel description */}
         {currentChannel && (
           <div className="text-center mb-6 py-4">
@@ -287,7 +287,7 @@ export const ChatMessages = ({
           })}
         </div>
         
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="pb-2" />
       </div>
 
       {/* Message Input - only show if not hidden */}
