@@ -129,12 +129,6 @@ export const ChannelSettingsModal = ({
         return;
       }
       
-      // For mock channels that aren't in database, just show empty
-      if (channel && !channel.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)) {
-        setChannelFiles([]);
-        return;
-      }
-      
       // Query for messages with attachments
       let query = supabase
         .from('chat_messages')
@@ -151,16 +145,20 @@ export const ChannelSettingsModal = ({
       if (isDM && dmChannelId) {
         query = query.eq('dm_channel_id', dmChannelId);
       } else if (channel) {
+        console.log('Looking up channel by name:', channel.name);
         // Look up the channel by name to get its UUID
-        const { data: channelData } = await supabase
+        const { data: channelData, error: channelError } = await supabase
           .from('chat_channels')
           .select('id')
           .eq('name', channel.name)
           .single();
         
+        console.log('Channel lookup result:', { channelData, channelError });
+        
         if (channelData) {
           query = query.eq('channel_id', channelData.id);
         } else {
+          console.log('No channel found, setting empty files');
           setChannelFiles([]);
           return;
         }
