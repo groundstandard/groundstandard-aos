@@ -14,6 +14,7 @@ interface AutomationSettings {
   memberSigned: boolean;
   memberCancelled: boolean;
   memberAbsent: boolean;
+  memberPresent: boolean;
   memberDelinquent: boolean;
   memberCurrent: boolean;
   absentDaysThreshold: number;
@@ -34,6 +35,7 @@ export const AutomationManagement = () => {
     memberSigned: false,
     memberCancelled: false,
     memberAbsent: false,
+    memberPresent: false,
     memberDelinquent: false,
     memberCurrent: false,
     absentDaysThreshold: 7
@@ -101,6 +103,7 @@ export const AutomationManagement = () => {
       memberSigned: false,
       memberCancelled: false,
       memberAbsent: false,
+      memberPresent: false,
       memberDelinquent: false,
       memberCurrent: false
     }));
@@ -138,6 +141,13 @@ export const AutomationManagement = () => {
       title: 'Member Absent',
       description: `Trigger HighLevel workflow when member is absent for ${automations.absentDaysThreshold} days`,
       icon: <Clock className="h-4 w-4" />,
+      direction: 'Software → HL'
+    },
+    {
+      key: 'memberPresent' as keyof AutomationSettings,
+      title: 'Member Present',
+      description: 'Notify HighLevel when a previously absent member returns to class',
+      icon: <CheckCircle className="h-4 w-4" />,
       direction: 'Software → HL'
     },
     {
