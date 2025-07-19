@@ -94,7 +94,7 @@ export const AuthForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-subtle p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-elegant border-0 bg-white">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-display text-primary">DojoMaster</CardTitle>
           <CardDescription>Access your martial arts academy</CardDescription>

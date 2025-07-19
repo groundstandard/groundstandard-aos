@@ -40,7 +40,7 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="hover:shadow-elegant transition-shadow">
+          <Card className="card-minimal hover-lift">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
@@ -54,7 +54,7 @@ const Dashboard = () => {
           </Card>
 
           <Card 
-            className="hover:shadow-elegant transition-shadow cursor-pointer"
+            className="card-minimal hover-lift cursor-pointer"
             onClick={() => navigate('/classes')}
           >
             <CardHeader>
@@ -75,7 +75,7 @@ const Dashboard = () => {
 
           {!isAdmin && (
             <Card 
-              className="hover:shadow-elegant transition-shadow cursor-pointer"
+              className="card-minimal hover-lift cursor-pointer"
               onClick={() => navigate('/attendance')}
             >
               <CardHeader>
@@ -93,7 +93,7 @@ const Dashboard = () => {
             </Card>
           )}
 
-          <Card className="hover:shadow-elegant transition-shadow">
+          <Card className="card-minimal hover-lift">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
@@ -112,7 +112,7 @@ const Dashboard = () => {
 
           {isAdmin && (
             <>
-              <Card className="hover:shadow-elegant transition-shadow">
+              <Card className="card-minimal hover-lift">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
@@ -126,7 +126,7 @@ const Dashboard = () => {
               </Card>
 
               <Card 
-                className="hover:shadow-elegant transition-shadow cursor-pointer"
+                className="card-minimal hover-lift cursor-pointer"
                 onClick={() => navigate('/admin')}
               >
                 <CardHeader>
