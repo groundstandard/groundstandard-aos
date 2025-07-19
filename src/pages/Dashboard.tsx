@@ -140,9 +140,9 @@ const Dashboard = () => {
             </Button>
           </div>
           
-          <div className="text-center">
+          <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
             <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-display font-bold text-primary`}>
-              Welcome, {profile.first_name}
+              Welcome, {profile.first_name}!
             </h1>
             <div className={`flex items-center justify-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
               {profile.belt_level && (
