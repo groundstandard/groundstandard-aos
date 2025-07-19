@@ -65,10 +65,13 @@ interface ChannelFile {
 interface ChannelSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  channel: Channel;
+  channel: Channel | null;
   onChannelUpdate: (channel: Channel) => void;
   onChannelDelete?: (channelId: string) => void;
   onLeaveChannel?: (channelId: string) => void;
+  isDM?: boolean;
+  dmUserName?: string;
+  onCloseDM?: () => void;
 }
 
 export const ChannelSettingsModal = ({
@@ -77,17 +80,20 @@ export const ChannelSettingsModal = ({
   channel,
   onChannelUpdate,
   onChannelDelete,
-  onLeaveChannel
+  onLeaveChannel,
+  isDM = false,
+  dmUserName,
+  onCloseDM
 }: ChannelSettingsModalProps) => {
-  const [channelName, setChannelName] = useState(channel.name);
-  const [channelDescription, setChannelDescription] = useState(channel.description);
+  const [channelName, setChannelName] = useState(channel?.name || '');
+  const [channelDescription, setChannelDescription] = useState(channel?.description || '');
   const [channelTopic, setChannelTopic] = useState('');
   const [members, setMembers] = useState<User[]>([]);
   const [channelFiles, setChannelFiles] = useState<ChannelFile[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [showAddUsers, setShowAddUsers] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState('about');
+  const [activeTab, setActiveTab] = useState(isDM ? 'files' : 'about');
   const [editingName, setEditingName] = useState(false);
   const [editingTopic, setEditingTopic] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
@@ -97,18 +103,20 @@ export const ChannelSettingsModal = ({
   const { toast } = useToast();
   
   const isAdmin = profile?.role === 'admin';
-  const isChannelCreator = profile?.id === channel.created_by;
+  const isChannelCreator = profile?.id === channel?.created_by;
 
   useEffect(() => {
-    if (open) {
+    if (open && channel) {
       setChannelName(channel.name);
       setChannelDescription(channel.description);
       setChannelTopic('');
-      fetchChannelMembers();
+      if (!isDM) {
+        fetchChannelMembers();
+        fetchAvailableUsers();
+      }
       fetchChannelFiles();
-      fetchAvailableUsers();
     }
-  }, [open, channel]);
+  }, [open, channel, isDM]);
 
   const fetchChannelMembers = async () => {
     try {
@@ -245,7 +253,7 @@ export const ChannelSettingsModal = ({
   };
 
   const handleLeaveChannel = () => {
-    if (onLeaveChannel) {
+    if (onLeaveChannel && channel) {
       onLeaveChannel(channel.id);
       onOpenChange(false);
       toast({
@@ -258,7 +266,7 @@ export const ChannelSettingsModal = ({
   const handleDeleteChannel = () => {
     if (!isAdmin && !isChannelCreator) return;
     
-    if (onChannelDelete) {
+    if (onChannelDelete && channel) {
       onChannelDelete(channel.id);
       onOpenChange(false);
       toast({
@@ -271,11 +279,13 @@ export const ChannelSettingsModal = ({
   const handleArchiveChannel = () => {
     if (!isAdmin && !isChannelCreator) return;
     
-    toast({
-      title: "Channel archived",
-      description: `#${channel.name} has been archived.`
-    });
-    onOpenChange(false);
+    if (channel) {
+      toast({
+        title: "Channel archived",
+        description: `#${channel.name} has been archived.`
+      });
+      onOpenChange(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -309,30 +319,43 @@ export const ChannelSettingsModal = ({
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0 fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
-            <div className="flex items-center">
-              {channel.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
-              {channel.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
-              <Hash className="h-5 w-5 text-muted-foreground" />
-            </div>
-            {channel.name}
+            {isDM ? (
+              <>
+                <Users className="h-5 w-5 text-muted-foreground" />
+                {dmUserName || 'Direct Message'}
+              </>
+            ) : (
+              <>
+                <div className="flex items-center">
+                  {channel?.type === 'private' && <Lock className="h-4 w-4 text-muted-foreground mr-1" />}
+                  {channel?.type === 'premium' && <Crown className="h-4 w-4 text-yellow-500 mr-1" />}
+                  <Hash className="h-5 w-5 text-muted-foreground" />
+                </div>
+                {channel?.name}
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
           <div className="border-b px-6">
-            <TabsList className="grid w-full grid-cols-4 bg-transparent h-auto p-0">
-              <TabsTrigger 
-                value="about" 
-                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
-              >
-                About
-              </TabsTrigger>
-              <TabsTrigger 
-                value="members"
-                className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
-              >
-                Members {members.length}
-              </TabsTrigger>
+            <TabsList className={`grid w-full bg-transparent h-auto p-0 ${isDM ? 'grid-cols-2' : 'grid-cols-4'}`}>
+              {!isDM && (
+                <>
+                  <TabsTrigger 
+                    value="about" 
+                    className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                  >
+                    About
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="members"
+                    className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
+                  >
+                    Members {members.length}
+                  </TabsTrigger>
+                </>
+              )}
               <TabsTrigger 
                 value="files"
                 className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none"
@@ -589,102 +612,131 @@ export const ChannelSettingsModal = ({
 
             <TabsContent value="settings" className="p-6 space-y-6 mt-0">
               <div className="space-y-4">
-                {/* Change to Public Channel */}
-                {channel.type === 'private' && (isAdmin || isChannelCreator) && (
+                {/* DM specific settings */}
+                {isDM ? (
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Globe className="h-5 w-5 text-muted-foreground" />
+                      <X className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <h4 className="font-medium">Change to a public channel</h4>
+                        <h4 className="font-medium text-destructive">Close Direct Message</h4>
                         <p className="text-sm text-muted-foreground">
-                          Anyone in your workspace will be able to view and join this channel.
+                          This will close the direct message conversation.
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Change to public
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        if (onCloseDM) {
+                          onCloseDM();
+                          onOpenChange(false);
+                        }
+                      }}
+                    >
+                      Close DM
                     </Button>
                   </div>
-                )}
-
-                {/* Archive Channel */}
-                {(isAdmin || isChannelCreator) && (
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Archive className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <h4 className="font-medium">Archive channel for everyone</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Hide this channel from the channel list for all workspace members.
-                        </p>
+                ) : (
+                  <>
+                    {/* Change to Public Channel */}
+                    {channel?.type === 'private' && (isAdmin || isChannelCreator) && (
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Globe className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <h4 className="font-medium">Change to a public channel</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Anyone in your workspace will be able to view and join this channel.
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Change to public
+                        </Button>
                       </div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={handleArchiveChannel}>
-                      Archive channel
-                    </Button>
-                  </div>
-                )}
+                    )}
 
-                {/* Delete Channel */}
-                {(isAdmin || isChannelCreator) && (
-                  <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
-                    <div className="flex items-center justify-between">
+                    {/* Archive Channel */}
+                    {(isAdmin || isChannelCreator) && (
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Archive className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <h4 className="font-medium">Archive channel for everyone</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Hide this channel from the channel list for all workspace members.
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={handleArchiveChannel}>
+                          Archive channel
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Delete Channel */}
+                    {(isAdmin || isChannelCreator) && (
+                      <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Trash2 className="h-5 w-5 text-destructive" />
+                            <div>
+                              <h4 className="font-medium text-destructive">Delete this channel</h4>
+                              <p className="text-sm text-muted-foreground">
+                                Permanently delete this channel and all its messages. This cannot be undone.
+                              </p>
+                            </div>
+                          </div>
+                          {!showDeleteConfirm ? (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(true)}
+                            >
+                              Delete channel
+                            </Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={handleDeleteChannel}
+                              >
+                                Confirm delete
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowDeleteConfirm(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <Separator />
+                    
+                    {/* Leave Channel */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Trash2 className="h-5 w-5 text-destructive" />
+                        <LogOut className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <h4 className="font-medium text-destructive">Delete this channel</h4>
+                          <h4 className="font-medium text-destructive">Leave channel</h4>
                           <p className="text-sm text-muted-foreground">
-                            Permanently delete this channel and all its messages. This cannot be undone.
+                            You will no longer receive messages from this channel.
                           </p>
                         </div>
                       </div>
-                      {!showDeleteConfirm ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setShowDeleteConfirm(true)}
-                        >
-                          Delete channel
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleDeleteChannel}
-                          >
-                            Confirm delete
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowDeleteConfirm(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      )}
+                      <Button variant="outline" size="sm" onClick={handleLeaveChannel}>
+                        Leave channel
+                      </Button>
                     </div>
-                  </div>
+                  </>
                 )}
-              </div>
-
-              <Separator />
-              
-              {/* Leave Channel */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <LogOut className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <h4 className="font-medium text-destructive">Leave channel</h4>
-                    <p className="text-sm text-muted-foreground">
-                      You will no longer receive messages from this channel.
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleLeaveChannel}>
-                  Leave channel
-                </Button>
               </div>
             </TabsContent>
           </div>

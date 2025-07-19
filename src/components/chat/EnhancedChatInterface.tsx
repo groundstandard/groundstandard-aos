@@ -871,18 +871,16 @@ export const EnhancedChatInterface = () => {
               </div>
             )}
             
-            {/* Channel Settings Button */}
-            {!activeChannel.startsWith('dm-') && currentChannel && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowChannelSettings(true)}
-                className="h-8 w-8 p-0"
-                title="Channel settings"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
+            {/* Channel/DM Settings Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowChannelSettings(true)}
+              className="h-8 w-8 p-0"
+              title={activeChannel.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -1000,26 +998,44 @@ export const EnhancedChatInterface = () => {
       />
 
       {/* Channel Settings Modal */}
-      {currentChannel && (
-        <ChannelSettingsModal
-          open={showChannelSettings}
-          onOpenChange={setShowChannelSettings}
-          channel={currentChannel}
-          onChannelUpdate={(updatedChannel) => {
-            setChannels(prev => prev.map(ch => 
-              ch.id === updatedChannel.id ? updatedChannel : ch
-            ));
-          }}
-          onChannelDelete={(channelId) => {
-            setChannels(prev => prev.filter(ch => ch.id !== channelId));
-            setActiveChannel('general');
-          }}
-          onLeaveChannel={(channelId) => {
-            setChannels(prev => prev.filter(ch => ch.id !== channelId));
-            setActiveChannel('general');
-          }}
-        />
-      )}
+      <ChannelSettingsModal
+        open={showChannelSettings}
+        onOpenChange={setShowChannelSettings}
+        channel={currentChannel}
+        isDM={activeChannel.startsWith('dm-')}
+        dmUserName={(() => {
+          if (activeChannel.startsWith('dm-')) {
+            const userId = activeChannel.replace('dm-', '');
+            const dmUser = directMessageUsers.find(u => u.user_id === userId);
+            return dmUser?.name || 'Direct Message';
+          }
+          return undefined;
+        })()}
+        onChannelUpdate={(updatedChannel) => {
+          setChannels(prev => prev.map(ch => 
+            ch.id === updatedChannel.id ? updatedChannel : ch
+          ));
+        }}
+        onChannelDelete={(channelId) => {
+          setChannels(prev => prev.filter(ch => ch.id !== channelId));
+          setActiveChannel('general');
+        }}
+        onLeaveChannel={(channelId) => {
+          setChannels(prev => prev.filter(ch => ch.id !== channelId));
+          setActiveChannel('general');
+        }}
+        onCloseDM={() => {
+          // Remove DM from directMessageUsers and switch to general
+          const userId = activeChannel.replace('dm-', '');
+          setDirectMessageUsers(prev => prev.filter(u => u.user_id !== userId));
+          setChannelMessages(prev => {
+            const newMessages = { ...prev };
+            delete newMessages[activeChannel];
+            return newMessages;
+          });
+          setActiveChannel('general');
+        }}
+      />
 
       {/* Start DM Modal */}
       <StartDMModal
