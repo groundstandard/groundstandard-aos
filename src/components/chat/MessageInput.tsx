@@ -36,9 +36,13 @@ export const MessageInput = ({
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [recordingTime, setRecordingTime] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const handleFileSelect = async (files: FileList | null, type: 'file' | 'image' | 'video') => {
@@ -122,13 +126,46 @@ export const MessageInput = ({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
+        setAttachments(prev => [...prev, audioFile]);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        toast({
+          title: "Recording stopped",
+          description: "Voice message ready to send"
+        });
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
       setIsRecording(true);
+      setRecordingTime(0);
+
+      // Start timer for 5-minute maximum
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 300) { // 5 minutes = 300 seconds
+            stopRecording();
+            return 300;
+          }
+          return prev + 1;
+        });
+      }, 1000);
       
-      // Simple recording implementation
-      // In a real app, you'd use MediaRecorder API
       toast({
         title: "Recording started",
-        description: "Tap the mic again to stop"
+        description: "Tap the mic again to stop (max 5 minutes)"
       });
       
     } catch (error) {
@@ -141,11 +178,15 @@ export const MessageInput = ({
   };
 
   const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
     setIsRecording(false);
-    toast({
-      title: "Recording stopped",
-      description: "Voice message saved"
-    });
+    setRecordingTime(0);
   };
 
   const removeAttachment = (index: number) => {
@@ -234,6 +275,16 @@ export const MessageInput = ({
           >
             <Video className="h-4 w-4" />
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => galleryInputRef.current?.click()}
+            className="h-9 w-9 p-0"
+            title="Select from gallery"
+          >
+            <Image className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Message Input */}
@@ -247,6 +298,14 @@ export const MessageInput = ({
             className="pr-20 resize-none min-h-[2.5rem] max-h-32 rounded-2xl border-0 bg-muted/50"
             rows={1}
           />
+          
+      {/* Recording Timer */}
+          {isRecording && (
+            <div className="absolute top-1 left-3 flex items-center gap-1 text-xs text-red-500">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 5:00
+            </div>
+          )}
           
           {/* Emoji and Voice Buttons */}
           <div className="absolute right-2 bottom-2 flex gap-1">
@@ -312,6 +371,15 @@ export const MessageInput = ({
         capture="environment"
         className="hidden"
         onChange={(e) => handleFileSelect(e.target.files, 'video')}
+      />
+      
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileSelect(e.target.files, 'image')}
       />
     </div>
   );
