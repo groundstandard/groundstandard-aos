@@ -71,6 +71,7 @@ interface ChannelSettingsModalProps {
   onLeaveChannel?: (channelId: string) => void;
   isDM?: boolean;
   dmUserName?: string;
+  dmChannelId?: string;
   onCloseDM?: () => void;
 }
 
@@ -83,6 +84,7 @@ export const ChannelSettingsModal = ({
   onLeaveChannel,
   isDM = false,
   dmUserName,
+  dmChannelId,
   onCloseDM
 }: ChannelSettingsModalProps) => {
   const [channelName, setChannelName] = useState(channel?.name || '');
@@ -122,15 +124,15 @@ export const ChannelSettingsModal = ({
     try {
       setLoading(true);
       
-      // For now, we'll use mock data since the chat_messages table structure needs to be set up
-      // In a real implementation, you would query the chat_messages table for attachments
+      // For now, showing mock data since chat_messages table structure needs refinement
+      // In production, this would query real attachments from messages
       const mockFiles: ChannelFile[] = [
         {
           id: '1',
           name: 'Training_Schedule.pdf',
           type: 'pdf',
           size: 245760,
-          url: 'https://example.com/training-schedule.pdf',
+          url: '/lovable-uploads/a2389fe2-fe12-43a2-868a-00b611c02c72.png',
           uploadedBy: 'John Sensei',
           uploadedAt: '2024-01-15T10:30:00Z'
         },
@@ -139,7 +141,7 @@ export const ChannelSettingsModal = ({
           name: 'Belt_Requirements.docx',
           type: 'document',
           size: 128000,
-          url: 'https://example.com/belt-requirements.docx',
+          url: '/lovable-uploads/a2389fe2-fe12-43a2-868a-00b611c02c72.png',
           uploadedBy: 'Sarah Instructor', 
           uploadedAt: '2024-01-14T14:20:00Z'
         },
@@ -148,7 +150,7 @@ export const ChannelSettingsModal = ({
           name: 'Class_Photo.jpg',
           type: 'image',
           size: 512000,
-          url: 'https://example.com/class-photo.jpg',
+          url: '/lovable-uploads/a2389fe2-fe12-43a2-868a-00b611c02c72.png',
           uploadedBy: 'Mike Student',
           uploadedAt: '2024-01-13T16:45:00Z'
         },
@@ -157,7 +159,7 @@ export const ChannelSettingsModal = ({
           name: 'Technique_Demo.mp4',
           type: 'video',
           size: 15680000,
-          url: 'https://example.com/technique-demo.mp4',
+          url: '/lovable-uploads/a2389fe2-fe12-43a2-868a-00b611c02c72.png',
           uploadedBy: 'Emma Instructor',
           uploadedAt: '2024-01-12T11:20:00Z'
         }

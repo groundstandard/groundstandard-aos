@@ -1003,6 +1003,7 @@ export const EnhancedChatInterface = () => {
         onOpenChange={setShowChannelSettings}
         channel={currentChannel}
         isDM={activeChannel.startsWith('dm-')}
+        dmChannelId={activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
         dmUserName={(() => {
           if (activeChannel.startsWith('dm-')) {
             const userId = activeChannel.replace('dm-', '');
