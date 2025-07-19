@@ -10,6 +10,7 @@ import { StudentReports } from "@/components/reports/StudentReports";
 import { ClassReports } from "@/components/reports/ClassReports";
 import { RevenueReports } from "@/components/reports/RevenueReports";
 import { OverviewReports } from "@/components/reports/OverviewReports";
+import { AdvancedReports } from "@/components/reports/AdvancedReports";
 import { BarChart3, Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
 
 const Reports = () => {
@@ -59,6 +60,10 @@ const Reports = () => {
                   <TrendingUp className="h-4 w-4" />
                   Overview
                 </TabsTrigger>
+                <TabsTrigger value="advanced" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <BarChart3 className="h-4 w-4" />
+                  Advanced
+                </TabsTrigger>
                 <TabsTrigger value="attendance" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
                   <Calendar className="h-4 w-4" />
                   Attendance
@@ -78,10 +83,14 @@ const Reports = () => {
               </TabsList>
             </ScrollArea>
           ) : (
-            <TabsList className="grid w-full grid-cols-5 bg-background/50 backdrop-blur">
+            <TabsList className="grid w-full grid-cols-6 bg-background/50 backdrop-blur">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Overview
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Advanced
               </TabsTrigger>
               <TabsTrigger value="attendance" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
@@ -104,6 +113,10 @@ const Reports = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <OverviewReports />
+          </TabsContent>
+
+          <TabsContent value="advanced" className="space-y-6">
+            <AdvancedReports />
           </TabsContent>
 
           <TabsContent value="attendance" className="space-y-6">
