@@ -200,7 +200,7 @@ export const AdminDashboard = () => {
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
-              onClick={() => handleQuickAction("Contacts")}
+              onClick={() => navigate('/contacts')}
             >
               <ContactRound className="h-4 w-4" />
               Contacts
