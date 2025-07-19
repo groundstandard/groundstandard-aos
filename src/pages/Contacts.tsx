@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+import { ContactFilters } from "@/components/contacts/ContactFilters";
+import { ContactCard } from "@/components/contacts/ContactCard";
+import { AddChildDialog } from "@/components/contacts/AddChildDialog";
+import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
 import { 
   Search, 
   Users, 
@@ -22,7 +26,11 @@ import {
   UserCheck,
   UserX,
   Award,
-  Edit
+  Edit,
+  Eye,
+  LayoutGrid,
+  List,
+  Columns
 } from "lucide-react";
 
 interface Contact {
@@ -35,6 +43,7 @@ interface Contact {
   belt_level?: string;
   emergency_contact?: string;
   membership_status: string;
+  parent_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -57,10 +66,16 @@ const Contacts = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showFamiliesOnly, setShowFamiliesOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'family'>('grid');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showAddChildDialog, setShowAddChildDialog] = useState(false);
+  const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -110,13 +125,79 @@ const Contacts = () => {
     }
   };
 
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = `${contact.first_name} ${contact.last_name} ${contact.email}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === "all" || contact.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  const organizeContacts = useMemo(() => {
+    let filtered = contacts.filter(contact => {
+      const matchesSearch = `${contact.first_name} ${contact.last_name} ${contact.email} ${contact.phone || ''}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === "all" || contact.role === filterRole;
+      return matchesSearch && matchesRole;
+    });
+
+    // Filter for families only if requested
+    if (showFamiliesOnly) {
+      filtered = filtered.filter(contact => 
+        contact.parent_id || contacts.some(child => child.parent_id === contact.id)
+      );
+    }
+
+    // Sort contacts
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
+          bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
+          break;
+        case 'email':
+          aValue = a.email.toLowerCase();
+          bValue = b.email.toLowerCase();
+          break;
+        case 'role':
+          aValue = a.role;
+          bValue = b.role;
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        case 'belt_level':
+          const beltOrder = ['white', 'yellow', 'orange', 'green', 'blue', 'brown', 'black'];
+          aValue = beltOrder.indexOf(a.belt_level || 'white');
+          bValue = beltOrder.indexOf(b.belt_level || 'white');
+          break;
+        case 'membership_status':
+          aValue = a.membership_status;
+          bValue = b.membership_status;
+          break;
+        default:
+          aValue = a.first_name;
+          bValue = b.first_name;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Organize by families
+    const families: { parent: Contact; children: Contact[] }[] = [];
+    const individualContacts: Contact[] = [];
+
+    filtered.forEach(contact => {
+      if (!contact.parent_id) {
+        const children = filtered.filter(child => child.parent_id === contact.id);
+        if (children.length > 0) {
+          families.push({ parent: contact, children });
+        } else {
+          individualContacts.push(contact);
+        }
+      }
+    });
+
+    return { families, individualContacts, allFiltered: filtered };
+  }, [contacts, searchTerm, filterRole, sortBy, sortOrder, showFamiliesOnly]);
 
   const roleColors = {
     visitor: "bg-gray-100 text-gray-800",
@@ -128,8 +209,6 @@ const Contacts = () => {
   };
 
   const handleAddContact = async () => {
-    // Note: In a real app, contacts would be created through user registration
-    // For demo purposes, we'll show a message
     toast({
       title: "Add Contact",
       description: "New contacts are typically added when users register for the academy through the authentication system.",
@@ -188,6 +267,24 @@ const Contacts = () => {
       membership_status: contact.membership_status
     });
     setShowEditDialog(true);
+  };
+
+  const handleAddChild = (parent: Contact) => {
+    setSelectedContact(parent);
+    setShowAddChildDialog(true);
+  };
+
+  const handleChildAdded = (newChild: Contact) => {
+    setContacts([...contacts, newChild]);
+    toast({
+      title: "Child Added",
+      description: `${newChild.first_name} has been added to the family`,
+    });
+  };
+
+  const handleViewFamily = (contact: Contact) => {
+    setSelectedContact(contact);
+    setShowFamilyDialog(true);
   };
 
   const ContactForm = () => (
@@ -312,174 +409,181 @@ const Contacts = () => {
                 Contact Management
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage academy members and their information
+                Manage academy members and their family relationships
               </p>
             </div>
           </div>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Contact
+          <div className="flex items-center gap-2">
+            {/* View Mode Toggle */}
+            <div className="flex border rounded-lg">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="rounded-r-none"
+              >
+                <LayoutGrid className="h-4 w-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Contact</DialogTitle>
-                <DialogDescription>
-                  Add a new member to your academy
-                </DialogDescription>
-              </DialogHeader>
-              <ContactForm />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddContact}>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'family' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('family')}
+                className="rounded-l-none"
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Contact
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add New Contact</DialogTitle>
+                  <DialogDescription>
+                    Add a new member to your academy
+                  </DialogDescription>
+                </DialogHeader>
+                <ContactForm />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddContact}>
+                    Add Contact
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search contacts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={filterRole === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("all")}
-                >
-                  All ({contacts.length})
-                </Button>
-                <Button
-                  variant={filterRole === "member" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("member")}
-                >
-                  Members ({contacts.filter(c => c.role === "member").length})
-                </Button>
-                <Button
-                  variant={filterRole === "visitor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("visitor")}
-                >
-                  Visitors ({contacts.filter(c => c.role === "visitor").length})
-                </Button>
-                <Button
-                  variant={filterRole === "alumni" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("alumni")}
-                >
-                  Alumni ({contacts.filter(c => c.role === "alumni").length})
-                </Button>
-                <Button
-                  variant={filterRole === "staff" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("staff")}
-                >
-                  Staff ({contacts.filter(c => c.role === "staff").length})
-                </Button>
-                <Button
-                  variant={filterRole === "instructor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("instructor")}
-                >
-                  Instructors ({contacts.filter(c => c.role === "instructor").length})
-                </Button>
-                <Button
-                  variant={filterRole === "admin" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterRole("admin")}
-                >
-                  Admins ({contacts.filter(c => c.role === "admin").length})
-                </Button>
-              </div>
+        {/* Enhanced Filters */}
+        <ContactFilters
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterRole={filterRole}
+          onFilterRoleChange={setFilterRole}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          sortOrder={sortOrder}
+          onSortOrderChange={setSortOrder}
+          showFamiliesOnly={showFamiliesOnly}
+          onShowFamiliesOnlyChange={setShowFamiliesOnly}
+          contacts={organizeContacts.allFiltered}
+        />
+
+        {/* Contacts Display */}
+        <div className="mt-6">
+          {viewMode === 'family' ? (
+            // Family Hierarchy View
+            <div className="space-y-6">
+              {organizeContacts.families.map(({ parent, children }) => (
+                <Card key={parent.id} className="border-2 border-primary/20">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        <CardTitle>{parent.first_name} {parent.last_name} Family</CardTitle>
+                        <Badge variant="outline">{children.length + 1} members</Badge>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewFamily(parent)}
+                      >
+                        View Family Details
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3">
+                      <ContactCard
+                        contact={parent}
+                        children={children}
+                        onView={handleViewContact}
+                        onEdit={handleEditContactClick}
+                        onAddChild={handleAddChild}
+                        onViewFamily={handleViewFamily}
+                      />
+                      {children.slice(0, 2).map((child) => (
+                        <ContactCard
+                          key={child.id}
+                          contact={child}
+                          onView={handleViewContact}
+                          onEdit={handleEditContactClick}
+                          onAddChild={handleAddChild}
+                          onViewFamily={handleViewFamily}
+                        />
+                      ))}
+                      {children.length > 2 && (
+                        <div className="ml-4 p-3 border rounded-lg bg-muted text-muted-foreground text-sm">
+                          +{children.length - 2} more children. Click "View Family Details" to see all.
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {organizeContacts.individualContacts.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Individual Contacts</h3>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {organizeContacts.individualContacts.map((contact) => (
+                      <ContactCard
+                        key={contact.id}
+                        contact={contact}
+                        onView={handleViewContact}
+                        onEdit={handleEditContactClick}
+                        onAddChild={handleAddChild}
+                        onViewFamily={handleViewFamily}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Contacts Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredContacts.map((contact) => (
-            <Card key={contact.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {contact.first_name} {contact.last_name}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-1 mt-1">
-                      <Mail className="h-3 w-3" />
-                      {contact.email}
-                    </CardDescription>
-                  </div>
-                  <Badge className={roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}>
-                    {contact.role}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2 text-sm">
-                  {contact.phone && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-3 w-3" />
-                      {contact.phone}
-                    </div>
-                  )}
-                  {contact.belt_level && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Award className="h-3 w-3" />
-                      {contact.belt_level} Belt
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    Joined {new Date(contact.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleViewContact(contact)}
-                  >
-                    <UserCheck className="h-3 w-3 mr-1" />
-                    View
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleEditContactClick(contact)}
-                  >
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          ) : (
+            // Grid or List View
+            <div className={viewMode === 'grid' ? 'grid gap-4 md:grid-cols-2 lg:grid-cols-3' : 'space-y-3'}>
+              {organizeContacts.allFiltered.map((contact) => {
+                const children = contacts.filter(child => child.parent_id === contact.id);
+                return (
+                  <ContactCard
+                    key={contact.id}
+                    contact={contact}
+                    children={children}
+                    onView={handleViewContact}
+                    onEdit={handleEditContactClick}
+                    onAddChild={handleAddChild}
+                    onViewFamily={handleViewFamily}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {filteredContacts.length === 0 && (
-          <Card className="text-center py-8">
+        {organizeContacts.allFiltered.length === 0 && (
+          <Card className="text-center py-8 mt-6">
             <CardContent>
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No contacts found</h3>
               <p className="text-muted-foreground">
-                {searchTerm || filterRole !== "all" 
+                {searchTerm || filterRole !== "all" || showFamiliesOnly
                   ? "Try adjusting your search or filter criteria"
                   : "Start by adding your first contact"
                 }
@@ -487,8 +591,8 @@ const Contacts = () => {
             </CardContent>
           </Card>
         )}
-        
-        {/* View Contact Dialog */}
+
+        {/* Dialogs */}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -582,7 +686,6 @@ const Contacts = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Edit Contact Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -602,6 +705,23 @@ const Contacts = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <AddChildDialog
+          open={showAddChildDialog}
+          onClose={() => setShowAddChildDialog(false)}
+          parentContact={selectedContact}
+          onChildAdded={handleChildAdded}
+        />
+
+        <FamilyHierarchy
+          open={showFamilyDialog}
+          onClose={() => setShowFamilyDialog(false)}
+          primaryContact={selectedContact}
+          familyMembers={contacts.filter(c => c.parent_id === selectedContact?.id)}
+          onEdit={handleEditContactClick}
+          onView={handleViewContact}
+          onAddChild={handleAddChild}
+        />
       </div>
     </div>
   );
