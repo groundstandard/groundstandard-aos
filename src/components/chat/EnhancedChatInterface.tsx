@@ -286,14 +286,51 @@ export const EnhancedChatInterface = () => {
         }, 100);
       };
       
-      // Try multiple times with increasing delays
+      // Try multiple times with increasing delays to account for image loading
       scrollToBottom();
       setTimeout(scrollToBottom, 50);
       setTimeout(scrollToBottom, 150);
+      setTimeout(scrollToBottom, 500);  // Extra delay for image loading
+      setTimeout(scrollToBottom, 1000); // Even longer delay for slow images
       
       setShouldScrollToBottom(false);
     }
   }, [shouldScrollToBottom]);
+
+  // Additional effect to handle image loading
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const images = container.querySelectorAll('img');
+      
+      const handleImageLoad = () => {
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+        const maxScrollTop = scrollHeight - clientHeight;
+        container.scrollTop = maxScrollTop;
+        console.log('Image loaded, scrolled to:', container.scrollTop);
+      };
+      
+      images.forEach(img => {
+        if (img.complete) {
+          // Image already loaded
+          handleImageLoad();
+        } else {
+          // Wait for image to load
+          img.addEventListener('load', handleImageLoad);
+          img.addEventListener('error', handleImageLoad); // Handle broken images too
+        }
+      });
+      
+      // Cleanup
+      return () => {
+        images.forEach(img => {
+          img.removeEventListener('load', handleImageLoad);
+          img.removeEventListener('error', handleImageLoad);
+        });
+      };
+    }
+  }, [channelMessages[activeChannel]?.length]); // Run when new messages are added
 
   // Check if user is near bottom when they scroll
   const handleScroll = () => {
