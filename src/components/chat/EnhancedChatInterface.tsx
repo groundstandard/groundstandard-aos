@@ -294,6 +294,11 @@ export const EnhancedChatInterface = () => {
         [activeChannel]: [...(prev[activeChannel] || []), message]
       }));
 
+      // If this is a reply, auto-expand the thread to show the new message
+      if (replyingTo) {
+        setExpandedThreads(prev => new Set([...prev, replyingTo]));
+      }
+
       // Update channel's last activity
       setChannels(prev => prev.map(channel => 
         channel.id === activeChannel 
