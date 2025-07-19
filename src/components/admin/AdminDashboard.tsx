@@ -181,7 +181,7 @@ export const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-start mb-4 sm:mb-6">
         <div>
           <h2 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="h-8 w-8 text-primary" />
@@ -190,23 +190,6 @@ export const AdminDashboard = () => {
           <p className="text-muted-foreground mt-1">
             Welcome back, {profile?.first_name}! Here's what's happening at your academy.
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {subscriptionInfo?.subscribed && (
-            <Badge variant="default" className="flex items-center gap-1">
-              <Crown className="h-3 w-3" />
-              {subscriptionInfo.subscription_tier}
-            </Badge>
-          )}
-          <Button 
-            onClick={handleRefreshStats}
-            disabled={refreshing}
-            variant="outline"
-            size="sm"
-          >
-            <Activity className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
         </div>
       </div>
 
