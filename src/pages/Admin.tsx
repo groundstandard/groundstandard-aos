@@ -4,30 +4,28 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { UserManagement } from "@/components/admin/UserManagement";
-import { ClassManagement } from "@/components/admin/ClassManagement";
-import { SecurityAudit } from "@/components/admin/SecurityAudit";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { ClassManagement } from "@/components/admin/ClassManagement";
+import { UserManagement } from "@/components/admin/UserManagement";
+import { SecurityAudit } from "@/components/admin/SecurityAudit";
 import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { 
+  Settings, 
   Users, 
   Calendar, 
+  BarChart3, 
   Shield, 
-  BarChart3,
-  Settings,
-  Bell,
-  FileText,
-  Database,
-  DollarSign
+  CreditCard,
+  Home,
+  Bell
 } from "lucide-react";
 
 const Admin = () => {
   const { user, profile, loading } = useAuth();
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("analytics");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   if (loading) {
     return (
@@ -42,83 +40,60 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
-      <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-full">
+    <div className="min-h-screen bg-gradient-subtle">
+      <div className="container mx-auto p-6 space-y-6">
         <BackButton />
-        <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
-          <div className="min-w-0 flex-1">
-            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-foreground truncate`}>
-              Admin Dashboard
-            </h1>
-            <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''} mt-1`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
               Manage your martial arts academy
             </p>
           </div>
           
-          {!isMobile && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4 mr-2" />
-                Notifications
-              </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </Button>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+          </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6 w-full">
-          {isMobile ? (
-            <div className="w-full overflow-x-auto">
-              <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-background/50 backdrop-blur p-1 text-muted-foreground w-max min-w-full">
-                <TabsTrigger value="analytics" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
-                  <BarChart3 className="h-3 w-3" />
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger value="users" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
-                  <Users className="h-3 w-3" />
-                  Users
-                </TabsTrigger>
-                <TabsTrigger value="classes" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
-                  <Calendar className="h-3 w-3" />
-                  Classes
-                </TabsTrigger>
-                <TabsTrigger value="subscriptions" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
-                  <DollarSign className="h-3 w-3" />
-                  Plans
-                </TabsTrigger>
-                <TabsTrigger value="security" className="flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap">
-                  <Shield className="h-3 w-3" />
-                  Security
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          ) : (
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="classes" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Classes
-              </TabsTrigger>
-              <TabsTrigger value="subscriptions" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Subscriptions
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Security
-              </TabsTrigger>
-            </TabsList>
-          )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 bg-background/50 backdrop-blur">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analytics
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="classes" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Classes
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Subscriptions
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Security
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <AdminDashboard />
+          </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
             <AdminAnalytics />

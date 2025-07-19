@@ -1,0 +1,365 @@
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Calendar,
+  Users,
+  TrendingUp,
+  DollarSign,
+  Settings,
+  BarChart3,
+  Crown,
+  Star,
+  Clock,
+  Target,
+  Award,
+  Activity
+} from "lucide-react";
+
+export const AdminDashboard = () => {
+  const { profile } = useAuth();
+  const { subscriptionInfo } = useSubscription();
+  const { toast } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleQuickAction = (action: string) => {
+    toast({
+      title: "Quick Action",
+      description: `${action} feature will be implemented soon`,
+    });
+  };
+
+  const handleRefreshStats = async () => {
+    setRefreshing(true);
+    // Simulate refresh
+    setTimeout(() => {
+      setRefreshing(false);
+      toast({
+        title: "Success",
+        description: "Dashboard statistics refreshed",
+      });
+    }, 1000);
+  };
+
+  const quickStats = [
+    {
+      title: "Total Students",
+      value: "247",
+      change: "+12",
+      changeType: "increase",
+      icon: Users,
+      description: "Active members",
+      color: "text-blue-600"
+    },
+    {
+      title: "Monthly Revenue",
+      value: "$18,540",
+      change: "+8.2%",
+      changeType: "increase",
+      icon: DollarSign,
+      description: "This month",
+      color: "text-green-600"
+    },
+    {
+      title: "Class Attendance",
+      value: "89%",
+      change: "+5.1%",
+      changeType: "increase",
+      icon: Target,
+      description: "Weekly average",
+      color: "text-purple-600"
+    },
+    {
+      title: "Belt Promotions",
+      value: "23",
+      change: "+3",
+      changeType: "increase",
+      icon: Award,
+      description: "This quarter",
+      color: "text-orange-600"
+    }
+  ];
+
+  const recentActivities = [
+    {
+      type: "enrollment",
+      message: "5 new students enrolled in Advanced Karate",
+      time: "2 hours ago",
+      icon: Users,
+      color: "text-blue-500"
+    },
+    {
+      type: "payment",
+      message: "Premium subscription renewed by 12 members",
+      time: "4 hours ago",
+      icon: DollarSign,
+      color: "text-green-500"
+    },
+    {
+      type: "achievement",
+      message: "Belt testing completed for 8 students",
+      time: "1 day ago",
+      icon: Award,
+      color: "text-yellow-500"
+    },
+    {
+      type: "class",
+      message: "New Beginner's Class scheduled for next week",
+      time: "2 days ago",
+      icon: Calendar,
+      color: "text-purple-500"
+    }
+  ];
+
+  const upcomingTasks = [
+    {
+      task: "Review belt testing applications",
+      priority: "high",
+      dueDate: "Today",
+      category: "Testing"
+    },
+    {
+      task: "Prepare monthly revenue report",
+      priority: "medium",
+      dueDate: "Tomorrow",
+      category: "Finance"
+    },
+    {
+      task: "Schedule instructor meetings",
+      priority: "low",
+      dueDate: "This week",
+      category: "Management"
+    },
+    {
+      task: "Update class schedules for next month",
+      priority: "medium",
+      dueDate: "Next week",
+      category: "Scheduling"
+    }
+  ];
+
+  const systemHealth = {
+    attendance: { status: "good", value: 95 },
+    payments: { status: "excellent", value: 98 },
+    engagement: { status: "good", value: 87 },
+    retention: { status: "excellent", value: 94 }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "excellent": return "text-green-500";
+      case "good": return "text-blue-500";
+      case "warning": return "text-yellow-500";
+      case "critical": return "text-red-500";
+      default: return "text-gray-500";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high": return "bg-red-100 text-red-800 border-red-200";
+      case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "low": return "bg-green-100 text-green-800 border-green-200";
+      default: return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-8 w-8 text-primary" />
+            Admin Dashboard
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Welcome back, {profile?.first_name}! Here's what's happening at your academy.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {subscriptionInfo?.subscribed && (
+            <Badge variant="default" className="flex items-center gap-1">
+              <Crown className="h-3 w-3" />
+              {subscriptionInfo.subscription_tier}
+            </Badge>
+          )}
+          <Button 
+            onClick={handleRefreshStats}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <Activity className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {quickStats.map((stat, index) => (
+          <Card key={index} className="relative overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-3 w-3 text-green-500" />
+                <span className="text-green-500">{stat.change}</span>
+                <span>{stat.description}</span>
+              </div>
+            </CardContent>
+            <div 
+              className={`absolute right-0 top-0 w-1 h-full ${stat.color.replace('text-', 'bg-')}`}
+            />
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* System Health */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              System Health
+            </CardTitle>
+            <CardDescription>Overall academy performance metrics</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Object.entries(systemHealth).map(([key, health]) => (
+              <div key={key} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium capitalize">{key}</span>
+                  <Badge 
+                    variant="outline" 
+                    className={getStatusColor(health.status)}
+                  >
+                    {health.status}
+                  </Badge>
+                </div>
+                <Progress value={health.value} className="h-2" />
+                <div className="text-xs text-muted-foreground text-right">
+                  {health.value}%
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activities */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Activities
+            </CardTitle>
+            <CardDescription>Latest updates and changes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <activity.icon className={`h-4 w-4 mt-1 ${activity.color}`} />
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm">{activity.message}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Upcoming Tasks */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Upcoming Tasks
+            </CardTitle>
+            <CardDescription>Items requiring your attention</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {upcomingTasks.map((task, index) => (
+                <div key={index} className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{task.task}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${getPriorityColor(task.priority)}`}
+                      >
+                        {task.priority}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{task.category}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {task.dueDate}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Quick Actions
+          </CardTitle>
+          <CardDescription>Common administrative tasks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleQuickAction("Add New Student")}
+              className="h-auto flex-col space-y-2 p-4"
+            >
+              <Users className="h-6 w-6" />
+              <span>Add Student</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => handleQuickAction("Schedule Class")}
+              className="h-auto flex-col space-y-2 p-4"
+            >
+              <Calendar className="h-6 w-6" />
+              <span>Schedule Class</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => handleQuickAction("Generate Report")}
+              className="h-auto flex-col space-y-2 p-4"
+            >
+              <BarChart3 className="h-6 w-6" />
+              <span>Generate Report</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => handleQuickAction("Send Notifications")}
+              className="h-auto flex-col space-y-2 p-4"
+            >
+              <Activity className="h-6 w-6" />
+              <span>Send Notifications</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
