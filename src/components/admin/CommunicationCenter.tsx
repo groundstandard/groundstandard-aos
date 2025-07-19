@@ -33,23 +33,23 @@ import {
 interface CommunicationTemplate {
   id: string;
   name: string;
-  type: 'email' | 'sms' | 'notification' | 'announcement';
+  message_type: 'email' | 'sms' | 'notification' | 'announcement';
   subject?: string;
   content: string;
-  target_audience: 'all' | 'students' | 'instructors' | 'parents' | 'custom';
   created_at: string;
   created_by: string;
 }
 
 interface CommunicationLog {
   id: string;
-  type: 'email' | 'sms' | 'notification' | 'announcement';
+  message_type: 'email' | 'sms' | 'notification' | 'announcement';
   subject?: string;
   content: string;
-  recipients_count: number;
+  contact_id: string;
   status: 'sent' | 'pending' | 'failed';
   sent_at: string;
   sent_by: string;
+  metadata?: any;
 }
 
 export const CommunicationCenter = () => {
@@ -58,85 +58,107 @@ export const CommunicationCenter = () => {
   const [activeTab, setActiveTab] = useState("compose");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [messageForm, setMessageForm] = useState({
-    type: 'email' as CommunicationTemplate['type'],
+    message_type: 'email' as CommunicationTemplate['message_type'],
     subject: '',
     content: '',
-    target_audience: 'all' as CommunicationTemplate['target_audience'],
+    target_audience: 'all' as 'all' | 'students' | 'instructors' | 'parents' | 'custom',
     custom_recipients: [] as string[]
   });
 
-  // Mock data for templates
-  const templates: CommunicationTemplate[] = [
-    {
-      id: '1',
-      name: 'Class Reminder',
-      type: 'email',
-      subject: 'Upcoming Class Reminder',
-      content: 'Don\'t forget about your upcoming class tomorrow at {time}. See you there!',
-      target_audience: 'students',
-      created_at: '2024-01-15T10:00:00Z',
-      created_by: 'admin'
-    },
-    {
-      id: '2',
-      name: 'Payment Due',
-      type: 'email',
-      subject: 'Monthly Payment Reminder',
-      content: 'Your monthly membership payment is due in 3 days. Please ensure your payment method is up to date.',
-      target_audience: 'all',
-      created_at: '2024-01-14T09:00:00Z',
-      created_by: 'admin'
-    },
-    {
-      id: '3',
-      name: 'Belt Test Notification',
-      type: 'notification',
-      content: 'Congratulations! You are eligible for your next belt test. Schedule your test today.',
-      target_audience: 'students',
-      created_at: '2024-01-13T14:00:00Z',
-      created_by: 'admin'
+  // Fetch templates from database
+  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ['message-templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('message_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
     }
-  ];
+  });
 
-  // Mock data for communication logs
-  const communicationLogs: CommunicationLog[] = [
-    {
-      id: '1',
-      type: 'email',
-      subject: 'Welcome to Our Academy',
-      content: 'Welcome to our martial arts academy! We\'re excited to have you join our community.',
-      recipients_count: 15,
-      status: 'sent',
-      sent_at: '2024-01-15T08:30:00Z',
-      sent_by: 'admin'
-    },
-    {
-      id: '2',
-      type: 'sms',
-      content: 'Class cancelled today due to weather. Make-up class scheduled for tomorrow.',
-      recipients_count: 45,
-      status: 'sent',
-      sent_at: '2024-01-14T07:15:00Z',
-      sent_by: 'admin'
-    },
-    {
-      id: '3',
-      type: 'notification',
-      content: 'New schedule available for next month. Check the app for updates.',
-      recipients_count: 120,
-      status: 'sent',
-      sent_at: '2024-01-13T16:45:00Z',
-      sent_by: 'admin'
+  // Fetch communication logs from database
+  const { data: communicationLogs = [], isLoading: logsLoading } = useQuery({
+    queryKey: ['communication-logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('communication_logs')
+        .select('*')
+        .order('sent_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
     }
-  ];
+  });
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: typeof messageForm) => {
-      // In a real implementation, this would call an edge function
-      console.log('Sending message:', messageData);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { success: true, recipients: 25 };
+      // Get recipient count based on target audience
+      let recipientCount = 0;
+      
+      if (messageData.target_audience === 'all') {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        recipientCount = count || 0;
+      } else if (messageData.target_audience === 'students') {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'student');
+        recipientCount = count || 0;
+      } else if (messageData.target_audience === 'instructors') {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'instructor');
+        recipientCount = count || 0;
+      } else if (messageData.target_audience === 'parents') {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .not('parent_id', 'is', null);
+        recipientCount = count || 0;
+      }
+
+      // For communication logs, we need a contact_id, so we'll use the first admin user
+      const { data: adminUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1)
+        .single();
+
+      if (!adminUser) throw new Error('No admin user found');
+
+      // Log the communication to database
+      const { data, error } = await supabase
+        .from('communication_logs')
+        .insert([{
+          contact_id: adminUser.id, // Using admin as sender
+          message_type: messageData.message_type,
+          subject: messageData.subject || null,
+          content: messageData.content,
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          metadata: {
+            target_audience: messageData.target_audience,
+            custom_recipients: messageData.custom_recipients,
+            recipients_count: recipientCount
+          }
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Here you would call an edge function to actually send the message
+      // For now, we'll just simulate success
+      console.log('Message logged to database:', data);
+      
+      return { success: true, recipients: recipientCount };
     },
     onSuccess: (data) => {
       toast({ 
@@ -144,12 +166,14 @@ export const CommunicationCenter = () => {
         description: `Message delivered to ${data.recipients} recipients`
       });
       setMessageForm({
-        type: 'email',
+        message_type: 'email',
         subject: '',
         content: '',
         target_audience: 'all',
         custom_recipients: []
       });
+      // Refresh the communication logs
+      queryClient.invalidateQueries({ queryKey: ['communication-logs'] });
     },
     onError: (error) => {
       toast({ 
@@ -160,19 +184,71 @@ export const CommunicationCenter = () => {
     }
   });
 
-  const useTemplate = (template: CommunicationTemplate) => {
+  // Create template mutation
+  const createTemplateMutation = useMutation({
+    mutationFn: async (templateData: { name: string; message_type: string; subject?: string; content: string; }) => {
+      const { data, error } = await supabase
+        .from('message_templates')
+        .insert([{
+          name: templateData.name,
+          message_type: templateData.message_type,
+          subject: templateData.subject || null,
+          content: templateData.content,
+          variables: null // Could be expanded for template variables
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Template created successfully!" });
+      queryClient.invalidateQueries({ queryKey: ['message-templates'] });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Failed to create template", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const saveAsTemplate = () => {
+    if (!messageForm.content) {
+      toast({
+        title: "Missing content",
+        description: "Please enter message content before saving as template",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const templateName = prompt("Enter template name:");
+    if (templateName) {
+      createTemplateMutation.mutate({
+        name: templateName,
+        message_type: messageForm.message_type,
+        subject: messageForm.subject,
+        content: messageForm.content
+      });
+    }
+  };
+
+  const useTemplate = (template: any) => {
     setMessageForm({
-      type: template.type,
+      message_type: template.message_type as CommunicationTemplate['message_type'],
       subject: template.subject || '',
       content: template.content,
-      target_audience: template.target_audience,
+      target_audience: 'all', // Default since templates don't store this
       custom_recipients: []
     });
     setActiveTab('compose');
     toast({ title: "Template loaded", description: `${template.name} template has been loaded` });
   };
 
-  const getTypeIcon = (type: CommunicationTemplate['type']) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
       case 'sms': return <Smartphone className="h-4 w-4" />;
@@ -182,7 +258,7 @@ export const CommunicationCenter = () => {
     }
   };
 
-  const getStatusColor = (status: CommunicationLog['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'sent': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -191,7 +267,7 @@ export const CommunicationCenter = () => {
     }
   };
 
-  const getAudienceLabel = (audience: CommunicationTemplate['target_audience']) => {
+  const getAudienceLabel = (audience: string) => {
     switch (audience) {
       case 'all': return 'All Members';
       case 'students': return 'Students Only';
@@ -209,7 +285,11 @@ export const CommunicationCenter = () => {
       const now = new Date();
       return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
     }).length,
-    totalRecipients: communicationLogs.reduce((sum, log) => sum + log.recipients_count, 0),
+    totalRecipients: communicationLogs.reduce((sum, log) => {
+      // Get recipients count from metadata if available
+      const metadata = log.metadata as any;
+      return sum + (metadata?.recipients_count || 0);
+    }, 0),
     templates: templates.length
   };
 
@@ -281,9 +361,9 @@ export const CommunicationCenter = () => {
                 <div className="space-y-2">
                   <Label htmlFor="message-type">Message Type</Label>
                   <Select 
-                    value={messageForm.type} 
-                    onValueChange={(value: CommunicationTemplate['type']) => 
-                      setMessageForm(prev => ({ ...prev, type: value }))
+                    value={messageForm.message_type} 
+                    onValueChange={(value: CommunicationTemplate['message_type']) => 
+                      setMessageForm(prev => ({ ...prev, message_type: value }))
                     }
                   >
                     <SelectTrigger>
@@ -302,7 +382,7 @@ export const CommunicationCenter = () => {
                   <Label htmlFor="target-audience">Target Audience</Label>
                   <Select 
                     value={messageForm.target_audience} 
-                    onValueChange={(value: CommunicationTemplate['target_audience']) => 
+                    onValueChange={(value: typeof messageForm.target_audience) => 
                       setMessageForm(prev => ({ ...prev, target_audience: value }))
                     }
                   >
@@ -320,7 +400,7 @@ export const CommunicationCenter = () => {
                 </div>
               </div>
 
-              {(messageForm.type === 'email' || messageForm.type === 'announcement') && (
+              {(messageForm.message_type === 'email' || messageForm.message_type === 'announcement') && (
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
                   <Input
@@ -347,7 +427,7 @@ export const CommunicationCenter = () => {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline">Save as Template</Button>
+                <Button variant="outline" onClick={saveAsTemplate}>Save as Template</Button>
                 <Button 
                   onClick={() => sendMessageMutation.mutate(messageForm)}
                   disabled={!messageForm.content || sendMessageMutation.isPending}
@@ -385,27 +465,27 @@ export const CommunicationCenter = () => {
                 {templates.map((template) => (
                   <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          {getTypeIcon(template.type)}
-                          <h4 className="font-medium">{template.name}</h4>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {template.type}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {template.subject && (
-                        <p className="font-medium text-sm mb-2">{template.subject}</p>
-                      )}
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {template.content}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-xs">
-                          {getAudienceLabel(template.target_audience)}
-                        </Badge>
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center space-x-2">
+                           {getTypeIcon(template.message_type)}
+                           <h4 className="font-medium">{template.name}</h4>
+                         </div>
+                         <Badge variant="outline" className="text-xs">
+                           {template.message_type}
+                         </Badge>
+                       </div>
+                     </CardHeader>
+                     <CardContent className="pt-0">
+                       {template.subject && (
+                         <p className="font-medium text-sm mb-2">{template.subject}</p>
+                       )}
+                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                         {template.content}
+                       </p>
+                       <div className="flex items-center justify-between">
+                         <Badge variant="secondary" className="text-xs">
+                           Template
+                         </Badge>
                         <div className="flex space-x-1">
                           <Button 
                             size="sm" 
@@ -447,26 +527,28 @@ export const CommunicationCenter = () => {
                 </TableHeader>
                 <TableBody>
                   {communicationLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {getTypeIcon(log.type)}
-                          <span className="capitalize">{log.type}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          {log.subject && (
-                            <div className="font-medium text-sm">{log.subject}</div>
-                          )}
-                          <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {log.content}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{log.recipients_count}</Badge>
-                      </TableCell>
+                     <TableRow key={log.id}>
+                       <TableCell>
+                         <div className="flex items-center space-x-2">
+                           {getTypeIcon(log.message_type)}
+                           <span className="capitalize">{log.message_type}</span>
+                         </div>
+                       </TableCell>
+                       <TableCell>
+                         <div>
+                           {log.subject && (
+                             <div className="font-medium text-sm">{log.subject}</div>
+                           )}
+                           <div className="text-sm text-muted-foreground truncate max-w-xs">
+                             {log.content}
+                           </div>
+                         </div>
+                       </TableCell>
+                       <TableCell>
+                         <Badge variant="secondary">
+                           {(log.metadata as any)?.recipients_count || 0}
+                         </Badge>
+                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(log.status)}>
                           {log.status}
