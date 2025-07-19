@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto p-6 space-y-6">
+        <BackButton />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>

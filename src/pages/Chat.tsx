@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { BackButton } from "@/components/ui/BackButton";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { Navigate } from "react-router-dom";
 
@@ -20,6 +21,7 @@ const Chat = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto p-6 space-y-6">
+        <BackButton />
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Academy Chat</h1>
         </div>
