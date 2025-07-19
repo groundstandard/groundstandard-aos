@@ -48,6 +48,7 @@ interface ChatSidebarProps {
   activeChannel: string;
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: () => void;
+  onStartDM: () => void;
   onDirectMessageSelect: (userId: string) => void;
   directMessageUsers: DirectMessageUser[];
   className?: string;
@@ -58,6 +59,7 @@ export const ChatSidebar = ({
   activeChannel, 
   onChannelSelect, 
   onCreateChannel,
+  onStartDM,
   onDirectMessageSelect,
   directMessageUsers,
   className = ""
@@ -390,6 +392,14 @@ export const ChatSidebar = ({
                 Direct Messages
               </h3>
             </button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onStartDM}
+              className="h-7 w-7 p-0 rounded-full hover:bg-muted"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
           {!collapsedSections['direct-messages'] && (
             <div className="px-2">

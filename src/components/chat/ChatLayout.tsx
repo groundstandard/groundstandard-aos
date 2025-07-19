@@ -93,6 +93,7 @@ export const ChatLayout = ({
               activeChannel={activeChannel}
               onChannelSelect={handleChannelSelect}
               onCreateChannel={handleCreateChannel}
+              onStartDM={() => {}}
               onDirectMessageSelect={() => {}}
               directMessageUsers={[]}
               className="h-full"
@@ -137,6 +138,7 @@ export const ChatLayout = ({
           activeChannel={activeChannel}
           onChannelSelect={onChannelSelect}
           onCreateChannel={handleCreateChannel}
+          onStartDM={() => {}}
           onDirectMessageSelect={() => {}}
           directMessageUsers={[]}
           className="h-full"

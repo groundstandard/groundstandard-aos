@@ -10,6 +10,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { ChannelSettingsModal } from './ChannelSettingsModal';
+import { StartDMModal } from './StartDMModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Hash, Lock, Crown, Users, Settings } from 'lucide-react';
 import { ChannelSetup } from './ChannelSetup';
@@ -99,6 +100,7 @@ export const EnhancedChatInterface = () => {
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [showChannelSettings, setShowChannelSettings] = useState(false);
+  const [showStartDM, setShowStartDM] = useState(false);
   const [showChannels, setShowChannels] = useState(false);
   const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -578,6 +580,7 @@ export const EnhancedChatInterface = () => {
               activeChannel={activeChannel}
               onChannelSelect={handleChannelSwitch}
               onCreateChannel={() => setShowCreateChannel(true)}
+              onStartDM={() => setShowStartDM(true)}
               onDirectMessageSelect={handleDirectMessageSelect}
               directMessageUsers={directMessageUsers}
               className="h-full"
@@ -722,6 +725,7 @@ export const EnhancedChatInterface = () => {
           activeChannel={activeChannel}
           onChannelSelect={handleChannelSwitch}
           onCreateChannel={() => setShowCreateChannel(true)}
+          onStartDM={() => setShowStartDM(true)}
           onDirectMessageSelect={handleDirectMessageSelect}
           directMessageUsers={directMessageUsers}
           className="h-full"
@@ -918,6 +922,13 @@ export const EnhancedChatInterface = () => {
           }}
         />
       )}
+
+      {/* Start DM Modal */}
+      <StartDMModal
+        open={showStartDM}
+        onOpenChange={setShowStartDM}
+        onStartDM={handleDirectMessageSelect}
+      />
     </div>
   );
 };
