@@ -17,6 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Hash, Lock, Crown, Users, Settings } from 'lucide-react';
 import { ChannelSetup } from './ChannelSetup';
 import { DateDivider } from './DateDivider';
+import { EmptyChatState } from './EmptyChatState';
 import { format, isSameDay } from 'date-fns';
 
 interface Message {
@@ -93,7 +94,7 @@ export const EnhancedChatInterface = () => {
   const navigate = useNavigate();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [channelMessages, setChannelMessages] = useState<{ [key: string]: Message[] }>({});
-  const [activeChannel, setActiveChannel] = useState('general');
+  const [activeChannel, setActiveChannel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<UserPresence[]>([]);
@@ -179,9 +180,11 @@ export const EnhancedChatInterface = () => {
         setChannels(loadedChannels);
         
         // Set first channel as active if none selected or if current activeChannel doesn't exist
-        const validChannel = loadedChannels.find(ch => ch.name === activeChannel);
-        if (loadedChannels.length > 0 && !validChannel) {
+        if (loadedChannels.length > 0 && !activeChannel) {
           setActiveChannel(loadedChannels[0].name);
+        } else if (activeChannel && !loadedChannels.find(ch => ch.name === activeChannel)) {
+          // If selected channel no longer exists, set to first available or null
+          setActiveChannel(loadedChannels.length > 0 ? loadedChannels[0].name : null);
         }
 
         // Load messages for all channels
@@ -433,7 +436,7 @@ export const EnhancedChatInterface = () => {
         });
       };
     }
-  }, [channelMessages[activeChannel]?.length]); // Run when new messages are added
+  }, [channelMessages[activeChannel || '']?.length]); // Run when new messages are added
 
   // Check if user is near bottom when they scroll
   const handleScroll = () => {
@@ -455,7 +458,7 @@ export const EnhancedChatInterface = () => {
 
     console.log('Sending message');
 
-    if (editingMessageId) {
+    if (editingMessageId && activeChannel) {
       // Update existing message
       setChannelMessages(prev => ({
         ...prev,
@@ -494,7 +497,7 @@ export const EnhancedChatInterface = () => {
         let channelId = null;
         let dmChannelId = null;
         
-        if (activeChannel.startsWith('dm-')) {
+        if (activeChannel && activeChannel.startsWith('dm-')) {
           dmChannelId = activeChannel.replace('dm-', '');
           console.log('DM channel detected:', dmChannelId);
         } else {
@@ -656,6 +659,8 @@ export const EnhancedChatInterface = () => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
+    if (!activeChannel) return;
+    
     setChannelMessages(prev => ({
       ...prev,
       [activeChannel]: (prev[activeChannel] || []).map(msg => {
@@ -756,6 +761,7 @@ export const EnhancedChatInterface = () => {
   };
 
   const getCurrentChannelMessages = (): Message[] => {
+    if (!activeChannel) return [];
     return channelMessages[activeChannel] || [];
   };
 
@@ -887,7 +893,7 @@ export const EnhancedChatInterface = () => {
                         size="sm"
                         onClick={() => setShowChannelSettings(true)}
                         className="h-8 w-8 p-0"
-                        title={activeChannel.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
+                        title={activeChannel?.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
@@ -901,7 +907,9 @@ export const EnhancedChatInterface = () => {
                   onScroll={handleScroll}
                   className="flex-1 overflow-y-auto px-4 pt-4 pb-4 flex flex-col justify-end"
                 >
-                  {isNewChannel() ? (
+                  {!activeChannel ? (
+                    <EmptyChatState />
+                  ) : isNewChannel() ? (
                     <ChannelSetup 
                       channel={currentChannel!} 
                       onDescriptionAdded={handleDescriptionAdded}
@@ -1055,7 +1063,7 @@ export const EnhancedChatInterface = () => {
         <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              {activeChannel.startsWith('dm-') ? (
+              {activeChannel?.startsWith('dm-') ? (
                 <>
                   <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
                     <Users className="h-4 w-4 text-white" />
@@ -1105,7 +1113,7 @@ export const EnhancedChatInterface = () => {
               size="sm"
               onClick={() => setShowChannelSettings(true)}
               className="h-8 w-8 p-0"
-              title={activeChannel.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
+              title={activeChannel?.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -1118,7 +1126,9 @@ export const EnhancedChatInterface = () => {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto px-4 pt-4 pb-4 flex flex-col justify-end"
         >
-          {isNewChannel() ? (
+          {!activeChannel ? (
+            <EmptyChatState />
+          ) : isNewChannel() ? (
             <ChannelSetup 
               channel={currentChannel!} 
               onDescriptionAdded={handleDescriptionAdded}
