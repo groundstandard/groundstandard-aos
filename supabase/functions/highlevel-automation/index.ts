@@ -28,10 +28,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[HIGHLEVEL-AUTOMATION] Processing ${type} for contact ${contactId}`);
 
-    // Get contact information first to find user's HighLevel config
+    // Get contact information first to find academy's HighLevel config
     const { data: contact, error: contactError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, academies(*)')
       .eq('id', contactId)
       .single();
 
@@ -39,10 +39,14 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to load contact: ${contactError.message}`);
     }
 
-    // Get automation settings and user's HighLevel config
+    if (!contact.academy_id) {
+      throw new Error('Contact is not associated with any academy');
+    }
+
+    // Get automation settings and academy's HighLevel config
     const [settingsResponse, hlConfigResponse] = await Promise.all([
       supabase.from('automation_settings').select('*').single(),
-      supabase.from('highlevel_config').select('*').eq('user_id', contact.id).single()
+      supabase.from('highlevel_config').select('*').eq('academy_id', contact.academy_id).single()
     ]);
 
     if (settingsResponse.error) {
@@ -50,10 +54,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (hlConfigResponse.error || !hlConfigResponse.data) {
-      console.log(`[HIGHLEVEL-AUTOMATION] No HighLevel config found for user ${contact.id}`);
+      console.log(`[HIGHLEVEL-AUTOMATION] No HighLevel config found for academy ${contact.academy_id}`);
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'No HighLevel config found for user' 
+        message: 'No HighLevel config found for academy' 
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -64,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
     const hlConfig = hlConfigResponse.data;
 
     if (!hlConfig.api_key || !hlConfig.subaccount_id || !hlConfig.is_connected) {
-      throw new Error('Incomplete HighLevel configuration for user');
+      throw new Error('Incomplete HighLevel configuration for academy');
     }
 
     // Check if automation is enabled for this type

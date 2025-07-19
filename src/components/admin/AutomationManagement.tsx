@@ -78,21 +78,28 @@ export const AutomationManagement = () => {
           });
         }
 
-        // Load HighLevel config
-        const { data: hlData, error: hlError } = await supabase
-          .from('highlevel_config')
-          .select('*')
-          .maybeSingle();
+        // Load HighLevel config for current user's academy
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('academy_id')
+          .eq('id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
 
-        if (hlError) {
-          console.error('Error loading HighLevel config:', hlError);
-        } else if (hlData) {
-          setHlConfig({
-            subaccountId: hlData.subaccount_id || '',
-            webhookUrl: hlData.webhook_url || '',
-            apiKey: hlData.api_key || '',
-            isConnected: hlData.is_connected || false
-          });
+        if (profile?.academy_id) {
+          const { data: hlData, error: hlError } = await supabase
+            .from('highlevel_config')
+            .select('*')
+            .eq('academy_id', profile.academy_id)
+            .maybeSingle();
+
+          if (!hlError && hlData) {
+            setHlConfig({
+              subaccountId: hlData.subaccount_id || '',
+              webhookUrl: hlData.webhook_url || '',
+              apiKey: hlData.api_key || '',
+              isConnected: hlData.is_connected || false
+            });
+          }
         }
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -135,6 +142,17 @@ export const AutomationManagement = () => {
   // Save HighLevel config to database
   const saveHighLevelConfig = async (config: HighLevelConfig) => {
     try {
+      // Get current user's academy_id
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!profile?.academy_id) {
+        throw new Error('User is not associated with any academy');
+      }
+
       const { error } = await supabase
         .from('highlevel_config')
         .upsert({
@@ -142,7 +160,7 @@ export const AutomationManagement = () => {
           webhook_url: config.webhookUrl,
           api_key: config.apiKey,
           is_connected: config.isConnected,
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          academy_id: profile.academy_id
         });
 
       if (error) throw error;
@@ -275,10 +293,22 @@ export const AutomationManagement = () => {
 
     try {
       setSaving(true);
+      // Get current user's academy_id for the test
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!profile?.academy_id) {
+        throw new Error('User is not associated with any academy');
+      }
+
       const { error } = await supabase.functions.invoke('test-highlevel-contact', {
         body: {
           subaccountId: hlConfig.subaccountId,
-          apiKey: hlConfig.apiKey
+          apiKey: hlConfig.apiKey,
+          academyId: profile.academy_id
         }
       });
 

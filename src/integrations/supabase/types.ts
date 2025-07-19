@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      academies: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          owner_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          owner_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           class_id: string
@@ -820,36 +853,44 @@ export type Database = {
       }
       highlevel_config: {
         Row: {
+          academy_id: string | null
           api_key: string | null
           created_at: string
           id: string
           is_connected: boolean
           subaccount_id: string | null
           updated_at: string
-          user_id: string | null
           webhook_url: string | null
         }
         Insert: {
+          academy_id?: string | null
           api_key?: string | null
           created_at?: string
           id?: string
           is_connected?: boolean
           subaccount_id?: string | null
           updated_at?: string
-          user_id?: string | null
           webhook_url?: string | null
         }
         Update: {
+          academy_id?: string | null
           api_key?: string | null
           created_at?: string
           id?: string
           is_connected?: boolean
           subaccount_id?: string | null
           updated_at?: string
-          user_id?: string | null
           webhook_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "highlevel_config_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory: {
         Row: {
@@ -1300,6 +1341,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          academy_id: string | null
           belt_level: string | null
           created_at: string
           email: string
@@ -1314,6 +1356,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          academy_id?: string | null
           belt_level?: string | null
           created_at?: string
           email: string
@@ -1328,6 +1371,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          academy_id?: string | null
           belt_level?: string | null
           created_at?: string
           email?: string
@@ -1342,6 +1386,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_parent_id_fkey"
             columns: ["parent_id"]
