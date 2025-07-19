@@ -82,7 +82,7 @@ interface UserPresence {
 
 export const EnhancedChatInterface = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [channelMessages, setChannelMessages] = useState<Record<string, Message[]>>({});
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState<string>('general');
   const [newMessage, setNewMessage] = useState('');
@@ -93,6 +93,7 @@ export const EnhancedChatInterface = () => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
@@ -160,41 +161,54 @@ export const EnhancedChatInterface = () => {
       });
     }
 
-    // Enhanced mock messages
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        content: 'Welcome to the academy chat! Feel free to ask questions and connect with fellow martial artists. 🥋',
-        sender_id: 'instructor-1',
-        sender_name: 'Sensei Johnson',
-        sender_role: 'admin',
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-        reactions: [
-          { emoji: '👋', count: 5, users: ['user1', 'user2'] },
-          { emoji: '🥋', count: 3, users: ['user3'] }
-        ]
-      },
-      {
-        id: '2',
-        content: 'Thank you! Excited to be part of this community.',
-        sender_id: 'student-1',
-        sender_name: 'Alex Chen',
-        sender_role: 'student',
-        created_at: new Date(Date.now() - 6900000).toISOString()
-      },
-      {
-        id: '3',
-        content: 'Classes are canceled on Monday due to the holiday. We will resume normal schedule on Tuesday.',
-        sender_id: 'instructor-1',
-        sender_name: 'Sensei Johnson',
-        sender_role: 'admin',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        thread_count: 2
-      }
-    ];
+    // Initialize messages for each channel
+    const initialChannelMessages: Record<string, Message[]> = {
+      'general': [
+        {
+          id: '1',
+          content: 'Welcome to the academy chat! Feel free to ask questions and connect with fellow martial artists. 🥋',
+          sender_id: 'instructor-1',
+          sender_name: 'Sensei Johnson',
+          sender_role: 'admin',
+          created_at: new Date(Date.now() - 7200000).toISOString(),
+          reactions: [
+            { emoji: '👋', count: 5, users: ['user1', 'user2'] },
+            { emoji: '🥋', count: 3, users: ['user3'] }
+          ]
+        },
+        {
+          id: '2',
+          content: 'Thank you! Excited to be part of this community.',
+          sender_id: 'student-1',
+          sender_name: 'Alex Chen',
+          sender_role: 'student',
+          created_at: new Date(Date.now() - 6900000).toISOString()
+        }
+      ],
+      'beginners': [
+        {
+          id: '3',
+          content: 'Welcome beginners! This is a safe space to ask any questions about basic techniques.',
+          sender_id: 'instructor-2',
+          sender_name: 'Instructor Sarah',
+          sender_role: 'instructor',
+          created_at: new Date(Date.now() - 3600000).toISOString()
+        }
+      ],
+      'admin-team': [
+        {
+          id: '4',
+          content: 'Staff meeting scheduled for next Wednesday at 7 PM.',
+          sender_id: 'instructor-1',
+          sender_name: 'Sensei Johnson',
+          sender_role: 'admin',
+          created_at: new Date(Date.now() - 1800000).toISOString()
+        }
+      ]
+    };
 
     setChannels(mockChannels);
-    setMessages(mockMessages);
+    setChannelMessages(initialChannelMessages);
     setLoading(false);
   }, [profile, subscriptionInfo]);
 
@@ -239,18 +253,21 @@ export const EnhancedChatInterface = () => {
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [channelMessages, activeChannel]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !profile) return;
 
     if (editingMessageId) {
       // Update existing message
-      setMessages(prev => prev.map(msg => 
-        msg.id === editingMessageId 
-          ? { ...msg, content: newMessage.trim() }
-          : msg
-      ));
+      setChannelMessages(prev => ({
+        ...prev,
+        [activeChannel]: (prev[activeChannel] || []).map(msg => 
+          msg.id === editingMessageId 
+            ? { ...msg, content: newMessage.trim() }
+            : msg
+        )
+      }));
       setEditingMessageId(null);
       toast({
         title: "Message updated",
@@ -272,7 +289,10 @@ export const EnhancedChatInterface = () => {
         attachments: attachments.length > 0 ? attachments : undefined
       };
 
-      setMessages(prev => [...prev, message]);
+      setChannelMessages(prev => ({
+        ...prev,
+        [activeChannel]: [...(prev[activeChannel] || []), message]
+      }));
 
       // Update channel's last activity
       setChannels(prev => prev.map(channel => 
@@ -306,6 +326,28 @@ export const EnhancedChatInterface = () => {
     setChannels(prev => prev.map(c => 
       c.id === channelId ? { ...c, unread_count: 0 } : c
     ));
+    setReplyingTo(null);
+    setEditingMessageId(null);
+    
+    if (isMobile) {
+      setShowChannels(false);
+    }
+  };
+
+  const handleDirectMessageSelect = (userId: string) => {
+    // Create or switch to a direct message channel with this user
+    const dmChannelId = `dm-${userId}`;
+    setActiveChannel(dmChannelId);
+    setReplyingTo(null);
+    setEditingMessageId(null);
+    
+    // Initialize DM channel if it doesn't exist
+    if (!channelMessages[dmChannelId]) {
+      setChannelMessages(prev => ({
+        ...prev,
+        [dmChannelId]: []
+      }));
+    }
     
     if (isMobile) {
       setShowChannels(false);
@@ -313,48 +355,51 @@ export const EnhancedChatInterface = () => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
-    setMessages(prev => prev.map(msg => {
-      if (msg.id === messageId) {
-        const reactions = msg.reactions || [];
-        const existingReaction = reactions.find(r => r.emoji === emoji);
-        
-        if (existingReaction) {
-          // Toggle reaction
-          const userInReaction = existingReaction.users.includes(profile?.id || '');
-          if (userInReaction) {
-            // Remove user's reaction
-            if (existingReaction.count === 1) {
-              return { ...msg, reactions: reactions.filter(r => r.emoji !== emoji) };
+    setChannelMessages(prev => ({
+      ...prev,
+      [activeChannel]: (prev[activeChannel] || []).map(msg => {
+        if (msg.id === messageId) {
+          const reactions = msg.reactions || [];
+          const existingReaction = reactions.find(r => r.emoji === emoji);
+          
+          if (existingReaction) {
+            // Toggle reaction
+            const userInReaction = existingReaction.users.includes(profile?.id || '');
+            if (userInReaction) {
+              // Remove user's reaction
+              if (existingReaction.count === 1) {
+                return { ...msg, reactions: reactions.filter(r => r.emoji !== emoji) };
+              } else {
+                return {
+                  ...msg,
+                  reactions: reactions.map(r => 
+                    r.emoji === emoji 
+                      ? { ...r, count: r.count - 1, users: r.users.filter(u => u !== profile?.id) }
+                      : r
+                  )
+                };
+              }
             } else {
+              // Add user's reaction
               return {
                 ...msg,
                 reactions: reactions.map(r => 
                   r.emoji === emoji 
-                    ? { ...r, count: r.count - 1, users: r.users.filter(u => u !== profile?.id) }
+                    ? { ...r, count: r.count + 1, users: [...r.users, profile?.id || ''] }
                     : r
                 )
               };
             }
           } else {
-            // Add user's reaction
+            // Add new reaction
             return {
               ...msg,
-              reactions: reactions.map(r => 
-                r.emoji === emoji 
-                  ? { ...r, count: r.count + 1, users: [...r.users, profile?.id || ''] }
-                  : r
-              )
+              reactions: [...reactions, { emoji, count: 1, users: [profile?.id || ''] }]
             };
           }
-        } else {
-          // Add new reaction
-          return {
-            ...msg,
-            reactions: [...reactions, { emoji, count: 1, users: [profile?.id || ''] }]
-          };
         }
-      }
-      return msg;
+        return msg;
+      })
     }));
   };
 
@@ -371,7 +416,10 @@ export const EnhancedChatInterface = () => {
   };
 
   const handleDelete = (messageId: string) => {
-    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    setChannelMessages(prev => ({
+      ...prev,
+      [activeChannel]: (prev[activeChannel] || []).filter(msg => msg.id !== messageId)
+    }));
     toast({
       title: "Message deleted",
       description: "The message has been removed from the chat."
@@ -406,13 +454,17 @@ export const EnhancedChatInterface = () => {
     });
   };
 
+  const getCurrentChannelMessages = (): Message[] => {
+    return channelMessages[activeChannel] || [];
+  };
+
   const getThreadReplies = (messageId: string): Message[] => {
-    return messages.filter(msg => msg.parent_message_id === messageId);
+    return getCurrentChannelMessages().filter(msg => msg.parent_message_id === messageId);
   };
 
   // Get only top-level messages (not replies)
   const getTopLevelMessages = (): Message[] => {
-    return messages.filter(msg => !msg.parent_message_id);
+    return getCurrentChannelMessages().filter(msg => !msg.parent_message_id);
   };
 
   // Update thread count for messages with replies
@@ -450,6 +502,8 @@ export const EnhancedChatInterface = () => {
               activeChannel={activeChannel}
               onChannelSelect={handleChannelSwitch}
               onCreateChannel={() => setShowCreateChannel(true)}
+              onDirectMessageSelect={handleDirectMessageSelect}
+              directMessageUsers={directMessageUsers}
               className="h-full"
             />
           </div>
@@ -573,6 +627,8 @@ export const EnhancedChatInterface = () => {
           activeChannel={activeChannel}
           onChannelSelect={handleChannelSwitch}
           onCreateChannel={() => setShowCreateChannel(true)}
+          onDirectMessageSelect={handleDirectMessageSelect}
+          directMessageUsers={directMessageUsers}
           className="h-full"
         />
       </div>

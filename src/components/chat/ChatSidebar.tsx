@@ -32,11 +32,22 @@ interface Channel {
   last_activity?: string;
 }
 
+interface DirectMessageUser {
+  user_id: string;
+  name: string;
+  online_at: string;
+  status: 'online' | 'away' | 'busy';
+  unread_count?: number;
+  last_message?: string;
+}
+
 interface ChatSidebarProps {
   channels: Channel[];
   activeChannel: string;
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: () => void;
+  onDirectMessageSelect: (userId: string) => void;
+  directMessageUsers: DirectMessageUser[];
   className?: string;
 }
 
@@ -45,6 +56,8 @@ export const ChatSidebar = ({
   activeChannel, 
   onChannelSelect, 
   onCreateChannel,
+  onDirectMessageSelect,
+  directMessageUsers,
   className = ""
 }: ChatSidebarProps) => {
   const navigate = useNavigate();
@@ -240,11 +253,33 @@ export const ChatSidebar = ({
           </TabsContent>
 
           <TabsContent value="direct" className="p-4 space-y-4 overflow-y-auto h-full">
-            <div className="text-center py-8">
-              <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-semibold text-muted-foreground mb-2">No Direct Messages</h3>
-              <p className="text-sm text-muted-foreground">Direct messaging coming soon!</p>
-            </div>
+            {directMessageUsers.length > 0 ? (
+              <div className="space-y-2">
+                {directMessageUsers.map((user) => (
+                  <button
+                    key={user.user_id}
+                    onClick={() => onDirectMessageSelect(user.user_id)}
+                    className="w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-green-500/10 to-blue-600/10">
+                        {getInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-left">
+                      <p className="font-semibold text-sm">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.status}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <h3 className="font-semibold text-muted-foreground mb-2">No Direct Messages</h3>
+                <p className="text-sm text-muted-foreground">Start a conversation with someone!</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -312,10 +347,32 @@ export const ChatSidebar = ({
               Direct Messages
             </h3>
           </div>
-          <div className="text-center py-6">
-            <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Direct messaging coming soon!</p>
-          </div>
+          {directMessageUsers.length > 0 ? (
+            <div className="space-y-2">
+              {directMessageUsers.map((user) => (
+                <button
+                  key={user.user_id}
+                  onClick={() => onDirectMessageSelect(user.user_id)}
+                  className="w-full p-3 rounded-2xl transition-all duration-200 flex items-center space-x-3 hover:bg-muted/60"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="text-xs bg-gradient-to-br from-green-500/10 to-blue-600/10">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="font-semibold text-sm">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.status}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Start a conversation with someone!</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
