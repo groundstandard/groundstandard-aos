@@ -225,7 +225,14 @@ export const EnhancedChatInterface = () => {
         const newState = channel.presenceState();
         const users = Object.values(newState).flat();
         // Filter and transform presence data to match UserPresence interface
-        const validUsers = users.filter((user: any) => user.user_id && user.name) as UserPresence[];
+        const validUsers = users
+          .filter((user: any) => user.user_id && user.name)
+          .map((user: any) => ({
+            user_id: user.user_id,
+            name: user.name,
+            online_at: user.online_at || new Date().toISOString(),
+            status: user.status || 'online'
+          })) as UserPresence[];
         setOnlineUsers(validUsers);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
