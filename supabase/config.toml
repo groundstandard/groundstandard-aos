@@ -1,1 +1,13 @@
 project_id = "yhriiykdnpuutzexjdee"
+
+[functions.create-payment-link]
+verify_jwt = true
+
+[functions.send-payment-reminder]
+verify_jwt = true
+
+[functions.process-recurring-payments]
+verify_jwt = true
+
+[functions.generate-financial-report]
+verify_jwt = true

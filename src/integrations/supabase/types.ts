@@ -440,6 +440,45 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          html_content: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_name: string
+          template_type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean
+          subject: string
+          template_name: string
+          template_type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       event_registrations: {
         Row: {
           event_id: string
@@ -659,6 +698,51 @@ export type Database = {
           },
         ]
       }
+      financial_reports: {
+        Row: {
+          file_url: string | null
+          generated_at: string
+          generated_by: string | null
+          id: string
+          net_income: number | null
+          period_end: string
+          period_start: string
+          report_data: Json | null
+          report_type: string
+          tax_amount: number | null
+          total_expenses: number | null
+          total_revenue: number
+        }
+        Insert: {
+          file_url?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          net_income?: number | null
+          period_end: string
+          period_start: string
+          report_data?: Json | null
+          report_type: string
+          tax_amount?: number | null
+          total_expenses?: number | null
+          total_revenue: number
+        }
+        Update: {
+          file_url?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          net_income?: number | null
+          period_end?: string
+          period_start?: string
+          report_data?: Json | null
+          report_type?: string
+          tax_amount?: number | null
+          total_expenses?: number | null
+          total_revenue?: number
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           category: string
@@ -758,6 +842,54 @@ export type Database = {
         }
         Relationships: []
       }
+      late_fees: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          days_overdue: number
+          fee_percentage: number | null
+          id: string
+          late_fee_amount: number
+          original_amount: number
+          payment_id: string
+          reason: string | null
+          status: string
+          student_id: string
+          waived_at: string | null
+          waived_by: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          days_overdue: number
+          fee_percentage?: number | null
+          id?: string
+          late_fee_amount: number
+          original_amount: number
+          payment_id: string
+          reason?: string | null
+          status?: string
+          student_id: string
+          waived_at?: string | null
+          waived_by?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          days_overdue?: number
+          fee_percentage?: number | null
+          id?: string
+          late_fee_amount?: number
+          original_amount?: number
+          payment_id?: string
+          reason?: string | null
+          status?: string
+          student_id?: string
+          waived_at?: string | null
+          waived_by?: string | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           content: string
@@ -791,6 +923,105 @@ export type Database = {
           subject?: string
           updated_at?: string
           variables?: Json | null
+        }
+        Relationships: []
+      }
+      payment_analytics: {
+        Row: {
+          average_payment_value: number
+          cancelled_memberships: number
+          created_at: string
+          failed_payments: number
+          id: string
+          new_memberships: number
+          outstanding_amount: number
+          payment_conversion_rate: number
+          period_end: string
+          period_start: string
+          refunded_amount: number
+          successful_payments: number
+          total_payments: number
+          total_revenue: number
+        }
+        Insert: {
+          average_payment_value?: number
+          cancelled_memberships?: number
+          created_at?: string
+          failed_payments?: number
+          id?: string
+          new_memberships?: number
+          outstanding_amount?: number
+          payment_conversion_rate?: number
+          period_end: string
+          period_start: string
+          refunded_amount?: number
+          successful_payments?: number
+          total_payments?: number
+          total_revenue?: number
+        }
+        Update: {
+          average_payment_value?: number
+          cancelled_memberships?: number
+          created_at?: string
+          failed_payments?: number
+          id?: string
+          new_memberships?: number
+          outstanding_amount?: number
+          payment_conversion_rate?: number
+          period_end?: string
+          period_start?: string
+          refunded_amount?: number
+          successful_payments?: number
+          total_payments?: number
+          total_revenue?: number
+        }
+        Relationships: []
+      }
+      payment_links: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          link_url: string | null
+          paid_at: string | null
+          payment_id: string | null
+          status: string
+          stripe_payment_link_id: string | null
+          student_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          link_url?: string | null
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string
+          stripe_payment_link_id?: string | null
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          link_url?: string | null
+          paid_at?: string | null
+          payment_id?: string | null
+          status?: string
+          stripe_payment_link_id?: string | null
+          student_id?: string
         }
         Relationships: []
       }
@@ -829,6 +1060,96 @@ export type Database = {
           interval_type?: string
           is_active?: boolean
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_reminders: {
+        Row: {
+          amount: number
+          created_at: string
+          email_content: string | null
+          id: string
+          payment_due_date: string
+          reminder_type: string
+          sent_at: string | null
+          sms_content: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          email_content?: string | null
+          id?: string
+          payment_due_date: string
+          reminder_type: string
+          sent_at?: string | null
+          sms_content?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          email_content?: string | null
+          id?: string
+          payment_due_date?: string
+          reminder_type?: string
+          sent_at?: string | null
+          sms_content?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
+      payment_schedules: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          end_date: string | null
+          frequency: string
+          id: string
+          next_payment_date: string
+          notes: string | null
+          payment_method: string | null
+          start_date: string
+          status: string
+          stripe_subscription_id: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          next_payment_date: string
+          notes?: string | null
+          payment_method?: string | null
+          start_date: string
+          status?: string
+          stripe_subscription_id?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          next_payment_date?: string
+          notes?: string | null
+          payment_method?: string | null
+          start_date?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          student_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -1055,6 +1376,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_late_fees: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1062,6 +1387,10 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      update_payment_analytics: {
+        Args: { start_date: string; end_date: string }
+        Returns: undefined
       }
       update_user_role: {
         Args: { target_user_id: string; new_role: string }

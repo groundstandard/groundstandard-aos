@@ -1,0 +1,1052 @@
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  DollarSign,
+  CreditCard,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Calendar as CalendarIcon,
+  Users,
+  Clock,
+  Mail,
+  FileText,
+  Download,
+  Plus,
+  Settings,
+  Zap,
+  BarChart3,
+  Target,
+  RefreshCw,
+  Link as LinkIcon,
+  Bell,
+  Calculator,
+  Eye
+} from 'lucide-react';
+import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
+interface PaymentAnalytics {
+  total_revenue: number;
+  total_payments: number;
+  successful_payments: number;
+  failed_payments: number;
+  refunded_amount: number;
+  outstanding_amount: number;
+  average_payment_value: number;
+  payment_conversion_rate: number;
+  period_start: string;
+  period_end: string;
+}
+
+interface PaymentSchedule {
+  id: string;
+  student_id: string;
+  amount: number;
+  frequency: string;
+  next_payment_date: string;
+  status: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
+interface PaymentReminder {
+  id: string;
+  student_id: string;
+  payment_due_date: string;
+  amount: number;
+  reminder_type: string;
+  status: string;
+  sent_at?: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
+interface LateFee {
+  id: string;
+  payment_id: string;
+  student_id: string;
+  original_amount: number;
+  late_fee_amount: number;
+  days_overdue: number;
+  status: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+type DateRange = {
+  from: Date;
+  to: Date;
+};
+
+export const ComprehensivePaymentManagement = () => {
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showPaymentLinkDialog, setShowPaymentLinkDialog] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  
+  // Form states
+  const [paymentLinkForm, setPaymentLinkForm] = useState({
+    student_id: '',
+    amount: '',
+    description: '',
+    expires_in_hours: '24'
+  });
+  
+  const [reminderForm, setReminderForm] = useState({
+    student_id: '',
+    payment_due_date: '',
+    amount: '',
+    reminder_type: 'first_notice'
+  });
+  
+  const [scheduleForm, setScheduleForm] = useState({
+    student_id: '',
+    amount: '',
+    frequency: 'monthly',
+    start_date: '',
+    payment_method: 'card'
+  });
+
+  // Fetch payment analytics
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ['payment-analytics', dateRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_analytics')
+        .select('*')
+        .gte('period_start', format(dateRange.from, 'yyyy-MM-dd'))
+        .lte('period_end', format(dateRange.to, 'yyyy-MM-dd'))
+        .order('period_start', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data;
+    }
+  });
+
+  // Fetch payment schedules
+  const { data: schedules } = useQuery({
+    queryKey: ['payment-schedules'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_schedules')
+        .select('*')
+        .eq('status', 'active')
+        .order('next_payment_date', { ascending: true });
+
+      if (error) throw error;
+
+      // Fetch profile data separately for each schedule
+      const schedulesWithProfiles = await Promise.all(
+        (data || []).map(async (schedule) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email')
+            .eq('id', schedule.student_id)
+            .single();
+          
+          return {
+            ...schedule,
+            profiles: profile
+          };
+        })
+      );
+      
+      return schedulesWithProfiles;
+    }
+  });
+
+  // Fetch payment reminders
+  const { data: reminders } = useQuery({
+    queryKey: ['payment-reminders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_reminders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Fetch profile data separately for each reminder
+      const remindersWithProfiles = await Promise.all(
+        (data || []).map(async (reminder) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email')
+            .eq('id', reminder.student_id)
+            .single();
+          
+          return {
+            ...reminder,
+            profiles: profile
+          };
+        })
+      );
+      
+      return remindersWithProfiles;
+    }
+  });
+
+  // Fetch late fees
+  const { data: lateFees } = useQuery({
+    queryKey: ['late-fees'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('late_fees')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch profile data separately for each late fee
+      const lateFeesWithProfiles = await Promise.all(
+        (data || []).map(async (fee) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', fee.student_id)
+            .single();
+          
+          return {
+            ...fee,
+            profiles: profile
+          };
+        })
+      );
+      
+      return lateFeesWithProfiles;
+    }
+  });
+
+  // Fetch all students for dropdowns
+  const { data: students } = useQuery({
+    queryKey: ['students'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .eq('role', 'student')
+        .order('first_name');
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Create payment link mutation
+  const createPaymentLinkMutation = useMutation({
+    mutationFn: async (formData: typeof paymentLinkForm) => {
+      const { data, error } = await supabase.functions.invoke('create-payment-link', {
+        body: formData
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Payment Link Created',
+        description: 'Payment link has been generated successfully.'
+      });
+      setShowPaymentLinkDialog(false);
+      setPaymentLinkForm({ student_id: '', amount: '', description: '', expires_in_hours: '24' });
+      // Open the payment link in a new tab
+      window.open(data.url, '_blank');
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to create payment link'
+      });
+    }
+  });
+
+  // Send reminder mutation
+  const sendReminderMutation = useMutation({
+    mutationFn: async (formData: typeof reminderForm) => {
+      const { data, error } = await supabase.functions.invoke('send-payment-reminder', {
+        body: formData
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Reminder Sent',
+        description: 'Payment reminder has been sent successfully.'
+      });
+      setShowReminderDialog(false);
+      setReminderForm({ student_id: '', payment_due_date: '', amount: '', reminder_type: 'first_notice' });
+      queryClient.invalidateQueries({ queryKey: ['payment-reminders'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send reminder'
+      });
+    }
+  });
+
+  // Create payment schedule mutation
+  const createScheduleMutation = useMutation({
+    mutationFn: async (formData: typeof scheduleForm) => {
+      const nextPaymentDate = new Date(formData.start_date);
+      const { data, error } = await supabase
+        .from('payment_schedules')
+        .insert({
+          student_id: formData.student_id,
+          amount: Math.round(parseFloat(formData.amount) * 100),
+          frequency: formData.frequency,
+          start_date: formData.start_date,
+          next_payment_date: nextPaymentDate.toISOString().split('T')[0],
+          payment_method: formData.payment_method,
+          status: 'active'
+        });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Payment Schedule Created',
+        description: 'Recurring payment schedule has been set up successfully.'
+      });
+      setShowScheduleDialog(false);
+      setScheduleForm({ student_id: '', amount: '', frequency: 'monthly', start_date: '', payment_method: 'card' });
+      queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to create payment schedule'
+      });
+    }
+  });
+
+  // Generate financial report mutation
+  const generateReportMutation = useMutation({
+    mutationFn: async (reportType: string) => {
+      const { data, error } = await supabase.functions.invoke('generate-financial-report', {
+        body: {
+          report_type: reportType,
+          period_start: format(dateRange.from, 'yyyy-MM-dd'),
+          period_end: format(dateRange.to, 'yyyy-MM-dd'),
+          generated_by: profile?.id
+        }
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Report Generated',
+        description: 'Financial report has been generated successfully.'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to generate report'
+      });
+    }
+  });
+
+  // Calculate late fees
+  const calculateLateFeesMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('calculate_late_fees');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Late Fees Calculated',
+        description: 'Late fees have been calculated for overdue payments.'
+      });
+      queryClient.invalidateQueries({ queryKey: ['late-fees'] });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to calculate late fees'
+      });
+    }
+  });
+
+  if (profile?.role !== 'admin') {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            Access denied. Admin privileges required.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-6 w-6" />
+                Comprehensive Payment Management
+              </CardTitle>
+              <CardDescription>
+                Advanced payment processing, analytics, and automation
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.from && dateRange.to 
+                      ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd, yyyy")}`
+                      : "Select date range"
+                    }
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange.from}
+                    selected={dateRange}
+                    onSelect={(range) => {
+                      if (range?.from && range?.to) {
+                        setDateRange({ from: range.from, to: range.to });
+                      }
+                    }}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 text-center">
+                <LinkIcon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                <h3 className="font-semibold">Create Payment Link</h3>
+                <p className="text-sm text-muted-foreground">Generate payment links for students</p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Payment Link</DialogTitle>
+              <DialogDescription>Generate a payment link for a specific student</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Student</Label>
+                <Select value={paymentLinkForm.student_id} onValueChange={(value) => 
+                  setPaymentLinkForm({...paymentLinkForm, student_id: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select student" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.first_name} {student.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Amount ($)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={paymentLinkForm.amount}
+                  onChange={(e) => setPaymentLinkForm({...paymentLinkForm, amount: e.target.value})}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={paymentLinkForm.description}
+                  onChange={(e) => setPaymentLinkForm({...paymentLinkForm, description: e.target.value})}
+                  placeholder="Monthly membership, equipment, etc."
+                />
+              </div>
+              <div>
+                <Label>Expires In (hours)</Label>
+                <Select value={paymentLinkForm.expires_in_hours} onValueChange={(value) => 
+                  setPaymentLinkForm({...paymentLinkForm, expires_in_hours: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24">24 hours</SelectItem>
+                    <SelectItem value="72">3 days</SelectItem>
+                    <SelectItem value="168">1 week</SelectItem>
+                    <SelectItem value="720">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={() => createPaymentLinkMutation.mutate(paymentLinkForm)}
+                disabled={createPaymentLinkMutation.isPending}
+                className="w-full"
+              >
+                {createPaymentLinkMutation.isPending ? 'Creating...' : 'Create Payment Link'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 text-center">
+                <Bell className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                <h3 className="font-semibold">Send Reminder</h3>
+                <p className="text-sm text-muted-foreground">Send payment reminders</p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Send Payment Reminder</DialogTitle>
+              <DialogDescription>Send a payment reminder to a student</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Student</Label>
+                <Select value={reminderForm.student_id} onValueChange={(value) => 
+                  setReminderForm({...reminderForm, student_id: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select student" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.first_name} {student.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Payment Due Date</Label>
+                <Input
+                  type="date"
+                  value={reminderForm.payment_due_date}
+                  onChange={(e) => setReminderForm({...reminderForm, payment_due_date: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>Amount ($)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={reminderForm.amount}
+                  onChange={(e) => setReminderForm({...reminderForm, amount: e.target.value})}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label>Reminder Type</Label>
+                <Select value={reminderForm.reminder_type} onValueChange={(value) => 
+                  setReminderForm({...reminderForm, reminder_type: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="first_notice">First Notice</SelectItem>
+                    <SelectItem value="second_notice">Second Notice</SelectItem>
+                    <SelectItem value="final_notice">Final Notice</SelectItem>
+                    <SelectItem value="overdue">Overdue Notice</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={() => sendReminderMutation.mutate(reminderForm)}
+                disabled={sendReminderMutation.isPending}
+                className="w-full"
+              >
+                {sendReminderMutation.isPending ? 'Sending...' : 'Send Reminder'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 text-center">
+                <Clock className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                <h3 className="font-semibold">Setup Recurring</h3>
+                <p className="text-sm text-muted-foreground">Create payment schedules</p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Payment Schedule</DialogTitle>
+              <DialogDescription>Set up recurring payments for a student</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Student</Label>
+                <Select value={scheduleForm.student_id} onValueChange={(value) => 
+                  setScheduleForm({...scheduleForm, student_id: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select student" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.first_name} {student.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Amount ($)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={scheduleForm.amount}
+                  onChange={(e) => setScheduleForm({...scheduleForm, amount: e.target.value})}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label>Frequency</Label>
+                <Select value={scheduleForm.frequency} onValueChange={(value) => 
+                  setScheduleForm({...scheduleForm, frequency: value})
+                }>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={scheduleForm.start_date}
+                  onChange={(e) => setScheduleForm({...scheduleForm, start_date: e.target.value})}
+                />
+              </div>
+              <Button 
+                onClick={() => createScheduleMutation.mutate(scheduleForm)}
+                disabled={createScheduleMutation.isPending}
+                className="w-full"
+              >
+                {createScheduleMutation.isPending ? 'Creating...' : 'Create Schedule'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <CardContent className="p-4 text-center">
+            <Calculator className="h-8 w-8 mx-auto mb-2 text-red-600" />
+            <h3 className="font-semibold">Calculate Late Fees</h3>
+            <p className="text-sm text-muted-foreground">Process overdue payments</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => calculateLateFeesMutation.mutate()}
+              disabled={calculateLateFeesMutation.isPending}
+            >
+              {calculateLateFeesMutation.isPending ? 'Processing...' : 'Calculate'}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analytics Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${((analytics?.total_revenue || 0) / 100).toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {analytics?.successful_payments || 0} successful payments
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(analytics?.payment_conversion_rate || 0).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Payment success rate
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${((analytics?.outstanding_amount || 0) / 100).toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pending payments
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Payment</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${((analytics?.average_payment_value || 0) / 100).toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Per transaction
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="schedules">Schedules</TabsTrigger>
+          <TabsTrigger value="reminders">Reminders</TabsTrigger>
+          <TabsTrigger value="late-fees">Late Fees</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-green-50 text-green-700">Success</Badge>
+                      <span className="text-sm">Payment received from John Doe</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">$150.00</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700">Link</Badge>
+                      <span className="text-sm">Payment link sent to Jane Smith</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">$120.00</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Stats</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{schedules?.length || 0}</div>
+                    <div className="text-sm text-muted-foreground">Active Schedules</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">{lateFees?.length || 0}</div>
+                    <div className="text-sm text-muted-foreground">Late Fees</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{reminders?.filter(r => r.status === 'pending').length || 0}</div>
+                    <div className="text-sm text-muted-foreground">Pending Reminders</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">95%</div>
+                    <div className="text-sm text-muted-foreground">Collection Rate</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="schedules" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Schedules</CardTitle>
+              <CardDescription>Manage recurring payment schedules</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead>Next Payment</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {schedules?.map((schedule) => (
+                      <TableRow key={schedule.id}>
+                        <TableCell>
+                          {schedule.profiles?.first_name} {schedule.profiles?.last_name}
+                        </TableCell>
+                        <TableCell>${(schedule.amount / 100).toFixed(2)}</TableCell>
+                        <TableCell className="capitalize">{schedule.frequency}</TableCell>
+                        <TableCell>{format(new Date(schedule.next_payment_date), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell>
+                          <Badge variant={schedule.status === 'active' ? 'default' : 'secondary'}>
+                            {schedule.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reminders" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Reminders</CardTitle>
+              <CardDescription>Track sent and pending payment reminders</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Sent At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reminders?.map((reminder) => (
+                      <TableRow key={reminder.id}>
+                        <TableCell>
+                          {reminder.profiles?.first_name} {reminder.profiles?.last_name}
+                        </TableCell>
+                        <TableCell>${(reminder.amount / 100).toFixed(2)}</TableCell>
+                        <TableCell>{format(new Date(reminder.payment_due_date), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell className="capitalize">{reminder.reminder_type.replace('_', ' ')}</TableCell>
+                        <TableCell>
+                          <Badge variant={reminder.status === 'sent' ? 'default' : 'secondary'}>
+                            {reminder.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {reminder.sent_at ? format(new Date(reminder.sent_at), 'MMM dd, HH:mm') : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="late-fees" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Late Fees</CardTitle>
+              <CardDescription>Manage late fees for overdue payments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Original Amount</TableHead>
+                      <TableHead>Late Fee</TableHead>
+                      <TableHead>Days Overdue</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lateFees?.map((fee) => (
+                      <TableRow key={fee.id}>
+                        <TableCell>
+                          {fee.profiles?.first_name} {fee.profiles?.last_name}
+                        </TableCell>
+                        <TableCell>${(fee.original_amount / 100).toFixed(2)}</TableCell>
+                        <TableCell>${(fee.late_fee_amount / 100).toFixed(2)}</TableCell>
+                        <TableCell>{fee.days_overdue} days</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            fee.status === 'applied' ? 'default' : 
+                            fee.status === 'waived' ? 'secondary' : 'outline'
+                          }>
+                            {fee.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Reports</CardTitle>
+              <CardDescription>Generate and download financial reports</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button 
+                  variant="outline" 
+                  className="h-20"
+                  onClick={() => generateReportMutation.mutate('monthly')}
+                  disabled={generateReportMutation.isPending}
+                >
+                  <div className="text-center">
+                    <FileText className="h-6 w-6 mx-auto mb-1" />
+                    <div>Monthly Report</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-20"
+                  onClick={() => generateReportMutation.mutate('quarterly')}
+                  disabled={generateReportMutation.isPending}
+                >
+                  <div className="text-center">
+                    <BarChart3 className="h-6 w-6 mx-auto mb-1" />
+                    <div>Quarterly Report</div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-20"
+                  onClick={() => generateReportMutation.mutate('tax')}
+                  disabled={generateReportMutation.isPending}
+                >
+                  <div className="text-center">
+                    <Calculator className="h-6 w-6 mx-auto mb-1" />
+                    <div>Tax Report</div>
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
