@@ -229,20 +229,20 @@ const Dashboard = () => {
         </div>
 
         {/* Member Features Grid */}
-        <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+        <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           <Card 
             className="card-minimal hover-lift cursor-pointer"
             onClick={() => navigate('/classes')}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4" />
                 Classes
               </CardTitle>
-              <CardDescription>View and book classes</CardDescription>
+              <CardDescription className="text-xs">View and book classes</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/classes'); }}>
+            <CardContent className="pt-2">
+              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/classes'); }}>
                 View Classes
               </Button>
             </CardContent>
@@ -252,15 +252,15 @@ const Dashboard = () => {
             className="card-minimal hover-lift cursor-pointer"
             onClick={() => navigate('/attendance')}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <CheckCircle className="h-4 w-4" />
                 Attendance
               </CardTitle>
-              <CardDescription>Track your class attendance</CardDescription>
+              <CardDescription className="text-xs">Track your class attendance</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/attendance'); }}>
+            <CardContent className="pt-2">
+              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/attendance'); }}>
                 View Attendance
               </Button>
             </CardContent>
@@ -270,34 +270,16 @@ const Dashboard = () => {
             className="card-minimal hover-lift cursor-pointer"
             onClick={() => navigate('/progress')}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <BarChart3 className="h-4 w-4" />
                 My Progress
               </CardTitle>
-              <CardDescription>Track your martial arts journey</CardDescription>
+              <CardDescription className="text-xs">Track your martial arts journey</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/progress'); }}>
+            <CardContent className="pt-2">
+              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/progress'); }}>
                 View Progress
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="card-minimal hover-lift cursor-pointer"
-            onClick={() => navigate('/chat')}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
-                Academy Chat
-              </CardTitle>
-              <CardDescription>Connect with members and instructors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}>
-                Open Chat
               </Button>
             </CardContent>
           </Card>
@@ -306,34 +288,16 @@ const Dashboard = () => {
             className="card-minimal hover-lift cursor-pointer"
             onClick={() => navigate('/payments')}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <CreditCard className="h-4 w-4" />
                 Payments
               </CardTitle>
-              <CardDescription>View payment history</CardDescription>
+              <CardDescription className="text-xs">View payment history</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/payments'); }}>
+            <CardContent className="pt-2">
+              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/payments'); }}>
                 Payment History
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="card-minimal hover-lift cursor-pointer"
-            onClick={() => navigate('/subscription')}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Subscription
-              </CardTitle>
-              <CardDescription>Manage your subscription plan</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/subscription'); }}>
-                View Plans
               </Button>
             </CardContent>
           </Card>
