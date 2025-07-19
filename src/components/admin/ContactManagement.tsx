@@ -130,14 +130,14 @@ export const ContactManagement = () => {
 
   const handleEditContact = (contact: Contact) => {
     setEditingContact(contact);
-    setFormData({
-      first_name: contact.first_name,
-      last_name: contact.last_name,
-      email: contact.email,
-      phone: contact.phone || "",
-      belt_level: contact.belt_level || "",
-      membership_status: contact.membership_status
-    });
+      setFormData({
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        email: contact.email,
+        phone: contact.phone || "",
+        belt_level: contact.belt_level || "none",
+        membership_status: contact.membership_status
+      });
     setIsEditDialogOpen(true);
   };
 
@@ -145,9 +145,14 @@ export const ContactManagement = () => {
     if (!editingContact) return;
 
     try {
+      const updateData = {
+        ...formData,
+        belt_level: formData.belt_level === "none" ? null : formData.belt_level
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update(updateData)
         .eq('id', editingContact.id);
 
       if (error) throw error;
@@ -587,7 +592,7 @@ export const ContactManagement = () => {
                   <SelectValue placeholder="Select belt level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="white">White Belt</SelectItem>
                   <SelectItem value="yellow">Yellow Belt</SelectItem>
                   <SelectItem value="orange">Orange Belt</SelectItem>
