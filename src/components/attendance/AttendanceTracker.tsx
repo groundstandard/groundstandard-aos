@@ -63,81 +63,75 @@ export const AttendanceTracker = () => {
 
   const fetchAttendanceData = async () => {
     try {
-      // Mock data for now - will implement with Supabase later
-      const mockAttendance: AttendanceRecord[] = [
-        {
-          id: '1',
-          member_id: 'member-1',
-          member_name: 'Alex Chen',
-          class_id: 'class-1',
-          class_name: 'Beginner Karate',
-          date: format(new Date(), 'yyyy-MM-dd'),
-          status: 'present',
-          checked_in_at: '18:00',
-          checked_out_at: '19:00'
-        },
-        {
-          id: '2',
-          member_id: 'member-2',
-          member_name: 'Sarah Kim',
-          class_id: 'class-1',
-          class_name: 'Beginner Karate',
-          date: format(new Date(), 'yyyy-MM-dd'),
-          status: 'late',
-          checked_in_at: '18:15',
-          notes: 'Traffic delay'
-        },
-        {
-          id: '3',
-          member_id: 'member-3',
-          member_name: 'Mike Johnson',
-          class_id: 'class-2',
-          class_name: 'Advanced Martial Arts',
-          date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
-          status: 'absent',
-          notes: 'Sick'
-        },
-        {
-          id: '4',
-          member_id: profile?.id || 'current-user',
-          member_name: `${profile?.first_name} ${profile?.last_name}`,
-          class_id: 'class-1',
-          class_name: 'Beginner Karate',
-          date: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
-          status: 'present',
-          checked_in_at: '18:00',
-          checked_out_at: '19:00'
-        }
-      ];
+      setLoading(true);
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      
+      // Fetch real attendance records
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('attendance')
+        .select(`
+          *,
+          profiles!attendance_student_id_fkey(first_name, last_name),
+          classes!attendance_class_id_fkey(name)
+        `)
+        .eq('date', dateStr)
+        .order('created_at', { ascending: false });
 
-      const mockSessions: ClassSession[] = [
-        {
-          id: 'session-1',
-          name: 'Beginner Karate',
-          date: format(new Date(), 'yyyy-MM-dd'),
-          start_time: '18:00',
-          end_time: '19:00',
-          instructor: 'Sensei Johnson',
-          enrolled_members: 15,
-          present_count: 12,
-          attendance_rate: 80
-        },
-        {
-          id: 'session-2',
-          name: 'Advanced Martial Arts',
-          date: format(new Date(), 'yyyy-MM-dd'),
-          start_time: '19:30',
-          end_time: '20:30',
-          instructor: 'Sensei Martinez',
-          enrolled_members: 8,
-          present_count: 7,
-          attendance_rate: 87.5
-        }
-      ];
+      if (attendanceError) throw attendanceError;
 
-      setAttendanceRecords(mockAttendance);
-      setClassSessions(mockSessions);
+      // Transform data to match interface
+      const transformedAttendance: AttendanceRecord[] = (attendanceData || []).map(record => ({
+        id: record.id,
+        member_id: record.student_id,
+        member_name: `${record.profiles?.first_name || ''} ${record.profiles?.last_name || ''}`.trim(),
+        class_id: record.class_id,
+        class_name: record.classes?.name || 'Unknown Class',
+        date: record.date,
+        status: record.status as 'present' | 'absent' | 'late' | 'excused',
+        notes: record.notes || undefined,
+        checked_in_at: record.created_at ? format(new Date(record.created_at), 'HH:mm') : undefined
+      }));
+
+      // Fetch class sessions for today
+      const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select(`
+          *,
+          class_schedules!inner(day_of_week, start_time, end_time),
+          profiles!classes_instructor_id_fkey(first_name, last_name)
+        `)
+        .eq('is_active', true);
+
+      if (classError) throw classError;
+
+      // Transform class data
+      const dayOfWeek = selectedDate.getDay();
+      const todayClasses = (classData || []).filter(cls => 
+        cls.class_schedules.some((schedule: any) => schedule.day_of_week === dayOfWeek)
+      );
+
+      const transformedSessions: ClassSession[] = todayClasses.map(cls => {
+        const schedule = cls.class_schedules.find((s: any) => s.day_of_week === dayOfWeek);
+        const classAttendance = transformedAttendance.filter(att => att.class_id === cls.id);
+        const presentCount = classAttendance.filter(att => att.status === 'present').length;
+        
+        return {
+          id: cls.id,
+          name: cls.name,
+          date: dateStr,
+          start_time: schedule?.start_time || '00:00',
+          end_time: schedule?.end_time || '00:00',
+          instructor: `${cls.profiles?.first_name || ''} ${cls.profiles?.last_name || ''}`.trim() || 'TBD',
+          enrolled_members: cls.max_students || 0,
+          present_count: presentCount,
+          attendance_rate: cls.max_students ? Math.round((presentCount / cls.max_students) * 100) : 0
+        };
+      });
+
+      setAttendanceRecords(transformedAttendance);
+      setClassSessions(transformedSessions);
     } catch (error: any) {
+      console.error('Error fetching attendance data:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -153,33 +147,72 @@ export const AttendanceTracker = () => {
     
     setCheckingIn(true);
     try {
-      // Mock check-in process
-      const newRecord: AttendanceRecord = {
-        id: Date.now().toString(),
-        member_id: profile.id,
-        member_name: `${profile.first_name} ${profile.last_name}`,
-        class_id: classId,
-        class_name: 'Current Class',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        status: 'present',
-        checked_in_at: format(new Date(), 'HH:mm')
-      };
-
-      setAttendanceRecords(prev => [...prev, newRecord]);
+      // Find available class to check into today
+      const todayClasses = classSessions.filter(session => session.date === format(new Date(), 'yyyy-MM-dd'));
+      const targetClass = todayClasses[0]; // Use first available class for simplicity
       
+      if (!targetClass) {
+        toast({
+          variant: 'destructive',
+          title: 'No Classes',
+          description: 'No classes scheduled for today'
+        });
+        return;
+      }
+
+      // Create real attendance record
+      const { error } = await supabase
+        .from('attendance')
+        .insert({
+          student_id: profile.id,
+          class_id: targetClass.id,
+          date: format(new Date(), 'yyyy-MM-dd'),
+          status: 'present',
+          notes: 'Self check-in'
+        });
+
+      if (error) throw error;
+
       toast({
         title: 'Success',
         description: 'Checked in successfully!'
       });
+
+      // Refresh data
+      fetchAttendanceData();
     } catch (error: any) {
+      console.error('Check-in error:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to check in'
+        description: 'Failed to check in: ' + (error.message || 'Unknown error')
       });
     } finally {
       setCheckingIn(false);
     }
+  };
+
+  const handleExportAttendance = () => {
+    const dataToExport = isAdmin ? filteredRecords : myAttendanceRecords;
+    const csv = [
+      ['Date', 'Member', 'Class', 'Status', 'Check In', 'Notes'],
+      ...dataToExport.map(record => [
+        record.date,
+        record.member_name,
+        record.class_name,
+        record.status,
+        record.checked_in_at || '',
+        record.notes || ''
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance-${format(selectedDate, 'yyyy-MM-dd')}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const getStatusColor = (status: string) => {
@@ -278,7 +311,11 @@ export const AttendanceTracker = () => {
                     <p className="text-sm text-muted-foreground">
                       {classSessions.length} classes scheduled
                     </p>
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.location.href = '/classes'}
+                    >
                       View Schedule
                     </Button>
                   </div>
@@ -337,7 +374,11 @@ export const AttendanceTracker = () => {
                 <option value="excused">Excused</option>
               </select>
 
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExportAttendance}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
@@ -383,7 +424,17 @@ export const AttendanceTracker = () => {
                         </Badge>
                       </div>
                       
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => {
+                          toast({
+                            title: "Feature Coming Soon",
+                            description: "Individual attendance management will be available soon"
+                          });
+                        }}
+                      >
                         Manage Attendance
                       </Button>
                     </div>

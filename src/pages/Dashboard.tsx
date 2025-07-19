@@ -242,6 +242,11 @@ const Dashboard = () => {
                     Manage student belt promotions and testing schedules
                   </CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/belt-testing'); }}>
+                    Manage Belt Tests
+                  </Button>
+                </CardContent>
               </Card>
 
               <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/events')}>
@@ -254,6 +259,11 @@ const Dashboard = () => {
                     Academy events, competitions, and special activities
                   </CardDescription>
                 </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/events'); }}>
+                    Manage Events
+                  </Button>
+                </CardContent>
               </Card>
             </>
           )}
