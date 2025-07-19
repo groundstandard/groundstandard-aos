@@ -431,10 +431,10 @@ export const ChannelSettingsModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`
         ${isMobile 
-          ? 'w-[calc(100vw-2rem)] h-[calc(100vh-4rem)] max-w-none max-h-none fixed inset-4 rounded-2xl shadow-2xl border-0' 
+          ? 'w-[calc(100vw-2rem)] h-[calc(100vh-6rem)] max-w-none max-h-none fixed top-12 left-4 right-4 bottom-12 rounded-2xl shadow-2xl border-0' 
           : 'max-w-3xl max-h-[85vh] fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0'
         } 
-        overflow-hidden p-0 bg-background
+        overflow-hidden p-0 bg-background flex flex-col
       `}>
         <DialogHeader className={`${isMobile ? 'p-4 pb-0' : 'p-6 pb-0'} border-b`}>
           <DialogTitle className="flex items-center gap-3">
