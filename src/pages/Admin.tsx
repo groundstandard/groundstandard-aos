@@ -17,6 +17,9 @@ import { InventoryManagement } from "@/components/admin/InventoryManagement";
 import { PaymentManagement } from "@/components/admin/PaymentManagement";
 import { InvoiceManagement } from "@/components/admin/InvoiceManagement";
 import { AdvancedAttendance } from "@/components/admin/AdvancedAttendance";
+import { BeltTestManagement } from "@/components/admin/BeltTestManagement";
+import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
+import { StockMovementHistory } from "@/components/admin/StockMovementHistory";
 import {
   Settings, 
   Users, 
@@ -70,7 +73,8 @@ const Admin = () => {
       subTabs: {
         users: { label: "Users", component: <UserManagement /> },
         classes: { label: "Classes", component: <ClassManagement /> },
-        attendance: { label: "Attendance", component: <AdvancedAttendance /> }
+        attendance: { label: "Attendance", component: <AdvancedAttendance /> },
+        belt_tests: { label: "Belt Tests", component: <BeltTestManagement /> }
       }
     },
     business: {
@@ -88,9 +92,11 @@ const Admin = () => {
       icon: Settings,
       subTabs: {
         inventory: { label: "Inventory", component: <InventoryManagement /> },
+        stock_history: { label: "Stock History", component: <StockMovementHistory /> },
         communication: { label: "Communication", component: <CommunicationCenter /> },
         analytics: { label: "Analytics", component: <AdminAnalytics /> },
-        security: { label: "Security", component: <SecurityAudit /> }
+        security: { label: "Security", component: <SecurityAudit /> },
+        audit_logs: { label: "Audit Logs", component: <AuditLogViewer /> }
       }
     }
   };
