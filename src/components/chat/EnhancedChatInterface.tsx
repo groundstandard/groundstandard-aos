@@ -824,27 +824,49 @@ export const EnhancedChatInterface = () => {
               <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="p-4 border-b bg-background/95 backdrop-blur">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowChannels(true)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
-                      {currentChannel && getChannelIcon(currentChannel)}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowChannels(true)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500/10 to-purple-600/10 flex items-center justify-center">
+                        {currentChannel && getChannelIcon(currentChannel)}
+                      </div>
+                      
+                      <div>
+                        <h1 className="font-semibold">
+                          {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                          {currentChannel?.member_count} members • {onlineUsers.length} online
+                        </p>
+                      </div>
                     </div>
-                    
-                    <div>
-                      <h1 className="font-semibold">
-                        {currentChannel?.type === 'public' ? '#' : ''}{currentChannel?.name}
-                      </h1>
-                      <p className="text-sm text-muted-foreground">
-                        {currentChannel?.member_count} members • {onlineUsers.length} online
-                      </p>
+
+                    {/* Right side with online count and settings */}
+                    <div className="flex items-center gap-2">
+                      {/* Online indicator */}
+                      <div className="flex items-center gap-1 bg-muted/50 rounded-full px-2 py-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium">{onlineUsers.length}</span>
+                      </div>
+                      
+                      {/* Settings button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowChannelSettings(true)}
+                        className="h-8 w-8 p-0"
+                        title={activeChannel.startsWith('dm-') ? "Direct message settings" : "Channel settings"}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -929,6 +951,47 @@ export const EnhancedChatInterface = () => {
               setChannels(prev => [...prev, newChannel]);
               setActiveChannel(newChannel.name);
               setShowCreateChannel(false);
+            }}
+          />
+
+          {/* Channel Settings Modal */}
+          <ChannelSettingsModal
+            open={showChannelSettings}
+            onOpenChange={setShowChannelSettings}
+            channel={currentChannel}
+            isDM={activeChannel.startsWith('dm-')}
+            dmChannelId={activeChannel.startsWith('dm-') ? activeChannel.replace('dm-', '') : undefined}
+            dmUserName={(() => {
+              if (activeChannel.startsWith('dm-')) {
+                const userId = activeChannel.replace('dm-', '');
+                const dmUser = directMessageUsers.find(u => u.user_id === userId);
+                return dmUser?.name || 'Direct Message';
+              }
+              return undefined;
+            })()}
+            onChannelUpdate={(updatedChannel) => {
+              setChannels(prev => prev.map(ch => 
+                ch.id === updatedChannel.id ? updatedChannel : ch
+              ));
+            }}
+            onChannelDelete={(channelId) => {
+              setChannels(prev => prev.filter(ch => ch.id !== channelId));
+              setActiveChannel('general');
+            }}
+            onLeaveChannel={(channelId) => {
+              setChannels(prev => prev.filter(ch => ch.id !== channelId));
+              setActiveChannel('general');
+            }}
+            onCloseDM={() => {
+              // Remove DM from directMessageUsers and switch to general
+              const userId = activeChannel.replace('dm-', '');
+              setDirectMessageUsers(prev => prev.filter(u => u.user_id !== userId));
+              setChannelMessages(prev => {
+                const newMessages = { ...prev };
+                delete newMessages[activeChannel];
+                return newMessages;
+              });
+              setActiveChannel('general');
             }}
           />
         </div>
