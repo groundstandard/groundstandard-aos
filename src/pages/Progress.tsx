@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BackButton } from '@/components/ui/BackButton';
 import { ProgressTracker } from '@/components/student/ProgressTracker';
@@ -6,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Shield, AlertTriangle } from 'lucide-react';
 
 const Progress = () => {
-  const { profile, loading } = useAuth();
+  const { loading } = useAuth();
+  const { effectiveRole } = useEffectiveRole();
   const isMobile = useIsMobile();
 
   if (loading) {
@@ -18,7 +20,7 @@ const Progress = () => {
   }
 
   // Allow students and admins to view progress
-  if (profile?.role !== 'student' && profile?.role !== 'admin') {
+  if (effectiveRole !== 'student' && effectiveRole !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
         <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-full">

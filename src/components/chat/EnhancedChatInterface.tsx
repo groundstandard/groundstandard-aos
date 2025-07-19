@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useRoleTesting } from '@/contexts/RoleTestingContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,7 +113,7 @@ export const EnhancedChatInterface = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { profile } = useAuth();
-  const { effectiveRole } = useRoleTesting();
+  const { effectiveRole } = useEffectiveRole();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
   const isMobile = useIsMobile();

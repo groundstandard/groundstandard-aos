@@ -1,12 +1,12 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useView } from "@/hooks/useView";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { BackButton } from "@/components/ui/BackButton";
 import { ClassSchedule } from "@/components/classes/ClassSchedule";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 
 const Classes = () => {
-  const { profile, loading } = useAuth();
-  const { currentView } = useView();
+  const { loading } = useAuth();
+  const { isAdmin } = useEffectiveRole();
 
   if (loading) {
     return (
@@ -16,7 +16,7 @@ const Classes = () => {
     );
   }
 
-  const isAdmin = profile?.role === 'admin' && currentView === 'admin';
+  
 
   return (
     <div className="min-h-screen bg-gradient-subtle">

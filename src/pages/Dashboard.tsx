@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useView } from "@/hooks/useView";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { ProfileView } from "@/components/profile/ProfileView";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
-  const { currentView } = useView();
+  const { isAdmin } = useEffectiveRole();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ const Dashboard = () => {
     return <div>Loading...</div>;
   }
 
-  const isAdmin = profile?.role === 'admin' && currentView === 'admin';
+  
 
   // Show Admin Dashboard for admin users
   if (isAdmin) {

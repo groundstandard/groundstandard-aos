@@ -1,11 +1,13 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { BackButton } from "@/components/ui/BackButton";
 import { AttendanceTracker } from "@/components/attendance/AttendanceTracker";
 import { AttendanceManagement } from "@/components/admin/AttendanceManagement";
 import { Navigate } from "react-router-dom";
 
 const Attendance = () => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
+  const { isAdmin } = useEffectiveRole();
 
   if (loading) {
     return (
@@ -27,7 +29,7 @@ const Attendance = () => {
           <h1 className="text-3xl font-bold text-foreground">Attendance</h1>
         </div>
         
-        {profile?.role === 'admin' ? (
+        {isAdmin ? (
           <AttendanceManagement />
         ) : (
           <AttendanceTracker />

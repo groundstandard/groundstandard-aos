@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
@@ -36,6 +37,7 @@ import { useNavigate } from "react-router-dom";
 const Admin = () => {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const { isAdmin } = useEffectiveRole();
   const { subscriptionInfo } = useSubscription();
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -52,7 +54,7 @@ const Admin = () => {
     );
   }
 
-  if (!user || profile?.role !== 'admin') {
+  if (!user || !isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
