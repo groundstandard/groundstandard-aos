@@ -306,7 +306,7 @@ export const ChannelSettingsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0 fixed top-[10vh] left-1/2 transform -translate-x-1/2 translate-y-0">
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
