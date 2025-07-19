@@ -181,7 +181,7 @@ export const ProfileView = () => {
                 </Badge>
                 <Badge variant="secondary" className="gap-1">
                   <Shield className="h-3 w-3" />
-                  {profile.role === 'admin' ? 'Admin' : 'Member'}
+                  {profile.role === 'admin' ? 'Admin' : profile.role === 'instructor' ? 'Instructor' : 'Student'}
                 </Badge>
                 {subscriptionInfo?.subscribed && (
                   <Badge variant="default" className="gap-1 bg-gradient-primary text-white">

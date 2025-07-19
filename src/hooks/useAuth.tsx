@@ -8,7 +8,7 @@ interface Profile {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'member' | 'admin';
+  role: 'student' | 'admin' | 'instructor';
   parent_id?: string;
   phone?: string;
   emergency_contact?: string;

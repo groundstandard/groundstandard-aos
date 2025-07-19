@@ -134,7 +134,7 @@ const Dashboard = () => {
             </h1>
             <div className={`flex items-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
               <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>
-                Member
+                Student
               </Badge>
               <Badge variant="outline" className={isMobile ? "text-xs" : ""}>{profile.membership_status}</Badge>
               {profile.belt_level && (
@@ -174,11 +174,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Member Statistics */}
+        {/* Student Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <Card className="p-3">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Member Since</h3>
+              <h3 className="text-xs font-medium text-muted-foreground">Student Since</h3>
               <User className="h-3 w-3 text-blue-500" />
             </div>
             <div className="space-y-0.5">
@@ -228,7 +228,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Member Features Grid */}
+        {/* Student Features Grid */}
         <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
           <Card 
             className="card-minimal hover-lift cursor-pointer"

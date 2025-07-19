@@ -321,7 +321,7 @@ export const ClassSchedule = () => {
                         </div>
                         
                         <div className="text-right">
-                          {profile?.role === 'member' && (
+                          {profile?.role === 'student' && (
                             classItem.is_enrolled ? (
                               <Button
                                 variant="outline"

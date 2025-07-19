@@ -17,7 +17,7 @@ const Progress = () => {
     );
   }
 
-  if (profile?.role !== 'member') {
+  if (profile?.role !== 'student') {
     return (
       <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
         <div className="container mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-full">
@@ -26,9 +26,9 @@ const Progress = () => {
             <CardContent className={`${isMobile ? 'p-6' : 'p-8'}`}>
               <div className="text-center">
                 <AlertTriangle className={`${isMobile ? 'h-12 w-12' : 'h-16 w-16'} mx-auto mb-4 text-muted-foreground`} />
-                <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-2`}>Member Access Only</h2>
+                <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold mb-2`}>Student Access Only</h2>
                 <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
-                  Progress tracking is available for members only.
+                  Progress tracking is available for students only.
                 </p>
               </div>
             </CardContent>

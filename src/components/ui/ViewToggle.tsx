@@ -16,14 +16,14 @@ export const ViewToggle = () => {
       <div className="flex items-center gap-2">
         <User className="h-4 w-4 text-muted-foreground" />
         <Label htmlFor="view-toggle" className="text-sm font-medium">
-          Member View
+          Student View
         </Label>
       </div>
       
       <Switch
         id="view-toggle"
         checked={currentView === 'admin'}
-        onCheckedChange={(checked) => setCurrentView(checked ? 'admin' : 'member')}
+        onCheckedChange={(checked) => setCurrentView(checked ? 'admin' : 'student')}
         className="data-[state=checked]:bg-primary"
       />
       
@@ -35,7 +35,7 @@ export const ViewToggle = () => {
       </div>
       
       <Badge variant={currentView === 'admin' ? 'default' : 'secondary'} className="ml-2">
-        {currentView === 'admin' ? 'Admin' : 'Member'}
+        {currentView === 'admin' ? 'Admin' : 'Student'}
       </Badge>
     </div>
   );

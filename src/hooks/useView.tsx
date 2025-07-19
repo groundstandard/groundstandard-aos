@@ -2,8 +2,8 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ViewContextType {
-  currentView: 'admin' | 'member';
-  setCurrentView: (view: 'admin' | 'member') => void;
+  currentView: 'admin' | 'student';
+  setCurrentView: (view: 'admin' | 'student') => void;
   canSwitchView: boolean;
 }
 
@@ -19,8 +19,8 @@ export const useView = () => {
 
 export const ViewProvider = ({ children }: { children: ReactNode }) => {
   const { profile } = useAuth();
-  const [currentView, setCurrentView] = useState<'admin' | 'member'>(
-    profile?.role === 'admin' ? 'admin' : 'member'
+  const [currentView, setCurrentView] = useState<'admin' | 'student'>(
+    profile?.role === 'admin' ? 'admin' : 'student'
   );
   
   const canSwitchView = profile?.role === 'admin';
