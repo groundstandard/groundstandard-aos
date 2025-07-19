@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, Target, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const OverviewReports = () => {
+  const isMobile = useIsMobile();
   const { data: stats, isLoading } = useQuery({
     queryKey: ['overview-stats'],
     queryFn: async () => {
@@ -55,7 +57,7 @@ export const OverviewReports = () => {
 
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         {[...Array(4)].map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -81,9 +83,9 @@ export const OverviewReports = () => {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 ${isMobile ? 'sm:space-y-6' : 'space-y-6'}`}>
       {/* Key Metrics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-4'}`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Students</CardTitle>
@@ -153,20 +155,20 @@ export const OverviewReports = () => {
       {/* Belt Level Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>Belt Level Distribution</CardTitle>
-          <CardDescription>
+          <CardTitle className={isMobile ? "text-base" : "text-lg"}>Belt Level Distribution</CardTitle>
+          <CardDescription className={isMobile ? "text-sm" : ""}>
             Current belt levels across all active members
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
+          <div className={`flex flex-wrap gap-2 ${isMobile ? 'gap-1.5' : 'gap-2'}`}>
             {Object.entries(stats?.beltDistribution || {}).map(([belt, count]) => (
-              <Badge key={belt} variant="outline" className="flex items-center gap-1">
+              <Badge key={belt} variant="outline" className={`flex items-center gap-1 ${isMobile ? 'text-xs px-2 py-1' : ''}`}>
                 {belt}: {count}
               </Badge>
             ))}
             {Object.keys(stats?.beltDistribution || {}).length === 0 && (
-              <p className="text-muted-foreground">No belt data available</p>
+              <p className="text-muted-foreground text-sm">No belt data available</p>
             )}
           </div>
         </CardContent>
@@ -174,38 +176,38 @@ export const OverviewReports = () => {
 
       {/* Quick Actions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Quick Insights</CardTitle>
-          <CardDescription>
-            Key performance indicators at a glance
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p className="font-medium">Monthly Attendance</p>
-              <p className="text-sm text-muted-foreground">
-                {stats?.presentCount || 0} out of {stats?.monthlyAttendance || 0} sessions
-              </p>
+          <CardHeader>
+            <CardTitle className={isMobile ? "text-base" : "text-lg"}>Quick Insights</CardTitle>
+            <CardDescription className={isMobile ? "text-sm" : ""}>
+              Key performance indicators at a glance
+            </CardDescription>
+          </CardHeader>
+          <CardContent className={`space-y-3 ${isMobile ? 'space-y-2' : 'space-y-4'}`}>
+            <div className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-4'} bg-muted/50 rounded-lg`}>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Monthly Attendance</p>
+                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                  {stats?.presentCount || 0} out of {stats?.monthlyAttendance || 0} sessions
+                </p>
+              </div>
+              <Badge variant={attendanceRate >= 80 ? "default" : "destructive"} className={isMobile ? "text-xs" : ""}>
+                {attendanceRate}%
+              </Badge>
             </div>
-            <Badge variant={attendanceRate >= 80 ? "default" : "destructive"}>
-              {attendanceRate}%
-            </Badge>
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p className="font-medium">Member Retention</p>
-              <p className="text-sm text-muted-foreground">
-                {stats?.activeStudents || 0} active of {stats?.totalStudents || 0} total
-              </p>
+            
+            <div className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-4'} bg-muted/50 rounded-lg`}>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${isMobile ? 'text-sm' : ''}`}>Member Retention</p>
+                <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'} truncate`}>
+                  {stats?.activeStudents || 0} active of {stats?.totalStudents || 0} total
+                </p>
+              </div>
+              <Badge variant={retentionRate >= 90 ? "default" : "secondary"} className={isMobile ? "text-xs" : ""}>
+                {retentionRate}%
+              </Badge>
             </div>
-            <Badge variant={retentionRate >= 90 ? "default" : "secondary"}>
-              {retentionRate}%
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
     </div>
   );
 };

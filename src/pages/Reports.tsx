@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AttendanceReports } from "@/components/reports/AttendanceReports";
 import { StudentReports } from "@/components/reports/StudentReports";
 import { ClassReports } from "@/components/reports/ClassReports";
@@ -12,6 +14,7 @@ import { BarChart3, Users, Calendar, DollarSign, TrendingUp } from "lucide-react
 
 const Reports = () => {
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
 
   // Only allow admin access
@@ -32,43 +35,72 @@ const Reports = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
           <BackButton />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              Academy Reports
+          <div className="flex-1">
+            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-foreground flex items-center gap-2 flex-wrap`}>
+              <BarChart3 className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
+              <span className="break-words">Academy Reports</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Comprehensive analytics and insights for your martial arts academy
-            </p>
+            {!isMobile && (
+              <p className="text-muted-foreground mt-1">
+                Comprehensive analytics and insights for your martial arts academy
+              </p>
+            )}
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-background/50 backdrop-blur">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Attendance
-            </TabsTrigger>
-            <TabsTrigger value="students" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Students
-            </TabsTrigger>
-            <TabsTrigger value="classes" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Classes
-            </TabsTrigger>
-            <TabsTrigger value="revenue" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Revenue
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          {isMobile ? (
+            <ScrollArea className="w-full whitespace-nowrap">
+              <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-background/50 backdrop-blur p-1 text-muted-foreground min-w-max">
+                <TabsTrigger value="overview" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <TrendingUp className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="attendance" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <Calendar className="h-4 w-4" />
+                  Attendance
+                </TabsTrigger>
+                <TabsTrigger value="students" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <Users className="h-4 w-4" />
+                  Students
+                </TabsTrigger>
+                <TabsTrigger value="classes" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <BarChart3 className="h-4 w-4" />
+                  Classes
+                </TabsTrigger>
+                <TabsTrigger value="revenue" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
+                  <DollarSign className="h-4 w-4" />
+                  Revenue
+                </TabsTrigger>
+              </TabsList>
+            </ScrollArea>
+          ) : (
+            <TabsList className="grid w-full grid-cols-5 bg-background/50 backdrop-blur">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="attendance" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Attendance
+              </TabsTrigger>
+              <TabsTrigger value="students" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Students
+              </TabsTrigger>
+              <TabsTrigger value="classes" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Classes
+              </TabsTrigger>
+              <TabsTrigger value="revenue" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Revenue
+              </TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="overview" className="space-y-6">
             <OverviewReports />

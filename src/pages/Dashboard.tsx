@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useView } from "@/hooks/useView";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { currentView } = useView();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
 
   if (!user || !profile) {
@@ -23,34 +25,39 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* View Toggle for Admins */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4 sm:mb-6">
           <ViewToggle />
         </div>
 
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-display font-bold text-primary">
+        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between items-center'} mb-6 sm:mb-8`}>
+          <div className="flex-1">
+            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-display font-bold text-primary`}>
               Welcome, {profile.first_name}
             </h1>
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant={isAdmin ? "default" : "secondary"}>
+            <div className={`flex items-center gap-2 mt-2 ${isMobile ? 'flex-wrap' : ''}`}>
+              <Badge variant={isAdmin ? "default" : "secondary"} className={isMobile ? "text-xs" : ""}>
                 {currentView === 'admin' ? 'Admin' : 'Member'}
               </Badge>
-              <Badge variant="outline">{profile.membership_status}</Badge>
+              <Badge variant="outline" className={isMobile ? "text-xs" : ""}>{profile.membership_status}</Badge>
               {profile.belt_level && (
-                <Badge variant="secondary">{profile.belt_level}</Badge>
+                <Badge variant="secondary" className={isMobile ? "text-xs" : ""}>{profile.belt_level}</Badge>
               )}
             </div>
           </div>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
+          <Button 
+            variant="outline" 
+            onClick={signOut}
+            size={isMobile ? "sm" : "default"}
+            className={isMobile ? "self-end" : ""}
+          >
+            <LogOut className={`${isMobile ? 'mr-1 h-3 w-3' : 'mr-2 h-4 w-4'}`} />
+            {isMobile ? "Sign Out" : "Sign Out"}
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
           <Card className="card-minimal hover-lift">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
