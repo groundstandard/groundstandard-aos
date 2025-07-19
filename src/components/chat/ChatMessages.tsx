@@ -35,23 +35,25 @@ interface Channel {
 interface ChatMessagesProps {
   messages: Message[];
   currentChannel: Channel | undefined;
-  newMessage: string;
-  onNewMessageChange: (value: string) => void;
-  onSendMessage: () => void;
-  onKeyPress: (e: React.KeyboardEvent) => void;
+  newMessage?: string;
+  onNewMessageChange?: (value: string) => void;
+  onSendMessage?: () => void;
+  onKeyPress?: (e: React.KeyboardEvent) => void;
   onBackToChannels?: () => void;
   className?: string;
+  hideInput?: boolean;
 }
 
 export const ChatMessages = ({
   messages,
   currentChannel,
-  newMessage,
-  onNewMessageChange,
-  onSendMessage,
-  onKeyPress,
+  newMessage = "",
+  onNewMessageChange = () => {},
+  onSendMessage = () => {},
+  onKeyPress = () => {},
   onBackToChannels,
-  className = ""
+  className = "",
+  hideInput = false
 }: ChatMessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -288,37 +290,39 @@ export const ChatMessages = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="p-4 border-t bg-background">
-        <div className="flex items-center gap-3">
-          <div className="flex-1 relative">
-            <Input
-              placeholder={`Message ${currentChannel?.name}...`}
-              value={newMessage}
-              onChange={(e) => onNewMessageChange(e.target.value)}
-              onKeyPress={onKeyPress}
-              className="pr-12 rounded-full bg-muted/50 border-0 h-11"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+      {/* Message Input - only show if not hidden */}
+      {!hideInput && (
+        <div className="p-4 border-t bg-background">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
+              <Input
+                placeholder={`Message ${currentChannel?.name}...`}
+                value={newMessage}
+                onChange={(e) => onNewMessageChange(e.target.value)}
+                onKeyPress={onKeyPress}
+                className="pr-12 rounded-full bg-muted/50 border-0 h-11"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button 
+              onClick={onSendMessage} 
+              size="sm" 
+              className={`h-11 w-11 p-0 rounded-full ${
+                newMessage.trim() ? 'bg-primary hover:bg-primary/90' : 'bg-muted-foreground/20'
+              }`}
+              disabled={!newMessage.trim()}
             >
-              <Smile className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             </Button>
           </div>
-          <Button 
-            onClick={onSendMessage} 
-            size="sm" 
-            className={`h-11 w-11 p-0 rounded-full ${
-              newMessage.trim() ? 'bg-primary hover:bg-primary/90' : 'bg-muted-foreground/20'
-            }`}
-            disabled={!newMessage.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessages } from './ChatMessages';
 import { CreateChannelDialog } from './CreateChannelDialog';
+import { MobileMessageInput } from './MobileMessageInput';
 
 interface Message {
   id: string;
@@ -35,7 +36,7 @@ interface ChatLayoutProps {
   newMessage: string;
   onChannelSelect: (channelId: string) => void;
   onNewMessageChange: (value: string) => void;
-  onSendMessage: () => void;
+  onSendMessage: (attachments?: Array<{url: string; type: string; name: string}>, mentionedUsers?: string[]) => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onChannelCreated: (channel: Channel) => void;
 }
@@ -80,51 +81,59 @@ export const ChatLayout = ({
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-12rem)] w-full overflow-hidden bg-background">
-        <div className="relative h-full">
-          {/* Mobile Channel List */}
-          <div 
-            className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out ${
-              showChannels ? 'translate-x-0' : '-translate-x-full'
-            }`}
-          >
-            <ChatSidebar
-              channels={channels}
-              activeChannel={activeChannel}
-              onChannelSelect={handleChannelSelect}
-              onCreateChannel={handleCreateChannel}
-              onStartDM={() => {}}
-              onDirectMessageSelect={() => {}}
-              directMessageUsers={[]}
-              className="h-full"
-            />
+      <>
+        <div className="h-[calc(100vh-16rem)] w-full overflow-hidden bg-background">
+          <div className="relative h-full">
+            {/* Mobile Channel List */}
+            <div 
+              className={`absolute inset-0 z-10 transform transition-transform duration-300 ease-in-out ${
+                showChannels ? 'translate-x-0' : '-translate-x-full'
+              }`}
+            >
+              <ChatSidebar
+                channels={channels}
+                activeChannel={activeChannel}
+                onChannelSelect={handleChannelSelect}
+                onCreateChannel={handleCreateChannel}
+                onStartDM={() => {}}
+                onDirectMessageSelect={() => {}}
+                directMessageUsers={[]}
+                className="h-full"
+              />
+            </div>
+
+            {/* Mobile Chat Messages */}
+            <div 
+              className={`absolute inset-0 transform transition-transform duration-300 ease-in-out ${
+                showChannels ? 'translate-x-full' : 'translate-x-0'
+              }`}
+            >
+              <ChatMessages
+                messages={messages}
+                currentChannel={currentChannel}
+                onBackToChannels={handleBackToChannels}
+                className="h-full"
+                hideInput={true}
+              />
+            </div>
           </div>
 
-          {/* Mobile Chat Messages */}
-          <div 
-            className={`absolute inset-0 transform transition-transform duration-300 ease-in-out ${
-              showChannels ? 'translate-x-full' : 'translate-x-0'
-            }`}
-          >
-            <ChatMessages
-              messages={messages}
-              currentChannel={currentChannel}
-              newMessage={newMessage}
-              onNewMessageChange={onNewMessageChange}
-              onSendMessage={onSendMessage}
-              onKeyPress={onKeyPress}
-              onBackToChannels={handleBackToChannels}
-              className="h-full"
-            />
-          </div>
+          <CreateChannelDialog
+            open={showCreateChannel}
+            onOpenChange={setShowCreateChannel}
+            onChannelCreated={handleChannelCreated}
+          />
         </div>
-
-        <CreateChannelDialog
-          open={showCreateChannel}
-          onOpenChange={setShowCreateChannel}
-          onChannelCreated={handleChannelCreated}
+        
+        {/* Mobile Input Component */}
+        <MobileMessageInput
+          newMessage={newMessage}
+          onNewMessageChange={onNewMessageChange}
+          onSendMessage={onSendMessage}
+          onKeyPress={onKeyPress}
+          channelName={currentChannel?.name}
         />
-      </div>
+      </>
     );
   }
 
