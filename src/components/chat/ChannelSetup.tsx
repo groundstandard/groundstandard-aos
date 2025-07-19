@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Users, FileText, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AddPeopleToChannelModal } from './AddPeopleToChannelModal';
 
 interface Channel {
   id: string;
@@ -20,13 +20,13 @@ interface Channel {
 interface ChannelSetupProps {
   channel: Channel | undefined;
   onDescriptionAdded: (description: string) => void;
+  isDM?: boolean;
 }
 
-export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps) => {
+export const ChannelSetup = ({ channel, onDescriptionAdded, isDM = false }: ChannelSetupProps) => {
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
   const [showAddPeopleDialog, setShowAddPeopleDialog] = useState(false);
   const [description, setDescription] = useState('');
-  const [emailList, setEmailList] = useState('');
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -51,16 +51,12 @@ export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps)
     }
   };
 
-  const handleAddPeople = () => {
-    if (emailList.trim()) {
-      // In a real app, this would send invites
-      setShowAddPeopleDialog(false);
-      setEmailList('');
-      toast({
-        title: "Invites sent",
-        description: "Channel invitations have been sent."
-      });
-    }
+  const handleAddPeople = (userIds: string[]) => {
+    // In a real app, this would add users to the channel
+    toast({
+      title: "People added",
+      description: `${userIds.length} user${userIds.length !== 1 ? 's' : ''} added to the channel.`
+    });
   };
 
   const getChannelIcon = () => {
@@ -69,6 +65,11 @@ export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps)
     if (channel.type === 'private' || channel.is_admin_only) return <Lock className="h-5 w-5 text-muted-foreground" />;
     return <span className="text-lg">#</span>;
   };
+
+  // For DMs, we don't show the setup UI at all
+  if (isDM) {
+    return null;
+  }
 
   return (
     <div className="p-6 border-b bg-muted/20">
@@ -139,40 +140,13 @@ export const ChannelSetup = ({ channel, onDescriptionAdded }: ChannelSetupProps)
         </DialogContent>
       </Dialog>
 
-      {/* Add People Dialog */}
-      <Dialog open={showAddPeopleDialog} onOpenChange={setShowAddPeopleDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add People to Channel</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="emails">Email Addresses</Label>
-              <Textarea
-                id="emails"
-                value={emailList}
-                onChange={(e) => setEmailList(e.target.value)}
-                placeholder="Enter email addresses (one per line)&#10;john@example.com&#10;jane@example.com"
-                className="mt-1 min-h-[100px]"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Enter one email address per line
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowAddPeopleDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleAddPeople}>
-                Send Invites
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Add People to Channel Modal */}
+      <AddPeopleToChannelModal
+        open={showAddPeopleDialog}
+        onOpenChange={setShowAddPeopleDialog}
+        onAddPeople={handleAddPeople}
+        channelName={channel?.name}
+      />
     </div>
   );
 };

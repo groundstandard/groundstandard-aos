@@ -717,6 +717,7 @@ export const EnhancedChatInterface = () => {
                   <ChannelSetup 
                     channel={currentChannel!} 
                     onDescriptionAdded={handleDescriptionAdded}
+                    isDM={activeChannel.startsWith('dm-')}
                   />
                 ) : (
                   <div className="space-y-1">
@@ -895,6 +896,7 @@ export const EnhancedChatInterface = () => {
             <ChannelSetup 
               channel={currentChannel!} 
               onDescriptionAdded={handleDescriptionAdded}
+              isDM={activeChannel.startsWith('dm-')}
             />
           ) : (
             <div className="space-y-1">
