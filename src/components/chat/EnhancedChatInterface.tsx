@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -82,22 +82,25 @@ interface UserPresence {
 
 export const EnhancedChatInterface = () => {
   const navigate = useNavigate();
-  const [channelMessages, setChannelMessages] = useState<Record<string, Message[]>>({});
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [activeChannel, setActiveChannel] = useState<string>('general');
-  const [newMessage, setNewMessage] = useState('');
+  const [channelMessages, setChannelMessages] = useState<{ [key: string]: Message[] }>({});
+  const [activeChannel, setActiveChannel] = useState('general');
   const [loading, setLoading] = useState(true);
+  const [newMessage, setNewMessage] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<UserPresence[]>([]);
-  const [showCreateChannel, setShowCreateChannel] = useState(false);
-  const [showChannels, setShowChannels] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showChannels, setShowChannels] = useState(false);
   const [directMessageUsers, setDirectMessageUsers] = useState<UserPresence[]>([]);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   // Initialize channels with subscription-aware features
@@ -250,10 +253,26 @@ export const EnhancedChatInterface = () => {
     };
   }, [activeChannel, profile]);
 
-  // Auto-scroll to bottom
+  // Smart auto-scroll: only scroll to bottom if user is near bottom or when switching channels
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [channelMessages, activeChannel]);
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [channelMessages, activeChannel, shouldAutoScroll]);
+
+  // Check if user is near bottom when they scroll
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShouldAutoScroll(isNearBottom);
+    }
+  };
+
+  // Reset auto-scroll when switching channels
+  useEffect(() => {
+    setShouldAutoScroll(true);
+  }, [activeChannel]);
 
   const handleSendMessage = async (attachments?: Array<{url: string; type: string; name: string}>) => {
     if (!newMessage.trim() && (!attachments || attachments.length === 0)) return;
@@ -548,8 +567,12 @@ export const EnhancedChatInterface = () => {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-end">
-                <div className="space-y-1">
+              <div 
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto p-4 flex flex-col justify-end"
+              >
+                <div className="space-y-1 min-h-0">
                   {getTopLevelMessages().map((message, index) => {
                      const topLevelMessages = getTopLevelMessages();
                      const prevMessage = topLevelMessages[index - 1];
@@ -669,8 +692,12 @@ export const EnhancedChatInterface = () => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-end">
-          <div className="space-y-1">
+        <div 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 flex flex-col justify-end"
+        >
+          <div className="space-y-1 min-h-0">
             {getTopLevelMessages().map((message, index) => {
               const topLevelMessages = getTopLevelMessages();
               const prevMessage = topLevelMessages[index - 1];
