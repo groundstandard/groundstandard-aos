@@ -325,38 +325,38 @@ export const AdminDashboard = () => {
           <CardDescription>Common administrative tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
             <Button 
               variant="outline" 
               onClick={() => handleQuickAction("Add New Student")}
-              className="h-auto flex-col space-y-2 p-4"
+              className="h-auto flex-col space-y-1 p-3"
             >
-              <Users className="h-6 w-6" />
-              <span>Add Student</span>
+              <Users className="h-4 w-4" />
+              <span className="text-xs">Add Student</span>
             </Button>
             <Button 
               variant="outline" 
               onClick={() => handleQuickAction("Schedule Class")}
-              className="h-auto flex-col space-y-2 p-4"
+              className="h-auto flex-col space-y-1 p-3"
             >
-              <Calendar className="h-6 w-6" />
-              <span>Schedule Class</span>
+              <Calendar className="h-4 w-4" />
+              <span className="text-xs">Schedule Class</span>
             </Button>
             <Button 
               variant="outline" 
               onClick={() => handleQuickAction("Generate Report")}
-              className="h-auto flex-col space-y-2 p-4"
+              className="h-auto flex-col space-y-1 p-3"
             >
-              <BarChart3 className="h-6 w-6" />
-              <span>Generate Report</span>
+              <BarChart3 className="h-4 w-4" />
+              <span className="text-xs">Generate Report</span>
             </Button>
             <Button 
               variant="outline" 
               onClick={() => handleQuickAction("Send Notifications")}
-              className="h-auto flex-col space-y-2 p-4"
+              className="h-auto flex-col space-y-1 p-3"
             >
-              <Activity className="h-6 w-6" />
-              <span>Send Notifications</span>
+              <Activity className="h-4 w-4" />
+              <span className="text-xs">Send Notifications</span>
             </Button>
           </div>
         </CardContent>
