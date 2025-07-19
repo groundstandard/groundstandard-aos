@@ -484,7 +484,8 @@ export const EnhancedChatInterface = () => {
 
         // Only save to database if we have valid channel/dm info
         if (channelId || dmChannelId) {
-          const { error } = await supabase
+          console.log('Saving message to database:', { channelId, dmChannelId, content: message.content });
+          const { data, error } = await supabase
             .from('chat_messages')
             .insert({
               channel_id: channelId,
@@ -495,12 +496,21 @@ export const EnhancedChatInterface = () => {
               mentioned_users: message.mentioned_users,
               attachments: message.attachments || [],
               message_type: 'text'
-            });
+            })
+            .select();
 
           if (error) {
             console.error('Error saving message:', error);
-            // Still show message locally even if database save fails
+            toast({
+              variant: "destructive",
+              title: "Message failed to save",
+              description: "Your message will only be visible locally."
+            });
+          } else {
+            console.log('Message saved successfully:', data);
           }
+        } else {
+          console.log('No valid channel/DM ID found, message will only show locally');
         }
       } catch (error) {
         console.error('Error saving message:', error);
