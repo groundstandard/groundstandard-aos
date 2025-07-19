@@ -39,21 +39,37 @@ const Payments = () => {
   const { data: paymentStats } = useQuery({
     queryKey: ['payment-stats'],
     queryFn: async () => {
-      // Get real data from profiles for active members
+      // Get real payment data
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, payment_date, status');
+
+      // Get profile data for active members
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, membership_status')
-        .eq('role', 'member');
+        .eq('role', 'student');
 
       const activeMembers = profiles?.filter(p => p.membership_status === 'active').length || 0;
-      const totalMembers = profiles?.length || 0;
+      
+      // Calculate actual stats from payments
+      const totalRevenue = payments?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      
+      const monthlyRevenue = payments?.filter(payment => {
+        const paymentDate = new Date(payment.payment_date);
+        return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+      }).reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
+
+      const outstandingPayments = payments?.filter(p => p.status === 'pending').length || 0;
       
       return {
-        monthlyRevenue: 12450,
-        outstandingPayments: 3,
+        monthlyRevenue: Math.round(monthlyRevenue),
+        outstandingPayments,
         activeMembers,
-        totalMembers,
-        averageMonthlyFee: activeMembers > 0 ? Math.round(12450 / activeMembers) : 120
+        totalMembers: profiles?.length || 0,
+        averageMonthlyFee: activeMembers > 0 ? Math.round(monthlyRevenue / activeMembers) : 0
       };
     }
   });
@@ -61,22 +77,35 @@ const Payments = () => {
   const { data: recentPayments } = useQuery({
     queryKey: ['recent-payments'],
     queryFn: async () => {
-      // Get recent students for mock payment data
-      const { data: students } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('role', 'member')
+      const { data: payments, error } = await supabase
+        .from('payments')
+        .select('*')
+        .order('payment_date', { ascending: false })
         .limit(10);
 
-      // Generate mock payment data
-      return students?.map((student, index) => ({
-        id: `payment-${index}`,
-        student_name: `${student.first_name} ${student.last_name}`,
-        amount: [120, 150, 180][index % 3],
-        date: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        method: ['Credit Card', 'Bank Transfer', 'Cash'][index % 3],
-        status: 'completed'
-      })) || [];
+      if (error) throw error;
+
+      // Fetch profile data for each payment
+      const paymentsWithProfiles = await Promise.all(
+        (payments || []).map(async (payment) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', payment.student_id)
+            .single();
+          
+          return {
+            id: payment.id,
+            student_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown Student',
+            amount: payment.amount,
+            date: payment.payment_date.split('T')[0],
+            method: payment.payment_method,
+            status: payment.status
+          };
+        })
+      );
+
+      return paymentsWithProfiles;
     }
   });
 
@@ -87,14 +116,30 @@ const Payments = () => {
       payment_method: string;
       description: string;
     }) => {
-      // Simulate success for now - replace with actual DB call when types are updated
-      return { success: true };
+      const { data, error } = await supabase
+        .from('payments')
+        .insert([{
+          student_id: paymentData.student_id,
+          amount: paymentData.amount,
+          payment_method: paymentData.payment_method,
+          description: paymentData.description,
+          status: 'completed',
+          payment_date: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast({ title: "Payment recorded successfully!" });
       setIsCreateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['recent-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['payment-stats'] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Payment recording error:', error);
       toast({ title: "Error recording payment", variant: "destructive" });
     }
   });
