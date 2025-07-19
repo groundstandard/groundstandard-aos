@@ -92,6 +92,48 @@ export type Database = {
         }
         Relationships: []
       }
+      belt_tests: {
+        Row: {
+          created_at: string
+          current_belt: string
+          evaluated_by: string | null
+          id: string
+          notes: string | null
+          result: string | null
+          status: string
+          student_id: string
+          target_belt: string
+          test_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_belt: string
+          evaluated_by?: string | null
+          id?: string
+          notes?: string | null
+          result?: string | null
+          status?: string
+          student_id: string
+          target_belt: string
+          test_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_belt?: string
+          evaluated_by?: string | null
+          id?: string
+          notes?: string | null
+          result?: string | null
+          status?: string
+          student_id?: string
+          target_belt?: string
+          test_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_enrollments: {
         Row: {
           class_id: string
@@ -215,6 +257,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          payment_date: string
+          payment_method: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_date?: string
+          payment_method: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_date?: string
+          payment_method?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

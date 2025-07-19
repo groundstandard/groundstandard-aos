@@ -15,6 +15,9 @@ import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Reports from "./pages/Reports";
+import BeltTesting from "./pages/BeltTesting";
+import Payments from "./pages/Payments";
+import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +41,9 @@ const AppRoutes = () => {
       <Route path="/profile" element={user ? <Profile /> : <Auth />} />
       <Route path="/chat" element={user ? <Chat /> : <Auth />} />
       <Route path="/reports" element={user ? <Reports /> : <Auth />} />
+      <Route path="/belt-testing" element={user ? <BeltTesting /> : <Auth />} />
+      <Route path="/payments" element={user ? <Payments /> : <Auth />} />
+      <Route path="/events" element={user ? <Events /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>

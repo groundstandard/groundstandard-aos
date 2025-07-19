@@ -4,7 +4,10 @@ import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, FileText } from "lucide-react";
+import { 
+  LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, 
+  FileText, Award, DollarSign
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -144,7 +147,10 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="card-minimal hover-lift">
+          <Card 
+            className="card-minimal hover-lift cursor-pointer"
+            onClick={() => navigate('/payments')}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
@@ -155,7 +161,7 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
+              <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/payments'); }}>
                 {isAdmin ? "Process Payments" : "Payment History"}
               </Button>
             </CardContent>
@@ -197,6 +203,30 @@ const Dashboard = () => {
                     Admin Dashboard
                   </Button>
                 </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/belt-testing')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    Belt Testing
+                  </CardTitle>
+                  <CardDescription>
+                    Manage student belt promotions and testing schedules
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/events')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Events
+                  </CardTitle>
+                  <CardDescription>
+                    Academy events, competitions, and special activities
+                  </CardDescription>
+                </CardHeader>
               </Card>
             </>
           )}
