@@ -1,4 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useView } from "@/hooks/useView";
+import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,17 +9,23 @@ import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
+  const { currentView } = useView();
   const navigate = useNavigate();
 
   if (!user || !profile) {
     return <div>Loading...</div>;
   }
 
-  const isAdmin = profile.role === 'admin';
+  const isAdmin = profile?.role === 'admin' && currentView === 'admin';
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto px-4 py-8">
+        {/* View Toggle for Admins */}
+        <div className="flex justify-center mb-6">
+          <ViewToggle />
+        </div>
+
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-display font-bold text-primary">
@@ -25,7 +33,7 @@ const Dashboard = () => {
             </h1>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant={isAdmin ? "default" : "secondary"}>
-                {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
+                {currentView === 'admin' ? 'Admin' : 'Member'}
               </Badge>
               <Badge variant="outline">{profile.membership_status}</Badge>
               {profile.belt_level && (
@@ -127,7 +135,7 @@ const Dashboard = () => {
                 <MessageCircle className="h-5 w-5" />
                 Academy Chat
               </CardTitle>
-              <CardDescription>Connect with students and instructors</CardDescription>
+              <CardDescription>Connect with members and instructors</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/chat'); }}>

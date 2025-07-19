@@ -23,8 +23,8 @@ import { cn } from '@/lib/utils';
 
 interface AttendanceRecord {
   id: string;
-  student_id: string;
-  student_name: string;
+  member_id: string;
+  member_name: string;
   class_id: string;
   class_name: string;
   date: string;
@@ -41,7 +41,7 @@ interface ClassSession {
   start_time: string;
   end_time: string;
   instructor: string;
-  enrolled_students: number;
+  enrolled_members: number;
   present_count: number;
   attendance_rate: number;
 }
@@ -67,8 +67,8 @@ export const AttendanceTracker = () => {
       const mockAttendance: AttendanceRecord[] = [
         {
           id: '1',
-          student_id: 'student-1',
-          student_name: 'Alex Chen',
+          member_id: 'member-1',
+          member_name: 'Alex Chen',
           class_id: 'class-1',
           class_name: 'Beginner Karate',
           date: format(new Date(), 'yyyy-MM-dd'),
@@ -78,8 +78,8 @@ export const AttendanceTracker = () => {
         },
         {
           id: '2',
-          student_id: 'student-2',
-          student_name: 'Sarah Kim',
+          member_id: 'member-2',
+          member_name: 'Sarah Kim',
           class_id: 'class-1',
           class_name: 'Beginner Karate',
           date: format(new Date(), 'yyyy-MM-dd'),
@@ -89,8 +89,8 @@ export const AttendanceTracker = () => {
         },
         {
           id: '3',
-          student_id: 'student-3',
-          student_name: 'Mike Johnson',
+          member_id: 'member-3',
+          member_name: 'Mike Johnson',
           class_id: 'class-2',
           class_name: 'Advanced Martial Arts',
           date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
@@ -99,8 +99,8 @@ export const AttendanceTracker = () => {
         },
         {
           id: '4',
-          student_id: profile?.id || 'current-user',
-          student_name: `${profile?.first_name} ${profile?.last_name}`,
+          member_id: profile?.id || 'current-user',
+          member_name: `${profile?.first_name} ${profile?.last_name}`,
           class_id: 'class-1',
           class_name: 'Beginner Karate',
           date: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
@@ -118,7 +118,7 @@ export const AttendanceTracker = () => {
           start_time: '18:00',
           end_time: '19:00',
           instructor: 'Sensei Johnson',
-          enrolled_students: 15,
+          enrolled_members: 15,
           present_count: 12,
           attendance_rate: 80
         },
@@ -129,7 +129,7 @@ export const AttendanceTracker = () => {
           start_time: '19:30',
           end_time: '20:30',
           instructor: 'Sensei Martinez',
-          enrolled_students: 8,
+          enrolled_members: 8,
           present_count: 7,
           attendance_rate: 87.5
         }
@@ -156,8 +156,8 @@ export const AttendanceTracker = () => {
       // Mock check-in process
       const newRecord: AttendanceRecord = {
         id: Date.now().toString(),
-        student_id: profile.id,
-        student_name: `${profile.first_name} ${profile.last_name}`,
+        member_id: profile.id,
+        member_name: `${profile.first_name} ${profile.last_name}`,
         class_id: classId,
         class_name: 'Current Class',
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -212,7 +212,7 @@ export const AttendanceTracker = () => {
   };
 
   const filteredRecords = attendanceRecords.filter(record => {
-    const matchesSearch = record.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = record.member_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          record.class_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
     const matchesDate = record.date === format(selectedDate, 'yyyy-MM-dd');
@@ -221,7 +221,7 @@ export const AttendanceTracker = () => {
   });
 
   const myAttendanceRecords = attendanceRecords.filter(record => 
-    record.student_id === profile?.id
+    record.member_id === profile?.id
   ).slice(0, 10);
 
   if (loading) {
@@ -318,7 +318,7 @@ export const AttendanceTracker = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search students or classes..."
+                  placeholder="Search members or classes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 w-64"
@@ -372,7 +372,7 @@ export const AttendanceTracker = () => {
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
-                            {session.present_count}/{session.enrolled_students}
+                            {session.present_count}/{session.enrolled_members}
                           </span>
                         </div>
                         <Badge 
@@ -420,7 +420,7 @@ export const AttendanceTracker = () => {
                   <div>
                     <h4 className="font-medium">{record.class_name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {isAdmin ? record.student_name : format(new Date(record.date), 'MMM d, yyyy')}
+                      {isAdmin ? record.member_name : format(new Date(record.date), 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>

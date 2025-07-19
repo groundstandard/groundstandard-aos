@@ -177,7 +177,7 @@ export const ProfileView = () => {
                 </Badge>
                 <Badge variant="secondary" className="gap-1">
                   <Shield className="h-3 w-3" />
-                  {profile.role}
+                  {profile.role === 'admin' ? 'Admin' : 'Member'}
                 </Badge>
               </div>
               <p className="text-muted-foreground">{profile.email}</p>

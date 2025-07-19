@@ -14,7 +14,7 @@ const Progress = () => {
     );
   }
 
-  if (profile?.role !== 'student') {
+  if (profile?.role !== 'member') {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto p-6">
