@@ -1,0 +1,351 @@
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
+} from "@/components/ui/dropdown-menu";
+import { 
+  ChevronUp, 
+  ChevronDown, 
+  MoreHorizontal, 
+  Eye, 
+  Edit, 
+  UserPlus, 
+  Users 
+} from "lucide-react";
+
+interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  belt_level?: string;
+  emergency_contact?: string;
+  membership_status: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Column {
+  id: keyof Contact | 'full_name' | 'actions';
+  label: string;
+  visible: boolean;
+  sortable: boolean;
+  width?: string;
+}
+
+interface ContactsTableProps {
+  contacts: Contact[];
+  onView: (contact: Contact) => void;
+  onEdit: (contact: Contact) => void;
+  onAddChild: (contact: Contact) => void;
+  onViewFamily: (contact: Contact) => void;
+}
+
+const DEFAULT_COLUMNS: Column[] = [
+  { id: 'full_name', label: 'Name', visible: true, sortable: true, width: 'w-48' },
+  { id: 'email', label: 'Email', visible: true, sortable: true, width: 'w-56' },
+  { id: 'phone', label: 'Phone', visible: true, sortable: false, width: 'w-36' },
+  { id: 'role', label: 'Role', visible: true, sortable: true, width: 'w-24' },
+  { id: 'belt_level', label: 'Belt', visible: true, sortable: true, width: 'w-24' },
+  { id: 'membership_status', label: 'Status', visible: true, sortable: true, width: 'w-24' },
+  { id: 'emergency_contact', label: 'Emergency', visible: false, sortable: false, width: 'w-48' },
+  { id: 'created_at', label: 'Joined', visible: false, sortable: true, width: 'w-32' },
+  { id: 'actions', label: 'Actions', visible: true, sortable: false, width: 'w-24' },
+];
+
+export const ContactsTable = ({ 
+  contacts, 
+  onView, 
+  onEdit, 
+  onAddChild, 
+  onViewFamily 
+}: ContactsTableProps) => {
+  const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
+  const [sortBy, setSortBy] = useState<string>('full_name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+
+  const roleColors = {
+    visitor: "bg-gray-100 text-gray-800",
+    member: "bg-green-100 text-green-800", 
+    alumni: "bg-purple-100 text-purple-800",
+    staff: "bg-blue-100 text-blue-800",
+    instructor: "bg-orange-100 text-orange-800",
+    admin: "bg-red-100 text-red-800",
+    student: "bg-green-100 text-green-800",
+  };
+
+  const statusColors = {
+    active: "bg-green-100 text-green-800",
+    inactive: "bg-red-100 text-red-800", 
+    alumni: "bg-purple-100 text-purple-800",
+    suspended: "bg-yellow-100 text-yellow-800",
+  };
+
+  const visibleColumns = useMemo(() => 
+    columns.filter(col => col.visible), 
+    [columns]
+  );
+
+  const sortedContacts = useMemo(() => {
+    const sorted = [...contacts].sort((a, b) => {
+      let aValue: any, bValue: any;
+      
+      switch (sortBy) {
+        case 'full_name':
+          aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
+          bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
+          break;
+        case 'email':
+          aValue = a.email.toLowerCase();
+          bValue = b.email.toLowerCase();
+          break;
+        case 'role':
+          aValue = a.role;
+          bValue = b.role;
+          break;
+        case 'belt_level':
+          const beltOrder = ['white', 'yellow', 'orange', 'green', 'blue', 'brown', 'black'];
+          aValue = beltOrder.indexOf((a.belt_level || 'white').toLowerCase());
+          bValue = beltOrder.indexOf((b.belt_level || 'white').toLowerCase());
+          break;
+        case 'membership_status':
+          aValue = a.membership_status;
+          bValue = b.membership_status;
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        default:
+          aValue = a[sortBy as keyof Contact] || '';
+          bValue = b[sortBy as keyof Contact] || '';
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return sorted;
+  }, [contacts, sortBy, sortOrder]);
+
+  const handleSort = (columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    if (!column?.sortable) return;
+
+    if (sortBy === columnId) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(columnId);
+      setSortOrder('asc');
+    }
+  };
+
+  const toggleColumn = (columnId: string) => {
+    setColumns(columns.map(col => 
+      col.id === columnId ? { ...col, visible: !col.visible } : col
+    ));
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedContacts.size === contacts.length) {
+      setSelectedContacts(new Set());
+    } else {
+      setSelectedContacts(new Set(contacts.map(c => c.id)));
+    }
+  };
+
+  const toggleSelectContact = (contactId: string) => {
+    const newSelected = new Set(selectedContacts);
+    if (newSelected.has(contactId)) {
+      newSelected.delete(contactId);
+    } else {
+      newSelected.add(contactId);
+    }
+    setSelectedContacts(newSelected);
+  };
+
+  const formatCellValue = (contact: Contact, columnId: string) => {
+    switch (columnId) {
+      case 'full_name':
+        return `${contact.first_name} ${contact.last_name}`;
+      case 'phone':
+        return contact.phone || '-';
+      case 'belt_level':
+        return contact.belt_level || '-';
+      case 'emergency_contact':
+        return contact.emergency_contact || '-';
+      case 'created_at':
+        return new Date(contact.created_at).toLocaleDateString();
+      default:
+        return contact[columnId as keyof Contact] || '-';
+    }
+  };
+
+  const hasChildren = (contact: Contact) => {
+    return contacts.some(c => c.parent_id === contact.id);
+  };
+
+  return (
+    <div className="border rounded-lg bg-card">
+      {/* Table Header with Column Management */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={selectedContacts.size === contacts.length && contacts.length > 0}
+            onCheckedChange={toggleSelectAll}
+          />
+          <span className="text-sm text-muted-foreground">
+            {selectedContacts.size > 0 ? `${selectedContacts.size} selected` : `${contacts.length} contacts`}
+          </span>
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {columns.map(column => (
+              <DropdownMenuItem
+                key={column.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleColumn(column.id);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Checkbox checked={column.visible} />
+                {column.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="p-3 text-left w-12">
+                <Checkbox
+                  checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+              </th>
+              {visibleColumns.map(column => (
+                <th 
+                  key={column.id} 
+                  className={`p-3 text-left text-sm font-medium ${column.width || ''}`}
+                >
+                  {column.sortable ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSort(column.id)}
+                      className="h-auto p-0 font-medium hover:bg-transparent"
+                    >
+                      {column.label}
+                      {sortBy === column.id && (
+                        sortOrder === 'asc' ? 
+                          <ChevronUp className="ml-1 h-3 w-3" /> : 
+                          <ChevronDown className="ml-1 h-3 w-3" />
+                      )}
+                    </Button>
+                  ) : (
+                    column.label
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedContacts.map(contact => (
+              <tr 
+                key={contact.id} 
+                className="border-b hover:bg-muted/30 transition-colors"
+              >
+                <td className="p-3">
+                  <Checkbox
+                    checked={selectedContacts.has(contact.id)}
+                    onCheckedChange={() => toggleSelectContact(contact.id)}
+                  />
+                </td>
+                {visibleColumns.map(column => (
+                  <td key={column.id} className="p-3 text-sm">
+                    {column.id === 'role' ? (
+                      <Badge 
+                        variant="secondary" 
+                        className={roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}
+                      >
+                        {contact.role}
+                      </Badge>
+                    ) : column.id === 'membership_status' ? (
+                      <Badge 
+                        variant="secondary"
+                        className={statusColors[contact.membership_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}
+                      >
+                        {contact.membership_status}
+                      </Badge>
+                    ) : column.id === 'actions' ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onView(contact)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEdit(contact)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onAddChild(contact)}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Add Child
+                          </DropdownMenuItem>
+                          {hasChildren(contact) && (
+                            <DropdownMenuItem onClick={() => onViewFamily(contact)}>
+                              <Users className="mr-2 h-4 w-4" />
+                              View Family
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span className="truncate block max-w-full" title={formatCellValue(contact, column.id)}>
+                        {formatCellValue(contact, column.id)}
+                      </span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {sortedContacts.length === 0 && (
+        <div className="p-8 text-center text-muted-foreground">
+          No contacts found
+        </div>
+      )}
+    </div>
+  );
+};

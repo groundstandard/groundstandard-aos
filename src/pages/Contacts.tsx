@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,9 @@ import {
   Eye,
   LayoutGrid,
   List,
-  Columns
+  Columns,
+  Table,
+  ExternalLink
 } from "lucide-react";
 
 interface Contact {
@@ -62,6 +65,7 @@ interface ContactFormData {
 const Contacts = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -414,6 +418,15 @@ const Contacts = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/contacts/table')}
+              className="mr-2"
+            >
+              <Table className="h-4 w-4 mr-2" />
+              Table View
+            </Button>
+
             {/* View Mode Toggle */}
             <div className="flex border rounded-lg">
               <Button
