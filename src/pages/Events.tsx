@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BackButton } from "@/components/ui/BackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,67 +11,114 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Events = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const isAdmin = profile?.role === 'admin';
 
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          title: eventData.title,
+          description: eventData.description,
+          event_type: eventData.type,
+          date: eventData.date,
+          start_time: eventData.time,
+          end_time: eventData.endTime || '23:59',
+          location: eventData.location,
+          max_participants: parseInt(eventData.maxParticipants) || null,
+          status: 'published',
+          created_by: profile?.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Event created successfully!" });
+      setIsCreateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['upcoming-events'] });
+      queryClient.invalidateQueries({ queryKey: ['events-stats'] });
+    },
+    onError: (error) => {
+      console.error('Event creation error:', error);
+      toast({ title: "Error creating event", variant: "destructive" });
+    }
+  });
+
   const handleCreateEvent = (eventData: any) => {
-    console.log('Creating event:', eventData);
-    toast({ title: "Event created successfully!" });
-    setIsCreateDialogOpen(false);
+    createEventMutation.mutate(eventData);
   };
 
   const { data: upcomingEvents } = useQuery({
     queryKey: ['upcoming-events'],
     queryFn: async () => {
-      // Get real classes to create realistic events
-      const { data: classes } = await supabase
-        .from('classes')
-        .select('name')
-        .eq('is_active', true)
-        .limit(5);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .gte('date', new Date().toISOString().split('T')[0])
+        .in('status', ['published', 'registration_open', 'registration_closed'])
+        .order('date', { ascending: true })
+        .limit(10);
 
-      return [
-        {
-          id: '1',
-          title: "Regional Karate Championship",
-          date: "2025-08-15",
-          time: "9:00 AM - 6:00 PM",
-          location: "City Sports Center",
-          type: "competition",
-          participants: 15,
-          description: "Annual regional championship tournament open to all belt levels.",
-          status: "open"
-        },
-        {
-          id: '2',
-          title: "Belt Testing Ceremony",
-          date: "2025-08-01",
-          time: "10:00 AM - 12:00 PM",
-          location: "Main Dojo",
-          type: "testing",
-          participants: 8,
-          description: "Quarterly belt promotion testing for eligible students.",
-          status: "scheduled"
-        },
-        {
-          id: '3',
-          title: `${classes?.[0]?.name || 'Advanced'} Workshop`,
-          date: "2025-07-28",
-          time: "2:00 PM - 4:00 PM",
-          location: "Main Dojo",
-          type: "workshop",
-          participants: 20,
-          description: "Advanced techniques and practical applications.",
-          status: "open"
-        }
-      ];
+      if (error) throw error;
+
+      // Get registration counts for each event
+      const eventsWithCounts = await Promise.all(
+        (data || []).map(async (event) => {
+          const { data: registrations } = await supabase
+            .from('event_registrations')
+            .select('id')
+            .eq('event_id', event.id)
+            .eq('status', 'registered');
+
+          return {
+            ...event,
+            participants: registrations?.length || 0
+          };
+        })
+      );
+
+      return eventsWithCounts;
+    }
+  });
+
+  const { data: eventsStats } = useQuery({
+    queryKey: ['events-stats'],
+    queryFn: async () => {
+      const { data: events } = await supabase
+        .from('events')
+        .select('event_type, date, status');
+
+      const { data: registrations } = await supabase
+        .from('event_registrations')
+        .select('id')
+        .eq('status', 'registered');
+
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      return {
+        totalEvents: events?.length || 0,
+        upcomingEvents: events?.filter(e => new Date(e.date) >= new Date()).length || 0,
+        competitions: events?.filter(e => e.event_type === 'tournament').length || 0,
+        thisMonthEvents: events?.filter(e => {
+          const eventDate = new Date(e.date);
+          return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+        }).length || 0,
+        totalParticipants: registrations?.length || 0
+      };
     }
   });
 
@@ -98,8 +145,8 @@ const Events = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">This month</p>
+              <div className="text-2xl font-bold">{eventsStats?.upcomingEvents || 0}</div>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
             </CardContent>
           </Card>
 
@@ -109,8 +156,8 @@ const Events = () => {
               <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
-              <p className="text-xs text-muted-foreground">Upcoming tournaments</p>
+              <div className="text-2xl font-bold">{eventsStats?.competitions || 0}</div>
+              <p className="text-xs text-muted-foreground">Tournaments</p>
             </CardContent>
           </Card>
 
@@ -120,7 +167,7 @@ const Events = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">32</div>
+              <div className="text-2xl font-bold">{eventsStats?.totalParticipants || 0}</div>
               <p className="text-xs text-muted-foreground">Total registrations</p>
             </CardContent>
           </Card>
@@ -164,20 +211,20 @@ const Events = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg">{event.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-4 mt-2">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {event.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {event.time}
-                          </span>
-                        </CardDescription>
+                         <CardDescription className="flex items-center gap-4 mt-2">
+                           <span className="flex items-center gap-1">
+                             <Calendar className="h-4 w-4" />
+                             {new Date(event.date).toLocaleDateString()}
+                           </span>
+                           <span className="flex items-center gap-1">
+                             <Clock className="h-4 w-4" />
+                             {event.start_time} - {event.end_time}
+                           </span>
+                         </CardDescription>
                       </div>
-                      <Badge variant={event.type === 'competition' ? 'default' : 'secondary'}>
-                        {event.type}
-                      </Badge>
+                       <Badge variant={event.event_type === 'tournament' ? 'default' : 'secondary'}>
+                         {event.event_type}
+                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -197,11 +244,11 @@ const Events = () => {
                         <Button variant="outline" size="sm">
                           View Details
                         </Button>
-                        {event.status === 'open' && (
-                          <Button size="sm" onClick={() => toast({ title: "Registration successful!" })}>
-                            Register
-                          </Button>
-                        )}
+                         {event.status === 'registration_open' && (
+                           <Button size="sm" onClick={() => toast({ title: "Registration successful!" })}>
+                             Register
+                           </Button>
+                         )}
                       </div>
                     </div>
                   </CardContent>
@@ -395,17 +442,21 @@ const CreateEventForm = ({ onSubmit }: CreateEventFormProps) => {
 
       <div>
         <Label htmlFor="type">Event Type</Label>
-        <select 
-          className="w-full p-2 border rounded-md"
+        <Select 
           value={formData.type}
-          onChange={(e) => setFormData({...formData, type: e.target.value})}
+          onValueChange={(value) => setFormData({...formData, type: value})}
         >
-          <option value="">Select type</option>
-          <option value="competition">Competition</option>
-          <option value="workshop">Workshop</option>
-          <option value="testing">Belt Testing</option>
-          <option value="social">Social Event</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="tournament">Tournament</SelectItem>
+            <SelectItem value="workshop">Workshop</SelectItem>
+            <SelectItem value="seminar">Seminar</SelectItem>
+            <SelectItem value="belt_test">Belt Testing</SelectItem>
+            <SelectItem value="social">Social Event</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
