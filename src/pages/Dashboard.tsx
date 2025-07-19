@@ -164,12 +164,12 @@ const Dashboard = () => {
             </Dialog>
             <Button 
               variant="outline" 
-              onClick={signOut}
+              onClick={() => navigate('/chat')}
               size="sm"
               className="flex items-center gap-2"
             >
-              <LogOut className="h-4 w-4" />
-              Sign Out
+              <MessageCircle className="h-4 w-4" />
+              Chat
             </Button>
           </div>
         </div>
