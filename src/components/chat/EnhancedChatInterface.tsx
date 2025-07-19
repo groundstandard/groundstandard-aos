@@ -262,20 +262,21 @@ export const EnhancedChatInterface = () => {
     };
   }, [activeChannel, profile]);
 
-  // Remove the complex auto-scroll logic and use a simpler approach
+  // Force scroll to bottom when new messages are added
   useEffect(() => {
-    // Always scroll to bottom when messages change for the active channel
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
-      if (wasAtBottom || shouldAutoScroll) {
-        setTimeout(() => {
-          container.scrollTop = container.scrollHeight;
-        }, 0);
+    const scrollToBottom = () => {
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
+        console.log('Force scrolled to:', container.scrollTop, 'total height:', container.scrollHeight);
       }
-    }
-  }, [channelMessages[activeChannel]]);
+    };
+
+    // Use requestAnimationFrame to ensure DOM is fully updated
+    requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+  }, [channelMessages[activeChannel]?.length]); // Trigger when message count changes
 
   // Check if user is near bottom when they scroll
   const handleScroll = () => {
@@ -334,15 +335,9 @@ export const EnhancedChatInterface = () => {
         [activeChannel]: [...(prev[activeChannel] || []), message]
       }));
 
-      // Force scroll to bottom immediately after state update
-      setTimeout(() => {
-        console.log('Attempting to scroll to bottom');
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          container.scrollTop = container.scrollHeight;
-          console.log('Scrolled to:', container.scrollTop, 'of', container.scrollHeight);
-        }
-      }, 0);
+      // Clear the input immediately
+      setNewMessage('');
+      setReplyingTo(null);
 
       // If this is a reply, auto-expand the thread to show the new message
       if (replyingTo) {
@@ -360,9 +355,6 @@ export const EnhancedChatInterface = () => {
           : channel
       ));
     }
-
-    setNewMessage('');
-    setReplyingTo(null);
   };
 
   const handleDescriptionAdded = (description: string) => {
