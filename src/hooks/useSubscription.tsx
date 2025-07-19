@@ -12,8 +12,9 @@ interface SubscriptionContextType {
   subscriptionInfo: SubscriptionInfo | null;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
-  createCheckout: (priceId: string) => Promise<string | null>;
+  createCheckout: (planId: string) => Promise<string | null>;
   openCustomerPortal: () => Promise<void>;
+  createPayment: (amount: number, description: string) => Promise<string | null>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -56,14 +57,14 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
-  const createCheckout = async (priceId: string): Promise<string | null> => {
+  const createCheckout = async (planId: string): Promise<string | null> => {
     if (!user) {
       throw new Error('User must be authenticated to create checkout');
     }
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId }
+        body: { planId, paymentType: 'subscription' }
       });
 
       if (error) {
@@ -100,6 +101,28 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
     }
   };
 
+  const createPayment = async (amount: number, description: string): Promise<string | null> => {
+    if (!user) {
+      throw new Error('User must be authenticated to create payment');
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { amount: amount * 100, description, paymentType: 'payment' }
+      });
+
+      if (error) {
+        console.error('Error creating payment:', error);
+        throw new Error('Failed to create payment session');
+      }
+
+      return data?.url || null;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     refreshSubscription();
   }, [user]);
@@ -110,7 +133,8 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       loading,
       refreshSubscription,
       createCheckout,
-      openCustomerPortal
+      openCustomerPortal,
+      createPayment
     }}>
       {children}
     </SubscriptionContext.Provider>
