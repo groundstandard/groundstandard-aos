@@ -174,6 +174,26 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
+          {!isAdmin && (
+            <Card 
+              className="card-minimal hover-lift cursor-pointer"
+              onClick={() => navigate('/subscription')}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Subscription
+                </CardTitle>
+                <CardDescription>Manage your subscription plan</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={(e) => { e.stopPropagation(); navigate('/subscription'); }}>
+                  View Plans
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {isAdmin && (
             <>
               <Card 

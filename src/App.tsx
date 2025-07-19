@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ViewProvider } from "@/hooks/useView";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +19,7 @@ import Reports from "./pages/Reports";
 import BeltTesting from "./pages/BeltTesting";
 import Payments from "./pages/Payments";
 import Events from "./pages/Events";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,7 @@ const AppRoutes = () => {
       <Route path="/reports" element={user ? <Reports /> : <Auth />} />
       <Route path="/belt-testing" element={user ? <BeltTesting /> : <Auth />} />
       <Route path="/payments" element={user ? <Payments /> : <Auth />} />
+      <Route path="/subscription" element={user ? <Subscription /> : <Auth />} />
       <Route path="/events" element={user ? <Events /> : <Auth />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
@@ -54,13 +57,15 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <ViewProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </ViewProvider>
+        <SubscriptionProvider>
+          <ViewProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </ViewProvider>
+        </SubscriptionProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
