@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MoreVertical, Reply, Heart, ThumbsUp, Smile, Trophy, Laugh, Frown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreVertical, Reply, Heart, ThumbsUp, Smile, Trophy, Laugh, Frown, Copy, Edit, Trash2, Pin, Flag } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 
 interface Message {
@@ -36,6 +37,30 @@ export const MessageBubble = ({
   currentUserId
 }: MessageBubbleProps) => {
   const [showReactions, setShowReactions] = useState(false);
+
+  const handleCopyMessage = () => {
+    navigator.clipboard.writeText(message.content);
+  };
+
+  const handleEditMessage = () => {
+    // TODO: Implement edit functionality
+    console.log('Edit message:', message.id);
+  };
+
+  const handleDeleteMessage = () => {
+    // TODO: Implement delete functionality
+    console.log('Delete message:', message.id);
+  };
+
+  const handlePinMessage = () => {
+    // TODO: Implement pin functionality
+    console.log('Pin message:', message.id);
+  };
+
+  const handleReportMessage = () => {
+    // TODO: Implement report functionality
+    console.log('Report message:', message.id);
+  };
 
   const getMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -189,13 +214,48 @@ export const MessageBubble = ({
                 >
                   <Reply className="h-3 w-3" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
-                >
-                  <MoreVertical className="h-3 w-3" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background"
+                    >
+                      <MoreVertical className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    <DropdownMenuItem onClick={handleCopyMessage}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy message
+                    </DropdownMenuItem>
+                    {isOwnMessage && (
+                      <DropdownMenuItem onClick={handleEditMessage}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit message
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handlePinMessage}>
+                      <Pin className="mr-2 h-4 w-4" />
+                      Pin message
+                    </DropdownMenuItem>
+                    {isOwnMessage && (
+                      <DropdownMenuItem 
+                        onClick={handleDeleteMessage}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete message
+                      </DropdownMenuItem>
+                    )}
+                    {!isOwnMessage && (
+                      <DropdownMenuItem onClick={handleReportMessage}>
+                        <Flag className="mr-2 h-4 w-4" />
+                        Report message
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
