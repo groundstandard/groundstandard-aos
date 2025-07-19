@@ -285,9 +285,11 @@ export const EnhancedChatInterface = () => {
           )
           .subscribe();
 
-        // Clean up subscription on unmount
+        // Clean up subscription on unmount or dependency change
         return () => {
-          messageSubscription.unsubscribe();
+          if (messageSubscription) {
+            messageSubscription.unsubscribe();
+          }
         };
       } catch (error) {
         console.error('Error loading data:', error);
@@ -545,7 +547,7 @@ export const EnhancedChatInterface = () => {
 
       // Update channel's last activity
       setChannels(prev => prev.map(channel => 
-        channel.id === activeChannel 
+        channel.name === activeChannel 
           ? { 
               ...channel, 
               last_message: newMessage.trim() || (attachments && attachments.length > 0 ? '📎 Attachment' : ''), 
@@ -558,7 +560,7 @@ export const EnhancedChatInterface = () => {
 
   const handleDescriptionAdded = (description: string) => {
     setChannels(prev => prev.map(channel => 
-      channel.id === activeChannel 
+      channel.name === activeChannel 
         ? { ...channel, description }
         : channel
     ));
@@ -1127,7 +1129,7 @@ export const EnhancedChatInterface = () => {
           
           setChannelMessages(prev => ({
             ...prev,
-            [newChannel.id]: [systemMessage]
+            [newChannel.name]: [systemMessage]
           }));
           setActiveChannel(newChannel.name);
           setShowCreateChannel(false);
