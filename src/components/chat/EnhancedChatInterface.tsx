@@ -153,8 +153,9 @@ export const EnhancedChatInterface = () => {
 
         setChannels(loadedChannels);
         
-        // Set first channel as active if none selected and no active channel set
-        if (loadedChannels.length > 0 && !activeChannel) {
+        // Set first channel as active if none selected or if current activeChannel doesn't exist
+        const validChannel = loadedChannels.find(ch => ch.name === activeChannel);
+        if (loadedChannels.length > 0 && !validChannel) {
           setActiveChannel(loadedChannels[0].name);
         }
 
@@ -460,22 +461,29 @@ export const EnhancedChatInterface = () => {
 
       // Save message to database first
       try {
+        console.log('Attempting to save message. ActiveChannel:', activeChannel);
+        
         // Find the actual channel UUID for named channels
         let channelId = null;
         let dmChannelId = null;
         
         if (activeChannel.startsWith('dm-')) {
           dmChannelId = activeChannel.replace('dm-', '');
+          console.log('DM channel detected:', dmChannelId);
         } else {
+          console.log('Looking up channel by name:', activeChannel);
           // Look up the channel by name to get its UUID
-          const { data: channelData } = await supabase
+          const { data: channelData, error: lookupError } = await supabase
             .from('chat_channels')
             .select('id')
             .eq('name', activeChannel)
             .single();
           
+          console.log('Channel lookup result:', { channelData, lookupError });
+          
           if (channelData) {
             channelId = channelData.id;
+            console.log('Found channel ID:', channelId);
           } else {
             // If channel doesn't exist, don't save to database but show locally
             console.log('Channel not found in database, showing locally only');
