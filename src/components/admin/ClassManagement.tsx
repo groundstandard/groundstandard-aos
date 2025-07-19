@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit2, Clock, Users, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,6 +50,7 @@ export const ClassManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -221,32 +223,32 @@ export const ClassManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-card border-0">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
+      <Card className="shadow-card border-0 max-w-full overflow-hidden">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+          <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between items-center'}`}>
+            <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+              <Calendar className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
               Class Management
             </CardTitle>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetForm} className="shadow-soft">
+                <Button onClick={resetForm} className={`shadow-soft ${isMobile ? 'w-full' : ''}`}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Class
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+              <DialogContent className={`${isMobile ? 'max-w-[95vw] w-full h-[90vh]' : 'max-w-2xl max-h-[90vh]'} overflow-y-auto bg-white`}>
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className={isMobile ? 'text-base' : ''}>
                     {editingClass ? 'Edit Class' : 'Create New Class'}
                   </DialogTitle>
                 </DialogHeader>
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     <div>
-                      <Label htmlFor="name">Class Name</Label>
+                      <Label htmlFor="name" className={isMobile ? 'text-sm' : ''}>Class Name</Label>
                       <Input
                         id="name"
                         value={formData.name}
@@ -255,10 +257,26 @@ export const ClassManagement = () => {
                         className="input-clean"
                       />
                     </div>
+                    {!isMobile && (
+                      <div>
+                        <Label htmlFor="max_students">Max Students</Label>
+                        <Input
+                          id="max_students"
+                          type="number"
+                          value={formData.max_students}
+                          onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) })}
+                          required
+                          className="input-clean"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {isMobile && (
                     <div>
-                      <Label htmlFor="max_students">Max Students</Label>
+                      <Label htmlFor="max_students_mobile" className="text-sm">Max Students</Label>
                       <Input
-                        id="max_students"
+                        id="max_students_mobile"
                         type="number"
                         value={formData.max_students}
                         onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) })}
@@ -266,10 +284,10 @@ export const ClassManagement = () => {
                         className="input-clean"
                       />
                     </div>
-                  </div>
+                  )}
 
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className={isMobile ? 'text-sm' : ''}>Description</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -278,9 +296,9 @@ export const ClassManagement = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
                     <div>
-                      <Label htmlFor="duration">Duration (minutes)</Label>
+                      <Label htmlFor="duration" className={isMobile ? 'text-sm' : ''}>Duration (minutes)</Label>
                       <Input
                         id="duration"
                         type="number"
@@ -291,7 +309,7 @@ export const ClassManagement = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="skill_level">Skill Level</Label>
+                      <Label htmlFor="skill_level" className={isMobile ? 'text-sm' : ''}>Skill Level</Label>
                       <Select
                         value={formData.skill_level}
                         onValueChange={(value) => setFormData({ ...formData, skill_level: value })}
@@ -308,7 +326,7 @@ export const ClassManagement = () => {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="age_group">Age Group</Label>
+                      <Label htmlFor="age_group" className={isMobile ? 'text-sm' : ''}>Age Group</Label>
                       <Select
                         value={formData.age_group}
                         onValueChange={(value) => setFormData({ ...formData, age_group: value })}
@@ -397,35 +415,36 @@ export const ClassManagement = () => {
           ) : (
             <div className="space-y-4">
               {classes.map((classItem) => (
-                <Card key={classItem.id} className="shadow-soft border hover:shadow-medium transition-smooth">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{classItem.name}</h3>
-                          <Badge variant={classItem.is_active ? "default" : "secondary"}>
+                <Card key={classItem.id} className="shadow-soft border hover:shadow-medium transition-smooth max-w-full overflow-hidden">
+                  <CardContent className={`${isMobile ? 'p-3' : 'p-4'}`}>
+                    <div className={`${isMobile ? 'space-y-3' : 'flex justify-between items-start'}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className={`flex items-center gap-2 mb-2 ${isMobile ? 'flex-wrap' : 'gap-3'}`}>
+                          <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'} truncate flex-1`}>{classItem.name}</h3>
+                          <Badge variant={classItem.is_active ? "default" : "secondary"} className={isMobile ? 'text-xs' : ''}>
                             {classItem.is_active ? 'Active' : 'Inactive'}
                           </Badge>
                         </div>
-                        <p className="text-muted-foreground text-sm mb-3">{classItem.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <p className={`text-muted-foreground ${isMobile ? 'text-xs mb-2' : 'text-sm mb-3'} line-clamp-2`}>{classItem.description}</p>
+                        <div className={`flex items-center gap-3 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground ${isMobile ? 'flex-wrap gap-2' : 'gap-4'}`}>
                           <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            Max {classItem.max_students} students
+                            <Users className="h-3 w-3" />
+                            <span className="truncate">Max {classItem.max_students}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {classItem.duration_minutes} minutes
+                            <Clock className="h-3 w-3" />
+                            <span className="truncate">{classItem.duration_minutes}min</span>
                           </div>
-                          <Badge variant="outline">{classItem.skill_level}</Badge>
-                          <Badge variant="outline">{classItem.age_group}</Badge>
+                          <Badge variant="outline" className={`${isMobile ? 'text-xs px-1' : ''} flex-shrink-0`}>{classItem.skill_level}</Badge>
+                          <Badge variant="outline" className={`${isMobile ? 'text-xs px-1' : ''} flex-shrink-0`}>{classItem.age_group}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className={`flex gap-2 ${isMobile ? 'w-full' : 'flex-shrink-0'}`}>
                         <Button
                           variant="outline"
-                          size="sm"
+                          size={isMobile ? "sm" : "sm"}
                           onClick={() => toggleClassStatus(classItem.id, classItem.is_active)}
+                          className={`${isMobile ? 'flex-1 text-xs' : ''}`}
                         >
                           {classItem.is_active ? 'Deactivate' : 'Activate'}
                         </Button>
@@ -444,6 +463,7 @@ export const ClassManagement = () => {
                             });
                             setIsDialogOpen(true);
                           }}
+                          className={`${isMobile ? 'px-2' : ''}`}
                         >
                           <Edit2 className="h-3 w-3" />
                         </Button>

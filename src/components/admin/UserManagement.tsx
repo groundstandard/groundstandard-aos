@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { UserCog, Shield, User } from 'lucide-react';
 
 interface User {
@@ -21,6 +22,7 @@ export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,48 +100,49 @@ export const UserManagement = () => {
   }
 
   return (
-    <Card>
+    <Card className="max-w-full overflow-hidden">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserCog className="h-5 w-5" />
+        <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+          <UserCog className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           User Management
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-0 sm:p-6">
+        <div className="space-y-3 sm:space-y-4">
           {users.map((user) => (
             <div
               key={user.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'} p-3 sm:p-4 border rounded-lg max-w-full overflow-hidden`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="flex-shrink-0">
                   {user.role === 'admin' ? (
-                    <Shield className="h-5 w-5 text-primary" />
+                    <Shield className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-primary`} />
                   ) : (
-                    <User className="h-5 w-5 text-muted-foreground" />
+                    <User className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-muted-foreground`} />
                   )}
                 </div>
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0 flex-1">
+                  <p className={`font-medium ${isMobile ? 'text-sm' : ''} truncate`}>
                     {user.first_name} {user.last_name}
                   </p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground truncate`}>{user.email}</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+              <div className={`flex items-center gap-2 ${isMobile ? 'w-full justify-between' : ''}`}>
+                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className={isMobile ? 'text-xs' : ''}>
                   {user.role}
                 </Badge>
                 
                 {user.id !== profile.id && (
-                  <div className="flex gap-1">
+                  <div className={`flex gap-1 ${isMobile ? 'flex-1 justify-end' : ''}`}>
                     {user.role === 'student' && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => updateUserRole(user.id, 'admin')}
+                        className={isMobile ? 'text-xs px-2' : ''}
                       >
                         Make Admin
                       </Button>
@@ -149,6 +152,7 @@ export const UserManagement = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => updateUserRole(user.id, 'student')}
+                        className={isMobile ? 'text-xs px-2' : ''}
                       >
                         Remove Admin
                       </Button>
@@ -157,7 +161,7 @@ export const UserManagement = () => {
                 )}
                 
                 {user.id === profile.id && (
-                  <Badge variant="outline">You</Badge>
+                  <Badge variant="outline" className={isMobile ? 'text-xs' : ''}>You</Badge>
                 )}
               </div>
             </div>

@@ -15,6 +15,7 @@ import {
   Target
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AnalyticsData {
   totalStudents: number;
@@ -40,6 +41,7 @@ export const AdminAnalytics = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -149,22 +151,22 @@ export const AdminAnalytics = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="card-minimal shadow-soft hover:shadow-medium transition-smooth">
-          <CardContent className="p-6">
+      <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+        <Card className="card-minimal shadow-soft hover:shadow-medium transition-smooth max-w-full overflow-hidden">
+          <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                <p className="text-2xl font-bold text-foreground">{analytics.totalStudents}</p>
-                <p className="text-xs text-green-600 flex items-center mt-1">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +{analytics.newEnrollments} this month
+              <div className="min-w-0 flex-1">
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-muted-foreground truncate`}>Total Students</p>
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>{analytics.totalStudents}</p>
+                <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-green-600 flex items-center mt-1`}>
+                  <TrendingUp className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">+{analytics.newEnrollments} this month</span>
                 </p>
               </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="h-6 w-6 text-blue-600" />
+              <div className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <Users className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'} text-blue-600`} />
               </div>
             </div>
           </CardContent>
