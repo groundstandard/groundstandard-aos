@@ -17,6 +17,7 @@ interface Message {
   reactions?: Array<{ emoji: string; count: number; users: string[] }>;
   attachments?: Array<{ url: string; type: string; name: string }>;
   parent_message_id?: string;
+  is_system_message?: boolean;
 }
 
 interface MessageBubbleProps {
@@ -179,6 +180,27 @@ export const MessageBubble = ({
       );
     }
   };
+
+  // System message rendering
+  if (message.is_system_message) {
+    return (
+      <div className="flex justify-center mb-3">
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-full">
+          <Avatar className="h-6 w-6">
+            <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+              {getInitials(message.sender_name)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{message.sender_name}</span> {message.content}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {getMessageTime(message.created_at)}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`}>

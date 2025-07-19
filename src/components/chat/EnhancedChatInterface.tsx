@@ -26,6 +26,7 @@ interface Message {
   reactions?: Array<{ emoji: string; count: number; users: string[] }>;
   attachments?: Array<{ url: string; type: string; name: string }>;
   parent_message_id?: string;
+  is_system_message?: boolean;
 }
 
 // Utility function to parse attachments from message content
@@ -835,8 +836,29 @@ export const EnhancedChatInterface = () => {
         onOpenChange={setShowCreateChannel}
         onChannelCreated={(newChannel) => {
           setChannels(prev => [...prev, newChannel]);
+          
+          // Create initial system message for channel creation
+          const systemMessage: Message = {
+            id: `system-${Date.now()}`,
+            content: "joined accounts. Also, Kurt joined via invite.",
+            sender_id: profile?.id || 'system',
+            sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'User',
+            sender_role: profile?.role || 'student',
+            created_at: new Date().toISOString(),
+            is_system_message: true
+          };
+          
+          setChannelMessages(prev => ({
+            ...prev,
+            [newChannel.id]: [systemMessage]
+          }));
           setActiveChannel(newChannel.id);
           setShowCreateChannel(false);
+          
+          toast({
+            title: "Channel created",
+            description: `Welcome to #${newChannel.name}!`
+          });
         }}
       />
     </div>
