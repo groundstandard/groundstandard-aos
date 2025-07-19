@@ -64,7 +64,7 @@ const Admin = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-background/50 backdrop-blur">
+          <TabsList className="grid w-full grid-cols-8 bg-background/50 backdrop-blur">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Dashboard
@@ -80,6 +80,14 @@ const Admin = () => {
             <TabsTrigger value="classes" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Classes
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Events
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Inventory
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -105,6 +113,20 @@ const Admin = () => {
 
           <TabsContent value="classes" className="space-y-6">
             <ClassManagement />
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6">
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground">Event Management will be available soon</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="inventory" className="space-y-6">
+            <div className="text-center py-8">
+              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground">Inventory Management will be available soon</p>
+            </div>
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6">
