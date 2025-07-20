@@ -59,29 +59,37 @@ export const EnhancedContactForm = ({
 
   // Search existing contacts for family linking
   const searchContacts = async (query: string) => {
+    console.log('Search called with query:', query);
     if (!query || query.length < 2) {
+      console.log('Query too short, clearing results');
       setSearchResults([]);
       return;
     }
 
     try {
+      console.log('Executing supabase search for:', query);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
 
+      console.log('Search results:', data, 'Error:', error);
       if (error) throw error;
       setSearchResults(data || []);
     } catch (error) {
       console.error('Error searching contacts:', error);
+      setSearchResults([]);
     }
   };
 
   useEffect(() => {
+    console.log('Search query changed:', searchQuery);
     const debounceTimer = setTimeout(() => {
-      if (searchQuery) {
+      if (searchQuery && searchQuery.length >= 2) {
         searchContacts(searchQuery);
+      } else {
+        setSearchResults([]);
       }
     }, 300);
 
@@ -185,6 +193,7 @@ export const EnhancedContactForm = ({
               <SelectContent className="bg-white z-50">
                 <SelectItem value="none">N/A</SelectItem>
                 <SelectItem value="head_of_house">Head of House</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
                 <SelectItem value="child">Child</SelectItem>
                 <SelectItem value="sibling">Sibling</SelectItem>
                 <SelectItem value="spouse">Spouse</SelectItem>
@@ -267,7 +276,9 @@ export const EnhancedContactForm = ({
                         value={searchQuery}
                         onValueChange={setSearchQuery}
                       />
-                      <CommandEmpty>No contacts found.</CommandEmpty>
+                      <CommandEmpty>
+                        {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
+                      </CommandEmpty>
                       <CommandGroup>
                         <CommandList>
                           {searchResults.map((contact) => (
@@ -386,6 +397,7 @@ export const EnhancedContactForm = ({
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
                       <SelectItem value="head_of_house">Head of House</SelectItem>
+                      <SelectItem value="parent">Parent</SelectItem>
                       <SelectItem value="child">Child</SelectItem>
                       <SelectItem value="sibling">Sibling</SelectItem>
                       <SelectItem value="spouse">Spouse</SelectItem>
