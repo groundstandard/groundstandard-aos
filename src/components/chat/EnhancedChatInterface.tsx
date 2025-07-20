@@ -160,7 +160,7 @@ export const EnhancedChatInterface = () => {
 
         // Filter channels based on user role and subscriptions
         const filteredChannels = channelData?.filter(channel => {
-          if (channel.is_admin_only && profile.role !== 'admin') return false;
+          if (channel.is_admin_only && effectiveRole !== 'admin') return false;
           if (channel.type === 'premium' && !subscriptionInfo?.subscribed) return false;
           return true;
         }) || [];
@@ -329,7 +329,7 @@ export const EnhancedChatInterface = () => {
     };
 
     loadData();
-  }, [profile, subscriptionInfo]);
+  }, [profile, subscriptionInfo, effectiveRole]);
 
   // Real-time presence tracking
   useEffect(() => {
@@ -497,7 +497,7 @@ export const EnhancedChatInterface = () => {
         content: newMessage.trim(),
         sender_id: profile.id,
         sender_name: `${profile.first_name} ${profile.last_name}`,
-        sender_role: profile.role,
+        sender_role: effectiveRole,
         created_at: new Date().toISOString(),
         parent_message_id: replyingTo || undefined,
         attachments: attachments && attachments.length > 0 ? attachments : undefined,
