@@ -266,10 +266,10 @@ const ContactProfile = () => {
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <User className="h-8 w-8 text-primary" />
-              {contact.first_name} {contact.last_name}
+              Contact Management
             </h1>
             <p className="text-muted-foreground mt-1">
-              Contact Profile & Management
+              Manage academy members and their family relationships
             </p>
           </div>
           <Button
@@ -283,18 +283,18 @@ const ContactProfile = () => {
 
         {/* Profile Header Card */}
         <Card className="card-minimal shadow-elegant mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-6">
-              <Avatar className="h-24 w-24 shadow-soft">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16 shadow-soft">
                 <AvatarImage src="" alt={`${contact.first_name} ${contact.last_name}`} />
-                <AvatarFallback className="text-xl font-semibold bg-muted">
+                <AvatarFallback className="text-lg font-semibold bg-muted">
                   {getInitials(contact)}
                 </AvatarFallback>
               </Avatar>
               
-              <div className="flex-1 space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-2xl font-semibold text-foreground">
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-semibold text-foreground">
                     {contact.first_name} {contact.last_name}
                   </h2>
                   <Badge variant="outline" className={getStatusColor(contact.membership_status)}>
@@ -310,7 +310,7 @@ const ContactProfile = () => {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{contact.email}</span>
@@ -328,22 +328,22 @@ const ContactProfile = () => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-subtle rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-gradient-subtle rounded-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">{formatCurrency(getTotalPaid())}</div>
-                    <p className="text-sm text-muted-foreground">Total Paid</p>
+                    <div className="text-lg font-bold text-primary">{formatCurrency(getTotalPaid())}</div>
+                    <p className="text-xs text-muted-foreground">Total Paid</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">{formatCurrency(getOutstandingBalance())}</div>
-                    <p className="text-sm text-muted-foreground">Outstanding</p>
+                    <div className="text-lg font-bold text-primary">{formatCurrency(getOutstandingBalance())}</div>
+                    <p className="text-xs text-muted-foreground">Outstanding</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">{getAttendanceRate()}%</div>
-                    <p className="text-sm text-muted-foreground">Attendance</p>
+                    <div className="text-lg font-bold text-primary">{getAttendanceRate()}%</div>
+                    <p className="text-xs text-muted-foreground">Attendance</p>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">{familyMembers.length}</div>
-                    <p className="text-sm text-muted-foreground">Family Members</p>
+                    <div className="text-lg font-bold text-primary">{familyMembers.length}</div>
+                    <p className="text-xs text-muted-foreground">Family Members</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +352,7 @@ const ContactProfile = () => {
         </Card>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -362,8 +362,8 @@ const ContactProfile = () => {
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Recent Payments */}
               <Card className="card-minimal">
                 <CardHeader>
@@ -432,8 +432,8 @@ const ContactProfile = () => {
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TabsContent value="billing" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Payment Actions */}
               <Card className="card-minimal">
                 <CardHeader>
@@ -507,7 +507,7 @@ const ContactProfile = () => {
           </TabsContent>
 
           {/* Attendance Tab */}
-          <TabsContent value="attendance" className="space-y-6">
+          <TabsContent value="attendance" className="space-y-4">
             <Card className="card-minimal">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -556,7 +556,7 @@ const ContactProfile = () => {
           </TabsContent>
 
           {/* Family Tab */}
-          <TabsContent value="family" className="space-y-6">
+          <TabsContent value="family" className="space-y-4">
             <Card className="card-minimal">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -602,7 +602,7 @@ const ContactProfile = () => {
           </TabsContent>
 
           {/* Notes Tab */}
-          <TabsContent value="notes" className="space-y-6">
+          <TabsContent value="notes" className="space-y-4">
             <Card className="card-minimal">
               <CardHeader>
                 <CardTitle>Contact Notes</CardTitle>
