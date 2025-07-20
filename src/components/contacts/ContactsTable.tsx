@@ -49,6 +49,8 @@ interface ContactsTableProps {
   onAddChild: (contact: Contact) => void;
   onViewFamily: (contact: Contact) => void;
   onContactClick?: (contact: Contact) => void;
+  selectedContactIds?: string[];
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -69,12 +71,13 @@ export const ContactsTable = ({
   onEdit, 
   onAddChild, 
   onViewFamily,
-  onContactClick 
+  onContactClick,
+  selectedContactIds = [],
+  onSelectionChange
 }: ContactsTableProps) => {
   const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [sortBy, setSortBy] = useState<string>('full_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
 
   const roleColors = {
     visitor: "bg-gray-100 text-gray-800",
@@ -160,21 +163,15 @@ export const ContactsTable = ({
   };
 
   const toggleSelectAll = () => {
-    if (selectedContacts.size === contacts.length) {
-      setSelectedContacts(new Set());
-    } else {
-      setSelectedContacts(new Set(contacts.map(c => c.id)));
-    }
+    const newSelection = selectedContactIds.length === contacts.length ? [] : contacts.map(c => c.id);
+    onSelectionChange?.(newSelection);
   };
 
   const toggleSelectContact = (contactId: string) => {
-    const newSelected = new Set(selectedContacts);
-    if (newSelected.has(contactId)) {
-      newSelected.delete(contactId);
-    } else {
-      newSelected.add(contactId);
-    }
-    setSelectedContacts(newSelected);
+    const newSelection = selectedContactIds.includes(contactId)
+      ? selectedContactIds.filter(id => id !== contactId)
+      : [...selectedContactIds, contactId];
+    onSelectionChange?.(newSelection);
   };
 
   const formatCellValue = (contact: Contact, columnId: string) => {
@@ -204,11 +201,11 @@ export const ContactsTable = ({
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <Checkbox
-            checked={selectedContacts.size === contacts.length && contacts.length > 0}
+            checked={selectedContactIds.length === contacts.length && contacts.length > 0}
             onCheckedChange={toggleSelectAll}
           />
           <span className="text-sm text-muted-foreground">
-            {selectedContacts.size > 0 ? `${selectedContacts.size} selected` : `${contacts.length} contacts`}
+            {selectedContactIds.length > 0 ? `${selectedContactIds.length} selected` : `${contacts.length} contacts`}
           </span>
         </div>
         
@@ -243,7 +240,7 @@ export const ContactsTable = ({
             <tr className="border-b bg-muted/50">
               <th className="p-3 text-left w-12">
                 <Checkbox
-                  checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                  checked={selectedContactIds.length === contacts.length && contacts.length > 0}
                   onCheckedChange={toggleSelectAll}
                 />
               </th>
@@ -281,7 +278,7 @@ export const ContactsTable = ({
               >
                 <td className="p-3">
                   <Checkbox
-                    checked={selectedContacts.has(contact.id)}
+                    checked={selectedContactIds.includes(contact.id)}
                     onCheckedChange={() => toggleSelectContact(contact.id)}
                   />
                 </td>

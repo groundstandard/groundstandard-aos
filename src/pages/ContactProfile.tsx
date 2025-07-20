@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,19 @@ interface MembershipPlan {
   is_active: boolean;
 }
 
+interface ContactNote {
+  id: string;
+  contact_id: string;
+  title: string;
+  content?: string;
+  note_type: string;
+  priority: string;
+  is_private: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ContactFormData {
   first_name: string;
   last_name: string;
@@ -97,10 +111,31 @@ const ContactProfile = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
+  const [contactNotes, setContactNotes] = useState<ContactNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showAddNoteDialog, setShowAddNoteDialog] = useState(false);
+  const [showAddFamilyDialog, setShowAddFamilyDialog] = useState(false);
+  const [editingNote, setEditingNote] = useState<ContactNote | null>(null);
   const [formData, setFormData] = useState<ContactFormData>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    role: "member",
+    belt_level: "",
+    emergency_contact: "",
+    membership_status: "active"
+  });
+  const [noteFormData, setNoteFormData] = useState({
+    title: "",
+    content: "",
+    note_type: "general",
+    priority: "normal",
+    is_private: false
+  });
+  const [familyFormData, setFamilyFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
@@ -180,6 +215,15 @@ const ContactProfile = () => {
         .eq('is_active', true);
 
       setMembershipPlans(plansData || []);
+
+      // Fetch contact notes
+      const { data: notesData } = await supabase
+        .from('contact_notes')
+        .select('*')
+        .eq('contact_id', contactId)
+        .order('created_at', { ascending: false });
+
+      setContactNotes(notesData || []);
 
     } catch (error) {
       console.error('Error fetching contact data:', error);
@@ -266,6 +310,169 @@ const ContactProfile = () => {
     setShowEditDialog(true);
   };
 
+  const handleAddNote = async () => {
+    if (!contact) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('contact_notes')
+        .insert({
+          contact_id: contact.id,
+          ...noteFormData,
+          created_by: profile?.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setContactNotes([data, ...contactNotes]);
+      setNoteFormData({
+        title: "",
+        content: "",
+        note_type: "general",
+        priority: "normal",
+        is_private: false
+      });
+      setShowAddNoteDialog(false);
+      toast({
+        title: "Success",
+        description: "Note added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add note",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditNote = async () => {
+    if (!editingNote) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('contact_notes')
+        .update(noteFormData)
+        .eq('id', editingNote.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setContactNotes(contactNotes.map(note => 
+        note.id === editingNote.id ? data : note
+      ));
+      setEditingNote(null);
+      setNoteFormData({
+        title: "",
+        content: "",
+        note_type: "general",
+        priority: "normal",
+        is_private: false
+      });
+      toast({
+        title: "Success",
+        description: "Note updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update note",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_notes')
+        .delete()
+        .eq('id', noteId);
+
+      if (error) throw error;
+
+      setContactNotes(contactNotes.filter(note => note.id !== noteId));
+      toast({
+        title: "Success",
+        description: "Note deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete note",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddFamilyMember = async () => {
+    if (!contact) return;
+
+    try {
+      const insertData = {
+        first_name: familyFormData.first_name,
+        last_name: familyFormData.last_name,
+        email: familyFormData.email,
+        phone: familyFormData.phone,
+        role: familyFormData.role,
+        emergency_contact: familyFormData.emergency_contact,
+        membership_status: familyFormData.membership_status,
+        parent_id: contact.id,
+        belt_level: familyFormData.belt_level === "none" ? null : familyFormData.belt_level
+      };
+
+      // @ts-ignore - TypeScript incorrectly requires id for insert operations
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(insertData as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFamilyMembers([...familyMembers, data]);
+      setFamilyFormData({
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone: "",
+        role: "member",
+        belt_level: "",
+        emergency_contact: "",
+        membership_status: "active"
+      });
+      setShowAddFamilyDialog(false);
+      toast({
+        title: "Success",
+        description: "Family member added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding family member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add family member",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startEditNote = (note: ContactNote) => {
+    setEditingNote(note);
+    setNoteFormData({
+      title: note.title,
+      content: note.content || "",
+      note_type: note.note_type,
+      priority: note.priority,
+      is_private: note.is_private
+    });
+  };
+
   const getInitials = (contact: Contact) => {
     return `${contact.first_name?.[0] || ''}${contact.last_name?.[0] || ''}`.toUpperCase();
   };
@@ -313,6 +520,40 @@ const ContactProfile = () => {
     if (attendance.length === 0) return 0;
     const presentCount = attendance.filter(a => a.status === 'present').length;
     return Math.round((presentCount / attendance.length) * 100);
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'normal':
+        return 'bg-blue-100 text-blue-800';
+      case 'low':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  const getNoteTypeColor = (type: string) => {
+    switch (type) {
+      case 'medical':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'behavioral':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'emergency':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'payment':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'attendance':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'family':
+        return 'bg-purple-50 text-purple-700 border-purple-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
   };
 
   if (loading) {
@@ -647,7 +888,11 @@ const ContactProfile = () => {
                   <Users className="h-5 w-5" />
                   Family Members
                 </CardTitle>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAddFamilyDialog(true)}
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add Family Member
                 </Button>
@@ -674,6 +919,13 @@ const ContactProfile = () => {
                             {member.belt_level}
                           </Badge>
                         )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/contacts/${member.id}`)}
+                        >
+                          View Profile
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -689,14 +941,318 @@ const ContactProfile = () => {
           <TabsContent value="notes" className="space-y-4">
             <Card className="card-minimal">
               <CardHeader>
-                <CardTitle>Contact Notes</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    📝 Contact Notes
+                  </CardTitle>
+                  <Button onClick={() => setShowAddNoteDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Note
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-center py-8">Notes feature coming soon</p>
+                <div className="space-y-4">
+                  {contactNotes.map((note) => (
+                    <div key={note.id} className={`p-4 border rounded-lg ${getNoteTypeColor(note.note_type)}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{note.title}</h4>
+                            <Badge variant="outline" className={getPriorityColor(note.priority)}>
+                              {note.priority}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {note.note_type}
+                            </Badge>
+                            {note.is_private && (
+                              <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">
+                                Private
+                              </Badge>
+                            )}
+                          </div>
+                          {note.content && (
+                            <p className="text-sm text-muted-foreground mb-2">{note.content}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(note.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => startEditNote(note)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteNote(note.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {contactNotes.length === 0 && (
+                    <p className="text-muted-foreground text-center py-8">No notes recorded</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Add Note Dialog */}
+        <Dialog open={showAddNoteDialog || !!editingNote} onOpenChange={(open) => {
+          if (!open) {
+            setShowAddNoteDialog(false);
+            setEditingNote(null);
+            setNoteFormData({
+              title: "",
+              content: "",
+              note_type: "general",
+              priority: "normal",
+              is_private: false
+            });
+          }
+        }}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{editingNote ? 'Edit Note' : 'Add New Note'}</DialogTitle>
+              <DialogDescription>
+                {editingNote ? 'Update the note information.' : 'Add a new note for this contact.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="note-title">Title</Label>
+                <Input
+                  id="note-title"
+                  value={noteFormData.title}
+                  onChange={(e) => setNoteFormData({...noteFormData, title: e.target.value})}
+                  placeholder="Enter note title"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="note-type">Type</Label>
+                  <Select 
+                    value={noteFormData.note_type} 
+                    onValueChange={(value) => setNoteFormData({...noteFormData, note_type: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="medical">Medical</SelectItem>
+                      <SelectItem value="behavioral">Behavioral</SelectItem>
+                      <SelectItem value="emergency">Emergency</SelectItem>
+                      <SelectItem value="payment">Payment</SelectItem>
+                      <SelectItem value="attendance">Attendance</SelectItem>
+                      <SelectItem value="family">Family</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="note-priority">Priority</Label>
+                  <Select 
+                    value={noteFormData.priority} 
+                    onValueChange={(value) => setNoteFormData({...noteFormData, priority: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="note-content">Content</Label>
+                <Textarea
+                  id="note-content"
+                  value={noteFormData.content}
+                  onChange={(e) => setNoteFormData({...noteFormData, content: e.target.value})}
+                  placeholder="Enter note content..."
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="note-private"
+                  checked={noteFormData.is_private}
+                  onChange={(e) => setNoteFormData({...noteFormData, is_private: e.target.checked})}
+                  className="rounded"
+                />
+                <Label htmlFor="note-private">Private note (visible only to admins)</Label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowAddNoteDialog(false);
+                setEditingNote(null);
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={editingNote ? handleEditNote : handleAddNote}>
+                {editingNote ? 'Update Note' : 'Add Note'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Family Member Dialog */}
+        <Dialog open={showAddFamilyDialog} onOpenChange={setShowAddFamilyDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add Family Member</DialogTitle>
+              <DialogDescription>
+                Add a new family member linked to this contact.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="family-first-name">First Name</Label>
+                  <Input
+                    id="family-first-name"
+                    value={familyFormData.first_name}
+                    onChange={(e) => setFamilyFormData({...familyFormData, first_name: e.target.value})}
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="family-last-name">Last Name</Label>
+                  <Input
+                    id="family-last-name"
+                    value={familyFormData.last_name}
+                    onChange={(e) => setFamilyFormData({...familyFormData, last_name: e.target.value})}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="family-email">Email</Label>
+                <Input
+                  id="family-email"
+                  type="email"
+                  value={familyFormData.email}
+                  onChange={(e) => setFamilyFormData({...familyFormData, email: e.target.value})}
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="family-phone">Phone</Label>
+                <Input
+                  id="family-phone"
+                  value={familyFormData.phone}
+                  onChange={(e) => setFamilyFormData({...familyFormData, phone: e.target.value})}
+                  placeholder="Enter phone number"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="family-role">Role</Label>
+                  <Select 
+                    value={familyFormData.role} 
+                    onValueChange={(value) => setFamilyFormData({...familyFormData, role: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="visitor">Visitor</SelectItem>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="instructor">Instructor</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="family-belt">Belt Level</Label>
+                  <Select 
+                    value={familyFormData.belt_level || "none"} 
+                    onValueChange={(value) => setFamilyFormData({...familyFormData, belt_level: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select belt level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Belt</SelectItem>
+                      <SelectItem value="white">White</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="orange">Orange</SelectItem>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="blue">Blue</SelectItem>
+                      <SelectItem value="brown">Brown</SelectItem>
+                      <SelectItem value="black">Black</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="family-emergency">Emergency Contact</Label>
+                <Input
+                  id="family-emergency"
+                  value={familyFormData.emergency_contact}
+                  onChange={(e) => setFamilyFormData({...familyFormData, emergency_contact: e.target.value})}
+                  placeholder="Enter emergency contact"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="family-status">Membership Status</Label>
+                <Select 
+                  value={familyFormData.membership_status} 
+                  onValueChange={(value) => setFamilyFormData({...familyFormData, membership_status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAddFamilyDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddFamilyMember}>
+                Add Family Member
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Contact Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>

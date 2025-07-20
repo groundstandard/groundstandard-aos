@@ -718,6 +718,53 @@ export type Database = {
           },
         ]
       }
+      contact_notes: {
+        Row: {
+          contact_id: string
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_private: boolean | null
+          note_type: string | null
+          priority: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          contact_id: string
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_private?: boolean | null
+          note_type?: string | null
+          priority?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          contact_id?: string
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_private?: boolean | null
+          note_type?: string | null
+          priority?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_message_channels: {
         Row: {
           created_at: string | null

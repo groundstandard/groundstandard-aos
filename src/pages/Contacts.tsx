@@ -15,6 +15,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { ContactCard } from "@/components/contacts/ContactCard";
 import { ContactsTable } from "@/components/contacts/ContactsTable";
+import { BulkActionsToolbar } from "@/components/contacts/BulkActionsToolbar";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
 import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
@@ -84,6 +85,7 @@ const Contacts = () => {
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -618,6 +620,8 @@ const Contacts = () => {
               onAddChild={handleAddChild}
               onViewFamily={handleViewFamily}
               onContactClick={handleContactClick}
+              selectedContactIds={selectedContactIds}
+              onSelectionChange={setSelectedContactIds}
             />
           ) : (
             // Grid View
@@ -792,6 +796,13 @@ const Contacts = () => {
           open={showMembershipDialog}
           onOpenChange={setShowMembershipDialog}
           onSuccess={handleMembershipSuccess}
+        />
+
+        {/* Bulk Actions Toolbar */}
+        <BulkActionsToolbar
+          selectedContactIds={selectedContactIds}
+          onClearSelection={() => setSelectedContactIds([])}
+          onActionComplete={fetchContacts}
         />
       </div>
     </div>
