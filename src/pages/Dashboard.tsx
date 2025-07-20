@@ -162,25 +162,25 @@ const Dashboard = () => {
                 <TrendingUp className="h-4 w-4" />
                 Overview
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/reports')}>
-                <BarChart3 className="h-4 w-4" />
-                Reports
-              </Button>
               <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/contacts')}>
                 <Users className="h-4 w-4" />
-                Students
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/classes')}>
-                <Calendar className="h-4 w-4" />
-                Classes
+                Contacts
               </Button>
               <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/payments')}>
                 <DollarSign className="h-4 w-4" />
                 Payments
               </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/attendance')}>
+                <Calendar className="h-4 w-4" />
+                Attendance
+              </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/reports')}>
+                <BarChart3 className="h-4 w-4" />
+                Reporting
+              </Button>
               <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/automations')}>
                 <Settings className="h-4 w-4" />
-                Automations
+                Admin
               </Button>
             </div>
           </div>
