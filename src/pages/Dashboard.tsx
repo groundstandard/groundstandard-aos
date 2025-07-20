@@ -263,8 +263,8 @@ const Dashboard = () => {
                         </CardTitle>
                         <IconComponent className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0">
-                        <div className="text-2xl font-bold flex-1 flex items-start">{stat.value}</div>
+                      <CardContent className="flex-1 flex flex-col justify-end px-4 pb-4 pt-0">
+                        <div className="text-2xl font-bold text-black mb-1">{stat.value}</div>
                         <div className="h-[20px] flex items-end">
                           <p className={`text-xs leading-none ${
                             stat.trend === 'up' ? 'text-green-600' : 
