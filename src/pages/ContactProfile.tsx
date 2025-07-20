@@ -4,6 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,6 +75,17 @@ interface MembershipPlan {
   is_active: boolean;
 }
 
+interface ContactFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  role: string;
+  belt_level: string;
+  emergency_contact: string;
+  membership_status: string;
+}
+
 const ContactProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -84,12 +99,38 @@ const ContactProfile = () => {
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [formData, setFormData] = useState<ContactFormData>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    role: "member",
+    belt_level: "",
+    emergency_contact: "",
+    membership_status: "active"
+  });
 
   useEffect(() => {
     if (id) {
       fetchContactData(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (contact) {
+      setFormData({
+        first_name: contact.first_name,
+        last_name: contact.last_name,
+        email: contact.email,
+        phone: contact.phone || "",
+        role: contact.role,
+        belt_level: contact.belt_level || "",
+        emergency_contact: contact.emergency_contact || "",
+        membership_status: contact.membership_status
+      });
+    }
+  }, [contact]);
 
   const fetchContactData = async (contactId: string) => {
     try {
@@ -180,6 +221,43 @@ const ContactProfile = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditContact = async () => {
+    if (!contact) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(formData)
+        .eq('id', contact.id)
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('No rows updated - check if you have permission to modify this contact');
+      }
+
+      const updatedContact = data[0];
+      setContact(updatedContact);
+      toast({
+        title: "Success",
+        description: "Contact updated successfully",
+      });
+
+      setShowEditDialog(false);
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update contact",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditClick = () => {
+    setShowEditDialog(true);
   };
 
   const getInitials = (contact: Contact) => {
@@ -274,7 +352,7 @@ const ContactProfile = () => {
           </div>
           <Button
             variant="outline"
-            onClick={() => navigate(`/contacts`)}
+            onClick={handleEditClick}
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit Contact
@@ -613,6 +691,130 @@ const ContactProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Contact Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Contact</DialogTitle>
+              <DialogDescription>
+                Make changes to the contact information. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="first_name">First Name</Label>
+                  <Input
+                    id="first_name"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  placeholder="Enter phone number"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="role">Role</Label>
+                  <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="visitor">Visitor</SelectItem>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="instructor">Instructor</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="belt_level">Belt Level</Label>
+                  <Select value={formData.belt_level} onValueChange={(value) => setFormData({...formData, belt_level: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select belt level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Belt</SelectItem>
+                      <SelectItem value="white">White</SelectItem>
+                      <SelectItem value="yellow">Yellow</SelectItem>
+                      <SelectItem value="orange">Orange</SelectItem>
+                      <SelectItem value="green">Green</SelectItem>
+                      <SelectItem value="blue">Blue</SelectItem>
+                      <SelectItem value="brown">Brown</SelectItem>
+                      <SelectItem value="black">Black</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                <Input
+                  id="emergency_contact"
+                  value={formData.emergency_contact}
+                  onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})}
+                  placeholder="Enter emergency contact"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="membership_status">Membership Status</Label>
+                <Select value={formData.membership_status} onValueChange={(value) => setFormData({...formData, membership_status: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditContact}>
+                Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
