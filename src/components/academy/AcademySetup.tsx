@@ -10,10 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Building2, Palette, Globe, CheckCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const AcademySetup = () => {
   const { user } = useAuth();
   const { academy, updateAcademy, refreshAcademy } = useAcademy();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreating, setIsCreating] = useState(!academy);
@@ -83,6 +85,11 @@ const AcademySetup = () => {
           title: "Academy Setup Complete!",
           description: "Your academy is now ready to use.",
         });
+        
+        // Redirect to dashboard after successful completion
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       }
     } catch (error) {
       console.error('Error with academy:', error);
