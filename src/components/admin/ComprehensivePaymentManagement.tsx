@@ -417,7 +417,7 @@ export const ComprehensivePaymentManagement = () => {
     }
   });
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
     return (
       <Card>
         <CardContent className="p-6">
