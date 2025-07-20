@@ -530,8 +530,8 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 id="base_price_cents"
                 type="number"
                 step="0.01"
-                value={formData.base_price_cents}
-                onChange={(e) => setFormData({...formData, base_price_cents: (parseFloat(e.target.value) * 100).toString()})}
+                value={formData.base_price_cents ? (parseInt(formData.base_price_cents) / 100).toString() : ''}
+                onChange={(e) => setFormData({...formData, base_price_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
               />
             </div>
@@ -580,8 +580,8 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 id="setup_fee_cents"
                 type="number"
                 step="0.01"
-                value={formData.setup_fee_cents}
-                onChange={(e) => setFormData({...formData, setup_fee_cents: (parseFloat(e.target.value || '0') * 100).toString()})}
+                value={formData.setup_fee_cents ? (parseInt(formData.setup_fee_cents) / 100).toString() : ''}
+                onChange={(e) => setFormData({...formData, setup_fee_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
               />
             </div>
             <div>
@@ -734,8 +734,8 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
                 id="price_per_session_cents"
                 type="number"
                 step="0.01"
-                value={formData.price_per_session_cents}
-                onChange={(e) => setFormData({...formData, price_per_session_cents: (parseFloat(e.target.value) * 100).toString()})}
+                value={formData.price_per_session_cents ? (parseInt(formData.price_per_session_cents) / 100).toString() : ''}
+                onChange={(e) => setFormData({...formData, price_per_session_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
               />
             </div>
@@ -889,8 +889,8 @@ const CreateDropInDialog = () => {
                 id="price_cents"
                 type="number"
                 step="0.01"
-                value={formData.price_cents}
-                onChange={(e) => setFormData({...formData, price_cents: (parseFloat(e.target.value) * 100).toString()})}
+                value={formData.price_cents ? (parseInt(formData.price_cents) / 100).toString() : ''}
+                onChange={(e) => setFormData({...formData, price_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
               />
             </div>
