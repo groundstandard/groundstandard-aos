@@ -51,6 +51,9 @@ interface ContactsTableProps {
   onContactClick?: (contact: Contact) => void;
   selectedContactIds?: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
+  filterRole?: string;
+  onFilterRoleChange?: (value: string) => void;
+  allContacts?: Contact[];
 }
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -73,7 +76,10 @@ export const ContactsTable = ({
   onViewFamily,
   onContactClick,
   selectedContactIds = [],
-  onSelectionChange
+  onSelectionChange,
+  filterRole = "all",
+  onFilterRoleChange,
+  allContacts = []
 }: ContactsTableProps) => {
   const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [sortBy, setSortBy] = useState<string>('full_name');
@@ -195,42 +201,118 @@ export const ContactsTable = ({
     return contacts.some(c => c.parent_id === contact.id);
   };
 
+  // Helper functions for role filtering
+  const getRoleCount = (role: string) => {
+    if (role === "all") return allContacts.length;
+    return allContacts.filter(c => c.role === role).length;
+  };
+
+  const getFamilyCount = () => {
+    return allContacts.filter(c => c.parent_id || allContacts.some(child => child.parent_id === c.id)).length;
+  };
+
   return (
     <div className="border rounded-lg bg-card">
-      {/* Table Header with Column Management */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={selectedContactIds.length === contacts.length && contacts.length > 0}
-            onCheckedChange={toggleSelectAll}
-          />
-          <span className="text-sm text-muted-foreground">
-            {selectedContactIds.length > 0 ? `${selectedContactIds.length} selected` : `${contacts.length} contacts`}
-          </span>
+      {/* Table Header with Role Filters and Column Management */}
+      <div className="space-y-3 p-4 border-b">
+        {/* Top Row: Contact Count and Columns Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedContactIds.length === contacts.length && contacts.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+            <span className="text-sm text-muted-foreground">
+              {selectedContactIds.length > 0 ? `${selectedContactIds.length} selected` : `${contacts.length} contacts`}
+            </span>
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {columns.map(column => (
+                <DropdownMenuItem
+                  key={column.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleColumn(column.id);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Checkbox checked={column.visible} />
+                  {column.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {columns.map(column => (
-              <DropdownMenuItem
-                key={column.id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleColumn(column.id);
-                }}
-                className="flex items-center gap-2"
+
+        {/* Bottom Row: Role Filter Buttons */}
+        {onFilterRoleChange && allContacts.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={filterRole === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("all")}
               >
-                <Checkbox checked={column.visible} />
-                {column.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                All ({getRoleCount("all")})
+              </Button>
+              <Button
+                variant={filterRole === "member" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("member")}
+              >
+                Members ({getRoleCount("member")})
+              </Button>
+              <Button
+                variant={filterRole === "visitor" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("visitor")}
+              >
+                Visitors ({getRoleCount("visitor")})
+              </Button>
+              <Button
+                variant={filterRole === "alumni" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("alumni")}
+              >
+                Alumni ({getRoleCount("alumni")})
+              </Button>
+              <Button
+                variant={filterRole === "staff" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("staff")}
+              >
+                Staff ({getRoleCount("staff")})
+              </Button>
+              <Button
+                variant={filterRole === "instructor" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("instructor")}
+              >
+                Instructors ({getRoleCount("instructor")})
+              </Button>
+              <Button
+                variant={filterRole === "admin" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("admin")}
+              >
+                Admins ({getRoleCount("admin")})
+              </Button>
+            </div>
+            
+            {/* Family Contacts Badge */}
+            <Badge variant="secondary" className="flex items-center gap-1 ml-auto">
+              <Users className="h-3 w-3" />
+              {getFamilyCount()} Family Members
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* Table */}

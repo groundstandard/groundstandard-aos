@@ -542,6 +542,9 @@ const Contacts = () => {
               onContactClick={handleContactClick}
               selectedContactIds={selectedContactIds}
               onSelectionChange={setSelectedContactIds}
+              filterRole={filterRole}
+              onFilterRoleChange={setFilterRole}
+              allContacts={contacts}
             />
           ) : (
             // Grid View

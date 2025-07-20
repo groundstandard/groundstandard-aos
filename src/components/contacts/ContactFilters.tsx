@@ -44,25 +44,25 @@ export const ContactFilters = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Main Filters */}
+      {/* Compact Search and Controls - All on One Line */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
+          <div className="flex items-center gap-3">
+            {/* Search - Compact */}
+            <div className="flex-1 relative min-w-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search contacts by name, email, phone..."
+                placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9"
               />
             </div>
 
             {/* Sort Options and Family Toggle */}
             <div className="flex gap-2 items-center flex-shrink-0">
               <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 h-9">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -79,7 +79,7 @@ export const ContactFilters = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3"
+                className="px-3 h-9"
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
@@ -89,77 +89,12 @@ export const ContactFilters = ({
                 variant={showFamiliesOnly ? "default" : "outline"}
                 size="sm"
                 onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
-                className="flex items-center gap-1 px-3 whitespace-nowrap"
+                className="flex items-center gap-1 px-3 whitespace-nowrap h-9"
               >
                 <Users className="h-3 w-3" />
                 <span className="hidden sm:inline">Families Only</span>
                 <span className="sm:hidden">Families</span>
               </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Role Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={filterRole === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("all")}
-            >
-              All ({getRoleCount("all")})
-            </Button>
-            <Button
-              variant={filterRole === "member" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("member")}
-            >
-              Members ({getRoleCount("member")})
-            </Button>
-            <Button
-              variant={filterRole === "visitor" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("visitor")}
-            >
-              Visitors ({getRoleCount("visitor")})
-            </Button>
-            <Button
-              variant={filterRole === "alumni" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("alumni")}
-            >
-              Alumni ({getRoleCount("alumni")})
-            </Button>
-            <Button
-              variant={filterRole === "staff" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("staff")}
-            >
-              Staff ({getRoleCount("staff")})
-            </Button>
-            <Button
-              variant={filterRole === "instructor" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("instructor")}
-            >
-              Instructors ({getRoleCount("instructor")})
-            </Button>
-            <Button
-              variant={filterRole === "admin" ? "default" : "outline"}
-              size="sm"
-              onClick={() => onFilterRoleChange("admin")}
-            >
-              Admins ({getRoleCount("admin")})
-            </Button>
-            
-            {/* Family Contacts Badge */}
-            <div className="ml-auto">
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                {getFamilyCount()} Family Members
-              </Badge>
             </div>
           </div>
         </CardContent>
