@@ -257,77 +257,64 @@ export const EnhancedContactForm = ({
             <Label>Link to Existing Contact</Label>
             <div className="space-y-2">
               {!selectedContact ? (
-                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={searchOpen}
-                      className="w-full justify-between"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSearchOpen(!searchOpen);
-                      }}
-                    >
-                      Search for family member...
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    className="w-full p-0 bg-white border shadow-lg z-50" 
-                    onInteractOutside={(e) => {
-                      // Only close if clicking truly outside, not on the trigger
-                      const target = e.target as Element;
-                      if (!target.closest('[role="combobox"]')) {
-                        setSearchOpen(false);
-                      } else {
-                        e.preventDefault();
-                      }
-                    }}
+                <div className="relative w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setSearchOpen(!searchOpen)}
                   >
-                    <Command shouldFilter={false} className="w-full">
-                       <CommandInput
-                         placeholder="Search contacts..."
-                         value={searchQuery}
-                         onValueChange={(value) => {
-                           console.log('CommandInput value changed:', value);
-                           setSearchQuery(value);
-                         }}
-                         className="border-0 focus:ring-0"
-                       />
-                       <CommandEmpty className="p-4 text-center text-sm text-muted-foreground">
-                         {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
-                       </CommandEmpty>
-                       <CommandGroup>
-                         <CommandList className="max-h-48 overflow-auto">
-                           {searchResults.map((contact) => (
-                            <CommandItem
-                              key={contact.id}
-                              value={`${contact.first_name} ${contact.last_name} ${contact.email}`}
-                              onSelect={() => handleContactSelection(contact)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  "opacity-0"
-                                )}
-                              />
-                              <div>
+                    Search for family member...
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                  
+                  {searchOpen && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div className="p-2">
+                        <input
+                          type="text"
+                          placeholder="Search contacts..."
+                          value={searchQuery}
+                          onChange={(e) => {
+                            console.log('Input value changed:', e.target.value);
+                            setSearchQuery(e.target.value);
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                        />
+                      </div>
+                      
+                      <div className="max-h-48 overflow-auto">
+                        {searchQuery && searchQuery.length >= 2 ? (
+                          searchResults.length > 0 ? (
+                            searchResults.map((contact) => (
+                              <div
+                                key={contact.id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => handleContactSelection(contact)}
+                              >
                                 <div className="font-medium">
                                   {contact.first_name} {contact.last_name}
                                 </div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-sm text-gray-500">
                                   {contact.email} • {contact.role} • {contact.membership_status}
                                 </div>
                               </div>
-                            </CommandItem>
-                          ))}
-                        </CommandList>
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-sm text-gray-500">
+                              No contacts found.
+                            </div>
+                          )
+                        ) : (
+                          <div className="p-4 text-center text-sm text-gray-500">
+                            Type at least 2 characters to search
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="p-3 border rounded-md bg-muted/50 flex items-center justify-between">
                   <div>
