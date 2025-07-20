@@ -215,43 +215,7 @@ export const ContactsTable = ({
     <div className="border rounded-lg bg-card">
       {/* Table Header with Role Filters and Column Management */}
       <div className="space-y-3 p-4 border-b">
-        {/* Top Row: Contact Count and Columns Button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={selectedContactIds.length === contacts.length && contacts.length > 0}
-              onCheckedChange={toggleSelectAll}
-            />
-            <span className="text-sm text-muted-foreground">
-              {selectedContactIds.length > 0 ? `${selectedContactIds.length} selected` : `${contacts.length} contacts`}
-            </span>
-          </div>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {columns.map(column => (
-                <DropdownMenuItem
-                  key={column.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleColumn(column.id);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Checkbox checked={column.visible} />
-                  {column.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Bottom Row: Role Filter Buttons */}
+        {/* Top Row: Role Filter Buttons */}
         {onFilterRoleChange && allContacts.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center justify-between">
             <div className="flex flex-wrap gap-2">
@@ -313,6 +277,42 @@ export const ContactsTable = ({
             </Badge>
           </div>
         )}
+
+        {/* Bottom Row: Contact Count and Columns Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedContactIds.length === contacts.length && contacts.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+            <span className="text-sm text-muted-foreground">
+              {selectedContactIds.length > 0 ? `${selectedContactIds.length} selected` : `${contacts.length} contacts`}
+            </span>
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {columns.map(column => (
+                <DropdownMenuItem
+                  key={column.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleColumn(column.id);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Checkbox checked={column.visible} />
+                  {column.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Table */}
