@@ -269,16 +269,17 @@ export const EnhancedContactForm = ({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 bg-white z-50">
-                    <Command>
-                      <CommandInput
-                        placeholder="Search contacts..."
-                        value={searchQuery}
-                        onValueChange={setSearchQuery}
-                      />
-                      <CommandEmpty className="py-4 text-center text-muted-foreground">
-                        {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
-                      </CommandEmpty>
+                   <PopoverContent className="w-full p-0 bg-white border shadow-lg z-50">
+                     <Command>
+                       <CommandInput
+                         placeholder="Search contacts..."
+                         value={searchQuery}
+                         onValueChange={setSearchQuery}
+                         className="border-0 focus:ring-0"
+                       />
+                       <CommandEmpty className="p-4 text-center text-sm text-muted-foreground">
+                         {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
+                       </CommandEmpty>
                       <CommandGroup>
                         <CommandList>
                           {searchResults.map((contact) => (
