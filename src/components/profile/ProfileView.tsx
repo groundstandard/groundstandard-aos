@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Camera, Edit, Save, X, Phone, Shield, Crown, Star } from 'lucide-react';
+import { User, Camera, Edit, Save, X, Phone, Shield, Crown, Star, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAcademy } from '@/hooks/useAcademy';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 export const ProfileView = () => {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
+  const { academy } = useAcademy();
   const { subscriptionInfo, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -413,6 +415,46 @@ export const ProfileView = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Academy Information */}
+      {academy && (
+        <Card className="card-minimal shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Academy Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Academy Name</Label>
+                <div className="mt-1 p-2">
+                  {academy.name}
+                </div>
+              </div>
+              <div>
+                <Label>Contact Email</Label>
+                <div className="mt-1 p-2">
+                  {academy.email || 'Not provided'}
+                </div>
+              </div>
+              <div>
+                <Label>Phone Number</Label>
+                <div className="mt-1 p-2">
+                  {academy.phone || 'Not provided'}
+                </div>
+              </div>
+              <div>
+                <Label>Location</Label>
+                <div className="mt-1 p-2">
+                  {academy.address ? `${academy.address}${(academy as any).city ? `, ${(academy as any).city}` : ''}${(academy as any).state ? `, ${(academy as any).state}` : ''}` : 'Not provided'}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Account Actions */}
       <Card className="card-minimal shadow-soft">

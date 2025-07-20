@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useAcademy } from "@/hooks/useAcademy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
@@ -11,10 +12,64 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const { user, profile } = useAuth();
+  const { academy, updateAcademy } = useAcademy();
   const isMobile = useIsMobile();
+  const [academyFormData, setAcademyFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    city: '',
+    state: '',
+    zipcode: '',
+    country: '',
+    timezone: '',
+    website_url: '',
+    description: ''
+  });
+
+  useEffect(() => {
+    if (academy) {
+      setAcademyFormData({
+        name: academy.name || '',
+        address: academy.address || '',
+        phone: academy.phone || '',
+        email: academy.email || '',
+        city: (academy as any).city || '',
+        state: (academy as any).state || '',
+        zipcode: (academy as any).zipcode || '',
+        country: (academy as any).country || '',
+        timezone: (academy as any).timezone || '',
+        website_url: (academy as any).website_url || '',
+        description: (academy as any).description || ''
+      });
+    }
+  }, [academy]);
+
+  const handleAcademyInputChange = (field: string, value: string) => {
+    setAcademyFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveAcademySettings = async () => {
+    try {
+      await updateAcademy(academyFormData);
+      toast({
+        title: "Success",
+        description: "Academy settings saved successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save academy settings",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!user) {
     return <Navigate to="/auth" replace />;
@@ -217,41 +272,108 @@ const Settings = () => {
                 <CardContent className="space-y-6">
                   <div>
                     <Label htmlFor="academyName">Academy Name</Label>
-                    <Input id="academyName" placeholder="Enter academy name" />
+                    <Input 
+                      id="academyName" 
+                      value={academyFormData.name}
+                      onChange={(e) => handleAcademyInputChange('name', e.target.value)}
+                      placeholder="Enter academy name" 
+                    />
                   </div>
                   
                   <div>
-                    <Label htmlFor="academyAddress">Address</Label>
-                    <Input id="academyAddress" placeholder="Enter academy address" />
+                    <Label htmlFor="academyAddress">Street Address</Label>
+                    <Input 
+                      id="academyAddress" 
+                      value={academyFormData.address}
+                      onChange={(e) => handleAcademyInputChange('address', e.target.value)}
+                      placeholder="Enter academy address" 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="academyCity">City</Label>
+                      <Input 
+                        id="academyCity" 
+                        value={academyFormData.city}
+                        onChange={(e) => handleAcademyInputChange('city', e.target.value)}
+                        placeholder="City" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="academyState">State</Label>
+                      <Input 
+                        id="academyState" 
+                        value={academyFormData.state}
+                        onChange={(e) => handleAcademyInputChange('state', e.target.value)}
+                        placeholder="State" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="academyZipcode">Zipcode</Label>
+                      <Input 
+                        id="academyZipcode" 
+                        value={academyFormData.zipcode}
+                        onChange={(e) => handleAcademyInputChange('zipcode', e.target.value)}
+                        placeholder="Zipcode" 
+                      />
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="academyPhone">Phone</Label>
-                      <Input id="academyPhone" type="tel" placeholder="Academy phone number" />
+                      <Input 
+                        id="academyPhone" 
+                        type="tel" 
+                        value={academyFormData.phone}
+                        onChange={(e) => handleAcademyInputChange('phone', e.target.value)}
+                        placeholder="Academy phone number" 
+                      />
                     </div>
                     <div>
                       <Label htmlFor="academyEmail">Email</Label>
-                      <Input id="academyEmail" type="email" placeholder="Academy email" />
+                      <Input 
+                        id="academyEmail" 
+                        type="email" 
+                        value={academyFormData.email}
+                        onChange={(e) => handleAcademyInputChange('email', e.target.value)}
+                        placeholder="Academy email" 
+                      />
                     </div>
                   </div>
 
                   <div>
+                    <Label htmlFor="academyWebsite">Website URL</Label>
+                    <Input 
+                      id="academyWebsite" 
+                      value={academyFormData.website_url}
+                      onChange={(e) => handleAcademyInputChange('website_url', e.target.value)}
+                      placeholder="https://example.com" 
+                    />
+                  </div>
+
+                  <div>
                     <Label htmlFor="timezone">Time Zone</Label>
-                    <Select defaultValue="America/New_York">
+                    <Select 
+                      value={academyFormData.timezone} 
+                      onValueChange={(value) => handleAcademyInputChange('timezone', value)}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
                         <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
                         <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
                         <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                        <SelectItem value="America/Anchorage">Alaska Time (AKT)</SelectItem>
+                        <SelectItem value="Pacific/Honolulu">Hawaii Time (HST)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <Button>Save Academy Settings</Button>
+                  <Button onClick={handleSaveAcademySettings}>Save Academy Settings</Button>
 
                   <Separator />
 
