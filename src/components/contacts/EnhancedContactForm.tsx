@@ -276,7 +276,7 @@ export const EnhancedContactForm = ({
                         value={searchQuery}
                         onValueChange={setSearchQuery}
                       />
-                      <CommandEmpty>
+                      <CommandEmpty className="py-4 text-center text-muted-foreground">
                         {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
                       </CommandEmpty>
                       <CommandGroup>
