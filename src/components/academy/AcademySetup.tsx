@@ -13,9 +13,10 @@ import { toast } from '@/hooks/use-toast';
 
 const AcademySetup = () => {
   const { user } = useAuth();
-  const { academy, updateAcademy } = useAcademy();
+  const { academy, updateAcademy, refreshAcademy } = useAcademy();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [isCreating, setIsCreating] = useState(!academy);
   
   const [formData, setFormData] = useState({
     name: academy?.name || '',
@@ -37,27 +38,56 @@ const AcademySetup = () => {
   };
 
   const handleStepSubmit = async () => {
-    if (!academy?.id) return;
-    
     setIsSubmitting(true);
     try {
-      await updateAcademy(formData);
+      if (isCreating) {
+        // Create new academy
+        const { data: newAcademy, error } = await supabase
+          .from('academies')
+          .insert({
+            ...formData,
+            owner_id: user?.id,
+            slug: formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
+            is_setup_complete: currentStep === 3
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update user's profile to link to this academy
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ academy_id: newAcademy.id })
+          .eq('id', user?.id);
+
+        if (profileError) throw profileError;
+
+        // Refresh academy context
+        await refreshAcademy();
+        setIsCreating(false);
+      } else {
+        // Update existing academy
+        await updateAcademy(formData);
+      }
       
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
         // Final step - mark setup as complete
-        await updateAcademy({ is_setup_complete: true });
+        if (!isCreating) {
+          await updateAcademy({ is_setup_complete: true });
+        }
         toast({
           title: "Academy Setup Complete!",
           description: "Your academy is now ready to use.",
         });
       }
     } catch (error) {
-      console.error('Error updating academy:', error);
+      console.error('Error with academy:', error);
       toast({
         title: "Error",
-        description: "Failed to save academy information. Please try again.",
+        description: `Failed to ${isCreating ? 'create' : 'update'} academy. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -92,7 +122,9 @@ const AcademySetup = () => {
             <div className="text-center mb-6">
               <Building2 className="h-12 w-12 text-primary mx-auto mb-4" />
               <h2 className="text-2xl font-bold">Basic Information</h2>
-              <p className="text-muted-foreground">Tell us about your academy</p>
+              <p className="text-muted-foreground">
+                {isCreating ? "Let's create your academy" : "Tell us about your academy"}
+              </p>
             </div>
             
             <div className="grid gap-4">
@@ -297,9 +329,14 @@ const AcademySetup = () => {
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">Welcome to Your Academy!</CardTitle>
+          <CardTitle className="text-3xl font-bold">
+            {isCreating ? "Create Your Academy" : "Welcome to Your Academy!"}
+          </CardTitle>
           <CardDescription>
-            Let's set up your academy in just a few steps
+            {isCreating 
+              ? "Let's set up your academy in just a few steps"
+              : "Let's complete your academy setup"
+            }
           </CardDescription>
           
           {/* Progress indicator */}
@@ -342,7 +379,7 @@ const AcademySetup = () => {
               disabled={!isCurrentStepValid() || isSubmitting}
             >
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {currentStep === 3 ? 'Complete Setup' : 'Next Step'}
+              {currentStep === 3 ? (isCreating ? 'Create Academy' : 'Complete Setup') : 'Next Step'}
             </Button>
           </div>
         </CardContent>
