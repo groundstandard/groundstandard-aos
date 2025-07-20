@@ -11,7 +11,8 @@ import {
   Edit, 
   UserPlus,
   Eye,
-  Baby
+  Baby,
+  CreditCard
 } from "lucide-react";
 
 interface Contact {
@@ -36,6 +37,7 @@ interface ContactCardProps {
   onEdit: (contact: Contact) => void;
   onAddChild: (contact: Contact) => void;
   onViewFamily: (contact: Contact) => void;
+  onAssignMembership?: (contact: Contact) => void;
 }
 
 export const ContactCard = ({ 
@@ -44,7 +46,8 @@ export const ContactCard = ({
   onView, 
   onEdit, 
   onAddChild, 
-  onViewFamily 
+  onViewFamily,
+  onAssignMembership
 }: ContactCardProps) => {
   const roleColors = {
     visitor: "bg-gray-100 text-gray-800",
@@ -153,6 +156,17 @@ export const ContactCard = ({
             >
               <Users className="h-3 w-3 mr-1" />
               Family ({children.length})
+            </Button>
+          )}
+          {onAssignMembership && contact.role === 'member' && (
+            <Button 
+              size="sm" 
+              variant="default"
+              onClick={() => onAssignMembership(contact)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <CreditCard className="h-3 w-3 mr-1" />
+              Assign Membership
             </Button>
           )}
         </div>

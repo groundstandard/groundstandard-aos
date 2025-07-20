@@ -16,6 +16,7 @@ import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { ContactCard } from "@/components/contacts/ContactCard";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
+import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
 import { 
   Search, 
   Users, 
@@ -33,7 +34,8 @@ import {
   List,
   Columns,
   Table,
-  ExternalLink
+  ExternalLink,
+  CreditCard
 } from "lucide-react";
 
 interface Contact {
@@ -80,6 +82,7 @@ const Contacts = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
+  const [showMembershipDialog, setShowMembershipDialog] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -289,6 +292,19 @@ const Contacts = () => {
   const handleViewFamily = (contact: Contact) => {
     setSelectedContact(contact);
     setShowFamilyDialog(true);
+  };
+
+  const handleAssignMembership = (contact: Contact) => {
+    setSelectedContact(contact);
+    setShowMembershipDialog(true);
+  };
+
+  const handleMembershipSuccess = () => {
+    fetchContacts(); // Refresh the contacts list
+    toast({
+      title: "Membership Assigned",
+      description: "Membership has been successfully assigned and payment processed",
+    });
   };
 
   const ContactForm = () => (
@@ -530,6 +546,7 @@ const Contacts = () => {
                         onEdit={handleEditContactClick}
                         onAddChild={handleAddChild}
                         onViewFamily={handleViewFamily}
+                        onAssignMembership={handleAssignMembership}
                       />
                       {children.slice(0, 2).map((child) => (
                         <ContactCard
@@ -539,6 +556,7 @@ const Contacts = () => {
                           onEdit={handleEditContactClick}
                           onAddChild={handleAddChild}
                           onViewFamily={handleViewFamily}
+                          onAssignMembership={handleAssignMembership}
                         />
                       ))}
                       {children.length > 2 && (
@@ -563,6 +581,7 @@ const Contacts = () => {
                         onEdit={handleEditContactClick}
                         onAddChild={handleAddChild}
                         onViewFamily={handleViewFamily}
+                        onAssignMembership={handleAssignMembership}
                       />
                     ))}
                   </div>
@@ -583,6 +602,7 @@ const Contacts = () => {
                     onEdit={handleEditContactClick}
                     onAddChild={handleAddChild}
                     onViewFamily={handleViewFamily}
+                    onAssignMembership={handleAssignMembership}
                   />
                 );
               })}
@@ -734,6 +754,13 @@ const Contacts = () => {
           onEdit={handleEditContactClick}
           onView={handleViewContact}
           onAddChild={handleAddChild}
+        />
+
+        <AssignMembershipDialog
+          contact={selectedContact}
+          open={showMembershipDialog}
+          onOpenChange={setShowMembershipDialog}
+          onSuccess={handleMembershipSuccess}
         />
       </div>
     </div>
