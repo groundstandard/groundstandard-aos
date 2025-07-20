@@ -136,16 +136,6 @@ const ContactProfile = () => {
     priority: "normal",
     is_private: false
   });
-  const [familyFormData, setFamilyFormData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    role: "member",
-    belt_level: "",
-    emergency_contact: "",
-    membership_status: "active"
-  });
 
   useEffect(() => {
     if (id) {
@@ -1135,8 +1125,7 @@ const ContactProfile = () => {
             });
           }}
         />
-            <DialogHeader>
-              <DialogTitle>Add Family Member</DialogTitle>
+        {/* Edit Contact Dialog */}
               <DialogDescription>
                 Add a new family member linked to this contact.
               </DialogDescription>
