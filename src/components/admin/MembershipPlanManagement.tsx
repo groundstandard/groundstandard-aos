@@ -13,7 +13,6 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus,
   Edit,
@@ -28,12 +27,12 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SortableAllPlansTable } from './SortableAllPlansTable';
 
 export const MembershipPlanManagement = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('memberships');
 
   // Access control
   if (profile?.role !== 'admin' && profile?.role !== 'owner') {
@@ -168,251 +167,76 @@ export const MembershipPlanManagement = () => {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="memberships">Membership Plans</TabsTrigger>
-          <TabsTrigger value="private">Private Sessions</TabsTrigger>
-          <TabsTrigger value="dropin">Drop-in & Trials</TabsTrigger>
-          <TabsTrigger value="discounts">Discounts</TabsTrigger>
-        </TabsList>
+      {/* All Plans & Services Table */}
+      <SortableAllPlansTable />
 
-        <TabsContent value="memberships" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Membership Plans</h3>
-            <CreateMembershipPlanDialog instructors={instructors} />
+      {/* Discounts Section - Separate from main table */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Discounts & Family Plans</h3>
+          <div className="flex gap-2">
+            <CreateDiscountDialog />
+            <CreateFamilyDiscountDialog />
           </div>
-          
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Age Group</TableHead>
-                  <TableHead>Classes/Week</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Billing</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {membershipPlans?.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{plan.age_group}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {plan.is_unlimited ? 'Unlimited' : plan.classes_per_week}
-                    </TableCell>
-                    <TableCell>{formatPrice(plan.base_price_cents)}</TableCell>
-                    <TableCell>
-                      {plan.is_class_pack ? (
-                        <Badge variant="secondary">{plan.class_pack_size} Classes</Badge>
-                      ) : (
-                        `${plan.cycle_length_months}mo / ${plan.payment_frequency}`
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={plan.is_active ? 'default' : 'secondary'}>
-                        {plan.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <CardHeader>
+              <CardTitle className="text-base">General Discounts</CardTitle>
+              <CardDescription>Student, military, senior discounts, etc.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Value</TableHead>
+                    <TableHead>Applies To</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="private" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Private Sessions</h3>
-            <CreatePrivateSessionDialog instructors={instructors} />
-          </div>
-          
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Package Size</TableHead>
-                  <TableHead>Price per Session</TableHead>
-                  <TableHead>Total Price</TableHead>
-                  <TableHead>Instructor</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {privateSessions?.map((session) => (
-                  <TableRow key={session.id}>
-                    <TableCell className="font-medium">{session.name}</TableCell>
-                    <TableCell>
-                      <Badge>{session.session_type}</Badge>
-                    </TableCell>
-                    <TableCell>{session.package_size}</TableCell>
-                    <TableCell>{formatPrice(session.price_per_session_cents)}</TableCell>
-                    <TableCell>{formatPrice(session.total_price_cents)}</TableCell>
-                    <TableCell>
-                      {session.instructor ? 
-                        `${session.instructor.first_name} ${session.instructor.last_name}` : 
-                        'Any Instructor'
-                      }
-                    </TableCell>
-                    <TableCell>{session.duration_minutes} min</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="dropin" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Drop-in Classes & Trial Periods</h3>
-            <CreateDropInDialog />
-          </div>
-          
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Age Group</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dropInOptions?.map((option) => (
-                  <TableRow key={option.id}>
-                    <TableCell className="font-medium">{option.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={option.option_type === 'drop_in' ? 'default' : 'secondary'}>
-                        {option.option_type === 'drop_in' ? 'Drop-in' : 'Trial'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatPrice(option.price_cents)}</TableCell>
-                    <TableCell>
-                      {option.trial_duration_days ? `${option.trial_duration_days} days` : 'Single class'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{option.age_group}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={option.is_active ? 'default' : 'secondary'}>
-                        {option.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="discounts" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">General Discounts & Family Plans</h3>
-            <div className="flex gap-2">
-              <CreateDiscountDialog />
-              <CreateFamilyDiscountDialog />
-            </div>
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">General Discounts</CardTitle>
-                <CardDescription>Student, military, senior discounts, etc.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Applies To</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                </TableHeader>
+                <TableBody>
+                  {discountTypes?.map((discount) => (
+                    <TableRow key={discount.id}>
+                      <TableCell className="font-medium">{discount.name}</TableCell>
+                      <TableCell>
+                        <Badge>{discount.discount_type}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {discount.discount_type === 'percentage' 
+                          ? `${discount.discount_value}%` 
+                          : formatPrice((discount.discount_value || 0) * 100)
+                        }
+                      </TableCell>
+                      <TableCell>{discount.applies_to}</TableCell>
+                      <TableCell>
+                        <Badge variant={discount.is_active ? 'default' : 'secondary'}>
+                          {discount.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {discountTypes?.map((discount) => (
-                      <TableRow key={discount.id}>
-                        <TableCell className="font-medium">{discount.name}</TableCell>
-                        <TableCell>
-                          <Badge>{discount.discount_type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {discount.discount_type === 'percentage' 
-                            ? `${discount.discount_value}%` 
-                            : formatPrice((discount.discount_value || 0) * 100)
-                          }
-                        </TableCell>
-                        <TableCell>{discount.applies_to}</TableCell>
-                        <TableCell>
-                          <Badge variant={discount.is_active ? 'default' : 'secondary'}>
-                            {discount.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-            <FamilyDiscountPlansCard />
-          </div>
-        </TabsContent>
-      </Tabs>
+          <FamilyDiscountPlansCard />
+        </div>
+      </div>
     </div>
   );
 };
