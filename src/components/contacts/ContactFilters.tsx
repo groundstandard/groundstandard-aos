@@ -59,10 +59,10 @@ export const ContactFilters = ({
               />
             </div>
 
-            {/* Sort Options */}
-            <div className="flex gap-2">
+            {/* Sort Options and Family Toggle */}
+            <div className="flex gap-2 items-center flex-shrink-0">
               <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-32">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -83,18 +83,19 @@ export const ContactFilters = ({
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
-            </div>
 
-            {/* Family Toggle */}
-            <Button
-              variant={showFamiliesOnly ? "default" : "outline"}
-              size="sm"
-              onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
-              className="flex items-center gap-2"
-            >
-              <Users className="h-4 w-4" />
-              Families Only
-            </Button>
+              {/* Family Toggle - Now inline and compact */}
+              <Button
+                variant={showFamiliesOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
+                className="flex items-center gap-1 px-3 whitespace-nowrap"
+              >
+                <Users className="h-3 w-3" />
+                <span className="hidden sm:inline">Families Only</span>
+                <span className="sm:hidden">Families</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
