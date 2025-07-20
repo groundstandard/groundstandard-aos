@@ -270,19 +270,22 @@ export const EnhancedContactForm = ({
                     </Button>
                   </PopoverTrigger>
                    <PopoverContent className="w-full p-0 bg-white border shadow-lg z-50">
-                     <Command>
+                     <Command shouldFilter={false}>
                        <CommandInput
                          placeholder="Search contacts..."
                          value={searchQuery}
-                         onValueChange={setSearchQuery}
+                         onValueChange={(value) => {
+                           console.log('CommandInput value changed:', value);
+                           setSearchQuery(value);
+                         }}
                          className="border-0 focus:ring-0"
                        />
                        <CommandEmpty className="p-4 text-center text-sm text-muted-foreground">
                          {searchQuery && searchQuery.length >= 2 ? "No contacts found." : "Type at least 2 characters to search"}
                        </CommandEmpty>
-                      <CommandGroup>
-                        <CommandList>
-                          {searchResults.map((contact) => (
+                       <CommandGroup>
+                         <CommandList className="max-h-48 overflow-auto">
+                           {searchResults.map((contact) => (
                             <CommandItem
                               key={contact.id}
                               value={`${contact.first_name} ${contact.last_name} ${contact.email}`}
