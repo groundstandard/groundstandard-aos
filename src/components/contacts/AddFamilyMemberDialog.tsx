@@ -342,6 +342,7 @@ export const AddFamilyMemberDialog = ({ open, onClose, primaryContact, onMemberA
                   <SelectContent>
                     <SelectItem value="visitor">Visitor</SelectItem>
                     <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="head_of_house">Head of House</SelectItem>
                     <SelectItem value="alumni">Alumni</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="instructor">Instructor</SelectItem>
