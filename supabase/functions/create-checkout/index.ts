@@ -26,7 +26,9 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { planId, paymentType = 'subscription' } = await req.json();
+    const body = await req.json();
+    const { planId, paymentType = 'subscription', amount, description } = body;
+    logStep("Request body", body);
     
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -67,57 +69,87 @@ serve(async (req) => {
     };
 
     if (paymentType === 'subscription' && planId) {
-      // Get subscription plan details
+      // Get membership plan details
       const { data: plan, error: planError } = await supabaseClient
-        .from('subscription_plans')
+        .from('membership_plans')
         .select('*')
         .eq('id', planId)
         .single();
       
-      if (planError || !plan) throw new Error("Invalid subscription plan");
-      logStep("Found subscription plan", { plan: plan.name, price: plan.price });
+      if (planError || !plan) {
+        logStep("Plan lookup error", { planError, planId });
+        throw new Error("Invalid subscription plan");
+      }
+      logStep("Found membership plan", { plan: plan.name, price: plan.base_price_cents });
 
       sessionConfig.mode = "subscription";
       sessionConfig.line_items = [{
         price_data: {
-          currency: plan.currency,
+          currency: "usd",
           product_data: { 
             name: plan.name,
-            description: plan.description
+            description: plan.description || `${plan.name} membership plan`
           },
-          unit_amount: plan.price,
-          recurring: { interval: plan.interval_type, interval_count: plan.interval_count },
+          unit_amount: plan.base_price_cents,
+          recurring: { 
+            interval: plan.billing_cycle === 'monthly' ? 'month' : 'year',
+            interval_count: 1 
+          },
         },
         quantity: 1,
       }];
+
+      // Add setup fee if exists
+      if (plan.setup_fee_cents > 0) {
+        sessionConfig.line_items.push({
+          price_data: {
+            currency: "usd",
+            product_data: { 
+              name: `${plan.name} - Setup Fee`,
+              description: "One-time setup fee"
+            },
+            unit_amount: plan.setup_fee_cents,
+          },
+          quantity: 1,
+        });
+      }
     } else {
       // One-time payment (class fees, gear, etc.)
-      const { amount = 2500, description = "Academy Payment" } = await req.json();
+      const paymentAmount = amount || 2500;
+      const paymentDescription = description || "Academy Payment";
       
       sessionConfig.mode = "payment";
       sessionConfig.line_items = [{
         price_data: {
           currency: "usd",
-          product_data: { name: description },
-          unit_amount: amount,
+          product_data: { name: paymentDescription },
+          unit_amount: paymentAmount,
         },
         quantity: 1,
       }];
-      logStep("One-time payment setup", { amount, description });
+      logStep("One-time payment setup", { amount: paymentAmount, description: paymentDescription });
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
-    // Record the payment intent in our database
-    await supabaseClient.from('payments').insert({
-      user_id: user.id,
-      stripe_session_id: session.id,
-      amount: paymentType === 'subscription' ? sessionConfig.line_items[0].price_data.unit_amount : sessionConfig.line_items[0].price_data.unit_amount,
-      status: 'pending',
-      payment_type: paymentType,
-      description: paymentType === 'subscription' ? `Subscription: ${sessionConfig.line_items[0].price_data.product_data.name}` : sessionConfig.line_items[0].price_data.product_data.name
-    });
+    // Record the payment intent in our database if payments table exists
+    try {
+      await supabaseClient.from('payments').insert({
+        user_id: user.id,
+        stripe_session_id: session.id,
+        amount: sessionConfig.line_items[0].price_data.unit_amount,
+        status: 'pending',
+        payment_type: paymentType,
+        description: paymentType === 'subscription' ? 
+          `Subscription: ${sessionConfig.line_items[0].price_data.product_data.name}` : 
+          sessionConfig.line_items[0].price_data.product_data.name
+      });
+      logStep("Payment record created");
+    } catch (paymentInsertError) {
+      logStep("Could not create payment record", { error: paymentInsertError });
+      // Continue even if payment record fails - the important part is the Stripe session
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
