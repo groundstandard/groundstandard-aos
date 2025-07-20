@@ -276,10 +276,17 @@ export const EnhancedContactForm = ({
                   </PopoverTrigger>
                   <PopoverContent 
                     className="w-full p-0 bg-white border shadow-lg z-50" 
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDownOutside={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => {
+                      // Only close if clicking truly outside, not on the trigger
+                      const target = e.target as Element;
+                      if (!target.closest('[role="combobox"]')) {
+                        setSearchOpen(false);
+                      } else {
+                        e.preventDefault();
+                      }
+                    }}
                   >
-                     <Command shouldFilter={false}>
+                    <Command shouldFilter={false} className="w-full">
                        <CommandInput
                          placeholder="Search contacts..."
                          value={searchQuery}
