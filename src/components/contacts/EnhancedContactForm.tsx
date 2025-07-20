@@ -264,12 +264,21 @@ export const EnhancedContactForm = ({
                       role="combobox"
                       aria-expanded={searchOpen}
                       className="w-full justify-between"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSearchOpen(!searchOpen);
+                      }}
                     >
                       Search for family member...
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                   <PopoverContent className="w-full p-0 bg-white border shadow-lg z-50">
+                  <PopoverContent 
+                    className="w-full p-0 bg-white border shadow-lg z-50" 
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDownOutside={(e) => e.preventDefault()}
+                  >
                      <Command shouldFilter={false}>
                        <CommandInput
                          placeholder="Search contacts..."
