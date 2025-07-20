@@ -630,7 +630,7 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
     package_size: '1',
     price_per_session_cents: '',
     duration_minutes: '60',
-    instructor_id: null,
+    instructor_id: 'any',
     is_active: true
   });
   const { toast } = useToast();
@@ -648,7 +648,7 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
           price_per_session_cents: pricePerSession,
           total_price_cents: packageSize * pricePerSession,
           duration_minutes: parseInt(data.duration_minutes),
-          instructor_id: data.instructor_id || null
+          instructor_id: data.instructor_id === 'any' ? null : data.instructor_id
         }]);
       if (error) throw error;
     },
@@ -663,7 +663,7 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
         package_size: '1',
         price_per_session_cents: '',
         duration_minutes: '60',
-        instructor_id: null,
+        instructor_id: 'any',
         is_active: true
       });
     },
@@ -766,12 +766,12 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
 
           <div>
             <Label htmlFor="instructor_id">Specific Instructor (Optional)</Label>
-            <Select value={formData.instructor_id || ''} onValueChange={(value) => setFormData({...formData, instructor_id: value || null})}>
+            <Select value={formData.instructor_id || 'any'} onValueChange={(value) => setFormData({...formData, instructor_id: value === 'any' ? null : value})}>
               <SelectTrigger>
                 <SelectValue placeholder="Any instructor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Instructor</SelectItem>
+                <SelectItem value="any">Any Instructor</SelectItem>
                 {instructors?.map((instructor) => (
                   <SelectItem key={instructor.id} value={instructor.id}>
                     {instructor.first_name} {instructor.last_name}
