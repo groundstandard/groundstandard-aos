@@ -2408,6 +2408,10 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      process_expired_class_packs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_payment_analytics: {
         Args: { start_date: string; end_date: string }
         Returns: undefined
