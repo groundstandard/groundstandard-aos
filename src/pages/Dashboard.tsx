@@ -109,9 +109,22 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-          {/* Header with Chat and Settings */}
-          <div className="flex justify-end items-center mb-4 sm:mb-6">
-            <div className="flex items-center gap-2">
+          {/* Main Header - Admin Dashboard Title with Chat and Settings */}
+          <div className="flex justify-between items-center mb-6">
+            {/* Left side - Admin Dashboard Title */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
+              <div>
+                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
+                <p className="text-xs sm:text-sm md:text-lg text-muted-foreground hidden sm:block">
+                  Complete management and analytics for your martial arts academy
+                </p>
+              </div>
+            </div>
+
+            {/* Right side - Chat and Settings buttons */}
+            {/* Desktop/Tablet Layout */}
+            <div className="hidden sm:flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -156,31 +169,58 @@ const Dashboard = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {/* Mobile Layout - Stacked Chat and Settings */}
+            <div className="flex sm:hidden flex-col gap-1">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 h-8"
+                onClick={() => navigate('/chat')}
+              >
+                <MessageCircle className="h-3 w-3" />
+                <span className="text-xs">Chat</span>
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex items-center gap-1 h-8"
+                  >
+                    <Settings className="h-3 w-3" />
+                    <span className="text-xs">Settings</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
+                  <DropdownMenuItem onClick={() => toast({ title: "Notifications", description: "Notifications feature coming soon" })}>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Dialog>
+                      <DialogTrigger className="flex items-center w-full px-2 py-1.5 text-sm cursor-pointer hover:bg-accent">
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Profile Management</DialogTitle>
+                        </DialogHeader>
+                        <ProfileView />
+                      </DialogContent>
+                    </Dialog>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          {/* Admin Header Section */}
+          {/* Navigation Tabs */}
           <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="h-8 w-8 text-primary" />
-                  <h1 className="text-4xl font-bold text-foreground">Admin Dashboard</h1>
-                </div>
-                <p className="text-lg text-muted-foreground">
-                  Complete management and analytics for your martial arts academy
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Notifications
-                </Button>
-              </div>
-            </div>
-
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
+            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">`
               <Button 
                 variant="ghost" 
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
