@@ -257,21 +257,23 @@ const Dashboard = () => {
                   const IconComponent = stat.icon;
                   return (
                     <Card key={index} className="hover:shadow-lg transition-shadow h-32 flex flex-col">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4 min-h-[44px]">
                         <CardTitle className="text-sm font-medium text-muted-foreground leading-tight">
                           {stat.title}
                         </CardTitle>
                         <IconComponent className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
                       </CardHeader>
-                      <CardContent className="flex-1 flex flex-col justify-between">
-                        <div className="text-2xl font-bold mb-auto">{stat.value}</div>
-                        <p className={`text-xs leading-tight mt-auto ${
-                          stat.trend === 'up' ? 'text-green-600' : 
-                          stat.trend === 'down' ? 'text-red-600' : 
-                          'text-muted-foreground'
-                        }`}>
-                          {stat.change} from last month
-                        </p>
+                      <CardContent className="flex-1 flex flex-col px-4 pb-4 pt-0">
+                        <div className="text-2xl font-bold flex-1 flex items-start">{stat.value}</div>
+                        <div className="h-[20px] flex items-end">
+                          <p className={`text-xs leading-none ${
+                            stat.trend === 'up' ? 'text-green-600' : 
+                            stat.trend === 'down' ? 'text-red-600' : 
+                            'text-muted-foreground'
+                          }`}>
+                            {stat.change} from last month
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   );
