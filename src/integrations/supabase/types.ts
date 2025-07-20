@@ -1530,6 +1530,75 @@ export type Database = {
           },
         ]
       }
+      membership_subscriptions: {
+        Row: {
+          auto_renewal: boolean | null
+          created_at: string
+          cycle_number: number | null
+          discount_expires_at: string | null
+          end_date: string | null
+          id: string
+          membership_plan_id: string
+          next_billing_date: string | null
+          notes: string | null
+          profile_id: string
+          renewal_discount_percentage: number | null
+          start_date: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_renewal?: boolean | null
+          created_at?: string
+          cycle_number?: number | null
+          discount_expires_at?: string | null
+          end_date?: string | null
+          id?: string
+          membership_plan_id: string
+          next_billing_date?: string | null
+          notes?: string | null
+          profile_id: string
+          renewal_discount_percentage?: number | null
+          start_date?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_renewal?: boolean | null
+          created_at?: string
+          cycle_number?: number | null
+          discount_expires_at?: string | null
+          end_date?: string | null
+          id?: string
+          membership_plan_id?: string
+          next_billing_date?: string | null
+          notes?: string | null
+          profile_id?: string
+          renewal_discount_percentage?: number | null
+          start_date?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_subscriptions_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string | null

@@ -33,6 +33,7 @@ import {
   UserPlus
 } from "lucide-react";
 import { AddFamilyMemberDialog } from "@/components/contacts/AddFamilyMemberDialog";
+import { ActiveMembershipCard } from "@/components/contacts/ActiveMembershipCard";
 
 interface Contact {
   id: string;
@@ -631,71 +632,76 @@ const ContactProfile = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Recent Payments */}
-              <Card className="card-minimal">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Recent Payments
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {payments.slice(0, 5).map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div>
-                          <p className="font-medium">{payment.description || 'Payment'}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(payment.payment_date).toLocaleDateString()}
-                          </p>
+            <div className="space-y-4">
+              {/* Active Membership Section */}
+              <ActiveMembershipCard contactId={contact?.id} />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Recent Payments */}
+                <Card className="card-minimal">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Recent Payments
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {payments.slice(0, 5).map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <div>
+                            <p className="font-medium">{payment.description || 'Payment'}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(payment.payment_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatCurrency(payment.amount)}</p>
+                            <Badge variant="outline" className={getStatusColor(payment.status)}>
+                              {payment.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                          <Badge variant="outline" className={getStatusColor(payment.status)}>
-                            {payment.status}
+                      ))}
+                      {payments.length === 0 && (
+                        <p className="text-muted-foreground text-center py-4">No payments recorded</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Attendance */}
+                <Card className="card-minimal">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Recent Attendance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {attendance.slice(0, 10).map((record) => (
+                        <div key={record.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <div>
+                            <p className="text-sm">
+                              {new Date(record.date).toLocaleDateString()}
+                            </p>
+                            {record.notes && (
+                              <p className="text-xs text-muted-foreground">{record.notes}</p>
+                            )}
+                          </div>
+                          <Badge variant="outline" className={getStatusColor(record.status)}>
+                            {record.status}
                           </Badge>
                         </div>
-                      </div>
-                    ))}
-                    {payments.length === 0 && (
-                      <p className="text-muted-foreground text-center py-4">No payments recorded</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Attendance */}
-              <Card className="card-minimal">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Recent Attendance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {attendance.slice(0, 10).map((record) => (
-                      <div key={record.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                        <div>
-                          <p className="text-sm">
-                            {new Date(record.date).toLocaleDateString()}
-                          </p>
-                          {record.notes && (
-                            <p className="text-xs text-muted-foreground">{record.notes}</p>
-                          )}
-                        </div>
-                        <Badge variant="outline" className={getStatusColor(record.status)}>
-                          {record.status}
-                        </Badge>
-                      </div>
-                    ))}
-                    {attendance.length === 0 && (
-                      <p className="text-muted-foreground text-center py-4">No attendance recorded</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      ))}
+                      {attendance.length === 0 && (
+                        <p className="text-muted-foreground text-center py-4">No attendance recorded</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 

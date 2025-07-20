@@ -556,7 +556,7 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="quarterly">Quarterly (3 months)</SelectItem>
                   <SelectItem value="semi_annual">Semi-Annual (6 months)</SelectItem>
-                  <SelectItem value="annual">Annual (12 months)</SelectItem>
+                  <SelectItem value="annual">Annual (12-Month Cycle with Auto-Renewal)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
