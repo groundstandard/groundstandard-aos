@@ -30,6 +30,8 @@ import Automations from "./pages/Automations";
 import PerformanceTargets from "./pages/PerformanceTargets";
 import Settings from "./pages/Settings";
 import AcademySetup from "./pages/AcademySetup";
+import AcceptInvitation from "./pages/AcceptInvitation";
+import TeamManagement from "./pages/TeamManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +72,8 @@ const AppRoutes = () => {
         <Route path="/admin/performance-targets" element={user ? <AcademyGatekeeper><PerformanceTargets /></AcademyGatekeeper> : <Auth />} />
         <Route path="/settings" element={user ? <AcademyGatekeeper><Settings /></AcademyGatekeeper> : <Auth />} />
         <Route path="/academy-setup" element={user ? <AcademySetup /> : <Auth />} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
+        <Route path="/team" element={user ? <AcademyGatekeeper><TeamManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
