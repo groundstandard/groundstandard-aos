@@ -346,7 +346,7 @@ export const AttendanceManagement = () => {
     );
   };
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
     return (
       <Card>
         <CardContent className="p-6">
