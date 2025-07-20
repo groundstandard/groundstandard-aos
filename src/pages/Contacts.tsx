@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
 import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { ContactCard } from "@/components/contacts/ContactCard";
+import { ContactsTable } from "@/components/contacts/ContactsTable";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
 import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
@@ -75,7 +76,7 @@ const Contacts = () => {
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showFamiliesOnly, setShowFamiliesOnly] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'family'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'family'>('list');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -331,6 +332,10 @@ const Contacts = () => {
     });
   };
 
+  const handleContactClick = (contact: Contact) => {
+    navigate(`/contacts/${contact.id}`);
+  };
+
   const ContactForm = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -458,32 +463,24 @@ const Contacts = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/contacts/table')}
-              className="mr-2"
-            >
-              <Table className="h-4 w-4 mr-2" />
-              Table View
-            </Button>
 
             {/* View Mode Toggle */}
             <div className="flex border rounded-lg">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="rounded-r-none"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
+                className="rounded-r-none"
+              >
+                <Table className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
                 className="rounded-none"
               >
-                <List className="h-4 w-4" />
+                <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
                 variant={viewMode === 'family' ? 'default' : 'ghost'}
@@ -612,9 +609,19 @@ const Contacts = () => {
                 </div>
               )}
             </div>
+          ) : viewMode === 'list' ? (
+            // Table View
+            <ContactsTable
+              contacts={organizeContacts.allFiltered}
+              onView={handleViewContact}
+              onEdit={handleEditContactClick}
+              onAddChild={handleAddChild}
+              onViewFamily={handleViewFamily}
+              onContactClick={handleContactClick}
+            />
           ) : (
-            // Grid or List View
-            <div className={viewMode === 'grid' ? 'grid gap-4 md:grid-cols-2 lg:grid-cols-3' : 'space-y-3'}>
+            // Grid View
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {organizeContacts.allFiltered.map((contact) => {
                 const children = contacts.filter(child => child.parent_id === contact.id);
                 return (

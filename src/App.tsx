@@ -23,6 +23,7 @@ import Events from "./pages/Events";
 import Subscription from "./pages/Subscription";
 import Contacts from "./pages/Contacts";
 import ContactTable from "./pages/ContactTable";
+import ContactProfile from "./pages/ContactProfile";
 import Automations from "./pages/Automations";
 import PerformanceTargets from "./pages/PerformanceTargets";
 import Settings from "./pages/Settings";
@@ -59,6 +60,7 @@ const AppRoutes = () => {
         <Route path="/subscription" element={user ? <Subscription /> : <Auth />} />
         <Route path="/contacts" element={user ? <Contacts /> : <Auth />} />
         <Route path="/contacts/table" element={user ? <ContactTable /> : <Auth />} />
+        <Route path="/contacts/:id" element={user ? <ContactProfile /> : <Auth />} />
         <Route path="/automations" element={user ? <Automations /> : <Auth />} />
         <Route path="/admin/performance-targets" element={user ? <PerformanceTargets /> : <Auth />} />
         <Route path="/settings" element={user ? <Settings /> : <Auth />} />

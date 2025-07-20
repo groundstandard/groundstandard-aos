@@ -48,6 +48,7 @@ interface ContactsTableProps {
   onEdit: (contact: Contact) => void;
   onAddChild: (contact: Contact) => void;
   onViewFamily: (contact: Contact) => void;
+  onContactClick?: (contact: Contact) => void;
 }
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -67,7 +68,8 @@ export const ContactsTable = ({
   onView, 
   onEdit, 
   onAddChild, 
-  onViewFamily 
+  onViewFamily,
+  onContactClick 
 }: ContactsTableProps) => {
   const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [sortBy, setSortBy] = useState<string>('full_name');
@@ -328,6 +330,14 @@ export const ContactsTable = ({
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    ) : column.id === 'full_name' && onContactClick ? (
+                      <button 
+                        onClick={() => onContactClick(contact)}
+                        className="text-left hover:text-primary hover:underline font-medium transition-colors"
+                        title={formatCellValue(contact, column.id)}
+                      >
+                        {formatCellValue(contact, column.id)}
+                      </button>
                     ) : (
                       <span className="truncate block max-w-full" title={formatCellValue(contact, column.id)}>
                         {formatCellValue(contact, column.id)}

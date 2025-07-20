@@ -1,0 +1,621 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { BackButton } from "@/components/ui/BackButton";
+import { 
+  User, 
+  Phone, 
+  Mail, 
+  Calendar,
+  Award,
+  Users,
+  CreditCard,
+  DollarSign,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Plus,
+  Edit,
+  Receipt,
+  Target,
+  UserPlus
+} from "lucide-react";
+
+interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  belt_level?: string;
+  emergency_contact?: string;
+  membership_status: string;
+  parent_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Payment {
+  id: string;
+  amount: number;
+  status: string;
+  payment_date: string;
+  payment_method?: string;
+  description?: string;
+  student_id: string;
+}
+
+interface Attendance {
+  id: string;
+  date: string;
+  status: string;
+  notes?: string;
+  class_id: string;
+  student_id: string;
+}
+
+interface MembershipPlan {
+  id: string;
+  name: string;
+  base_price_cents: number;
+  billing_cycle: string;
+  description?: string;
+  is_active: boolean;
+}
+
+const ContactProfile = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { toast } = useToast();
+  
+  const [contact, setContact] = useState<Contact | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<Contact[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    if (id) {
+      fetchContactData(id);
+    }
+  }, [id]);
+
+  const fetchContactData = async (contactId: string) => {
+    try {
+      setLoading(true);
+
+      // Fetch contact details
+      const { data: contactData, error: contactError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', contactId)
+        .single();
+
+      if (contactError) throw contactError;
+      setContact(contactData);
+
+      // Fetch family members (if this contact is a parent)
+      const { data: familyData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('parent_id', contactId);
+
+      setFamilyMembers(familyData || []);
+
+      // Fetch payment history
+      const { data: paymentData } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('student_id', contactId)
+        .order('payment_date', { ascending: false });
+
+      setPayments(paymentData || []);
+
+      // Fetch attendance history
+      const { data: attendanceData } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', contactId)
+        .order('date', { ascending: false })
+        .limit(50);
+
+      setAttendance(attendanceData || []);
+
+      // Fetch available membership plans
+      const { data: plansData } = await supabase
+        .from('membership_plans')
+        .select('*')
+        .eq('is_active', true);
+
+      setMembershipPlans(plansData || []);
+
+    } catch (error) {
+      console.error('Error fetching contact data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load contact information",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreatePayment = async (planId: string, amount: number, description: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          planId,
+          amount,
+          description,
+          paymentType: 'payment'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Payment Link Created",
+          description: "Opening payment window...",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create payment link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInitials = (contact: Contact) => {
+    return `${contact.first_name?.[0] || ''}${contact.last_name?.[0] || ''}`.toUpperCase();
+  };
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+      case 'paid':
+      case 'active':
+      case 'present':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+      case 'cancelled':
+      case 'absent':
+        return 'bg-red-100 text-red-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  const getTotalPaid = () => {
+    return payments
+      .filter(p => p.status === 'completed')
+      .reduce((sum, p) => sum + p.amount, 0);
+  };
+
+  const getOutstandingBalance = () => {
+    return payments
+      .filter(p => p.status === 'pending')
+      .reduce((sum, p) => sum + p.amount, 0);
+  };
+
+  const getAttendanceRate = () => {
+    if (attendance.length === 0) return 0;
+    const presentCount = attendance.filter(a => a.status === 'present').length;
+    return Math.round((presentCount / attendance.length) * 100);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-6">
+            <BackButton />
+            <div>Loading contact profile...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!contact) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-6">
+            <BackButton />
+            <div>Contact not found</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-subtle">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <BackButton />
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <User className="h-8 w-8 text-primary" />
+              {contact.first_name} {contact.last_name}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Contact Profile & Management
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/contacts`)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Contact
+          </Button>
+        </div>
+
+        {/* Profile Header Card */}
+        <Card className="card-minimal shadow-elegant mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-6">
+              <Avatar className="h-24 w-24 shadow-soft">
+                <AvatarImage src="" alt={`${contact.first_name} ${contact.last_name}`} />
+                <AvatarFallback className="text-xl font-semibold bg-muted">
+                  {getInitials(contact)}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 space-y-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-2xl font-semibold text-foreground">
+                    {contact.first_name} {contact.last_name}
+                  </h2>
+                  <Badge variant="outline" className={getStatusColor(contact.membership_status)}>
+                    {contact.membership_status}
+                  </Badge>
+                  <Badge variant="secondary">
+                    {contact.role}
+                  </Badge>
+                  {contact.belt_level && (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      {contact.belt_level} Belt
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{contact.email}</span>
+                  </div>
+                  {contact.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{contact.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Joined {new Date(contact.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gradient-subtle rounded-lg">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{formatCurrency(getTotalPaid())}</div>
+                    <p className="text-sm text-muted-foreground">Total Paid</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{formatCurrency(getOutstandingBalance())}</div>
+                    <p className="text-sm text-muted-foreground">Outstanding</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{getAttendanceRate()}%</div>
+                    <p className="text-sm text-muted-foreground">Attendance</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{familyMembers.length}</div>
+                    <p className="text-sm text-muted-foreground">Family Members</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="family">Family</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Payments */}
+              <Card className="card-minimal">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Recent Payments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {payments.slice(0, 5).map((payment) => (
+                      <div key={payment.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                        <div>
+                          <p className="font-medium">{payment.description || 'Payment'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(payment.payment_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{formatCurrency(payment.amount)}</p>
+                          <Badge variant="outline" className={getStatusColor(payment.status)}>
+                            {payment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {payments.length === 0 && (
+                      <p className="text-muted-foreground text-center py-4">No payments recorded</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Attendance */}
+              <Card className="card-minimal">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Recent Attendance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {attendance.slice(0, 10).map((record) => (
+                      <div key={record.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                        <div>
+                          <p className="text-sm">
+                            {new Date(record.date).toLocaleDateString()}
+                          </p>
+                          {record.notes && (
+                            <p className="text-xs text-muted-foreground">{record.notes}</p>
+                          )}
+                        </div>
+                        <Badge variant="outline" className={getStatusColor(record.status)}>
+                          {record.status}
+                        </Badge>
+                      </div>
+                    ))}
+                    {attendance.length === 0 && (
+                      <p className="text-muted-foreground text-center py-4">No attendance recorded</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Payment Actions */}
+              <Card className="card-minimal">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5" />
+                    Create Payment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {membershipPlans.map((plan) => (
+                    <Button
+                      key={plan.id}
+                      variant="outline"
+                      className="w-full justify-between"
+                      onClick={() => handleCreatePayment(plan.id, plan.base_price_cents, plan.name)}
+                    >
+                      <span>{plan.name}</span>
+                      <span>{formatCurrency(plan.base_price_cents)}</span>
+                    </Button>
+                  ))}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleCreatePayment('', 2500, 'Custom Payment')}
+                  >
+                    Custom Amount
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Payment History */}
+              <Card className="card-minimal lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Receipt className="h-5 w-5" />
+                    Payment History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {payments.map((payment) => (
+                      <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-full bg-primary/10">
+                              <DollarSign className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{payment.description || 'Payment'}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(payment.payment_date).toLocaleDateString()} • {payment.payment_method || 'Credit Card'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
+                          <Badge variant="outline" className={getStatusColor(payment.status)}>
+                            {payment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {payments.length === 0 && (
+                      <p className="text-muted-foreground text-center py-8">No payment history</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Attendance Tab */}
+          <TabsContent value="attendance" className="space-y-6">
+            <Card className="card-minimal">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Attendance History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {attendance.map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${
+                          record.status === 'present' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          {record.status === 'present' ? 
+                            <CheckCircle className="h-4 w-4 text-green-600" /> :
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                          }
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {new Date(record.date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                          {record.notes && (
+                            <p className="text-sm text-muted-foreground">{record.notes}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className={getStatusColor(record.status)}>
+                        {record.status}
+                      </Badge>
+                    </div>
+                  ))}
+                  {attendance.length === 0 && (
+                    <p className="text-muted-foreground text-center py-8">No attendance records</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Family Tab */}
+          <TabsContent value="family" className="space-y-6">
+            <Card className="card-minimal">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Family Members
+                </CardTitle>
+                <Button variant="outline" size="sm">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Family Member
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {familyMembers.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>{getInitials(member)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.first_name} {member.last_name}</p>
+                          <p className="text-sm text-muted-foreground">{member.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={getStatusColor(member.membership_status)}>
+                          {member.membership_status}
+                        </Badge>
+                        {member.belt_level && (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                            {member.belt_level}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {familyMembers.length === 0 && (
+                    <p className="text-muted-foreground text-center py-8">No family members</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="space-y-6">
+            <Card className="card-minimal">
+              <CardHeader>
+                <CardTitle>Contact Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-center py-8">Notes feature coming soon</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default ContactProfile;
