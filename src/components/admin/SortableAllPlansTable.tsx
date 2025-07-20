@@ -340,20 +340,21 @@ export const SortableAllPlansTable = () => {
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <CardContent className="py-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div>
-              <Label>Search</Label>
+              <Label className="text-xs">Search</Label>
               <Input
                 placeholder="Search plans..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="h-8"
               />
             </div>
             <div>
-              <Label>Type</Label>
+              <Label className="text-xs">Type</Label>
               <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -366,9 +367,9 @@ export const SortableAllPlansTable = () => {
               </Select>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label className="text-xs">Status</Label>
               <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -379,27 +380,27 @@ export const SortableAllPlansTable = () => {
               </Select>
             </div>
             <div>
-              <Label>Age Group</Label>
+              <Label className="text-xs">Age Group</Label>
               <Select value={filters.ageGroup} onValueChange={(value) => setFilters(prev => ({ ...prev, ageGroup: value }))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Ages</SelectItem>
+                  <SelectItem value="youth">Youth</SelectItem>
+                  <SelectItem value="adult">Adult</SelectItem>
                   <SelectItem value="kids">Kids</SelectItem>
                   <SelectItem value="teens">Teens</SelectItem>
-                  <SelectItem value="adults">Adults</SelectItem>
-                  <SelectItem value="seniors">Seniors</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
+            <div>
               <Button 
-                variant="outline"
-                onClick={() => setFilters({ type: 'all', status: 'all', ageGroup: 'all', search: '' })}
+                variant="outline" 
+                onClick={() => setFilters({ search: '', type: 'all', status: 'all', ageGroup: 'all' })}
+                className="h-8 mt-5"
               >
-                <Filter className="h-4 w-4 mr-2" />
-                Clear
+                Clear Filters
               </Button>
             </div>
           </div>
