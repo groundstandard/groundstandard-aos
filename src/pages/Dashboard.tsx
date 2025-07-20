@@ -122,9 +122,18 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Right side - Chat and Settings buttons */}
+            {/* Right side - Check-In, Chat and Settings buttons */}
             {/* Desktop/Tablet Layout */}
             <div className="hidden sm:flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => navigate('/checkin')}
+              >
+                <Clock className="h-4 w-4" />
+                Check-In
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -170,8 +179,17 @@ const Dashboard = () => {
               </DropdownMenu>
             </div>
 
-            {/* Mobile Layout - Stacked Chat and Settings */}
+            {/* Mobile Layout - Stacked Check-In, Chat and Settings */}
             <div className="flex sm:hidden flex-col gap-1">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 h-8"
+                onClick={() => navigate('/checkin')}
+              >
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">Check-In</span>
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm"
