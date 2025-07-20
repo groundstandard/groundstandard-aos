@@ -757,6 +757,87 @@ export type Database = {
           },
         ]
       }
+      discount_types: {
+        Row: {
+          applies_to: string | null
+          created_at: string | null
+          description: string | null
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          is_active: boolean | null
+          max_family_members: number | null
+          minimum_members: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_family_members?: number | null
+          minimum_members?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_family_members?: number | null
+          minimum_members?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      drop_in_options: {
+        Row: {
+          age_group: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          option_type: string | null
+          price_cents: number
+          trial_duration_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          age_group?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          option_type?: string | null
+          price_cents: number
+          trial_duration_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          age_group?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          option_type?: string | null
+          price_cents?: number
+          trial_duration_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           created_at: string
@@ -1248,6 +1329,98 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_plan_types: {
+        Row: {
+          contract_length_months: number | null
+          created_at: string | null
+          description: string | null
+          has_contract: boolean | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          contract_length_months?: number | null
+          created_at?: string | null
+          description?: string | null
+          has_contract?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          contract_length_months?: number | null
+          created_at?: string | null
+          description?: string | null
+          has_contract?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      membership_plans: {
+        Row: {
+          age_group: string | null
+          base_price_cents: number
+          billing_cycle: string | null
+          classes_per_week: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_unlimited: boolean | null
+          name: string
+          plan_type_id: string | null
+          setup_fee_cents: number | null
+          trial_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          age_group?: string | null
+          base_price_cents: number
+          billing_cycle?: string | null
+          classes_per_week?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_unlimited?: boolean | null
+          name: string
+          plan_type_id?: string | null
+          setup_fee_cents?: number | null
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          age_group?: string | null
+          base_price_cents?: number
+          billing_cycle?: string | null
+          classes_per_week?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_unlimited?: boolean | null
+          name?: string
+          plan_type_id?: string | null
+          setup_fee_cents?: number | null
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_plans_plan_type_id_fkey"
+            columns: ["plan_type_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plan_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string | null
@@ -1648,6 +1821,59 @@ export type Database = {
             columns: ["academy_id"]
             isOneToOne: false
             referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      private_sessions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          instructor_id: string | null
+          is_active: boolean | null
+          name: string
+          package_size: number | null
+          price_per_session_cents: number
+          session_type: string | null
+          total_price_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_active?: boolean | null
+          name: string
+          package_size?: number | null
+          price_per_session_cents: number
+          session_type?: string | null
+          total_price_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_active?: boolean | null
+          name?: string
+          package_size?: number | null
+          price_per_session_cents?: number
+          session_type?: string | null
+          total_price_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_sessions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
