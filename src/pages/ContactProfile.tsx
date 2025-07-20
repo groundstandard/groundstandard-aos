@@ -32,6 +32,7 @@ import {
   Target,
   UserPlus
 } from "lucide-react";
+import { AddFamilyMemberDialog } from "@/components/contacts/AddFamilyMemberDialog";
 
 interface Contact {
   id: string;
@@ -1122,8 +1123,18 @@ const ContactProfile = () => {
         </Dialog>
 
         {/* Add Family Member Dialog */}
-        <Dialog open={showAddFamilyDialog} onOpenChange={setShowAddFamilyDialog}>
-          <DialogContent className="sm:max-w-[500px]">
+        <AddFamilyMemberDialog
+          open={showAddFamilyDialog}
+          onClose={() => setShowAddFamilyDialog(false)}
+          primaryContact={contact}
+          onMemberAdded={(member) => {
+            setFamilyMembers([...familyMembers, member]);
+            toast({
+              title: "Success",
+              description: "Family member added successfully",
+            });
+          }}
+        />
             <DialogHeader>
               <DialogTitle>Add Family Member</DialogTitle>
               <DialogDescription>
