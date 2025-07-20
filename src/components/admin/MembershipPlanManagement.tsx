@@ -399,92 +399,711 @@ export const MembershipPlanManagement = () => {
   );
 };
 
-// Placeholder dialog components that will be implemented
-const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Membership Plan
-      </Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Create Membership Plan</DialogTitle>
-        <DialogDescription>
-          Add a new membership plan for your academy
-        </DialogDescription>
-      </DialogHeader>
-      {/* Form will be implemented */}
-      <div className="p-4 text-center text-muted-foreground">
-        Form coming soon...
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+// Form components with full functionality
+const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    age_group: 'all',
+    base_price_cents: '',
+    billing_cycle: 'monthly',
+    classes_per_week: '',
+    is_unlimited: false,
+    setup_fee_cents: '',
+    trial_days: '',
+    plan_type_id: null,
+    is_active: true
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Private Session
-      </Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Create Private Session</DialogTitle>
-        <DialogDescription>
-          Add a new private session or package option
-        </DialogDescription>
-      </DialogHeader>
-      <div className="p-4 text-center text-muted-foreground">
-        Form coming soon...
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+  const { data: planTypes } = useQuery({
+    queryKey: ['membership-plan-types'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('membership_plan_types')
+        .select('*')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    }
+  });
 
-const CreateDropInDialog = () => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Drop-in Option
-      </Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Create Drop-in/Trial Option</DialogTitle>
-        <DialogDescription>
-          Add a new drop-in class or trial period option
-        </DialogDescription>
-      </DialogHeader>
-      <div className="p-4 text-center text-muted-foreground">
-        Form coming soon...
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+  const createPlan = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from('membership_plans')
+        .insert([{
+          ...data,
+          base_price_cents: parseInt(data.base_price_cents),
+          setup_fee_cents: data.setup_fee_cents ? parseInt(data.setup_fee_cents) : 0,
+          trial_days: data.trial_days ? parseInt(data.trial_days) : 0,
+          classes_per_week: data.is_unlimited ? null : parseInt(data.classes_per_week)
+        }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['membership-plans'] });
+      toast({ title: "Membership plan created successfully" });
+      setOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        age_group: 'all',
+        base_price_cents: '',
+        billing_cycle: 'monthly',
+        classes_per_week: '',
+        is_unlimited: false,
+        setup_fee_cents: '',
+        trial_days: '',
+        plan_type_id: null,
+        is_active: true
+      });
+    },
+    onError: (error) => {
+      toast({ title: "Error creating plan", description: error.message, variant: "destructive" });
+    }
+  });
 
-const CreateDiscountDialog = () => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Discount
-      </Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Create Discount</DialogTitle>
-        <DialogDescription>
-          Add a new discount type or family plan
-        </DialogDescription>
-      </DialogHeader>
-      <div className="p-4 text-center text-muted-foreground">
-        Form coming soon...
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createPlan.mutate(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Membership Plan
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create Membership Plan</DialogTitle>
+          <DialogDescription>
+            Add a new membership plan for your academy
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Plan Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="age_group">Age Group</Label>
+              <Select value={formData.age_group} onValueChange={(value) => setFormData({...formData, age_group: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ages</SelectItem>
+                  <SelectItem value="youth">Youth</SelectItem>
+                  <SelectItem value="adult">Adult</SelectItem>
+                  <SelectItem value="kids">Kids</SelectItem>
+                  <SelectItem value="teens">Teens</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="base_price_cents">Monthly Price ($)</Label>
+              <Input
+                id="base_price_cents"
+                type="number"
+                step="0.01"
+                value={formData.base_price_cents}
+                onChange={(e) => setFormData({...formData, base_price_cents: (parseFloat(e.target.value) * 100).toString()})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="billing_cycle">Billing Cycle</Label>
+              <Select value={formData.billing_cycle} onValueChange={(value) => setFormData({...formData, billing_cycle: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly (3 months)</SelectItem>
+                  <SelectItem value="semi_annual">Semi-Annual (6 months)</SelectItem>
+                  <SelectItem value="annual">Annual (12 months)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={formData.is_unlimited}
+              onCheckedChange={(checked) => setFormData({...formData, is_unlimited: checked})}
+            />
+            <Label>Unlimited Classes</Label>
+          </div>
+
+          {!formData.is_unlimited && (
+            <div>
+              <Label htmlFor="classes_per_week">Classes per Week</Label>
+              <Input
+                id="classes_per_week"
+                type="number"
+                min="1"
+                value={formData.classes_per_week}
+                onChange={(e) => setFormData({...formData, classes_per_week: e.target.value})}
+                required={!formData.is_unlimited}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="setup_fee_cents">Setup Fee ($)</Label>
+              <Input
+                id="setup_fee_cents"
+                type="number"
+                step="0.01"
+                value={formData.setup_fee_cents}
+                onChange={(e) => setFormData({...formData, setup_fee_cents: (parseFloat(e.target.value || '0') * 100).toString()})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="trial_days">Trial Days</Label>
+              <Input
+                id="trial_days"
+                type="number"
+                min="0"
+                value={formData.trial_days}
+                onChange={(e) => setFormData({...formData, trial_days: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createPlan.isPending}>
+              {createPlan.isPending ? 'Creating...' : 'Create Plan'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    session_type: 'individual',
+    package_size: '1',
+    price_per_session_cents: '',
+    duration_minutes: '60',
+    instructor_id: null,
+    is_active: true
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createSession = useMutation({
+    mutationFn: async (data: any) => {
+      const packageSize = parseInt(data.package_size);
+      const pricePerSession = parseInt(data.price_per_session_cents);
+      const { error } = await supabase
+        .from('private_sessions')
+        .insert([{
+          ...data,
+          package_size: packageSize,
+          price_per_session_cents: pricePerSession,
+          total_price_cents: packageSize * pricePerSession,
+          duration_minutes: parseInt(data.duration_minutes),
+          instructor_id: data.instructor_id || null
+        }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['private-sessions'] });
+      toast({ title: "Private session created successfully" });
+      setOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        session_type: 'individual',
+        package_size: '1',
+        price_per_session_cents: '',
+        duration_minutes: '60',
+        instructor_id: null,
+        is_active: true
+      });
+    },
+    onError: (error) => {
+      toast({ title: "Error creating session", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createSession.mutate(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Private Session
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create Private Session</DialogTitle>
+          <DialogDescription>
+            Add a new private session or package option
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Session Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="session_type">Session Type</Label>
+              <Select value={formData.session_type} onValueChange={(value) => setFormData({...formData, session_type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Individual</SelectItem>
+                  <SelectItem value="semi_private">Semi-Private</SelectItem>
+                  <SelectItem value="package">Package Deal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="package_size">Package Size</Label>
+              <Input
+                id="package_size"
+                type="number"
+                min="1"
+                value={formData.package_size}
+                onChange={(e) => setFormData({...formData, package_size: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="price_per_session_cents">Price per Session ($)</Label>
+              <Input
+                id="price_per_session_cents"
+                type="number"
+                step="0.01"
+                value={formData.price_per_session_cents}
+                onChange={(e) => setFormData({...formData, price_per_session_cents: (parseFloat(e.target.value) * 100).toString()})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="duration_minutes">Duration (minutes)</Label>
+              <Input
+                id="duration_minutes"
+                type="number"
+                min="15"
+                step="15"
+                value={formData.duration_minutes}
+                onChange={(e) => setFormData({...formData, duration_minutes: e.target.value})}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="instructor_id">Specific Instructor (Optional)</Label>
+            <Select value={formData.instructor_id || ''} onValueChange={(value) => setFormData({...formData, instructor_id: value || null})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Any instructor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Any Instructor</SelectItem>
+                {instructors?.map((instructor) => (
+                  <SelectItem key={instructor.id} value={instructor.id}>
+                    {instructor.first_name} {instructor.last_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createSession.isPending}>
+              {createSession.isPending ? 'Creating...' : 'Create Session'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const CreateDropInDialog = () => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    option_type: 'drop_in',
+    price_cents: '',
+    trial_duration_days: '',
+    age_group: 'all',
+    is_active: true
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createDropIn = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from('drop_in_options')
+        .insert([{
+          ...data,
+          price_cents: parseInt(data.price_cents),
+          trial_duration_days: data.trial_duration_days ? parseInt(data.trial_duration_days) : null
+        }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drop-in-options'] });
+      toast({ title: "Drop-in option created successfully" });
+      setOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        option_type: 'drop_in',
+        price_cents: '',
+        trial_duration_days: '',
+        age_group: 'all',
+        is_active: true
+      });
+    },
+    onError: (error) => {
+      toast({ title: "Error creating option", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createDropIn.mutate(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Drop-in Option
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Drop-in/Trial Option</DialogTitle>
+          <DialogDescription>
+            Add a new drop-in class or trial period option
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Option Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="option_type">Type</Label>
+              <Select value={formData.option_type} onValueChange={(value) => setFormData({...formData, option_type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="drop_in">Drop-in Class</SelectItem>
+                  <SelectItem value="trial">Trial Period</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price_cents">Price ($)</Label>
+              <Input
+                id="price_cents"
+                type="number"
+                step="0.01"
+                value={formData.price_cents}
+                onChange={(e) => setFormData({...formData, price_cents: (parseFloat(e.target.value) * 100).toString()})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="age_group">Age Group</Label>
+              <Select value={formData.age_group} onValueChange={(value) => setFormData({...formData, age_group: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ages</SelectItem>
+                  <SelectItem value="youth">Youth</SelectItem>
+                  <SelectItem value="adult">Adult</SelectItem>
+                  <SelectItem value="kids">Kids</SelectItem>
+                  <SelectItem value="teens">Teens</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {formData.option_type === 'trial' && (
+            <div>
+              <Label htmlFor="trial_duration_days">Trial Duration (days)</Label>
+              <Input
+                id="trial_duration_days"
+                type="number"
+                min="1"
+                value={formData.trial_duration_days}
+                onChange={(e) => setFormData({...formData, trial_duration_days: e.target.value})}
+                required={formData.option_type === 'trial'}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createDropIn.isPending}>
+              {createDropIn.isPending ? 'Creating...' : 'Create Option'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const CreateDiscountDialog = () => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    discount_type: 'percentage',
+    discount_value: '',
+    applies_to: 'membership',
+    minimum_members: '1',
+    max_family_members: '',
+    is_active: true
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createDiscount = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from('discount_types')
+        .insert([{
+          ...data,
+          discount_value: parseFloat(data.discount_value),
+          minimum_members: parseInt(data.minimum_members),
+          max_family_members: data.max_family_members ? parseInt(data.max_family_members) : null
+        }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['discount-types'] });
+      toast({ title: "Discount created successfully" });
+      setOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        discount_type: 'percentage',
+        discount_value: '',
+        applies_to: 'membership',
+        minimum_members: '1',
+        max_family_members: '',
+        is_active: true
+      });
+    },
+    onError: (error) => {
+      toast({ title: "Error creating discount", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createDiscount.mutate(formData);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Discount
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Discount Type</DialogTitle>
+          <DialogDescription>
+            Add a new discount type or family plan
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Discount Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="discount_type">Discount Type</Label>
+              <Select value={formData.discount_type} onValueChange={(value) => setFormData({...formData, discount_type: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">Percentage</SelectItem>
+                  <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="discount_value">
+                {formData.discount_type === 'percentage' ? 'Percentage (%)' : 'Amount ($)'}
+              </Label>
+              <Input
+                id="discount_value"
+                type="number"
+                step={formData.discount_type === 'percentage' ? '1' : '0.01'}
+                value={formData.discount_value}
+                onChange={(e) => setFormData({...formData, discount_value: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="applies_to">Applies To</Label>
+              <Select value={formData.applies_to} onValueChange={(value) => setFormData({...formData, applies_to: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="membership">Membership Plans</SelectItem>
+                  <SelectItem value="private_sessions">Private Sessions</SelectItem>
+                  <SelectItem value="drop_in">Drop-in Classes</SelectItem>
+                  <SelectItem value="all">All Services</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="minimum_members">Minimum Family Members</Label>
+              <Input
+                id="minimum_members"
+                type="number"
+                min="1"
+                value={formData.minimum_members}
+                onChange={(e) => setFormData({...formData, minimum_members: e.target.value})}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="max_family_members">Maximum Family Members</Label>
+              <Input
+                id="max_family_members"
+                type="number"
+                min="1"
+                value={formData.max_family_members}
+                onChange={(e) => setFormData({...formData, max_family_members: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createDiscount.isPending}>
+              {createDiscount.isPending ? 'Creating...' : 'Create Discount'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
