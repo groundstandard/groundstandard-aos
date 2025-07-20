@@ -699,9 +699,8 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 />
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
