@@ -18,6 +18,7 @@ import { ContactsTable } from "@/components/contacts/ContactsTable";
 import { BulkActionsToolbar } from "@/components/contacts/BulkActionsToolbar";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
+import { EnhancedContactForm } from "@/components/contacts/EnhancedContactForm";
 import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
 import { 
   Search, 
@@ -64,6 +65,8 @@ interface ContactFormData {
   belt_level: string;
   emergency_contact: string;
   membership_status: string;
+  relationship_type: string;
+  linked_contact_id?: string;
 }
 
 const Contacts = () => {
@@ -94,7 +97,9 @@ const Contacts = () => {
     role: "member",
     belt_level: "",
     emergency_contact: "",
-    membership_status: "active"
+    membership_status: "active",
+    relationship_type: "none",
+    linked_contact_id: undefined
   });
 
   useEffect(() => {
@@ -110,7 +115,9 @@ const Contacts = () => {
       role: "member",
       belt_level: "",
       emergency_contact: "",
-      membership_status: "active"
+      membership_status: "active",
+      relationship_type: "none",
+      linked_contact_id: undefined
     });
   };
 
@@ -219,12 +226,22 @@ const Contacts = () => {
   };
 
   const handleAddContact = async () => {
-    toast({
-      title: "Add Contact",
-      description: "New contacts are typically added when users register for the academy through the authentication system.",
-    });
-    setShowAddDialog(false);
-    resetForm();
+    try {
+      // Simple demo implementation for now
+      toast({
+        title: "Contact Creation Demo",
+        description: `${formData.first_name} would be added${formData.linked_contact_id ? ' and linked as a family member' : ''}. This is a demo of the enhanced form functionality.`,
+      });
+      setShowAddDialog(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add contact",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditContact = async () => {
@@ -298,7 +315,9 @@ const Contacts = () => {
       role: contact.role,
       belt_level: contact.belt_level || "",
       emergency_contact: contact.emergency_contact || "",
-      membership_status: contact.membership_status
+      membership_status: contact.membership_status,
+      relationship_type: "none",
+      linked_contact_id: undefined
     });
     setShowEditDialog(true);
   };
@@ -338,111 +357,7 @@ const Contacts = () => {
     navigate(`/contacts/${contact.id}`);
   };
 
-  const ContactForm = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="first_name">First Name</Label>
-          <Input
-            id="first_name"
-            value={formData.first_name}
-            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-            placeholder="Enter first name"
-          />
-        </div>
-        <div>
-          <Label htmlFor="last_name">Last Name</Label>
-          <Input
-            id="last_name"
-            value={formData.last_name}
-            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-            placeholder="Enter last name"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({...formData, email: e.target.value})}
-          placeholder="Enter email address"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="phone">Phone</Label>
-        <Input
-          id="phone"
-          value={formData.phone}
-          onChange={(e) => setFormData({...formData, phone: e.target.value})}
-          placeholder="Enter phone number"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="role">Role</Label>
-          <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="visitor">Visitor</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="alumni">Alumni</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-              <SelectItem value="instructor">Instructor</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor="belt_level">Belt Level</Label>
-          <Select value={formData.belt_level} onValueChange={(value) => setFormData({...formData, belt_level: value})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select belt level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="white">White</SelectItem>
-              <SelectItem value="yellow">Yellow</SelectItem>
-              <SelectItem value="orange">Orange</SelectItem>
-              <SelectItem value="green">Green</SelectItem>
-              <SelectItem value="blue">Blue</SelectItem>
-              <SelectItem value="brown">Brown</SelectItem>
-              <SelectItem value="black">Black</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="emergency_contact">Emergency Contact</Label>
-        <Input
-          id="emergency_contact"
-          value={formData.emergency_contact}
-          onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})}
-          placeholder="Enter emergency contact"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="membership_status">Membership Status</Label>
-        <Select value={formData.membership_status} onValueChange={(value) => setFormData({...formData, membership_status: value})}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
+  // Enhanced ContactForm is now imported from separate component
 
   if (loading) {
     return <div className="p-8">Loading contacts...</div>;
@@ -508,7 +423,12 @@ const Contacts = () => {
                     Add a new member to your academy
                   </DialogDescription>
                 </DialogHeader>
-                <ContactForm />
+                <EnhancedContactForm 
+                  formData={formData} 
+                  setFormData={setFormData} 
+                  contacts={contacts}
+                  mode="add"
+                />
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowAddDialog(false)}>
                     Cancel
@@ -762,7 +682,12 @@ const Contacts = () => {
                 Update contact information
               </DialogDescription>
             </DialogHeader>
-            <ContactForm />
+            <EnhancedContactForm 
+              formData={formData} 
+              setFormData={setFormData} 
+              contacts={contacts}
+              mode="edit"
+            />
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                 Cancel
