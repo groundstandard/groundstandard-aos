@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -66,6 +67,7 @@ import {
 
 export const SortableAllPlansTable = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [filters, setFilters] = useState({
     type: 'all',
@@ -76,6 +78,103 @@ export const SortableAllPlansTable = () => {
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState('');
+  const [editingPlan, setEditingPlan] = useState<AllPlan | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // Delete mutation
+  const deletePlan = useMutation({
+    mutationFn: async (plan: AllPlan) => {
+      if (plan.type === 'membership') {
+        const { error } = await supabase
+          .from('membership_plans')
+          .delete()
+          .eq('id', plan.id);
+        if (error) throw error;
+      } else if (plan.type === 'private_session') {
+        const { error } = await supabase
+          .from('private_sessions')
+          .delete()
+          .eq('id', plan.id);
+        if (error) throw error;
+      } else if (plan.type === 'drop_in' || plan.type === 'trial') {
+        const { error } = await supabase
+          .from('drop_in_options')
+          .delete()
+          .eq('id', plan.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, deletedPlan) => {
+      if (deletedPlan.type === 'membership') {
+        queryClient.invalidateQueries({ queryKey: ['membership-plans'] });
+      } else if (deletedPlan.type === 'private_session') {
+        queryClient.invalidateQueries({ queryKey: ['private-sessions'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['drop-in-options'] });
+      }
+      toast({ title: "Plan deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting plan", description: error.message, variant: "destructive" });
+    }
+  });
+
+  // Update mutation
+  const updatePlan = useMutation({
+    mutationFn: async (plan: AllPlan) => {
+      if (plan.type === 'membership') {
+        const { error } = await supabase
+          .from('membership_plans')
+          .update({
+            name: plan.name,
+            is_active: plan.status,
+            base_price_cents: plan.price * 100,
+            age_group: plan.ageGroup,
+            classes_per_week: plan.classes_per_week,
+            is_unlimited: plan.is_unlimited
+          })
+          .eq('id', plan.id);
+        if (error) throw error;
+      } else if (plan.type === 'private_session') {
+        const { error } = await supabase
+          .from('private_sessions')
+          .update({
+            name: plan.name,
+            is_active: plan.status,
+            price_per_session_cents: plan.price * 100,
+            session_type: plan.session_type
+          })
+          .eq('id', plan.id);
+        if (error) throw error;
+      } else if (plan.type === 'drop_in' || plan.type === 'trial') {
+        const { error } = await supabase
+          .from('drop_in_options')
+          .update({
+            name: plan.name,
+            is_active: plan.status,
+            price_cents: plan.price * 100,
+            age_group: plan.ageGroup
+          })
+          .eq('id', plan.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, updatedPlan) => {
+      if (updatedPlan.type === 'membership') {
+        queryClient.invalidateQueries({ queryKey: ['membership-plans'] });
+      } else if (updatedPlan.type === 'private_session') {
+        queryClient.invalidateQueries({ queryKey: ['private-sessions'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['drop-in-options'] });
+      }
+      toast({ title: "Plan updated successfully" });
+      setEditDialogOpen(false);
+      setEditingPlan(null);
+    },
+    onError: (error) => {
+      toast({ title: "Error updating plan", description: error.message, variant: "destructive" });
+    }
+  });
 
   // Fetch all plan types
   const { data: membershipPlans } = useQuery({
@@ -508,16 +607,41 @@ export const SortableAllPlansTable = () => {
                     {plan.status ? 'Active' : 'Inactive'}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setEditingPlan(plan);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Plan</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "{plan.name}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deletePlan.mutate(plan)}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -529,6 +653,74 @@ export const SortableAllPlansTable = () => {
           </div>
         )}
       </Card>
+
+      {/* Edit Plan Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Plan</DialogTitle>
+            <DialogDescription>
+              Update the details for this plan
+            </DialogDescription>
+          </DialogHeader>
+          {editingPlan && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editingPlan.name}
+                  onChange={(e) => setEditingPlan({...editingPlan, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-price">Price ($)</Label>
+                <Input
+                  id="edit-price"
+                  type="number"
+                  step="0.01"
+                  value={editingPlan.price}
+                  onChange={(e) => setEditingPlan({...editingPlan, price: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              {editingPlan.type === 'membership' && (
+                <div>
+                  <Label htmlFor="edit-classes">Classes per Week</Label>
+                  <Input
+                    id="edit-classes"
+                    type="number"
+                    value={editingPlan.classes_per_week || ''}
+                    onChange={(e) => setEditingPlan({...editingPlan, classes_per_week: parseInt(e.target.value) || undefined})}
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="edit-age-group">Age Group</Label>
+                <Select value={editingPlan.ageGroup} onValueChange={(value) => setEditingPlan({...editingPlan, ageGroup: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ages</SelectItem>
+                    <SelectItem value="youth">Youth</SelectItem>
+                    <SelectItem value="adult">Adult</SelectItem>
+                    <SelectItem value="kids">Kids</SelectItem>
+                    <SelectItem value="teens">Teens</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => updatePlan.mutate(editingPlan)}>
+                  Update Plan
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
