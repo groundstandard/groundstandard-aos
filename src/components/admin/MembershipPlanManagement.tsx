@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -205,7 +206,13 @@ export const MembershipPlanManagement = () => {
                       {plan.is_unlimited ? 'Unlimited' : plan.classes_per_week}
                     </TableCell>
                     <TableCell>{formatPrice(plan.base_price_cents)}</TableCell>
-                    <TableCell>{plan.billing_cycle}</TableCell>
+                    <TableCell>
+                      {plan.is_class_pack ? (
+                        <Badge variant="secondary">{plan.class_pack_size} Classes</Badge>
+                      ) : (
+                        `${plan.cycle_length_months}mo / ${plan.payment_frequency}`
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={plan.is_active ? 'default' : 'secondary'}>
                         {plan.is_active ? 'Active' : 'Inactive'}
@@ -419,8 +426,13 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
     age_group: 'all',
     base_price_cents: '',
     billing_cycle: 'monthly',
+    cycle_length_months: '1',
+    payment_frequency: 'monthly',
     classes_per_week: '',
     is_unlimited: false,
+    is_class_pack: false,
+    class_pack_size: '',
+    pack_expiry_days: '',
     setup_fee_cents: '',
     trial_days: '',
     plan_type_id: null,
@@ -464,8 +476,13 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
         age_group: 'all',
         base_price_cents: '',
         billing_cycle: 'monthly',
+        cycle_length_months: '1',
+        payment_frequency: 'monthly',
         classes_per_week: '',
         is_unlimited: false,
+        is_class_pack: false,
+        class_pack_size: '',
+        pack_expiry_days: '',
         setup_fee_cents: '',
         trial_days: '',
         plan_type_id: null,
@@ -558,11 +575,82 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                   <SelectItem value="semi_annual">Semi-Annual (6 months)</SelectItem>
                   <SelectItem value="annual">Annual (12-Month Cycle with Auto-Renewal)</SelectItem>
                 </SelectContent>
-              </Select>
-            </div>
-          </div>
+               </Select>
+             </div>
 
-          <div className="flex items-center space-x-2">
+             <div className="grid grid-cols-2 gap-4">
+               <div>
+                 <Label htmlFor="cycle_length_months">Cycle Length (Months)</Label>
+                 <Input
+                   id="cycle_length_months"
+                   type="number"
+                   min="1"
+                   max="36"
+                   value={formData.cycle_length_months}
+                   onChange={(e) => setFormData({...formData, cycle_length_months: e.target.value})}
+                   placeholder="1, 3, 6, 12, 24, etc."
+                   required
+                 />
+                 <p className="text-xs text-muted-foreground mt-1">
+                   How many months per billing cycle
+                 </p>
+               </div>
+               <div>
+                 <Label htmlFor="payment_frequency">Payment Frequency</Label>
+                 <Select value={formData.payment_frequency} onValueChange={(value) => setFormData({...formData, payment_frequency: value})}>
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="monthly">Monthly</SelectItem>
+                     <SelectItem value="bi_monthly">Bi-Monthly (2x per month)</SelectItem>
+                     <SelectItem value="quarterly">Quarterly</SelectItem>
+                     <SelectItem value="annually">Annually</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+             </div>
+
+             <div className="flex items-center space-x-2">
+               <Checkbox
+                 id="is_class_pack"
+                 checked={formData.is_class_pack}
+                 onCheckedChange={(checked) => setFormData({...formData, is_class_pack: checked as boolean})}
+               />
+               <Label htmlFor="is_class_pack">This is a Class Pack (individual classes)</Label>
+             </div>
+
+             {formData.is_class_pack && (
+               <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                 <div>
+                   <Label htmlFor="class_pack_size">Number of Classes</Label>
+                   <Input
+                     id="class_pack_size"
+                     type="number"
+                     min="1"
+                     value={formData.class_pack_size}
+                     onChange={(e) => setFormData({...formData, class_pack_size: e.target.value})}
+                     placeholder="10, 20, 30..."
+                     required={formData.is_class_pack}
+                   />
+                 </div>
+                 <div>
+                   <Label htmlFor="pack_expiry_days">Expiry Days</Label>
+                   <Input
+                     id="pack_expiry_days"
+                     type="number"
+                     min="1"
+                     value={formData.pack_expiry_days}
+                     onChange={(e) => setFormData({...formData, pack_expiry_days: e.target.value})}
+                     placeholder="90, 180, 365..."
+                     required={formData.is_class_pack}
+                   />
+                   <p className="text-xs text-muted-foreground mt-1">
+                     Days from purchase until pack expires
+                   </p>
+                 </div>
+               </div>
+             )}
             <Switch
               checked={formData.is_unlimited}
               onCheckedChange={(checked) => setFormData({...formData, is_unlimited: checked})}
@@ -570,19 +658,19 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
             <Label>Unlimited Classes</Label>
           </div>
 
-          {!formData.is_unlimited && (
-            <div>
-              <Label htmlFor="classes_per_week">Classes per Week</Label>
-              <Input
-                id="classes_per_week"
-                type="number"
-                min="1"
-                value={formData.classes_per_week}
-                onChange={(e) => setFormData({...formData, classes_per_week: e.target.value})}
-                required={!formData.is_unlimited}
-              />
-            </div>
-          )}
+           {!formData.is_unlimited && !formData.is_class_pack && (
+             <div>
+               <Label htmlFor="classes_per_week">Classes per Week</Label>
+               <Input
+                 id="classes_per_week"
+                 type="number"
+                 min="1"
+                 value={formData.classes_per_week}
+                 onChange={(e) => setFormData({...formData, classes_per_week: e.target.value})}
+                 required={!formData.is_unlimited && !formData.is_class_pack}
+               />
+             </div>
+           )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

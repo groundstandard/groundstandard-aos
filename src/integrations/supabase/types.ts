@@ -487,6 +487,114 @@ export type Database = {
           },
         ]
       }
+      class_pack_usage: {
+        Row: {
+          attendance_id: string | null
+          class_pack_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          used_date: string
+        }
+        Insert: {
+          attendance_id?: string | null
+          class_pack_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          used_date?: string
+        }
+        Update: {
+          attendance_id?: string | null
+          class_pack_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          used_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_pack_usage_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_pack_usage_class_pack_id_fkey"
+            columns: ["class_pack_id"]
+            isOneToOne: false
+            referencedRelation: "class_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_packs: {
+        Row: {
+          auto_renewal: boolean | null
+          created_at: string
+          expiry_date: string
+          id: string
+          membership_plan_id: string
+          notes: string | null
+          profile_id: string
+          purchase_date: string
+          remaining_classes: number
+          renewal_discount_percentage: number | null
+          status: string
+          stripe_subscription_id: string | null
+          total_classes: number
+          updated_at: string
+        }
+        Insert: {
+          auto_renewal?: boolean | null
+          created_at?: string
+          expiry_date: string
+          id?: string
+          membership_plan_id: string
+          notes?: string | null
+          profile_id: string
+          purchase_date?: string
+          remaining_classes: number
+          renewal_discount_percentage?: number | null
+          status?: string
+          stripe_subscription_id?: string | null
+          total_classes: number
+          updated_at?: string
+        }
+        Update: {
+          auto_renewal?: boolean | null
+          created_at?: string
+          expiry_date?: string
+          id?: string
+          membership_plan_id?: string
+          notes?: string | null
+          profile_id?: string
+          purchase_date?: string
+          remaining_classes?: number
+          renewal_discount_percentage?: number | null
+          status?: string
+          stripe_subscription_id?: string | null
+          total_classes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_packs_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_packs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_schedules: {
         Row: {
           class_id: string
@@ -1476,13 +1584,18 @@ export type Database = {
           age_group: string | null
           base_price_cents: number
           billing_cycle: string | null
+          class_pack_size: number | null
           classes_per_week: number | null
           created_at: string | null
+          cycle_length_months: number | null
           description: string | null
           id: string
           is_active: boolean | null
+          is_class_pack: boolean | null
           is_unlimited: boolean | null
           name: string
+          pack_expiry_days: number | null
+          payment_frequency: string | null
           plan_type_id: string | null
           setup_fee_cents: number | null
           trial_days: number | null
@@ -1492,13 +1605,18 @@ export type Database = {
           age_group?: string | null
           base_price_cents: number
           billing_cycle?: string | null
+          class_pack_size?: number | null
           classes_per_week?: number | null
           created_at?: string | null
+          cycle_length_months?: number | null
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_class_pack?: boolean | null
           is_unlimited?: boolean | null
           name: string
+          pack_expiry_days?: number | null
+          payment_frequency?: string | null
           plan_type_id?: string | null
           setup_fee_cents?: number | null
           trial_days?: number | null
@@ -1508,13 +1626,18 @@ export type Database = {
           age_group?: string | null
           base_price_cents?: number
           billing_cycle?: string | null
+          class_pack_size?: number | null
           classes_per_week?: number | null
           created_at?: string | null
+          cycle_length_months?: number | null
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_class_pack?: boolean | null
           is_unlimited?: boolean | null
           name?: string
+          pack_expiry_days?: number | null
+          payment_frequency?: string | null
           plan_type_id?: string | null
           setup_fee_cents?: number | null
           trial_days?: number | null
@@ -1534,6 +1657,7 @@ export type Database = {
         Row: {
           auto_renewal: boolean | null
           created_at: string
+          cycle_length_months: number | null
           cycle_number: number | null
           discount_expires_at: string | null
           end_date: string | null
@@ -1551,6 +1675,7 @@ export type Database = {
         Insert: {
           auto_renewal?: boolean | null
           created_at?: string
+          cycle_length_months?: number | null
           cycle_number?: number | null
           discount_expires_at?: string | null
           end_date?: string | null
@@ -1568,6 +1693,7 @@ export type Database = {
         Update: {
           auto_renewal?: boolean | null
           created_at?: string
+          cycle_length_months?: number | null
           cycle_number?: number | null
           discount_expires_at?: string | null
           end_date?: string | null

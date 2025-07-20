@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { AddFamilyMemberDialog } from "@/components/contacts/AddFamilyMemberDialog";
 import { ActiveMembershipCard } from "@/components/contacts/ActiveMembershipCard";
+import { ClassPacksCard } from "@/components/contacts/ClassPacksCard";
 
 interface Contact {
   id: string;
@@ -635,6 +636,9 @@ const ContactProfile = () => {
             <div className="space-y-4">
               {/* Active Membership Section */}
               <ActiveMembershipCard contactId={contact?.id} />
+              
+              {/* Class Packs Section */}
+              <ClassPacksCard contactId={contact?.id} />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Recent Payments */}
