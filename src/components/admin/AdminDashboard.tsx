@@ -266,6 +266,10 @@ export const AdminDashboard = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate('/team-management')}>
+                  <Users className="h-4 w-4 mr-2" />
+                  Team Management
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/events')}>
                   <Calendar className="h-4 w-4 mr-2" />
                   Events
