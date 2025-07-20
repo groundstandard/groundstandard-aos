@@ -505,28 +505,29 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
           Add Membership Plan
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="pb-4">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-3">
           <DialogTitle className="text-lg">Create Membership Plan</DialogTitle>
-          <DialogDescription className="text-sm">
+          <DialogDescription className="text-sm text-muted-foreground">
             Add a new membership plan for your academy
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="name">Plan Name</Label>
+              <Label htmlFor="name" className="text-sm">Plan Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
+                className="h-9"
               />
             </div>
             <div>
-              <Label htmlFor="age_group">Age Group</Label>
+              <Label htmlFor="age_group" className="text-sm">Age Group</Label>
               <Select value={formData.age_group} onValueChange={(value) => setFormData({...formData, age_group: value})}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -541,17 +542,19 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-sm">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
+              className="min-h-[60px] resize-none"
+              rows={2}
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label htmlFor="base_price_cents">Price ($)</Label>
+              <Label htmlFor="base_price_cents" className="text-sm">Price ($)</Label>
               <Input
                 id="base_price_cents"
                 type="number"
@@ -560,11 +563,12 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 value={formData.base_price_cents ? (parseInt(formData.base_price_cents) / 100).toString() : ''}
                 onChange={(e) => setFormData({...formData, base_price_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
+                className="h-9"
               />
             </div>
 
             <div>
-              <Label htmlFor="length_months">Length (Months)</Label>
+              <Label htmlFor="length_months" className="text-sm">Length (Months)</Label>
               <Input
                 id="length_months"
                 type="number"
@@ -573,11 +577,12 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 value={formData.length_months}
                 onChange={(e) => setFormData({...formData, length_months: e.target.value})}
                 required
+                className="h-9"
               />
             </div>
 
             <div>
-              <Label htmlFor="payment_frequency_months">Payment Frequency (Months)</Label>
+              <Label htmlFor="payment_frequency_months" className="text-sm">Payment Frequency (Months)</Label>
               <Input
                 id="payment_frequency_months"
                 type="number"
@@ -586,17 +591,18 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
                 value={formData.payment_frequency_months}
                 onChange={(e) => setFormData({...formData, payment_frequency_months: e.target.value})}
                 required
+                className="h-9"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-3 py-3 px-4 bg-muted/30 rounded-md">
+          <div className="flex items-center space-x-2 py-2 px-3 bg-muted/30 rounded-md">
             <Checkbox
               id="is_class_pack"
               checked={formData.is_class_pack}
               onCheckedChange={(checked) => setFormData({...formData, is_class_pack: checked as boolean})}
             />
-            <Label htmlFor="is_class_pack" className="text-sm font-medium">This is a Class Pack (individual classes)</Label>
+            <Label htmlFor="is_class_pack" className="text-sm font-medium cursor-pointer">This is a Class Pack (individual classes)</Label>
           </div>
 
           {formData.is_class_pack && (
