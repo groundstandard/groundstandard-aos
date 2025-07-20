@@ -25,6 +25,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('overview');
 
   if (!user || !profile) {
     return <div>Loading...</div>;
@@ -158,173 +159,225 @@ const Dashboard = () => {
 
             {/* Navigation Tabs */}
             <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
-              <Button variant="ghost" className="flex items-center gap-2 text-primary border-b-2 border-primary pb-2 whitespace-nowrap">
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => setSelectedTab('overview')}
+              >
                 <TrendingUp className="h-4 w-4" />
                 Overview
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/contacts')}>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'contacts' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => {
+                  setSelectedTab('contacts');
+                  navigate('/contacts');
+                }}
+              >
                 <Users className="h-4 w-4" />
                 Contacts
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/payments')}>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => {
+                  setSelectedTab('payments');
+                  navigate('/payments');
+                }}
+              >
                 <DollarSign className="h-4 w-4" />
                 Payments
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/attendance')}>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => {
+                  setSelectedTab('attendance');
+                  navigate('/attendance');
+                }}
+              >
                 <Calendar className="h-4 w-4" />
                 Attendance
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/reports')}>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'reporting' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => {
+                  setSelectedTab('reporting');
+                  navigate('/reports');
+                }}
+              >
                 <BarChart3 className="h-4 w-4" />
                 Reporting
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/events')}>
-                <CalendarDays className="h-4 w-4" />
-                Events
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
-                <Award className="h-4 w-4" />
-                Belt Testing
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/subscription')}>
-                <UserCheck className="h-4 w-4" />
-                Memberships
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/settings')}>
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'admin' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => setSelectedTab('admin')}
+              >
                 <Settings className="h-4 w-4" />
-                Settings
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/automations')}>
-                <Activity className="h-4 w-4" />
-                Automations
+                Admin
               </Button>
             </div>
-          </div>
 
-          {/* Quick Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-            {quickStats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </CardTitle>
-                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className={`text-xs ${
-                      stat.trend === 'up' ? 'text-green-600' : 
-                      stat.trend === 'down' ? 'text-red-600' : 
-                      'text-muted-foreground'
-                    }`}>
-                      {stat.change} from last month
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Performance Overview */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Performance Overview
-                  </CardTitle>
-                  <CardDescription>Key metrics for this month</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
-                  <Activity className="h-4 w-4 mr-2" />
-                  {refreshing ? "Refreshing..." : "Refresh"}
+            {/* Secondary Admin Navigation - Only shown when Admin is selected */}
+            {selectedTab === 'admin' && (
+              <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/events')}>
+                  <CalendarDays className="h-4 w-4" />
+                  Events
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
+                  <Award className="h-4 w-4" />
+                  Belt Testing
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/subscription')}>
+                  <UserCheck className="h-4 w-4" />
+                  Memberships
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/automations')}>
+                  <Activity className="h-4 w-4" />
+                  Automations
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/settings')}>
+                  <Settings className="h-4 w-4" />
+                  Settings
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Student Retention</span>
-                    <span className="text-sm text-muted-foreground">96%</span>
-                  </div>
-                  <Progress value={96} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Class Capacity</span>
-                    <span className="text-sm text-muted-foreground">78%</span>
-                  </div>
-                  <Progress value={78} className="h-2" />
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Revenue Goal</span>
-                    <span className="text-sm text-muted-foreground">84%</span>
-                  </div>
-                  <Progress value={84} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
-          {/* Recent Activity */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>Latest updates from your academy</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    action: "New student enrollment",
-                    details: "Sarah Johnson joined Advanced Karate",
-                    time: "2 minutes ago",
-                    type: "enrollment"
-                  },
-                  {
-                    action: "Payment received",
-                    details: "$150 monthly subscription from Mike Chen",
-                    time: "15 minutes ago", 
-                    type: "payment"
-                  },
-                  {
-                    action: "Belt test scheduled",
-                    details: "3 students registered for Black Belt test",
-                    time: "1 hour ago",
-                    type: "test"
-                  },
-                  {
-                    action: "Class completed",
-                    details: "Evening Judo session with 18 participants",
-                    time: "2 hours ago",
-                    type: "class"
-                  }
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.details}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+          {/* Only show overview content when overview tab is selected */}
+          {selectedTab === 'overview' && (
+            <>
+              {/* Quick Stats Overview */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                {quickStats.map((stat, index) => {
+                  const IconComponent = stat.icon;
+                  return (
+                    <Card key={index} className="hover:shadow-lg transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          {stat.title}
+                        </CardTitle>
+                        <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                        <p className={`text-xs ${
+                          stat.trend === 'up' ? 'text-green-600' : 
+                          stat.trend === 'down' ? 'text-red-600' : 
+                          'text-muted-foreground'
+                        }`}>
+                          {stat.change} from last month
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Performance Overview */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5" />
+                        Performance Overview
+                      </CardTitle>
+                      <CardDescription>Key metrics for this month</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
+                      <Activity className="h-4 w-4 mr-2" />
+                      {refreshing ? "Refreshing..." : "Refresh"}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Student Retention</span>
+                        <span className="text-sm text-muted-foreground">96%</span>
+                      </div>
+                      <Progress value={96} className="h-2" />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Class Capacity</span>
+                        <span className="text-sm text-muted-foreground">78%</span>
+                      </div>
+                      <Progress value={78} className="h-2" />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Revenue Goal</span>
+                        <span className="text-sm text-muted-foreground">84%</span>
+                      </div>
+                      <Progress value={84} className="h-2" />
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          <AdminDashboard />
+              {/* Recent Activity */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Recent Activity
+                  </CardTitle>
+                  <CardDescription>Latest updates from your academy</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      {
+                        action: "New student enrollment",
+                        details: "Sarah Johnson joined Advanced Karate",
+                        time: "2 minutes ago",
+                        type: "enrollment"
+                      },
+                      {
+                        action: "Payment received",
+                        details: "$150 monthly subscription from Mike Chen",
+                        time: "15 minutes ago", 
+                        type: "payment"
+                      },
+                      {
+                        action: "Belt test scheduled",
+                        details: "3 students registered for Black Belt test",
+                        time: "1 hour ago",
+                        type: "test"
+                      },
+                      {
+                        action: "Class completed",
+                        details: "Evening Judo session with 18 participants",
+                        time: "2 hours ago",
+                        type: "class"
+                      }
+                    ].map((activity, index) => (
+                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                        <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground">{activity.details}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <AdminDashboard />
+            </>
+          )}
+        
 
           {/* View Toggle at bottom center */}
           <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10">
