@@ -491,7 +491,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <AdminDashboard />
             </>
           )}
         
