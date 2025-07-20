@@ -264,8 +264,8 @@ const Dashboard = () => {
                         <IconComponent className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col justify-between">
-                        <div className="text-2xl font-bold">{stat.value}</div>
-                        <p className={`text-xs leading-tight ${
+                        <div className="text-2xl font-bold mb-auto">{stat.value}</div>
+                        <p className={`text-xs leading-tight mt-auto ${
                           stat.trend === 'up' ? 'text-green-600' : 
                           stat.trend === 'down' ? 'text-red-600' : 
                           'text-muted-foreground'
