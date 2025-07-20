@@ -81,7 +81,7 @@ const TeamManagement = () => {
       setTeamMembers(members || []);
 
       // Fetch pending invitations
-      const { data: invites, error: invitesError } = await supabase
+      const { data: invites, error: invitesError } = await (supabase as any)
         .from('academy_invitations')
         .select(`
           id,
@@ -175,7 +175,7 @@ const TeamManagement = () => {
 
   const handleCancelInvitation = async (inviteId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('academy_invitations')
         .update({ status: 'cancelled' })
         .eq('id', inviteId);

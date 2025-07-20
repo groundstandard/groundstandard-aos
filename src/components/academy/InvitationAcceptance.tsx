@@ -57,7 +57,7 @@ const InvitationAcceptance = () => {
 
   const fetchInvitation = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('academy_invitations')
         .select(`
           id,
@@ -120,7 +120,7 @@ const InvitationAcceptance = () => {
       if (profileError) throw profileError;
 
       // Mark invitation as accepted
-      const { error: inviteError } = await supabase
+      const { error: inviteError } = await (supabase as any)
         .from('academy_invitations')
         .update({ status: 'accepted' })
         .eq('id', invitation.id);
@@ -151,7 +151,7 @@ const InvitationAcceptance = () => {
     if (!invitation) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('academy_invitations')
         .update({ status: 'declined' })
         .eq('id', invitation.id);
