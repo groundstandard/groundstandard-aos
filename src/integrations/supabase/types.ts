@@ -448,6 +448,36 @@ export type Database = {
           },
         ]
       }
+      check_in_settings: {
+        Row: {
+          auto_checkout_hours: number | null
+          created_at: string | null
+          id: string
+          kiosk_mode_enabled: boolean | null
+          require_class_selection: boolean | null
+          updated_at: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          auto_checkout_hours?: number | null
+          created_at?: string | null
+          id?: string
+          kiosk_mode_enabled?: boolean | null
+          require_class_selection?: boolean | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          auto_checkout_hours?: number | null
+          created_at?: string | null
+          id?: string
+          kiosk_mode_enabled?: boolean | null
+          require_class_selection?: boolean | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
       class_enrollments: {
         Row: {
           class_id: string
@@ -2186,6 +2216,7 @@ export type Database = {
         Row: {
           academy_id: string | null
           belt_level: string | null
+          check_in_pin: string | null
           created_at: string
           email: string
           emergency_contact: string | null
@@ -2202,6 +2233,7 @@ export type Database = {
         Insert: {
           academy_id?: string | null
           belt_level?: string | null
+          check_in_pin?: string | null
           created_at?: string
           email: string
           emergency_contact?: string | null
@@ -2218,6 +2250,7 @@ export type Database = {
         Update: {
           academy_id?: string | null
           belt_level?: string | null
+          check_in_pin?: string | null
           created_at?: string
           email?: string
           emergency_contact?: string | null
@@ -2395,6 +2428,14 @@ export type Database = {
       check_absent_members: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      check_in_with_pin: {
+        Args: { pin_code: string; class_id_param?: string }
+        Returns: Json
+      }
+      generate_check_in_pin: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>

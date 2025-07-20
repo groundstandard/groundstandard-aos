@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Classes from "./pages/Classes";
 import Attendance from "./pages/Attendance";
+import CheckIn from "./pages/CheckIn";
 import Admin from "./pages/Admin";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
@@ -50,6 +51,7 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={user ? <Dashboard /> : <Auth />} />
         <Route path="/classes" element={user ? <Classes /> : <Auth />} />
         <Route path="/attendance" element={user ? <Attendance /> : <Auth />} />
+        <Route path="/checkin" element={user ? <CheckIn /> : <Auth />} />
         <Route path="/admin" element={user ? <Admin /> : <Auth />} />
         <Route path="/progress" element={user ? <Progress /> : <Auth />} />
         <Route path="/profile" element={user ? <Profile /> : <Auth />} />

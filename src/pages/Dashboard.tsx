@@ -264,6 +264,17 @@ const Dashboard = () => {
               </Button>
               <Button 
                 variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'checkin' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => {
+                  setSelectedTab('checkin');
+                  navigate('/checkin');
+                }}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Check-In
+              </Button>
+              <Button 
+                variant="ghost" 
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'reporting' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => {
                   setSelectedTab('reporting');
