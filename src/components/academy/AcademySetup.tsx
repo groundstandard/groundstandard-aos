@@ -27,6 +27,7 @@ const AcademySetup = () => {
     address: academy?.address || '',
     city: academy?.city || '',
     state: academy?.state || '',
+    zipcode: (academy as any)?.zipcode || '',
     country: academy?.country || 'USA',
     timezone: academy?.timezone || 'America/New_York',
     primary_color: academy?.primary_color || '#3B82F6',
@@ -225,14 +226,26 @@ const AcademySetup = () => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  placeholder="USA"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="zipcode">Zipcode</Label>
+                  <Input
+                    id="zipcode"
+                    value={formData.zipcode}
+                    onChange={(e) => handleInputChange('zipcode', e.target.value)}
+                    placeholder="10001"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="USA"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
