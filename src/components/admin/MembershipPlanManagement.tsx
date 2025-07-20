@@ -113,11 +113,33 @@ export const MembershipPlanManagement = () => {
     }
   });
 
+  // Helper functions
   const formatPrice = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(cents / 100);
+  };
+
+  // Delete discount handler
+  const handleDeleteDiscount = async (discountId: string) => {
+    try {
+      const { error } = await supabase
+        .from('discount_types')
+        .delete()
+        .eq('id', discountId);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['discount-types'] });
+      toast({ title: "Discount deleted successfully" });
+    } catch (error) {
+      toast({ 
+        title: "Error deleting discount", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
   };
 
   return (
@@ -226,10 +248,25 @@ export const MembershipPlanManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Edit Discount</DialogTitle>
+                                </DialogHeader>
+                                <EditDiscountForm discount={discount} />
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteDiscount(discount.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -248,8 +285,6 @@ export const MembershipPlanManagement = () => {
     </div>
   );
 };
-
-// Form components with full functionality - Export them for use in SortableAllPlansTable
 export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -1277,6 +1312,117 @@ const CreateFamilyDiscountDialog = () => {
         </form>
       </DialogContent>
     </Dialog>
+  );
+};
+
+// Edit Discount Form Component
+const EditDiscountForm = ({ discount }: { discount: any }) => {
+  const [formData, setFormData] = useState({
+    name: discount.name || '',
+    discount_type: discount.discount_type || 'percentage',
+    discount_value: discount.discount_value || '',
+    applies_to: discount.applies_to || 'membership',
+    description: discount.description || '',
+    is_active: discount.is_active ?? true
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateDiscount = useMutation({
+    mutationFn: async (data: any) => {
+      const { error } = await supabase
+        .from('discount_types')
+        .update({
+          name: data.name,
+          discount_type: data.discount_type,
+          discount_value: parseFloat(data.discount_value),
+          applies_to: data.applies_to,
+          description: data.description,
+          is_active: data.is_active
+        })
+        .eq('id', discount.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['discount-types'] });
+      toast({ title: "Discount updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating discount", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateDiscount.mutate(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Discount Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({...formData, name: e.target.value})}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="discount_type">Type</Label>
+        <Select value={formData.discount_type} onValueChange={(value) => setFormData({...formData, discount_type: value})}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="fixed">Fixed Amount</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="discount_value">Value</Label>
+        <Input
+          id="discount_value"
+          type="number"
+          step="0.01"
+          value={formData.discount_value}
+          onChange={(e) => setFormData({...formData, discount_value: e.target.value})}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="applies_to">Applies To</Label>
+        <Select value={formData.applies_to} onValueChange={(value) => setFormData({...formData, applies_to: value})}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="membership">Memberships</SelectItem>
+            <SelectItem value="private_session">Private Sessions</SelectItem>
+            <SelectItem value="all">All Services</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({...formData, description: e.target.value})}
+        />
+      </div>
+      <div className="flex items-center space-x-2">
+        <Switch
+          checked={formData.is_active}
+          onCheckedChange={(checked) => setFormData({...formData, is_active: checked})}
+        />
+        <Label>Active</Label>
+      </div>
+      <div className="flex justify-end space-x-2">
+        <Button type="submit">Update Discount</Button>
+      </div>
+    </form>
   );
 };
 

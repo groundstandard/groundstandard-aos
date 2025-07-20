@@ -75,7 +75,16 @@ export const SortableAllPlansTable = () => {
     ageGroup: 'all',
     search: ''
   });
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+  
+  // Load saved views from localStorage on component mount
+  const [savedViews, setSavedViews] = useState<SavedView[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('membership-table-views');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [newViewName, setNewViewName] = useState('');
   const [editingPlan, setEditingPlan] = useState<AllPlan | null>(null);
@@ -326,12 +335,17 @@ export const SortableAllPlansTable = () => {
     
     const newView: SavedView = {
       id: Date.now().toString(),
-      name: newViewName,
+      name: newViewName.trim(),
       sortConfig,
-      filters: { ...filters }
+      filters
     };
     
-    setSavedViews(prev => [...prev, newView]);
+    const updatedViews = [...savedViews, newView];
+    setSavedViews(updatedViews);
+    
+    // Persist to localStorage
+    localStorage.setItem('membership-table-views', JSON.stringify(updatedViews));
+    
     setNewViewName('');
     setViewDialogOpen(false);
     toast({ title: "View saved successfully" });
@@ -341,6 +355,13 @@ export const SortableAllPlansTable = () => {
     setSortConfig(view.sortConfig);
     setFilters(view.filters);
     toast({ title: `Loaded view: ${view.name}` });
+  };
+
+  const deleteView = (viewId: string) => {
+    const updatedViews = savedViews.filter(v => v.id !== viewId);
+    setSavedViews(updatedViews);
+    localStorage.setItem('membership-table-views', JSON.stringify(updatedViews));
+    toast({ title: "View deleted" });
   };
 
   const formatPrice = (cents: number) => {
@@ -427,9 +448,23 @@ export const SortableAllPlansTable = () => {
                   <SelectContent>
                     {savedViews.map(view => (
                       <SelectItem key={view.id} value={view.id}>
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-2" />
-                          {view.name}
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center">
+                            <Eye className="h-4 w-4 mr-2" />
+                            {view.name}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              deleteView(view.id);
+                            }}
+                            className="h-4 w-4 p-0 ml-2"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
                       </SelectItem>
                     ))}
