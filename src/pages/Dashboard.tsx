@@ -185,6 +185,33 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Quick Stats Overview */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            {quickStats.map((stat, index) => {
+              const IconComponent = stat.icon;
+              return (
+                <Card key={index} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {stat.title}
+                    </CardTitle>
+                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <p className={`text-xs ${
+                      stat.trend === 'up' ? 'text-green-600' : 
+                      stat.trend === 'down' ? 'text-red-600' : 
+                      'text-muted-foreground'
+                    }`}>
+                      {stat.change} from last month
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
           {/* Performance Overview */}
           <Card className="mb-6">
             <CardHeader>
@@ -230,33 +257,6 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Quick Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-            {quickStats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      {stat.title}
-                    </CardTitle>
-                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className={`text-xs ${
-                      stat.trend === 'up' ? 'text-green-600' : 
-                      stat.trend === 'down' ? 'text-red-600' : 
-                      'text-muted-foreground'
-                    }`}>
-                      {stat.change} from last month
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
 
           {/* Recent Activity */}
           <Card className="mb-6">
