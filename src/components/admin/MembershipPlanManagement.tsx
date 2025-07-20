@@ -564,96 +564,98 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
               />
             </div>
             <div>
-              <Label htmlFor="billing_cycle">Billing Cycle</Label>
-              <Select value={formData.billing_cycle} onValueChange={(value) => setFormData({...formData, billing_cycle: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly (3 months)</SelectItem>
-                  <SelectItem value="semi_annual">Semi-Annual (6 months)</SelectItem>
-                  <SelectItem value="annual">Annual (12-Month Cycle with Auto-Renewal)</SelectItem>
-                </SelectContent>
-               </Select>
+              <Label htmlFor="billing_cycle_months" className="text-sm">Billing Cycle (Months)</Label>
+              <Input
+                id="billing_cycle_months"
+                type="number"
+                min="1"
+                max="36"
+                value={formData.billing_cycle}
+                onChange={(e) => setFormData({...formData, billing_cycle: e.target.value})}
+                placeholder="1, 3, 6, 12, etc."
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                How often billing occurs (in months)
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="cycle_length_months" className="text-sm">Cycle Length (Months)</Label>
+              <Input
+                id="cycle_length_months"
+                type="number"
+                min="1"
+                max="36"
+                value={formData.cycle_length_months}
+                onChange={(e) => setFormData({...formData, cycle_length_months: e.target.value})}
+                placeholder="1, 3, 6, 12, 24, etc."
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                How many months per billing cycle
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="payment_frequency_months" className="text-sm">Payment Frequency (Months)</Label>
+              <Input
+                id="payment_frequency_months"
+                type="number"
+                min="1"
+                max="12"
+                value={formData.payment_frequency}
+                onChange={(e) => setFormData({...formData, payment_frequency: e.target.value})}
+                placeholder="1, 2, 3, 6, etc."
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                How often payments are made (in months)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 py-3 px-4 bg-muted/30 rounded-md">
+            <Checkbox
+              id="is_class_pack"
+              checked={formData.is_class_pack}
+              onCheckedChange={(checked) => setFormData({...formData, is_class_pack: checked as boolean})}
+            />
+            <Label htmlFor="is_class_pack" className="text-sm font-medium">This is a Class Pack (individual classes)</Label>
+          </div>
+
+          {formData.is_class_pack && (
+            <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-md">
               <div>
-                <Label htmlFor="cycle_length_months">Cycle Length (Months)</Label>
+                <Label htmlFor="class_pack_size" className="text-sm">Number of Classes</Label>
                 <Input
-                  id="cycle_length_months"
+                  id="class_pack_size"
                   type="number"
                   min="1"
-                  max="36"
-                  value={formData.cycle_length_months}
-                  onChange={(e) => setFormData({...formData, cycle_length_months: e.target.value})}
-                  placeholder="1, 3, 6, 12, 24, etc."
-                  required
+                  value={formData.class_pack_size}
+                  onChange={(e) => setFormData({...formData, class_pack_size: e.target.value})}
+                  placeholder="10, 20, 30..."
+                  required={formData.is_class_pack}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  How many months per billing cycle
-                </p>
               </div>
               <div>
-                <Label htmlFor="payment_frequency">Payment Frequency</Label>
-                <Select value={formData.payment_frequency} onValueChange={(value) => setFormData({...formData, payment_frequency: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="bi_monthly">Bi-Monthly (2x per month)</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="annually">Annually</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="pack_expiry_days" className="text-sm">Expiry Days</Label>
+                <Input
+                  id="pack_expiry_days"
+                  type="number"
+                  min="1"
+                  value={formData.pack_expiry_days}
+                  onChange={(e) => setFormData({...formData, pack_expiry_days: e.target.value})}
+                  placeholder="90, 180, 365..."
+                  required={formData.is_class_pack}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Days from purchase until pack expires
+                </p>
+               </div>
               </div>
-            </div>
-
-            <div className="flex items-center space-x-2 py-2">
-              <Checkbox
-                id="is_class_pack"
-                checked={formData.is_class_pack}
-                onCheckedChange={(checked) => setFormData({...formData, is_class_pack: checked as boolean})}
-              />
-              <Label htmlFor="is_class_pack" className="text-sm">This is a Class Pack (individual classes)</Label>
-            </div>
-
-            {formData.is_class_pack && (
-              <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-md">
-                <div>
-                  <Label htmlFor="class_pack_size" className="text-sm">Number of Classes</Label>
-                  <Input
-                    id="class_pack_size"
-                    type="number"
-                    min="1"
-                    value={formData.class_pack_size}
-                    onChange={(e) => setFormData({...formData, class_pack_size: e.target.value})}
-                    placeholder="10, 20, 30..."
-                    required={formData.is_class_pack}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pack_expiry_days" className="text-sm">Expiry Days</Label>
-                  <Input
-                    id="pack_expiry_days"
-                    type="number"
-                    min="1"
-                    value={formData.pack_expiry_days}
-                    onChange={(e) => setFormData({...formData, pack_expiry_days: e.target.value})}
-                    placeholder="90, 180, 365..."
-                    required={formData.is_class_pack}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Days from purchase until pack expires
-                  </p>
-                 </div>
-                </div>
-              )}
-            </div>
+            )}
 
             <div className="flex items-center space-x-3 py-2">
               <Switch
