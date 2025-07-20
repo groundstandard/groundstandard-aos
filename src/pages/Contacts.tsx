@@ -228,14 +228,37 @@ const Contacts = () => {
     if (!selectedContact) return;
 
     try {
+      // First check if we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication required');
+      }
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to update contacts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Updating contact with session:', session.user.email);
+      console.log('Form data:', formData);
+      
       const { data, error } = await supabase
         .from('profiles')
         .update(formData)
         .eq('id', selectedContact.id)
         .select();
 
+      console.log('Update result:', { data, error });
+
       if (error) throw error;
-      if (!data || data.length === 0) throw new Error('No rows updated - check permissions');
+      if (!data || data.length === 0) {
+        throw new Error('No rows updated - check if you have permission to modify this contact');
+      }
 
       const updatedContact = data[0];
       toast({
@@ -251,7 +274,7 @@ const Contacts = () => {
       console.error('Error updating contact:', error);
       toast({
         title: "Error",
-        description: "Failed to update contact",
+        description: error instanceof Error ? error.message : "Failed to update contact",
         variant: "destructive",
       });
     }
