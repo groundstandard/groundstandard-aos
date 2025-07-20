@@ -232,17 +232,18 @@ const Contacts = () => {
         .from('profiles')
         .update(formData)
         .eq('id', selectedContact.id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('No rows updated - check permissions');
 
+      const updatedContact = data[0];
       toast({
         title: "Success",
         description: "Contact updated successfully",
       });
 
-      setContacts(contacts.map(c => c.id === selectedContact.id ? data : c));
+      setContacts(contacts.map(c => c.id === selectedContact.id ? updatedContact : c));
       setShowEditDialog(false);
       setSelectedContact(null);
       resetForm();
