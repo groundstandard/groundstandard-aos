@@ -54,6 +54,8 @@ interface ContactsTableProps {
   filterRole?: string;
   onFilterRoleChange?: (value: string) => void;
   allContacts?: Contact[];
+  searchTerm?: string;
+  showFamiliesOnly?: boolean;
 }
 
 const DEFAULT_COLUMNS: Column[] = [
@@ -79,7 +81,9 @@ export const ContactsTable = ({
   onSelectionChange,
   filterRole = "all",
   onFilterRoleChange,
-  allContacts = []
+  allContacts = [],
+  searchTerm = "",
+  showFamiliesOnly = false
 }: ContactsTableProps) => {
   const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [sortBy, setSortBy] = useState<string>('full_name');
@@ -431,8 +435,15 @@ export const ContactsTable = ({
       </div>
 
       {sortedContacts.length === 0 && (
-        <div className="p-8 text-center text-muted-foreground">
-          No contacts found
+        <div className="p-8 text-center">
+          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No contacts found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm || filterRole !== "all" || showFamiliesOnly
+              ? "Try adjusting your search or filter criteria"
+              : "Start by adding your first contact"
+            }
+          </p>
         </div>
       )}
     </div>

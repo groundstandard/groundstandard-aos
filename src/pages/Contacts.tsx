@@ -545,6 +545,8 @@ const Contacts = () => {
               filterRole={filterRole}
               onFilterRoleChange={setFilterRole}
               allContacts={contacts}
+              searchTerm={searchTerm}
+              showFamiliesOnly={showFamiliesOnly}
             />
           ) : (
             // Grid View
@@ -568,20 +570,6 @@ const Contacts = () => {
           )}
         </div>
 
-        {organizeContacts.allFiltered.length === 0 && (
-          <Card className="text-center py-8 mt-6">
-            <CardContent>
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No contacts found</h3>
-              <p className="text-muted-foreground">
-                {searchTerm || filterRole !== "all" || showFamiliesOnly
-                  ? "Try adjusting your search or filter criteria"
-                  : "Start by adding your first contact"
-                }
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Dialogs */}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
