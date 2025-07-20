@@ -25,7 +25,9 @@ import {
   CreditCard,
   FileText,
   ContactRound,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  User
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -180,16 +182,38 @@ export const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="flex items-center justify-start mb-4 sm:mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <BarChart3 className="h-8 w-8 text-primary" />
-            Admin Dashboard
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {profile?.first_name}! Here's what's happening at your academy.
-          </p>
+      {/* Header Section */}
+      <div className="flex items-center justify-between w-full p-4 bg-background border-b">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Admin Dashboard</h1>
+            <p className="text-sm text-muted-foreground">
+              Complete management and analytics for your martial arts academy
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => handleQuickAction("Notifications")}
+          >
+            <Bell className="h-4 w-4" />
+            Notifications
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => navigate('/profile')}
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </Button>
         </div>
       </div>
 
