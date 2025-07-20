@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from './useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface SubscriptionInfo {
   subscribed: boolean;
@@ -29,6 +30,7 @@ export const useSubscription = () => {
 
 export const SubscriptionProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,17 +43,31 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      const { data, error } = await supabase.functions.invoke('sync-subscription-status', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
       
       if (error) {
         console.error('Error checking subscription:', error);
         setSubscriptionInfo({ subscribed: false });
+        toast({
+          title: "Error refreshing subscription",
+          description: error.message || "Unknown error",
+          variant: "destructive",
+        });
       } else if (data) {
         setSubscriptionInfo(data);
       }
     } catch (error) {
       console.error('Error refreshing subscription:', error);
       setSubscriptionInfo({ subscribed: false });
+      toast({
+        title: "Error refreshing subscription",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -59,39 +75,69 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
 
   const createCheckout = async (planId: string): Promise<string | null> => {
     if (!user) {
-      throw new Error('User must be authenticated to create checkout');
+      toast({
+        title: "Authentication required",
+        description: "Please log in to subscribe",
+        variant: "destructive",
+      });
+      return null;
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { planId, paymentType: 'subscription' }
+      const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
+        body: { planId },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       if (error) {
         console.error('Error creating checkout:', error);
-        throw new Error('Failed to create checkout session');
+        toast({
+          title: "Error creating checkout",
+          description: error.message || "Failed to create checkout session",
+          variant: "destructive",
+        });
+        return null;
       }
 
-      // After successful checkout creation, user will be redirected to Stripe
-      // The subscription will be updated when they return and the page refreshes
       return data?.url || null;
     } catch (error) {
       console.error('Error creating checkout:', error);
-      throw error;
+      toast({
+        title: "Error creating checkout",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+      return null;
     }
   };
 
   const openCustomerPortal = async () => {
     if (!user) {
-      throw new Error('User must be authenticated to access customer portal');
+      toast({
+        title: "Authentication required",
+        description: "Please log in to manage your subscription",
+        variant: "destructive",
+      });
+      return;
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal');
+      const { data, error } = await supabase.functions.invoke('subscription-portal', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
 
       if (error) {
         console.error('Error opening customer portal:', error);
-        throw new Error('Failed to open customer portal');
+        toast({
+          title: "Error opening customer portal",
+          description: error.message || "Failed to open customer portal",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (data?.url) {
@@ -99,7 +145,11 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
       }
     } catch (error) {
       console.error('Error opening customer portal:', error);
-      throw error;
+      toast({
+        title: "Error opening customer portal",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
     }
   };
 
