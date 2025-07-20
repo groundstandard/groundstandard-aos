@@ -256,16 +256,16 @@ const Dashboard = () => {
                 {quickStats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <Card key={index} className="hover:shadow-lg transition-shadow">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                    <Card key={index} className="hover:shadow-lg transition-shadow h-32 flex flex-col">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
+                        <CardTitle className="text-sm font-medium text-muted-foreground leading-tight">
                           {stat.title}
                         </CardTitle>
-                        <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                        <IconComponent className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="flex-1 flex flex-col justify-between">
                         <div className="text-2xl font-bold">{stat.value}</div>
-                        <p className={`text-xs ${
+                        <p className={`text-xs leading-tight ${
                           stat.trend === 'up' ? 'text-green-600' : 
                           stat.trend === 'down' ? 'text-red-600' : 
                           'text-muted-foreground'
