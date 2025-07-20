@@ -425,9 +425,8 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
     description: '',
     age_group: 'all',
     base_price_cents: '',
-    billing_cycle: 'monthly',
-    cycle_length_months: '1',
-    payment_frequency: 'monthly',
+    length_months: '1',
+    payment_frequency_months: '1',
     classes_per_week: '',
     is_unlimited: false,
     is_class_pack: false,
@@ -475,9 +474,8 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
         description: '',
         age_group: 'all',
         base_price_cents: '',
-        billing_cycle: 'monthly',
-        cycle_length_months: '1',
-        payment_frequency: 'monthly',
+        length_months: '1',
+        payment_frequency_months: '1',
         classes_per_week: '',
         is_unlimited: false,
         is_class_pack: false,
@@ -551,68 +549,44 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="base_price_cents">Monthly Price ($)</Label>
+              <Label htmlFor="base_price_cents">Price ($)</Label>
               <Input
                 id="base_price_cents"
                 type="number"
                 step="0.01"
+                placeholder="600.00"
                 value={formData.base_price_cents ? (parseInt(formData.base_price_cents) / 100).toString() : ''}
                 onChange={(e) => setFormData({...formData, base_price_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="billing_cycle_months" className="text-sm">Billing Cycle (Months)</Label>
-              <Input
-                id="billing_cycle_months"
-                type="number"
-                min="1"
-                max="36"
-                value={formData.billing_cycle}
-                onChange={(e) => setFormData({...formData, billing_cycle: e.target.value})}
-                placeholder="1, 3, 6, 12, etc."
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                How often billing occurs (in months)
-              </p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="cycle_length_months" className="text-sm">Cycle Length (Months)</Label>
+              <Label htmlFor="length_months">Length (Months)</Label>
               <Input
-                id="cycle_length_months"
+                id="length_months"
                 type="number"
+                placeholder="12"
                 min="1"
-                max="36"
-                value={formData.cycle_length_months}
-                onChange={(e) => setFormData({...formData, cycle_length_months: e.target.value})}
-                placeholder="1, 3, 6, 12, 24, etc."
+                value={formData.length_months}
+                onChange={(e) => setFormData({...formData, length_months: e.target.value})}
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                How many months per billing cycle
-              </p>
             </div>
+
             <div>
-              <Label htmlFor="payment_frequency_months" className="text-sm">Payment Frequency (Months)</Label>
+              <Label htmlFor="payment_frequency_months">Payment Frequency (Months)</Label>
               <Input
                 id="payment_frequency_months"
                 type="number"
+                placeholder="3"
                 min="1"
-                max="12"
-                value={formData.payment_frequency}
-                onChange={(e) => setFormData({...formData, payment_frequency: e.target.value})}
-                placeholder="1, 2, 3, 6, etc."
+                value={formData.payment_frequency_months}
+                onChange={(e) => setFormData({...formData, payment_frequency_months: e.target.value})}
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                How often payments are made (in months)
-              </p>
             </div>
           </div>
 
