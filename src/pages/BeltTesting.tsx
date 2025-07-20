@@ -20,8 +20,8 @@ const BeltTesting = () => {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Only allow admin access
-  if (profile?.role !== 'admin') {
+  // Only allow admin and owner access
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
         <Card className="w-full max-w-md">
