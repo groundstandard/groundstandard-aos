@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SortableAllPlansTable } from './SortableAllPlansTable';
+import { SubscriptionDashboard } from '@/components/subscription/SubscriptionDashboard';
 
 export const MembershipPlanManagement = () => {
   const { profile } = useAuth();
@@ -191,13 +192,18 @@ export const MembershipPlanManagement = () => {
       </div>
 
       <Tabs defaultValue="memberships" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="memberships">Memberships & Plans</TabsTrigger>
+          <TabsTrigger value="subscription">My Subscription</TabsTrigger>
           <TabsTrigger value="discounts">Discounts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="memberships" className="space-y-4">
           <SortableAllPlansTable />
+        </TabsContent>
+
+        <TabsContent value="subscription" className="space-y-4">
+          <SubscriptionDashboard />
         </TabsContent>
 
         <TabsContent value="discounts" className="space-y-4">

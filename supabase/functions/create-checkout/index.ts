@@ -7,36 +7,35 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper logging function for debugging
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
 
-    const body = await req.json();
-    const { planId, paymentType = 'subscription', amount, description } = body;
-    logStep("Request body", body);
-    
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
+    // Create Supabase client using the anon key for user authentication
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    
+    logStep("Authorization header found");
+
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
@@ -44,117 +43,158 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Parse request body to get plan details
+    const { planId, planType } = await req.json();
+    if (!planId || !planType) {
+      throw new Error("planId and planType are required");
+    }
+    logStep("Plan details received", { planId, planType });
+
+    // Get plan details from database
+    let planData;
+    switch (planType) {
+      case 'membership':
+        const { data: membershipPlan, error: membershipError } = await supabaseClient
+          .from('membership_plans')
+          .select('*')
+          .eq('id', planId)
+          .single();
+        if (membershipError) throw new Error(`Error fetching membership plan: ${membershipError.message}`);
+        planData = membershipPlan;
+        break;
+      case 'private_session':
+        const { data: privatePlan, error: privateError } = await supabaseClient
+          .from('private_sessions')
+          .select('*')
+          .eq('id', planId)
+          .single();
+        if (privateError) throw new Error(`Error fetching private session: ${privateError.message}`);
+        planData = privatePlan;
+        break;
+      case 'drop_in':
+        const { data: dropInPlan, error: dropInError } = await supabaseClient
+          .from('drop_in_options')
+          .select('*')
+          .eq('id', planId)
+          .single();
+        if (dropInError) throw new Error(`Error fetching drop-in option: ${dropInError.message}`);
+        planData = dropInPlan;
+        break;
+      default:
+        throw new Error(`Unknown plan type: ${planType}`);
+    }
+
+    if (!planData) throw new Error("Plan not found");
+    logStep("Plan data retrieved", { planName: planData.name, planType });
+
+    // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    
-    // Get or create Stripe customer
+
+    // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
+      logStep("Found existing Stripe customer", { customerId });
     } else {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id }
-      });
-      customerId = customer.id;
-      logStep("Created new customer", { customerId });
+      logStep("No existing customer found, will create new one");
     }
 
-    let sessionConfig: any = {
-      customer: customerId,
-      line_items: [],
-      success_url: `${req.headers.get("origin")}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/pricing`,
+    // Get the origin for redirect URLs
+    const origin = req.headers.get("origin") || "http://localhost:3000";
+
+    // Determine price and whether it's recurring
+    let unitAmount;
+    let productName;
+    let recurring = undefined;
+
+    switch (planType) {
+      case 'membership':
+        unitAmount = planData.base_price_cents;
+        productName = `${planData.name} - Membership Plan`;
+        if (planData.payment_frequency === 'monthly') {
+          recurring = { interval: "month" };
+        } else if (planData.payment_frequency === 'yearly') {
+          recurring = { interval: "year" };
+        }
+        break;
+      case 'private_session':
+        unitAmount = planData.price_per_session_cents || planData.price_per_hour * 100;
+        productName = `${planData.name} - Private Session`;
+        break;
+      case 'drop_in':
+        unitAmount = planData.price_cents;
+        productName = `${planData.name} - Drop-in Class`;
+        break;
+    }
+
+    logStep("Price calculated", { unitAmount, productName, recurring });
+
+    // Create line item
+    const lineItem: any = {
+      price_data: {
+        currency: "usd",
+        product_data: { 
+          name: productName,
+          description: planData.description || `${planType} plan`
+        },
+        unit_amount: unitAmount,
+      },
+      quantity: 1,
     };
 
-    if (paymentType === 'subscription' && planId) {
-      // Get membership plan details
-      const { data: plan, error: planError } = await supabaseClient
-        .from('membership_plans')
-        .select('*')
-        .eq('id', planId)
-        .single();
-      
-      if (planError || !plan) {
-        logStep("Plan lookup error", { planError, planId });
-        throw new Error("Invalid subscription plan");
-      }
-      logStep("Found membership plan", { plan: plan.name, price: plan.base_price_cents });
-
-      sessionConfig.mode = "subscription";
-      sessionConfig.line_items = [{
-        price_data: {
-          currency: "usd",
-          product_data: { 
-            name: plan.name,
-            description: plan.description || `${plan.name} membership plan`
-          },
-          unit_amount: plan.base_price_cents,
-          recurring: { 
-            interval: plan.billing_cycle === 'monthly' ? 'month' : 'year',
-            interval_count: 1 
-          },
-        },
-        quantity: 1,
-      }];
-
-      // Add setup fee if exists
-      if (plan.setup_fee_cents > 0) {
-        sessionConfig.line_items.push({
-          price_data: {
-            currency: "usd",
-            product_data: { 
-              name: `${plan.name} - Setup Fee`,
-              description: "One-time setup fee"
-            },
-            unit_amount: plan.setup_fee_cents,
-          },
-          quantity: 1,
-        });
-      }
-    } else {
-      // One-time payment (class fees, gear, etc.)
-      const paymentAmount = amount || 2500;
-      const paymentDescription = description || "Academy Payment";
-      
-      sessionConfig.mode = "payment";
-      sessionConfig.line_items = [{
-        price_data: {
-          currency: "usd",
-          product_data: { name: paymentDescription },
-          unit_amount: paymentAmount,
-        },
-        quantity: 1,
-      }];
-      logStep("One-time payment setup", { amount: paymentAmount, description: paymentDescription });
+    // Add recurring info if it's a subscription
+    if (recurring) {
+      lineItem.price_data.recurring = recurring;
     }
+
+    // Create checkout session
+    const sessionConfig: any = {
+      customer: customerId,
+      customer_email: customerId ? undefined : user.email,
+      line_items: [lineItem],
+      mode: recurring ? "subscription" : "payment",
+      success_url: `${origin}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/subscription?cancelled=true`,
+      metadata: {
+        user_id: user.id,
+        plan_id: planId,
+        plan_type: planType,
+      },
+    };
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
-    // Record the payment intent in our database if payments table exists
-    try {
-      await supabaseClient.from('payments').insert({
-        user_id: user.id,
-        stripe_session_id: session.id,
-        amount: sessionConfig.line_items[0].price_data.unit_amount,
-        status: 'pending',
-        payment_type: paymentType,
-        description: paymentType === 'subscription' ? 
-          `Subscription: ${sessionConfig.line_items[0].price_data.product_data.name}` : 
-          sessionConfig.line_items[0].price_data.product_data.name
-      });
-      logStep("Payment record created");
-    } catch (paymentInsertError) {
-      logStep("Could not create payment record", { error: paymentInsertError });
-      // Continue even if payment record fails - the important part is the Stripe session
-    }
+    // Store checkout session info in database using service role
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    // Create a simple orders/checkouts table entry to track this
+    await supabaseService.from("invoices").insert({
+      user_id: user.id,
+      stripe_invoice_id: session.id,
+      amount: unitAmount,
+      status: 'pending',
+      line_items: [{
+        plan_id: planId,
+        plan_type: planType,
+        plan_name: productName,
+        amount: unitAmount
+      }],
+      notes: `Checkout session for ${planType}: ${planData.name}`
+    });
+
+    logStep("Order tracking record created");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in create-checkout", { message: errorMessage });

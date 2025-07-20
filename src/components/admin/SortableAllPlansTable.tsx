@@ -654,6 +654,7 @@ export const SortableAllPlansTable = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          <PurchaseButton plan={plan} />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">
@@ -756,6 +757,60 @@ export const SortableAllPlansTable = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Purchase Button Component */}
+      <PurchaseButtonComponent />
     </div>
   );
+};
+
+// Purchase Button Component
+const PurchaseButton = ({ plan }: { plan: AllPlan }) => {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const handlePurchase = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          planId: plan.id, 
+          planType: plan.type 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      toast({
+        title: "Error creating checkout",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button 
+      variant="default" 
+      size="sm" 
+      onClick={handlePurchase}
+      disabled={loading}
+    >
+      {loading ? "Loading..." : "Purchase"}
+    </Button>
+  );
+};
+
+// Purchase Button Component Wrapper
+const PurchaseButtonComponent = () => {
+  return null; // This is just to satisfy the component structure
 };
