@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Plus,
@@ -167,82 +168,89 @@ export const MembershipPlanManagement = () => {
         </Card>
       </div>
 
-      {/* All Plans & Services Table */}
-      <SortableAllPlansTable />
+      <Tabs defaultValue="memberships" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="memberships">Memberships & Plans</TabsTrigger>
+          <TabsTrigger value="discounts">Discounts</TabsTrigger>
+        </TabsList>
 
-      {/* Discounts Section - Separate from main table */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Discounts & Family Plans</h3>
-          <div className="flex gap-2">
-            <CreateDiscountDialog />
-            <CreateFamilyDiscountDialog />
+        <TabsContent value="memberships" className="space-y-4">
+          <SortableAllPlansTable />
+        </TabsContent>
+
+        <TabsContent value="discounts" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Discounts & Family Plans</h3>
+            <div className="flex gap-2">
+              <CreateDiscountDialog />
+              <CreateFamilyDiscountDialog />
+            </div>
           </div>
-        </div>
-        
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">General Discounts</CardTitle>
-              <CardDescription>Student, military, senior discounts, etc.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Applies To</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {discountTypes?.map((discount) => (
-                    <TableRow key={discount.id}>
-                      <TableCell className="font-medium">{discount.name}</TableCell>
-                      <TableCell>
-                        <Badge>{discount.discount_type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {discount.discount_type === 'percentage' 
-                          ? `${discount.discount_value}%` 
-                          : formatPrice((discount.discount_value || 0) * 100)
-                        }
-                      </TableCell>
-                      <TableCell>{discount.applies_to}</TableCell>
-                      <TableCell>
-                        <Badge variant={discount.is_active ? 'default' : 'secondary'}>
-                          {discount.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">General Discounts</CardTitle>
+                <CardDescription>Student, military, senior discounts, etc.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Applies To</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {discountTypes?.map((discount) => (
+                      <TableRow key={discount.id}>
+                        <TableCell className="font-medium">{discount.name}</TableCell>
+                        <TableCell>
+                          <Badge>{discount.discount_type}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {discount.discount_type === 'percentage' 
+                            ? `${discount.discount_value}%` 
+                            : formatPrice((discount.discount_value || 0) * 100)
+                          }
+                        </TableCell>
+                        <TableCell>{discount.applies_to}</TableCell>
+                        <TableCell>
+                          <Badge variant={discount.is_active ? 'default' : 'secondary'}>
+                            {discount.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-          <FamilyDiscountPlansCard />
-        </div>
-      </div>
+            <FamilyDiscountPlansCard />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-// Form components with full functionality
-const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => {
+// Form components with full functionality - Export them for use in SortableAllPlansTable
+export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -524,7 +532,7 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
   );
 };
 
-const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => {
+export const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -698,7 +706,7 @@ const CreatePrivateSessionDialog = ({ instructors }: { instructors: any[] }) => 
   );
 };
 
-const CreateDropInDialog = () => {
+export const CreateDropInDialog = () => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',

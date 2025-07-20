@@ -17,7 +17,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  ArrowUpDown
+  ArrowUpDown,
+  Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -55,6 +56,13 @@ interface SavedView {
     search: string;
   };
 }
+
+// Import the actual create dialogs
+import { 
+  CreateMembershipPlanDialog,
+  CreatePrivateSessionDialog, 
+  CreateDropInDialog 
+} from './MembershipPlanManagement';
 
 export const SortableAllPlansTable = () => {
   const { toast } = useToast();
@@ -104,6 +112,19 @@ export const SortableAllPlansTable = () => {
         .from('drop_in_options')
         .select('*')
         .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: instructors } = useQuery({
+    queryKey: ['instructors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('role', ['instructor', 'admin'])
+        .order('first_name');
       if (error) throw error;
       return data;
     }
@@ -257,6 +278,9 @@ export const SortableAllPlansTable = () => {
           <CardTitle className="flex items-center justify-between">
             <span>All Plans & Services</span>
             <div className="flex gap-2">
+              <CreateMembershipPlanDialog instructors={instructors || []} />
+              <CreatePrivateSessionDialog instructors={instructors || []} />
+              <CreateDropInDialog />
               <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm">
