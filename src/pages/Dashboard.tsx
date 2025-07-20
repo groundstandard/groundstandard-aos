@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as SelectComponents from "@/components/ui/select";
+
+const Select = SelectComponents.Select;
+const SelectContent = SelectComponents.SelectContent;
+const SelectItem = SelectComponents.SelectItem;
+const SelectTrigger = SelectComponents.SelectTrigger;
+const SelectValue = SelectComponents.SelectValue;
 import { 
   LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, 
   FileText, Award, DollarSign, Users, TrendingUp, Settings, Crown, Star,
