@@ -256,12 +256,12 @@ const Dashboard = () => {
                 {quickStats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <Card key={index} className="hover:shadow-lg transition-shadow h-32 flex flex-col">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4 min-h-[44px]">
+                    <Card key={index} className="hover:shadow-lg transition-shadow h-32 flex flex-col relative">
+                      <CardHeader className="pb-2 px-4 pt-4 min-h-[44px] pr-12">
                         <CardTitle className="text-sm font-medium text-muted-foreground leading-tight">
                           {stat.title}
                         </CardTitle>
-                        <IconComponent className={`h-5 w-5 ${stat.color} flex-shrink-0`} />
+                        <IconComponent className={`h-5 w-5 ${stat.color} absolute top-4 right-4`} />
                       </CardHeader>
                       <CardContent className="flex-1 flex flex-col justify-end px-4 pb-4 pt-0">
                         <div className="text-2xl font-bold text-black mb-1">{stat.value}</div>
