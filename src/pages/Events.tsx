@@ -162,15 +162,15 @@ const Events = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
           <BackButton />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Calendar className="h-8 w-8 text-primary" />
-              Events & Calendar
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <span className="break-words">Events & Calendar</span>
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Academy events, competitions, and special activities
             </p>
           </div>
