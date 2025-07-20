@@ -1227,18 +1227,23 @@ const ContactProfile = () => {
               </div>
 
               <div>
-                <Label htmlFor="family-status">Membership Status</Label>
+                <Label htmlFor="family-status">Membership Type</Label>
                 <Select 
                   value={familyFormData.membership_status} 
                   onValueChange={(value) => setFamilyFormData({...familyFormData, membership_status: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="frozen">Frozen</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="alumni">Alumni</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1354,15 +1359,20 @@ const ContactProfile = () => {
               </div>
 
               <div>
-                <Label htmlFor="membership_status">Membership Status</Label>
+                <Label htmlFor="membership_status">Membership Type</Label>
                 <Select value={formData.membership_status} onValueChange={(value) => setFormData({...formData, membership_status: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="suspended">Suspended</SelectItem>
+                    <SelectItem value="frozen">Frozen</SelectItem>
+                    <SelectItem value="guardian">Guardian</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="alumni">Alumni</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
