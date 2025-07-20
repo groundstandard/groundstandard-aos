@@ -18,8 +18,8 @@ const Reports = () => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Only allow admin access
-  if (profile?.role !== 'admin') {
+  // Only allow admin and owner access
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
         <Card className="w-full max-w-md">

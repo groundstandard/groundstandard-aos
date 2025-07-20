@@ -21,7 +21,7 @@ const Events = () => {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {

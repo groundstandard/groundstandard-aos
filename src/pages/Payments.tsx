@@ -19,7 +19,7 @@ const Payments = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
         <Card className="w-full max-w-md">
