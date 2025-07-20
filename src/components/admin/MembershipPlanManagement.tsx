@@ -568,7 +568,7 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
             </div>
 
             <div>
-              <Label htmlFor="length_months" className="text-xs">Length (Months)</Label>
+              <Label htmlFor="length_months" className="text-xs">Length</Label>
               <Input
                 id="length_months"
                 type="number"
@@ -582,7 +582,7 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
             </div>
 
             <div>
-              <Label htmlFor="payment_frequency_months" className="text-xs">Payment Frequency (Months)</Label>
+              <Label htmlFor="payment_frequency_months" className="text-xs">Frequency</Label>
               <Input
                 id="payment_frequency_months"
                 type="number"
@@ -596,17 +596,17 @@ const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[] }) => 
             </div>
           </div>
 
-          <div className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded-md">
-            <div className="flex items-center space-x-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
               <Checkbox
                 id="is_class_pack"
                 checked={formData.is_class_pack}
                 onCheckedChange={(checked) => setFormData({...formData, is_class_pack: checked as boolean})}
                 className="h-4 w-4"
               />
-              <Label htmlFor="is_class_pack" className="text-xs font-medium cursor-pointer">This is a Class Pack</Label>
+              <Label htmlFor="is_class_pack" className="text-xs font-medium cursor-pointer">Class Pack</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
               <Switch
                 checked={formData.is_unlimited}
                 onCheckedChange={(checked) => setFormData({...formData, is_unlimited: checked})}
