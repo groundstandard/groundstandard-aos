@@ -19,7 +19,7 @@ import { BulkActionsToolbar } from "@/components/contacts/BulkActionsToolbar";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
 import { EnhancedContactForm } from "@/components/contacts/EnhancedContactForm";
-import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
+// import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
 import { 
   Search, 
   Users, 
@@ -716,12 +716,15 @@ const Contacts = () => {
           onAddChild={handleAddChild}
         />
 
+        {/* Temporarily commenting out AssignMembershipDialog until we fix the issue */}
+        {/* 
         <AssignMembershipDialog
           contact={selectedContact}
           open={showMembershipDialog}
           onOpenChange={setShowMembershipDialog}
           onSuccess={handleMembershipSuccess}
         />
+        */}
 
         {/* Bulk Actions Toolbar */}
         <BulkActionsToolbar
