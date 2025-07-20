@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import * as SelectComponents from "@/components/ui/select";
 
 const Select = SelectComponents.Select;
@@ -16,7 +17,7 @@ const SelectValue = SelectComponents.SelectValue;
 import { 
   LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, 
   FileText, Award, DollarSign, Users, TrendingUp, Settings, Crown, Star,
-  Clock, Target, Activity, Bell, CalendarDays, UserCheck
+  Clock, Target, Activity, Bell, CalendarDays, UserCheck, ChevronDown
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
@@ -122,24 +123,39 @@ const Dashboard = () => {
               </Button>
             </div>
             <div className="flex-1 flex justify-end">
-              <Dialog>
-                <DialogTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="flex items-center gap-2"
                   >
-                    <User className="h-4 w-4" />
-                    Profile
+                    <Settings className="h-4 w-4" />
+                    Settings
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Profile Management</DialogTitle>
-                  </DialogHeader>
-                  <ProfileView />
-                </DialogContent>
-              </Dialog>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
+                  <DropdownMenuItem onClick={() => toast({ title: "Notifications", description: "Notifications feature coming soon" })}>
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Dialog>
+                      <DialogTrigger className="flex items-center w-full px-2 py-1.5 text-sm cursor-pointer hover:bg-accent">
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Profile Management</DialogTitle>
+                        </DialogHeader>
+                        <ProfileView />
+                      </DialogContent>
+                    </Dialog>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
