@@ -125,7 +125,7 @@ const ContactProfile = () => {
         email: contact.email,
         phone: contact.phone || "",
         role: contact.role,
-        belt_level: contact.belt_level || "",
+        belt_level: contact.belt_level || "none", // Convert empty string to "none"
         emergency_contact: contact.emergency_contact || "",
         membership_status: contact.membership_status
       });
@@ -227,9 +227,15 @@ const ContactProfile = () => {
     if (!contact) return;
 
     try {
+      // Convert "none" back to empty string for belt_level
+      const updateData = {
+        ...formData,
+        belt_level: formData.belt_level === "none" ? "" : formData.belt_level
+      };
+
       const { data, error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update(updateData)
         .eq('id', contact.id)
         .select();
 
@@ -768,7 +774,7 @@ const ContactProfile = () => {
                       <SelectValue placeholder="Select belt level" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Belt</SelectItem>
+                      <SelectItem value="none">No Belt</SelectItem>
                       <SelectItem value="white">White</SelectItem>
                       <SelectItem value="yellow">Yellow</SelectItem>
                       <SelectItem value="orange">Orange</SelectItem>
