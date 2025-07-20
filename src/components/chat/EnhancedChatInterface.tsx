@@ -134,18 +134,13 @@ export const EnhancedChatInterface = () => {
       if (!profile) return;
 
       try {
-        // Load channels from database with membership filtering
+        // Load channels from database 
         let channelQuery = supabase
           .from('chat_channels')
           .select(`
             *,
             channel_memberships!left(user_id)
           `);
-
-        // If not owner, filter channels based on access
-        if (!isOwner) {
-          channelQuery = channelQuery.or(`type.eq.public,channel_memberships.user_id.eq.${profile.id}`);
-        }
 
         const { data: channelData, error: channelError } = await channelQuery.order('name');
 

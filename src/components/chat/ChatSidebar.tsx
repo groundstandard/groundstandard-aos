@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoleTesting } from '@/contexts/RoleTestingContext';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -69,7 +69,7 @@ export const ChatSidebar = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({});
   const { profile } = useAuth();
-  const { effectiveRole } = useRoleTesting();
+  const { effectiveRole } = useEffectiveRole();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
   const isMobile = useIsMobile();
