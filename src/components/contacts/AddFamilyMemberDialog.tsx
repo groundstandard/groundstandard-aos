@@ -395,7 +395,6 @@ export const AddFamilyMemberDialog = ({ open, onClose, primaryContact, onMemberA
                     <SelectItem value="guardian">Guardian</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="alumni">Alumni</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
