@@ -766,8 +766,6 @@ export type Database = {
           discount_value: number | null
           id: string
           is_active: boolean | null
-          max_family_members: number | null
-          minimum_members: number | null
           name: string
           updated_at: string | null
         }
@@ -779,8 +777,6 @@ export type Database = {
           discount_value?: number | null
           id?: string
           is_active?: boolean | null
-          max_family_members?: number | null
-          minimum_members?: number | null
           name: string
           updated_at?: string | null
         }
@@ -792,8 +788,6 @@ export type Database = {
           discount_value?: number | null
           id?: string
           is_active?: boolean | null
-          max_family_members?: number | null
-          minimum_members?: number | null
           name?: string
           updated_at?: string | null
         }
@@ -1008,6 +1002,74 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      family_discount_plans: {
+        Row: {
+          applies_to: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      family_discount_tiers: {
+        Row: {
+          created_at: string
+          discount_type: string
+          discount_value: number | null
+          family_member_position: number
+          family_plan_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_type: string
+          discount_value?: number | null
+          family_member_position: number
+          family_plan_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_type?: string
+          discount_value?: number | null
+          family_member_position?: number
+          family_plan_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_discount_tiers_family_plan_id_fkey"
+            columns: ["family_plan_id"]
+            isOneToOne: false
+            referencedRelation: "family_discount_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       family_discounts: {
         Row: {

@@ -341,58 +341,69 @@ export const MembershipPlanManagement = () => {
 
         <TabsContent value="discounts" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Discount Types & Family Plans</h3>
-            <CreateDiscountDialog />
+            <h3 className="text-lg font-semibold">General Discounts & Family Plans</h3>
+            <div className="flex gap-2">
+              <CreateDiscountDialog />
+              <CreateFamilyDiscountDialog />
+            </div>
           </div>
           
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Applies To</TableHead>
-                  <TableHead>Min Members</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {discountTypes?.map((discount) => (
-                  <TableRow key={discount.id}>
-                    <TableCell className="font-medium">{discount.name}</TableCell>
-                    <TableCell>
-                      <Badge>{discount.discount_type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {discount.discount_type === 'percentage' 
-                        ? `${discount.discount_value}%` 
-                        : formatPrice((discount.discount_value || 0) * 100)
-                      }
-                    </TableCell>
-                    <TableCell>{discount.applies_to}</TableCell>
-                    <TableCell>{discount.minimum_members}</TableCell>
-                    <TableCell>
-                      <Badge variant={discount.is_active ? 'default' : 'secondary'}>
-                        {discount.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">General Discounts</CardTitle>
+                <CardDescription>Student, military, senior discounts, etc.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Applies To</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {discountTypes?.map((discount) => (
+                      <TableRow key={discount.id}>
+                        <TableCell className="font-medium">{discount.name}</TableCell>
+                        <TableCell>
+                          <Badge>{discount.discount_type}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {discount.discount_type === 'percentage' 
+                            ? `${discount.discount_value}%` 
+                            : formatPrice((discount.discount_value || 0) * 100)
+                          }
+                        </TableCell>
+                        <TableCell>{discount.applies_to}</TableCell>
+                        <TableCell>
+                          <Badge variant={discount.is_active ? 'default' : 'secondary'}>
+                            {discount.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <FamilyDiscountPlansCard />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -947,8 +958,6 @@ const CreateDiscountDialog = () => {
     discount_type: 'percentage',
     discount_value: '',
     applies_to: 'membership',
-    minimum_members: '1',
-    max_family_members: '',
     is_active: true
   });
   const { toast } = useToast();
@@ -960,9 +969,7 @@ const CreateDiscountDialog = () => {
         .from('discount_types')
         .insert([{
           ...data,
-          discount_value: parseFloat(data.discount_value),
-          minimum_members: parseInt(data.minimum_members),
-          max_family_members: data.max_family_members ? parseInt(data.max_family_members) : null
+          discount_value: parseFloat(data.discount_value)
         }]);
       if (error) throw error;
     },
@@ -976,8 +983,6 @@ const CreateDiscountDialog = () => {
         discount_type: 'percentage',
         discount_value: '',
         applies_to: 'membership',
-        minimum_members: '1',
-        max_family_members: '',
         is_active: true
       });
     },
@@ -1001,9 +1006,9 @@ const CreateDiscountDialog = () => {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Discount Type</DialogTitle>
+          <DialogTitle>Create General Discount</DialogTitle>
           <DialogDescription>
-            Add a new discount type or family plan
+            Add a new general discount (not family-specific)
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1070,30 +1075,6 @@ const CreateDiscountDialog = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="minimum_members">Minimum Family Members</Label>
-              <Input
-                id="minimum_members"
-                type="number"
-                min="1"
-                value={formData.minimum_members}
-                onChange={(e) => setFormData({...formData, minimum_members: e.target.value})}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="max_family_members">Maximum Family Members</Label>
-              <Input
-                id="max_family_members"
-                type="number"
-                min="1"
-                value={formData.max_family_members}
-                onChange={(e) => setFormData({...formData, max_family_members: e.target.value})}
-              />
-            </div>
-          </div>
-
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
@@ -1106,4 +1087,291 @@ const CreateDiscountDialog = () => {
       </DialogContent>
     </Dialog>
   );
+};
+
+// New Family Discount Components
+const FamilyDiscountPlansCard = () => {
+  const { data: familyPlans } = useQuery({
+    queryKey: ['family-discount-plans'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('family_discount_plans')
+        .select(`
+          *,
+          tiers:family_discount_tiers(*)
+        `)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const formatDiscountValue = (tier: any) => {
+    if (tier.discount_type === 'free') return 'Free';
+    if (tier.discount_type === 'percentage') return `${tier.discount_value}%`;
+    return `$${tier.discount_value}`;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Family Discount Plans</CardTitle>
+        <CardDescription>Progressive discounts for additional family members</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {familyPlans?.map((plan) => (
+            <div key={plan.id} className="border rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium">{plan.name}</h4>
+                <Badge variant={plan.is_active ? 'default' : 'secondary'}>
+                  {plan.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              {plan.description && (
+                <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>
+              )}
+              <div className="grid gap-2">
+                {plan.tiers?.sort((a: any, b: any) => a.family_member_position - b.family_member_position)
+                  .map((tier: any) => (
+                  <div key={tier.id} className="flex justify-between text-sm">
+                    <span>{ordinal(tier.family_member_position)} family member:</span>
+                    <span className="font-medium">{formatDiscountValue(tier)} off</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end mt-3 gap-2">
+                <Button variant="ghost" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const CreateFamilyDiscountDialog = () => {
+  const [open, setOpen] = useState(false);
+  const [planData, setPlanData] = useState({
+    name: '',
+    description: '',
+    applies_to: 'membership',
+    is_active: true
+  });
+  const [tiers, setTiers] = useState([
+    { family_member_position: 2, discount_type: 'percentage', discount_value: '' }
+  ]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const createFamilyPlan = useMutation({
+    mutationFn: async (data: any) => {
+      // First create the plan
+      const { data: plan, error: planError } = await supabase
+        .from('family_discount_plans')
+        .insert([data.plan])
+        .select()
+        .single();
+      
+      if (planError) throw planError;
+
+      // Then create the tiers
+      const tiersToInsert = data.tiers.map((tier: any) => ({
+        ...tier,
+        family_plan_id: plan.id,
+        discount_value: tier.discount_type === 'free' ? null : parseFloat(tier.discount_value)
+      }));
+
+      const { error: tiersError } = await supabase
+        .from('family_discount_tiers')
+        .insert(tiersToInsert);
+      
+      if (tiersError) throw tiersError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['family-discount-plans'] });
+      toast({ title: "Family discount plan created successfully" });
+      setOpen(false);
+      setPlanData({
+        name: '',
+        description: '',
+        applies_to: 'membership',
+        is_active: true
+      });
+      setTiers([{ family_member_position: 2, discount_type: 'percentage', discount_value: '' }]);
+    },
+    onError: (error) => {
+      toast({ title: "Error creating family plan", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const addTier = () => {
+    const nextPosition = Math.max(...tiers.map(t => t.family_member_position)) + 1;
+    setTiers([...tiers, { family_member_position: nextPosition, discount_type: 'percentage', discount_value: '' }]);
+  };
+
+  const removeTier = (index: number) => {
+    setTiers(tiers.filter((_, i) => i !== index));
+  };
+
+  const updateTier = (index: number, field: string, value: any) => {
+    const newTiers = [...tiers];
+    newTiers[index] = { ...newTiers[index], [field]: value };
+    setTiers(newTiers);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createFamilyPlan.mutate({ plan: planData, tiers });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Family Plan
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create Family Discount Plan</DialogTitle>
+          <DialogDescription>
+            Set up progressive discounts for additional family members
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Plan Name</Label>
+              <Input
+                id="name"
+                value={planData.name}
+                onChange={(e) => setPlanData({...planData, name: e.target.value})}
+                required
+                placeholder="e.g., Standard Family Plan"
+              />
+            </div>
+            <div>
+              <Label htmlFor="applies_to">Applies To</Label>
+              <Select value={planData.applies_to} onValueChange={(value) => setPlanData({...planData, applies_to: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="membership">Membership Plans</SelectItem>
+                  <SelectItem value="private_sessions">Private Sessions</SelectItem>
+                  <SelectItem value="drop_in">Drop-in Classes</SelectItem>
+                  <SelectItem value="all">All Services</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={planData.description}
+              onChange={(e) => setPlanData({...planData, description: e.target.value})}
+              placeholder="Describe this family discount plan"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <Label className="text-base font-medium">Family Member Discounts</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addTier}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Tier
+              </Button>
+            </div>
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                First family member pays full price. Set discounts for additional members:
+              </div>
+              {tiers.map((tier, index) => (
+                <div key={index} className="grid grid-cols-4 gap-3 items-end p-3 border rounded">
+                  <div>
+                    <Label>Family Member</Label>
+                    <Input
+                      type="number"
+                      min="2"
+                      value={tier.family_member_position}
+                      onChange={(e) => updateTier(index, 'family_member_position', parseInt(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Discount Type</Label>
+                    <Select 
+                      value={tier.discount_type} 
+                      onValueChange={(value) => updateTier(index, 'discount_type', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Percentage</SelectItem>
+                        <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
+                        <SelectItem value="free">Free</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>
+                      {tier.discount_type === 'percentage' ? 'Percentage (%)' : 
+                       tier.discount_type === 'fixed_amount' ? 'Amount ($)' : 'Value'}
+                    </Label>
+                    <Input
+                      type="number"
+                      step={tier.discount_type === 'percentage' ? '1' : '0.01'}
+                      value={tier.discount_value}
+                      onChange={(e) => updateTier(index, 'discount_value', e.target.value)}
+                      disabled={tier.discount_type === 'free'}
+                      required={tier.discount_type !== 'free'}
+                      placeholder={tier.discount_type === 'free' ? 'Free' : ''}
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeTier(index)}
+                      disabled={tiers.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={createFamilyPlan.isPending}>
+              {createFamilyPlan.isPending ? 'Creating...' : 'Create Family Plan'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Helper function for ordinal numbers
+const ordinal = (num: number) => {
+  const suffixes = ['th', 'st', 'nd', 'rd'];
+  const v = num % 100;
+  return num + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
 };
