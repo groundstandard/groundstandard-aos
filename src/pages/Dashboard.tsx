@@ -109,9 +109,9 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-          {/* Header with Chat and Profile */}
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <div className="flex-1 flex justify-start">
+          {/* Header with Chat and Settings */}
+          <div className="flex justify-end items-center mb-4 sm:mb-6">
+            <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -121,8 +121,7 @@ const Dashboard = () => {
                 <MessageCircle className="h-4 w-4" />
                 Chat
               </Button>
-            </div>
-            <div className="flex-1 flex justify-end">
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
