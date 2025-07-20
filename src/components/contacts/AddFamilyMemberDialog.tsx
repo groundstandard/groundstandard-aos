@@ -69,12 +69,15 @@ export const AddFamilyMemberDialog = ({ open, onClose, primaryContact, onMemberA
 
   // Search existing contacts
   const searchContacts = async (query: string) => {
+    console.log('searchContacts called with query:', query);
     if (!query || query.length < 2) {
+      console.log('Query too short, clearing results');
       setSearchResults([]);
       return;
     }
 
     try {
+      console.log('Executing supabase query for:', query);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -82,8 +85,10 @@ export const AddFamilyMemberDialog = ({ open, onClose, primaryContact, onMemberA
         .neq('id', primaryContact?.id) // Don't include the primary contact
         .limit(10);
 
+      console.log('Supabase response - data:', data, 'error:', error);
       if (error) throw error;
       setSearchResults(data || []);
+      console.log('Search results set:', data);
     } catch (error) {
       console.error('Error searching contacts:', error);
     }
