@@ -1142,7 +1142,6 @@ const ContactProfile = () => {
                     <SelectContent>
                       <SelectItem value="visitor">Visitor</SelectItem>
                       <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="head_of_house">Head of House</SelectItem>
                       <SelectItem value="alumni">Alumni</SelectItem>
                       <SelectItem value="staff">Staff</SelectItem>
                       <SelectItem value="instructor">Instructor</SelectItem>
@@ -1181,19 +1180,19 @@ const ContactProfile = () => {
               </div>
 
               <div>
-                <Label htmlFor="membership_status">Membership Type</Label>
+                <Label htmlFor="membership_status">Status</Label>
                 <Select value={formData.membership_status} onValueChange={(value) => setFormData({...formData, membership_status: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="suspended">Suspended</SelectItem>
                     <SelectItem value="frozen">Frozen</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
