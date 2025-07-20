@@ -1950,6 +1950,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          membership_plan_id: string | null
           membership_status: string
           parent_id: string | null
           phone: string | null
@@ -1965,6 +1966,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          membership_plan_id?: string | null
           membership_status?: string
           parent_id?: string | null
           phone?: string | null
@@ -1980,6 +1982,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          membership_plan_id?: string | null
           membership_status?: string
           parent_id?: string | null
           phone?: string | null
@@ -1992,6 +1995,13 @@ export type Database = {
             columns: ["academy_id"]
             isOneToOne: false
             referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
             referencedColumns: ["id"]
           },
           {
