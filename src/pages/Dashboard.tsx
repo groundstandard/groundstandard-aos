@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, 
   FileText, Award, DollarSign, Users, TrendingUp, Settings, Crown, Star,
@@ -280,51 +281,104 @@ const Dashboard = () => {
                 })}
               </div>
 
-              {/* Performance Overview */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
-                        Performance Overview
+              {/* Performance Overview - 3 Separate Cards */}
+              <div className="grid gap-6 mb-6 md:grid-cols-3">
+                {/* Student Retention Card */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Users className="h-4 w-4" />
+                        Student Retention
                       </CardTitle>
-                      <CardDescription>Key metrics for this month</CardDescription>
+                      <Select defaultValue="3months">
+                        <SelectTrigger className="w-28 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3months">3 Months</SelectItem>
+                          <SelectItem value="6months">6 Months</SelectItem>
+                          <SelectItem value="9months">9 Months</SelectItem>
+                          <SelectItem value="12months">12 Months</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleRefreshStats} disabled={refreshing}>
-                      <Activity className="h-4 w-4 mr-2" />
-                      {refreshing ? "Refreshing..." : "Refresh"}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Student Retention</span>
-                        <span className="text-sm text-muted-foreground">96%</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold">96%</div>
+                        <div className="text-sm text-muted-foreground">of target (90%)</div>
                       </div>
                       <Progress value={96} className="h-2" />
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Class Capacity</span>
-                        <span className="text-sm text-muted-foreground">78%</span>
+                  </CardContent>
+                </Card>
+
+                {/* Class Capacity Card */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Calendar className="h-4 w-4" />
+                        Class Capacity
+                      </CardTitle>
+                      <Select defaultValue="adults">
+                        <SelectTrigger className="w-32 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="adults">Adults</SelectItem>
+                          <SelectItem value="youth">Youth</SelectItem>
+                          <SelectItem value="first30">First 30 Days</SelectItem>
+                          <SelectItem value="after30">After 30 Days</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold">78%</div>
+                        <div className="text-sm text-muted-foreground">of target (80%)</div>
                       </div>
                       <Progress value={78} className="h-2" />
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Revenue Goal</span>
-                        <span className="text-sm text-muted-foreground">84%</span>
+                  </CardContent>
+                </Card>
+
+                {/* Revenue Goal Card */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <DollarSign className="h-4 w-4" />
+                        Revenue Goal
+                      </CardTitle>
+                      <Select defaultValue="monthly">
+                        <SelectTrigger className="w-28 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarter</SelectItem>
+                          <SelectItem value="halfyear">Half Year</SelectItem>
+                          <SelectItem value="yearly">Year</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold">84%</div>
+                        <div className="text-sm text-muted-foreground">of target ($20,000)</div>
                       </div>
                       <Progress value={84} className="h-2" />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Recent Activity */}
               <Card className="mb-6">

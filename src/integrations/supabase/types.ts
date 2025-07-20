@@ -1587,6 +1587,71 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_targets: {
+        Row: {
+          academy_id: string | null
+          capacity_adults: number
+          capacity_after_30_days: number
+          capacity_first_30_days: number
+          capacity_youth: number
+          created_at: string
+          id: string
+          retention_12_months: number
+          retention_3_months: number
+          retention_6_months: number
+          retention_9_months: number
+          revenue_half_yearly: number
+          revenue_monthly: number
+          revenue_quarterly: number
+          revenue_yearly: number
+          updated_at: string
+        }
+        Insert: {
+          academy_id?: string | null
+          capacity_adults?: number
+          capacity_after_30_days?: number
+          capacity_first_30_days?: number
+          capacity_youth?: number
+          created_at?: string
+          id?: string
+          retention_12_months?: number
+          retention_3_months?: number
+          retention_6_months?: number
+          retention_9_months?: number
+          revenue_half_yearly?: number
+          revenue_monthly?: number
+          revenue_quarterly?: number
+          revenue_yearly?: number
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string | null
+          capacity_adults?: number
+          capacity_after_30_days?: number
+          capacity_first_30_days?: number
+          capacity_youth?: number
+          created_at?: string
+          id?: string
+          retention_12_months?: number
+          retention_3_months?: number
+          retention_6_months?: number
+          retention_9_months?: number
+          revenue_half_yearly?: number
+          revenue_monthly?: number
+          revenue_quarterly?: number
+          revenue_yearly?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_targets_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           academy_id: string | null

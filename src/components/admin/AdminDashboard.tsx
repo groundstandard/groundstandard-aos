@@ -254,6 +254,10 @@ export const AdminDashboard = () => {
                   <Users className="h-4 w-4 mr-2" />
                   Memberships
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/performance-targets')}>
+                  <Target className="h-4 w-4 mr-2" />
+                  Performance Targets
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleQuickAction("Settings")}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
