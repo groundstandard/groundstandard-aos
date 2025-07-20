@@ -77,6 +77,10 @@ export const ChatSidebar = ({
   // Check effective role for permissions (includes role switching for owners)
   const canCreateChannels = effectiveRole === 'admin';
   const canSeeAdminChannels = effectiveRole === 'admin';
+  
+  // Debug logging
+  console.log('ChatSidebar - effectiveRole:', effectiveRole);
+  console.log('ChatSidebar - canCreateChannels:', canCreateChannels);
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({

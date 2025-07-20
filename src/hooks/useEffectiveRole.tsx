@@ -26,6 +26,12 @@ export const useEffectiveRole = () => {
     effectiveRole = profile?.role || 'admin';
   }
   
+  console.log('useEffectiveRole - profile.role:', profile?.role);
+  console.log('useEffectiveRole - currentView:', currentView);
+  console.log('useEffectiveRole - testRole:', testRole);
+  console.log('useEffectiveRole - isOwner:', isOwner);
+  console.log('useEffectiveRole - effectiveRole:', effectiveRole);
+  
   return {
     effectiveRole,
     isAdmin: effectiveRole === 'admin' || effectiveRole === 'owner',
