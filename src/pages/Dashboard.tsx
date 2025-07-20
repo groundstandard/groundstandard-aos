@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { 
   LogOut, User, Calendar, CreditCard, BarChart3, CheckCircle, MessageCircle, 
   FileText, Award, DollarSign, Users, TrendingUp, Settings, Crown, Star,
-  Clock, Target, Activity, Bell
+  Clock, Target, Activity, Bell, CalendarDays, UserCheck
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
@@ -157,30 +157,46 @@ const Dashboard = () => {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-8 border-b border-border pb-4">
-              <Button variant="ghost" className="flex items-center gap-2 text-primary border-b-2 border-primary pb-2">
+            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
+              <Button variant="ghost" className="flex items-center gap-2 text-primary border-b-2 border-primary pb-2 whitespace-nowrap">
                 <TrendingUp className="h-4 w-4" />
                 Overview
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/contacts')}>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/contacts')}>
                 <Users className="h-4 w-4" />
                 Contacts
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/payments')}>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/payments')}>
                 <DollarSign className="h-4 w-4" />
                 Payments
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/attendance')}>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/attendance')}>
                 <Calendar className="h-4 w-4" />
                 Attendance
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/reports')}>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/reports')}>
                 <BarChart3 className="h-4 w-4" />
                 Reporting
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/automations')}>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/events')}>
+                <CalendarDays className="h-4 w-4" />
+                Events
+              </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
+                <Award className="h-4 w-4" />
+                Belt Testing
+              </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/subscription')}>
+                <UserCheck className="h-4 w-4" />
+                Memberships
+              </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/settings')}>
                 <Settings className="h-4 w-4" />
-                Admin
+                Settings
+              </Button>
+              <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/automations')}>
+                <Activity className="h-4 w-4" />
+                Automations
               </Button>
             </div>
           </div>
