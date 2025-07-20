@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ViewProvider } from "@/hooks/useView";
 import { RoleTestingProvider } from "@/contexts/RoleTestingContext";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
+import { AcademyProvider } from "@/hooks/useAcademy";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -28,12 +29,14 @@ import ContactProfile from "./pages/ContactProfile";
 import Automations from "./pages/Automations";
 import PerformanceTargets from "./pages/PerformanceTargets";
 import Settings from "./pages/Settings";
+import AcademySetup from "./pages/AcademySetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
 import { useRoleTesting } from "@/contexts/RoleTestingContext";
+import AcademyGatekeeper from "@/components/academy/AcademyGatekeeper";
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -46,27 +49,28 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/" element={user ? <Dashboard /> : <Index />} />
-        <Route path="/auth" element={!user ? <Auth /> : <Dashboard />} />
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Auth />} />
-        <Route path="/classes" element={user ? <Classes /> : <Auth />} />
-        <Route path="/attendance" element={user ? <Attendance /> : <Auth />} />
-        <Route path="/checkin" element={user ? <CheckIn /> : <Auth />} />
-        <Route path="/admin" element={user ? <Admin /> : <Auth />} />
-        <Route path="/progress" element={user ? <Progress /> : <Auth />} />
-        <Route path="/profile" element={user ? <Profile /> : <Auth />} />
-        <Route path="/chat" element={user ? <Chat /> : <Auth />} />
-        <Route path="/reports" element={user ? <Reports /> : <Auth />} />
-        <Route path="/belt-testing" element={user ? <BeltTesting /> : <Auth />} />
-        <Route path="/payments" element={user ? <Payments /> : <Auth />} />
-        <Route path="/subscription" element={user ? <Subscription /> : <Auth />} />
-        <Route path="/contacts" element={user ? <Contacts /> : <Auth />} />
-        <Route path="/contacts/table" element={user ? <ContactTable /> : <Auth />} />
-        <Route path="/contacts/:id" element={user ? <ContactProfile /> : <Auth />} />
-        <Route path="/automations" element={user ? <Automations /> : <Auth />} />
-        <Route path="/admin/performance-targets" element={user ? <PerformanceTargets /> : <Auth />} />
-        <Route path="/settings" element={user ? <Settings /> : <Auth />} />
-        <Route path="/events" element={user ? <Events /> : <Auth />} />
+        <Route path="/" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Index />} />
+        <Route path="/auth" element={!user ? <Auth /> : <AcademyGatekeeper><Dashboard /></AcademyGatekeeper>} />
+        <Route path="/dashboard" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/classes" element={user ? <AcademyGatekeeper><Classes /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/attendance" element={user ? <AcademyGatekeeper><Attendance /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/checkin" element={user ? <AcademyGatekeeper><CheckIn /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/admin" element={user ? <AcademyGatekeeper><Admin /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/progress" element={user ? <AcademyGatekeeper><Progress /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/profile" element={user ? <AcademyGatekeeper><Profile /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/chat" element={user ? <AcademyGatekeeper><Chat /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/reports" element={user ? <AcademyGatekeeper><Reports /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/belt-testing" element={user ? <AcademyGatekeeper><BeltTesting /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/payments" element={user ? <AcademyGatekeeper><Payments /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/subscription" element={user ? <AcademyGatekeeper><Subscription /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/contacts" element={user ? <AcademyGatekeeper><Contacts /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/contacts/table" element={user ? <AcademyGatekeeper><ContactTable /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/contacts/:id" element={user ? <AcademyGatekeeper><ContactProfile /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/automations" element={user ? <AcademyGatekeeper><Automations /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/admin/performance-targets" element={user ? <AcademyGatekeeper><PerformanceTargets /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/settings" element={user ? <AcademyGatekeeper><Settings /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/academy-setup" element={user ? <AcademySetup /> : <Auth />} />
+        <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -81,17 +85,19 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <SubscriptionProvider>
-          <ViewProvider>
-            <RoleTestingProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </RoleTestingProvider>
-          </ViewProvider>
-        </SubscriptionProvider>
+        <AcademyProvider>
+          <SubscriptionProvider>
+            <ViewProvider>
+              <RoleTestingProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </RoleTestingProvider>
+            </ViewProvider>
+          </SubscriptionProvider>
+        </AcademyProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

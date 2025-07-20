@@ -1,0 +1,354 @@
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useAcademy } from '@/hooks/useAcademy';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Building2, Palette, Globe, CheckCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+
+const AcademySetup = () => {
+  const { user } = useAuth();
+  const { academy, updateAcademy } = useAcademy();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  
+  const [formData, setFormData] = useState({
+    name: academy?.name || '',
+    description: academy?.description || '',
+    website_url: academy?.website_url || '',
+    phone: academy?.phone || '',
+    email: academy?.email || '',
+    address: academy?.address || '',
+    city: academy?.city || '',
+    state: academy?.state || '',
+    country: academy?.country || 'USA',
+    timezone: academy?.timezone || 'America/New_York',
+    primary_color: academy?.primary_color || '#3B82F6',
+    secondary_color: academy?.secondary_color || '#1E40AF',
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleStepSubmit = async () => {
+    if (!academy?.id) return;
+    
+    setIsSubmitting(true);
+    try {
+      await updateAcademy(formData);
+      
+      if (currentStep < 3) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        // Final step - mark setup as complete
+        await updateAcademy({ is_setup_complete: true });
+        toast({
+          title: "Academy Setup Complete!",
+          description: "Your academy is now ready to use.",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating academy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save academy information. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const isCurrentStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.name.trim() && formData.email.trim();
+      case 2:
+        return formData.city.trim() && formData.state.trim();
+      case 3:
+        return true; // Branding is optional
+      default:
+        return false;
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <Building2 className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold">Basic Information</h2>
+              <p className="text-muted-foreground">Tell us about your academy</p>
+            </div>
+            
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Academy Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="My Martial Arts Academy"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Contact Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="contact@myacademy.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="website">Website URL</Label>
+                <Input
+                  id="website"
+                  value={formData.website_url}
+                  onChange={(e) => handleInputChange('website_url', e.target.value)}
+                  placeholder="https://myacademy.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Brief description of your academy..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <Globe className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold">Location & Settings</h2>
+              <p className="text-muted-foreground">Where is your academy located?</p>
+            </div>
+            
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="address">Street Address</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City *</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="New York"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="state">State *</Label>
+                  <Input
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    placeholder="NY"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  placeholder="USA"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="timezone">Timezone</Label>
+                <select
+                  id="timezone"
+                  value={formData.timezone}
+                  onChange={(e) => handleInputChange('timezone', e.target.value)}
+                  className="w-full p-2 border border-input rounded-md bg-background"
+                >
+                  <option value="America/New_York">Eastern Time (ET)</option>
+                  <option value="America/Chicago">Central Time (CT)</option>
+                  <option value="America/Denver">Mountain Time (MT)</option>
+                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="America/Anchorage">Alaska Time (AKT)</option>
+                  <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <Palette className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-2xl font-bold">Branding & Colors</h2>
+              <p className="text-muted-foreground">Customize your academy's appearance</p>
+            </div>
+            
+            <div className="grid gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="primary-color">Primary Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="primary-color"
+                      type="color"
+                      value={formData.primary_color}
+                      onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                      className="w-16 h-10 p-1"
+                    />
+                    <Input
+                      value={formData.primary_color}
+                      onChange={(e) => handleInputChange('primary_color', e.target.value)}
+                      placeholder="#3B82F6"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="secondary-color">Secondary Color</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="secondary-color"
+                      type="color"
+                      value={formData.secondary_color}
+                      onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                      className="w-16 h-10 p-1"
+                    />
+                    <Input
+                      value={formData.secondary_color}
+                      onChange={(e) => handleInputChange('secondary_color', e.target.value)}
+                      placeholder="#1E40AF"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-card rounded-lg border">
+                <h3 className="font-semibold mb-2">Color Preview</h3>
+                <div className="flex gap-2">
+                  <div 
+                    className="w-16 h-16 rounded-lg border"
+                    style={{ backgroundColor: formData.primary_color }}
+                  />
+                  <div 
+                    className="w-16 h-16 rounded-lg border"
+                    style={{ backgroundColor: formData.secondary_color }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold">Welcome to Your Academy!</CardTitle>
+          <CardDescription>
+            Let's set up your academy in just a few steps
+          </CardDescription>
+          
+          {/* Progress indicator */}
+          <div className="flex justify-center gap-2 mt-4">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  step < currentStep ? 'bg-green-500 text-white' :
+                  step === currentStep ? 'bg-primary text-white' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {step < currentStep ? <CheckCircle className="w-4 h-4" /> : step}
+                </div>
+                {step < 3 && <div className="w-8 h-0.5 bg-muted mx-2" />}
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex justify-center mt-2">
+            <Badge variant="secondary">
+              Step {currentStep} of 3
+            </Badge>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          {renderStep()}
+          
+          <div className="flex justify-between mt-8">
+            <Button
+              variant="outline"
+              onClick={handlePreviousStep}
+              disabled={currentStep === 1 || isSubmitting}
+            >
+              Previous
+            </Button>
+            
+            <Button
+              onClick={handleStepSubmit}
+              disabled={!isCurrentStepValid() || isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {currentStep === 3 ? 'Complete Setup' : 'Next Step'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AcademySetup;

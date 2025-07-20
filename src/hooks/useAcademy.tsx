@@ -6,12 +6,15 @@ interface Academy {
   id: string;
   name: string;
   slug?: string;
+  description?: string;
+  website_url?: string;
   email?: string;
   phone?: string;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
+  timezone?: string;
   logo_url?: string;
   primary_color?: string;
   secondary_color?: string;
