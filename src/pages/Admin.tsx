@@ -182,21 +182,6 @@ const Admin = () => {
                 <Bell className="h-4 w-4 mr-2" />
                 Notifications
               </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Profile Management</DialogTitle>
-                    <DialogDescription>Manage your admin profile and account settings</DialogDescription>
-                  </DialogHeader>
-                  <ProfileView />
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
 

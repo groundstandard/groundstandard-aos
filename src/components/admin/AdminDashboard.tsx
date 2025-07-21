@@ -286,7 +286,7 @@ export const AdminDashboard = () => {
                   <Target className="h-4 w-4 mr-2" />
                   Performance Targets
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleQuickAction("Settings")}>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
