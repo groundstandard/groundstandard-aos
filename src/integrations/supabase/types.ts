@@ -2265,12 +2265,15 @@ export type Database = {
           amount: number
           created_at: string
           description: string | null
+          failure_reason: string | null
           id: string
           installment_number: number | null
           installment_plan_id: string | null
+          next_retry_date: string | null
           payment_date: string
           payment_method: string
           payment_method_type: string | null
+          retry_count: number | null
           status: string
           stripe_invoice_id: string | null
           student_id: string
@@ -2283,12 +2286,15 @@ export type Database = {
           amount: number
           created_at?: string
           description?: string | null
+          failure_reason?: string | null
           id?: string
           installment_number?: number | null
           installment_plan_id?: string | null
+          next_retry_date?: string | null
           payment_date?: string
           payment_method: string
           payment_method_type?: string | null
+          retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
           student_id: string
@@ -2301,12 +2307,15 @@ export type Database = {
           amount?: number
           created_at?: string
           description?: string | null
+          failure_reason?: string | null
           id?: string
           installment_number?: number | null
           installment_plan_id?: string | null
+          next_retry_date?: string | null
           payment_date?: string
           payment_method?: string
           payment_method_type?: string | null
+          retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
           student_id?: string

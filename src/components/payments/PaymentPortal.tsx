@@ -7,8 +7,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Receipt, AlertCircle, Calendar, DollarSign } from 'lucide-react';
-import { ACHSetupForm } from './ACHSetupForm';
+import { EnhancedACHSetupForm } from './EnhancedACHSetupForm';
 import { InstallmentPlanForm } from './InstallmentPlanForm';
+import { InstallmentPlanManagement } from './InstallmentPlanManagement';
 
 interface PaymentPortalProps {
   userId?: string;
@@ -117,9 +118,10 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="installments">Payment Plans</TabsTrigger>
+          <TabsTrigger value="manage">Manage Plans</TabsTrigger>
           <TabsTrigger value="ach">Bank Transfer</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
@@ -220,8 +222,12 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
           <InstallmentPlanForm />
         </TabsContent>
 
+        <TabsContent value="manage">
+          <InstallmentPlanManagement />
+        </TabsContent>
+
         <TabsContent value="ach">
-          <ACHSetupForm />
+          <EnhancedACHSetupForm />
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
