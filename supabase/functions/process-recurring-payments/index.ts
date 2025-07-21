@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,147 +13,271 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Stripe
+    console.log("[PROCESS-RECURRING-PAYMENTS] Starting recurring payment processing");
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
-    // Initialize Supabase client with service role key
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    // Process failed payments that need retry
+    await processFailedPayments(supabase, stripe);
 
-    const today = new Date().toISOString().split('T')[0];
+    // Check for expiring trials
+    await processExpiringTrials(supabase, stripe);
 
-    // Get payment schedules that are due today
-    const { data: duePayments, error: paymentError } = await supabaseClient
-      .from('payment_schedules')
-      .select(`
-        *,
-        profiles!payment_schedules_student_id_fkey(first_name, last_name, email)
-      `)
-      .eq('status', 'active')
-      .lte('next_payment_date', today);
+    // Process overdue payments
+    await processOverduePayments(supabase, stripe);
 
-    if (paymentError) {
-      throw new Error(`Error fetching due payments: ${paymentError.message}`);
-    }
+    // Auto-process class pack renewals
+    await processClassPackRenewals(supabase, stripe);
 
-    const results = [];
+    console.log("[PROCESS-RECURRING-PAYMENTS] Completed successfully");
 
-    for (const schedule of duePayments || []) {
-      try {
-        let paymentResult;
-
-        if (schedule.stripe_subscription_id) {
-          // For Stripe subscriptions, just verify the payment
-          const subscription = await stripe.subscriptions.retrieve(schedule.stripe_subscription_id);
-          
-          if (subscription.status === 'active') {
-            // Record successful payment
-            const { error: insertError } = await supabaseClient
-              .from('payments')
-              .insert({
-                student_id: schedule.student_id,
-                amount: schedule.amount,
-                payment_method: 'subscription',
-                status: 'completed',
-                description: `Recurring payment - ${schedule.frequency}`,
-                payment_date: new Date().toISOString(),
-              });
-
-            if (!insertError) {
-              paymentResult = { success: true, type: 'subscription' };
-            }
-          }
-        } else {
-          // For manual recurring payments, create payment intent
-          const paymentIntent = await stripe.paymentIntents.create({
-            amount: schedule.amount,
-            currency: schedule.currency,
-            metadata: {
-              student_id: schedule.student_id,
-              schedule_id: schedule.id,
-              type: 'recurring_payment'
-            },
-            description: `Recurring payment for ${schedule.profiles?.first_name} ${schedule.profiles?.last_name}`,
-          });
-
-          paymentResult = { 
-            success: true, 
-            type: 'payment_intent',
-            payment_intent_id: paymentIntent.id 
-          };
-        }
-
-        if (paymentResult?.success) {
-          // Calculate next payment date
-          const nextDate = new Date(schedule.next_payment_date);
-          switch (schedule.frequency) {
-            case 'weekly':
-              nextDate.setDate(nextDate.getDate() + 7);
-              break;
-            case 'monthly':
-              nextDate.setMonth(nextDate.getMonth() + 1);
-              break;
-            case 'quarterly':
-              nextDate.setMonth(nextDate.getMonth() + 3);
-              break;
-            case 'yearly':
-              nextDate.setFullYear(nextDate.getFullYear() + 1);
-              break;
-          }
-
-          // Update payment schedule
-          const { error: updateError } = await supabaseClient
-            .from('payment_schedules')
-            .update({
-              next_payment_date: nextDate.toISOString().split('T')[0],
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', schedule.id);
-
-          if (updateError) {
-            console.error(`Error updating schedule ${schedule.id}:`, updateError);
-          }
-
-          results.push({
-            schedule_id: schedule.id,
-            student_name: `${schedule.profiles?.first_name} ${schedule.profiles?.last_name}`,
-            amount: schedule.amount,
-            next_payment_date: nextDate.toISOString().split('T')[0],
-            status: 'processed',
-            ...paymentResult
-          });
-        }
-
-      } catch (scheduleError) {
-        console.error(`Error processing schedule ${schedule.id}:`, scheduleError);
-        results.push({
-          schedule_id: schedule.id,
-          student_name: `${schedule.profiles?.first_name} ${schedule.profiles?.last_name}`,
-          status: 'failed',
-          error: scheduleError.message
-        });
-      }
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      processed_count: results.length,
-      results
-    }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
-
   } catch (error) {
-    console.error("Error processing recurring payments:", error);
+    console.error("[PROCESS-RECURRING-PAYMENTS] Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
 });
+
+async function processFailedPayments(supabase: any, stripe: Stripe) {
+  console.log("Processing failed payments for retry...");
+
+  // Get subscriptions with failed payments in the last 3 days
+  const { data: failedPayments } = await supabase
+    .from("payments")
+    .select(`
+      *,
+      profiles!inner(email, first_name, last_name, membership_status)
+    `)
+    .eq("status", "failed")
+    .gte("payment_date", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+    .limit(10);
+
+  for (const payment of failedPayments || []) {
+    try {
+      // Try to charge the customer again
+      const customers = await stripe.customers.list({
+        email: payment.profiles.email,
+        limit: 1
+      });
+
+      if (customers.data.length > 0) {
+        const customer = customers.data[0];
+        
+        // Get customer's default payment method
+        const paymentMethods = await stripe.paymentMethods.list({
+          customer: customer.id,
+          type: 'card',
+        });
+
+        if (paymentMethods.data.length > 0) {
+          // Attempt to create a new payment intent
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: payment.amount,
+            currency: 'usd',
+            customer: customer.id,
+            payment_method: paymentMethods.data[0].id,
+            confirm: true,
+            automatic_payment_methods: {
+              enabled: true,
+              allow_redirects: 'never'
+            },
+            description: `Retry payment for ${payment.description}`,
+          });
+
+          if (paymentIntent.status === 'succeeded') {
+            // Update payment status
+            await supabase
+              .from("payments")
+              .update({
+                status: "completed",
+                updated_at: new Date().toISOString(),
+                description: `${payment.description} (Retry successful)`
+              })
+              .eq("id", payment.id);
+
+            console.log(`Payment retry successful for ${payment.profiles.email}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to retry payment for ${payment.profiles.email}:`, error);
+      
+      // After 3 failed attempts, suspend the account
+      const retryCount = (payment.description?.match(/Retry/g) || []).length;
+      if (retryCount >= 2) {
+        await supabase
+          .from("profiles")
+          .update({
+            membership_status: "suspended",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", payment.student_id);
+      }
+    }
+  }
+}
+
+async function processExpiringTrials(supabase: any, stripe: Stripe) {
+  console.log("Processing expiring trials...");
+
+  const { data: expiringTrials } = await supabase
+    .from("subscriptions")
+    .select(`
+      *,
+      profiles!inner(email, first_name, last_name)
+    `)
+    .not("trial_end", "is", null)
+    .lte("trial_end", new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()) // 2 days from now
+    .eq("status", "trialing");
+
+  for (const subscription of expiringTrials || []) {
+    try {
+      // Send trial expiring notification via our notification service
+      await supabase.functions.invoke('send-payment-reminder', {
+        body: {
+          type: 'trial_expiring',
+          contactId: subscription.user_id,
+          data: {
+            trial_end: subscription.trial_end,
+            portal_url: await getCustomerPortalUrl(stripe, subscription.stripe_customer_id)
+          }
+        }
+      });
+      
+      console.log(`Trial expiring notification sent to ${subscription.profiles.email}`);
+    } catch (error) {
+      console.error(`Failed to process expiring trial for ${subscription.profiles.email}:`, error);
+    }
+  }
+}
+
+async function processOverduePayments(supabase: any, stripe: Stripe) {
+  console.log("Processing overdue payments...");
+
+  const { data: overduePayments } = await supabase
+    .from("payments")
+    .select(`
+      *,
+      profiles!inner(email, first_name, last_name)
+    `)
+    .eq("status", "pending")
+    .lt("payment_date", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()); // 7 days overdue
+
+  for (const payment of overduePayments || []) {
+    try {
+      // Apply late fee if not already applied
+      const { data: existingLateFee } = await supabase
+        .from("late_fees")
+        .select("id")
+        .eq("payment_id", payment.id)
+        .single();
+
+      if (!existingLateFee) {
+        const lateFeeAmount = Math.max(Math.floor(payment.amount * 0.05), 500); // 5% or $5 minimum
+
+        await supabase
+          .from("late_fees")
+          .insert({
+            payment_id: payment.id,
+            student_id: payment.student_id,
+            original_amount: payment.amount,
+            late_fee_amount: lateFeeAmount,
+            days_overdue: Math.floor((Date.now() - new Date(payment.payment_date).getTime()) / (24 * 60 * 60 * 1000)),
+            fee_percentage: 5.0,
+            status: "pending",
+            created_at: new Date().toISOString()
+          });
+
+        console.log(`Late fee applied for ${payment.profiles.email}: $${lateFeeAmount / 100}`);
+      }
+    } catch (error) {
+      console.error(`Failed to process overdue payment for ${payment.profiles.email}:`, error);
+    }
+  }
+}
+
+async function processClassPackRenewals(supabase: any, stripe: Stripe) {
+  console.log("Processing class pack auto-renewals...");
+
+  // Get class packs that are set for auto-renewal and are expiring or low on classes
+  const { data: renewalPacks } = await supabase
+    .from("class_packs")
+    .select(`
+      *,
+      profiles!inner(email, first_name, last_name),
+      membership_plans!inner(name, price_cents, stripe_price_id)
+    `)
+    .eq("auto_renewal", true)
+    .eq("status", "active")
+    .or(`expiry_date.lte.${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()},remaining_classes.lte.2`);
+
+  for (const pack of renewalPacks || []) {
+    try {
+      const customers = await stripe.customers.list({
+        email: pack.profiles.email,
+        limit: 1
+      });
+
+      if (customers.data.length > 0 && pack.membership_plans.stripe_price_id) {
+        // Create a one-time charge for the renewal
+        await stripe.invoiceItems.create({
+          customer: customers.data[0].id,
+          price: pack.membership_plans.stripe_price_id,
+          description: `Auto-renewal: ${pack.membership_plans.name}`,
+        });
+
+        const invoice = await stripe.invoices.create({
+          customer: customers.data[0].id,
+          auto_advance: true,
+        });
+
+        await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.pay(invoice.id);
+
+        // Create new class pack
+        await supabase
+          .from("class_packs")
+          .insert({
+            profile_id: pack.profile_id,
+            membership_plan_id: pack.membership_plan_id,
+            total_classes: pack.total_classes,
+            remaining_classes: pack.total_classes,
+            expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+            status: "active",
+            auto_renewal: pack.auto_renewal,
+            notes: `Auto-renewal from pack ${pack.id}`,
+            created_at: new Date().toISOString()
+          });
+
+        console.log(`Auto-renewed class pack for ${pack.profiles.email}`);
+      }
+    } catch (error) {
+      console.error(`Failed to auto-renew class pack for ${pack.profiles.email}:`, error);
+    }
+  }
+}
+
+async function getCustomerPortalUrl(stripe: Stripe, customerId: string): Promise<string> {
+  try {
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: 'https://academy.com/payments',
+    });
+    return portalSession.url;
+  } catch (error) {
+    return 'https://academy.com/payments';
+  }
+}
