@@ -225,6 +225,66 @@ export type Database = {
           },
         ]
       }
+      account_credits: {
+        Row: {
+          amount: number
+          balance: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          source: string
+          source_reference_id: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          source: string
+          source_reference_id?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          balance?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          source?: string
+          source_reference_id?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_credits_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_credits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           class_id: string
@@ -1715,6 +1775,47 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean | null
+          template_css: string | null
+          template_html: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean | null
+          template_css?: string | null
+          template_html: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean | null
+          template_css?: string | null
+          template_html?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -1725,8 +1826,13 @@ export type Database = {
           invoice_number: string
           line_items: Json | null
           notes: string | null
+          pdf_url: string | null
+          sent_at: string | null
           status: string
           stripe_invoice_id: string | null
+          subtotal_amount: number | null
+          tax_amount: number | null
+          template_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1739,8 +1845,13 @@ export type Database = {
           invoice_number: string
           line_items?: Json | null
           notes?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          template_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1753,12 +1864,25 @@ export type Database = {
           invoice_number?: string
           line_items?: Json | null
           notes?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           status?: string
           stripe_invoice_id?: string | null
+          subtotal_amount?: number | null
+          tax_amount?: number | null
+          template_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       late_fees: {
         Row: {
@@ -2293,6 +2417,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_taxes: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string
+          tax_amount: number
+          tax_rate: number
+          tax_setting_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id: string
+          tax_amount: number
+          tax_rate: number
+          tax_setting_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string
+          tax_amount?: number
+          tax_rate?: number
+          tax_setting_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_taxes_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_taxes_tax_setting_id_fkey"
+            columns: ["tax_setting_id"]
+            isOneToOne: false
+            referencedRelation: "tax_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -2354,6 +2520,7 @@ export type Database = {
           ach_bank_name: string | null
           ach_last4: string | null
           amount: number
+          applied_credits: number | null
           created_at: string
           description: string | null
           failure_reason: string | null
@@ -2368,6 +2535,8 @@ export type Database = {
           status: string
           stripe_invoice_id: string | null
           student_id: string
+          subtotal_amount: number | null
+          tax_amount: number | null
           total_installments: number | null
           updated_at: string
         }
@@ -2375,6 +2544,7 @@ export type Database = {
           ach_bank_name?: string | null
           ach_last4?: string | null
           amount: number
+          applied_credits?: number | null
           created_at?: string
           description?: string | null
           failure_reason?: string | null
@@ -2389,6 +2559,8 @@ export type Database = {
           status?: string
           stripe_invoice_id?: string | null
           student_id: string
+          subtotal_amount?: number | null
+          tax_amount?: number | null
           total_installments?: number | null
           updated_at?: string
         }
@@ -2396,6 +2568,7 @@ export type Database = {
           ach_bank_name?: string | null
           ach_last4?: string | null
           amount?: number
+          applied_credits?: number | null
           created_at?: string
           description?: string | null
           failure_reason?: string | null
@@ -2410,6 +2583,8 @@ export type Database = {
           status?: string
           stripe_invoice_id?: string | null
           student_id?: string
+          subtotal_amount?: number | null
+          tax_amount?: number | null
           total_installments?: number | null
           updated_at?: string
         }
@@ -2603,6 +2778,73 @@ export type Database = {
           {
             foreignKeyName: "profiles_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payment_id: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          refund_type: string
+          status: string
+          stripe_refund_id: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payment_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_type?: string
+          status?: string
+          stripe_refund_id?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          refund_type?: string
+          status?: string
+          stripe_refund_id?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_student_id_fkey"
+            columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2883,6 +3125,45 @@ export type Database = {
           trial_start?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tax_settings: {
+        Row: {
+          applicable_services: string[] | null
+          created_at: string
+          effective_date: string
+          id: string
+          is_active: boolean
+          jurisdiction: string
+          tax_name: string
+          tax_rate: number
+          tax_type: string
+          updated_at: string
+        }
+        Insert: {
+          applicable_services?: string[] | null
+          created_at?: string
+          effective_date?: string
+          id?: string
+          is_active?: boolean
+          jurisdiction: string
+          tax_name: string
+          tax_rate: number
+          tax_type?: string
+          updated_at?: string
+        }
+        Update: {
+          applicable_services?: string[] | null
+          created_at?: string
+          effective_date?: string
+          id?: string
+          is_active?: boolean
+          jurisdiction?: string
+          tax_name?: string
+          tax_rate?: number
+          tax_type?: string
+          updated_at?: string
         }
         Relationships: []
       }

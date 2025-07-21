@@ -36,8 +36,12 @@ import {
   Link as LinkIcon,
   Bell,
   Calculator,
-  Eye
+  Eye,
+  ArrowLeft,
+  RotateCcw
 } from 'lucide-react';
+import { RefundManagement } from '@/components/payments/RefundManagement';
+import { TaxManagement } from '@/components/payments/TaxManagement';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -479,7 +483,7 @@ export const ComprehensivePaymentManagement = () => {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
@@ -487,6 +491,109 @@ export const ComprehensivePaymentManagement = () => {
                 <LinkIcon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
                 <h3 className="font-semibold">Create Payment Link</h3>
                 <p className="text-sm text-muted-foreground">Generate payment links for students</p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Payment Link</DialogTitle>
+              <DialogDescription>Generate a payment link for a specific student</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Student</Label>
+                <Select value={paymentLinkForm.student_id} onValueChange={(value) => setPaymentLinkForm(prev => ({ ...prev, student_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select student" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {students?.map((student) => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.first_name} {student.last_name} ({student.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={paymentLinkForm.amount}
+                  onChange={(e) => setPaymentLinkForm(prev => ({ ...prev, amount: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={paymentLinkForm.description}
+                  onChange={(e) => setPaymentLinkForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Payment description"
+                />
+              </div>
+
+              <div>
+                <Label>Expires In (Hours)</Label>
+                <Select value={paymentLinkForm.expires_in_hours} onValueChange={(value) => setPaymentLinkForm(prev => ({ ...prev, expires_in_hours: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Hour</SelectItem>
+                    <SelectItem value="6">6 Hours</SelectItem>
+                    <SelectItem value="24">24 Hours</SelectItem>
+                    <SelectItem value="72">3 Days</SelectItem>
+                    <SelectItem value="168">1 Week</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button 
+                onClick={() => createPaymentLinkMutation.mutate(paymentLinkForm)}
+                disabled={createPaymentLinkMutation.isPending}
+                className="w-full"
+              >
+                {createPaymentLinkMutation.isPending ? 'Creating...' : 'Create Payment Link'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Refunds & Credits */}
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab('refunds')}
+        >
+          <CardContent className="p-4 text-center">
+            <RotateCcw className="h-8 w-8 mx-auto mb-2 text-green-600" />
+            <h3 className="font-semibold">Refunds & Credits</h3>
+            <p className="text-sm text-muted-foreground">Process refunds and manage credits</p>
+          </CardContent>
+        </Card>
+
+        {/* Tax Management */}
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab('taxes')}
+        >
+          <CardContent className="p-4 text-center">
+            <Calculator className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+            <h3 className="font-semibold">Tax Management</h3>
+            <p className="text-sm text-muted-foreground">Configure tax rates and compliance</p>
+          </CardContent>
+        </Card>
+
+        <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 text-center">
+                <Bell className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                <h3 className="font-semibold">Send Reminder</h3>
+                <p className="text-sm text-muted-foreground">Send payment reminders</p>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -797,11 +904,13 @@ export const ComprehensivePaymentManagement = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="schedules">Schedules</TabsTrigger>
           <TabsTrigger value="reminders">Reminders</TabsTrigger>
           <TabsTrigger value="late-fees">Late Fees</TabsTrigger>
+          <TabsTrigger value="refunds">Refunds</TabsTrigger>
+          <TabsTrigger value="taxes">Taxes</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
@@ -999,6 +1108,14 @@ export const ComprehensivePaymentManagement = () => {
               </ScrollArea>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="refunds" className="space-y-6">
+          <RefundManagement />
+        </TabsContent>
+
+        <TabsContent value="taxes" className="space-y-6">
+          <TaxManagement />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
