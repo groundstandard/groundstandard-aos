@@ -143,40 +143,6 @@ const Dashboard = () => {
                 <MessageCircle className="h-4 w-4" />
                 Chat
               </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
-                  <DropdownMenuItem onClick={() => toast({ title: "Notifications", description: "Notifications feature coming soon" })}>
-                    <Bell className="h-4 w-4 mr-2" />
-                    Notifications
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Dialog>
-                      <DialogTrigger className="flex items-center w-full px-2 py-1.5 text-sm cursor-pointer hover:bg-accent">
-                        <User className="h-4 w-4 mr-2" />
-                        Profile
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Profile Management</DialogTitle>
-                        </DialogHeader>
-                        <ProfileView />
-                      </DialogContent>
-                    </Dialog>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
             {/* Mobile Layout - Stacked Check-In, Chat and Settings */}
@@ -199,40 +165,6 @@ const Dashboard = () => {
                 <MessageCircle className="h-3 w-3" />
                 <span className="text-xs">Chat</span>
               </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-1 h-8"
-                  >
-                    <Settings className="h-3 w-3" />
-                    <span className="text-xs">Settings</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
-                  <DropdownMenuItem onClick={() => toast({ title: "Notifications", description: "Notifications feature coming soon" })}>
-                    <Bell className="h-4 w-4 mr-2" />
-                    Notifications
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Dialog>
-                      <DialogTrigger className="flex items-center w-full px-2 py-1.5 text-sm cursor-pointer hover:bg-accent">
-                        <User className="h-4 w-4 mr-2" />
-                        Profile
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Profile Management</DialogTitle>
-                        </DialogHeader>
-                        <ProfileView />
-                      </DialogContent>
-                    </Dialog>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
