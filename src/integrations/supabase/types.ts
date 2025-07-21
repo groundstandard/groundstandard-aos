@@ -1516,6 +1516,60 @@ export type Database = {
           },
         ]
       }
+      installment_plans: {
+        Row: {
+          auto_pay: boolean | null
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          installment_amount: number
+          installments_count: number
+          next_payment_date: string
+          preferred_payment_method: string | null
+          start_date: string
+          status: string
+          stripe_setup_intent_id: string | null
+          student_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          auto_pay?: boolean | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          installment_amount: number
+          installments_count: number
+          next_payment_date: string
+          preferred_payment_method?: string | null
+          start_date: string
+          status?: string
+          stripe_setup_intent_id?: string | null
+          student_id: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          auto_pay?: boolean | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          installment_amount?: number
+          installments_count?: number
+          next_payment_date?: string
+          preferred_payment_method?: string | null
+          start_date?: string
+          status?: string
+          stripe_setup_intent_id?: string | null
+          student_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           category: string
@@ -2206,39 +2260,57 @@ export type Database = {
       }
       payments: {
         Row: {
+          ach_bank_name: string | null
+          ach_last4: string | null
           amount: number
           created_at: string
           description: string | null
           id: string
+          installment_number: number | null
+          installment_plan_id: string | null
           payment_date: string
           payment_method: string
+          payment_method_type: string | null
           status: string
           stripe_invoice_id: string | null
           student_id: string
+          total_installments: number | null
           updated_at: string
         }
         Insert: {
+          ach_bank_name?: string | null
+          ach_last4?: string | null
           amount: number
           created_at?: string
           description?: string | null
           id?: string
+          installment_number?: number | null
+          installment_plan_id?: string | null
           payment_date?: string
           payment_method: string
+          payment_method_type?: string | null
           status?: string
           stripe_invoice_id?: string | null
           student_id: string
+          total_installments?: number | null
           updated_at?: string
         }
         Update: {
+          ach_bank_name?: string | null
+          ach_last4?: string | null
           amount?: number
           created_at?: string
           description?: string | null
           id?: string
+          installment_number?: number | null
+          installment_plan_id?: string | null
           payment_date?: string
           payment_method?: string
+          payment_method_type?: string | null
           status?: string
           stripe_invoice_id?: string | null
           student_id?: string
+          total_installments?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -2436,6 +2508,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_payment_methods: {
+        Row: {
+          bank_last4: string | null
+          bank_name: string | null
+          card_brand: string | null
+          card_last4: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          payment_type: string
+          status: string | null
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_last4?: string | null
+          bank_name?: string | null
+          card_brand?: string | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          payment_type: string
+          status?: string | null
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_last4?: string | null
+          bank_name?: string | null
+          card_brand?: string | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          payment_type?: string
+          status?: string | null
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       stock_movements: {
         Row: {

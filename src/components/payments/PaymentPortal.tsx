@@ -4,8 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Receipt, AlertCircle, Calendar, DollarSign } from 'lucide-react';
+import { ACHSetupForm } from './ACHSetupForm';
+import { InstallmentPlanForm } from './InstallmentPlanForm';
 
 interface PaymentPortalProps {
   userId?: string;
@@ -113,148 +116,182 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Subscription Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Subscription Status
-          </CardTitle>
-          <CardDescription>
-            Manage your membership and billing information
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {subscription ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Status</span>
-                <Badge className={getStatusColor(subscription.status)}>
-                  {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
-                </Badge>
-              </div>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="installments">Payment Plans</TabsTrigger>
+          <TabsTrigger value="ach">Bank Transfer</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
 
-              {subscription.current_period_end && (
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Next Billing Date</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(subscription.current_period_end).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-
-              {subscription.cancel_at_period_end && (
-                <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
-                  <AlertCircle className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm text-yellow-700">
-                    Your subscription will cancel at the end of the current billing period.
-                  </span>
-                </div>
-              )}
-
-              <Separator />
-
-              <Button 
-                onClick={openCustomerPortal} 
-                disabled={portalLoading}
-                className="w-full"
-              >
-                {portalLoading ? "Opening Portal..." : "Manage Subscription & Billing"}
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground mb-4">No active subscription found</p>
-              <Button onClick={() => window.location.href = '/subscription'}>
-                View Subscription Plans
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Payment History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Payment History
-          </CardTitle>
-          <CardDescription>
-            Your recent payment transactions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {paymentHistory.length > 0 ? (
-            <div className="space-y-3">
-              {paymentHistory.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      payment.status === 'completed' ? 'bg-green-100' :
-                      payment.status === 'failed' ? 'bg-red-100' : 'bg-yellow-100'
-                    }`}>
-                      <DollarSign className={`h-4 w-4 ${
-                        payment.status === 'completed' ? 'text-green-600' :
-                        payment.status === 'failed' ? 'text-red-600' : 'text-yellow-600'
-                      }`} />
-                    </div>
-                    <div>
-                      <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {payment.description || 'Membership payment'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <Badge variant={payment.status === 'completed' ? 'default' : 'destructive'}>
-                      {payment.status}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Subscription Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Subscription Status
+              </CardTitle>
+              <CardDescription>
+                Manage your membership and billing information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {subscription ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Status</span>
+                    <Badge className={getStatusColor(subscription.status)}>
+                      {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
                     </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(payment.payment_date).toLocaleDateString()}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground">No payment history found</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => window.location.href = '/subscription'}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            View Available Plans
-          </Button>
-          
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={openCustomerPortal}
-            disabled={portalLoading}
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Update Payment Method
-          </Button>
-        </CardContent>
-      </Card>
+                  {subscription.current_period_end && (
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Next Billing Date</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(subscription.current_period_end).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {subscription.cancel_at_period_end && (
+                    <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <span className="text-sm text-yellow-700">
+                        Your subscription will cancel at the end of the current billing period.
+                      </span>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  <Button 
+                    onClick={openCustomerPortal} 
+                    disabled={portalLoading}
+                    className="w-full"
+                  >
+                    {portalLoading ? "Opening Portal..." : "Manage Subscription & Billing"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground mb-4">No active subscription found</p>
+                  <Button onClick={() => window.location.href = '/subscription'}>
+                    View Subscription Plans
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>
+                Manage your payments and billing preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => window.location.href = '/subscription'}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                View Available Plans
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={openCustomerPortal}
+                disabled={portalLoading}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Update Payment Method
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="installments">
+          <InstallmentPlanForm />
+        </TabsContent>
+
+        <TabsContent value="ach">
+          <ACHSetupForm />
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          {/* Payment History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Payment History
+              </CardTitle>
+              <CardDescription>
+                Your complete payment history
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {paymentHistory.length > 0 ? (
+                <div className="space-y-3">
+                  {paymentHistory.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${
+                          payment.status === 'completed' ? 'bg-green-100' :
+                          payment.status === 'failed' ? 'bg-red-100' : 'bg-yellow-100'
+                        }`}>
+                          <DollarSign className={`h-4 w-4 ${
+                            payment.status === 'completed' ? 'text-green-600' :
+                            payment.status === 'failed' ? 'text-red-600' : 'text-yellow-600'
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="font-medium">{formatCurrency(payment.amount)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {payment.description || 'Membership payment'}
+                          </p>
+                          {payment.payment_method_type && (
+                            <p className="text-xs text-muted-foreground">
+                              via {payment.payment_method_type === 'ach' ? 'Bank Transfer' : 'Credit Card'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <Badge variant={payment.status === 'completed' ? 'default' : 'destructive'}>
+                          {payment.status}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(payment.payment_date).toLocaleDateString()}
+                        </p>
+                        {payment.installment_number && (
+                          <p className="text-xs text-muted-foreground">
+                            {payment.installment_number}/{payment.total_installments}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">No payment history found</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
