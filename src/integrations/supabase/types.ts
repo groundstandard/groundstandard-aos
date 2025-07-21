@@ -134,6 +134,97 @@ export type Database = {
           },
         ]
       }
+      academy_setup_progress: {
+        Row: {
+          academy_id: string
+          completed_at: string
+          completed_by: string | null
+          id: string
+          step_completed: string
+        }
+        Insert: {
+          academy_id: string
+          completed_at?: string
+          completed_by?: string | null
+          id?: string
+          step_completed: string
+        }
+        Update: {
+          academy_id?: string
+          completed_at?: string
+          completed_by?: string | null
+          id?: string
+          step_completed?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_setup_progress_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_subscriptions: {
+        Row: {
+          academy_id: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          features: Json | null
+          id: string
+          max_instructors: number | null
+          max_students: number | null
+          plan_type: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          features?: Json | null
+          id?: string
+          max_instructors?: number | null
+          max_students?: number | null
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          features?: Json | null
+          id?: string
+          max_instructors?: number | null
+          max_students?: number | null
+          plan_type?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_subscriptions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: true
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           class_id: string
@@ -2444,7 +2535,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          academy_id: string | null
+          academy_id: string
           belt_level: string | null
           check_in_pin: string | null
           created_at: string
@@ -2461,7 +2552,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          academy_id?: string | null
+          academy_id: string
           belt_level?: string | null
           check_in_pin?: string | null
           created_at?: string
@@ -2478,7 +2569,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          academy_id?: string | null
+          academy_id?: string
           belt_level?: string | null
           check_in_pin?: string | null
           created_at?: string
@@ -2816,6 +2907,10 @@ export type Database = {
         Args: { required_tier: string }
         Returns: boolean
       }
+      check_subscription_limits: {
+        Args: { academy_uuid: string; limit_type: string }
+        Returns: number
+      }
       generate_check_in_pin: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2823,6 +2918,10 @@ export type Database = {
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_academy_usage: {
+        Args: { academy_uuid: string }
+        Returns: Json
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>

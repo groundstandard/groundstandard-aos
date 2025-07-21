@@ -12,25 +12,28 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-SUBSCRIPTION-CHECKOUT] ${step}${detailsStr}`);
 };
 
+const planPricing = {
+  starter: { monthly: 2900, yearly: 29000 }, // prices in cents
+  professional: { monthly: 7900, yearly: 79000 },
+  enterprise: { monthly: 19900, yearly: 199000 }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
 
-    const { planId, trialDays } = await req.json();
-    logStep("Request body parsed", { planId, trialDays });
-
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -40,84 +43,79 @@ serve(async (req) => {
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
+
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Get the subscription plan
-    const { data: plan, error: planError } = await supabaseClient
-      .from('subscription_plans')
-      .select('*')
-      .eq('id', planId)
-      .single();
+    const { plan_type, academy_id } = await req.json();
+    if (!plan_type || !academy_id) {
+      throw new Error("Missing required fields: plan_type and academy_id");
+    }
 
-    if (planError) throw new Error(`Plan not found: ${planError.message}`);
-    logStep("Plan retrieved", { planName: plan.name, price: plan.price });
+    logStep("Request data validated", { plan_type, academy_id });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Check if customer exists
+    // Get or create Stripe customer
+    let customer;
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId: string;
-    
     if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+      customer = customers.data[0];
+      logStep("Found existing customer", { customerId: customer.id });
     } else {
-      const newCustomer = await stripe.customers.create({
+      customer = await stripe.customers.create({
         email: user.email,
-        metadata: { supabase_user_id: user.id }
+        metadata: {
+          user_id: user.id,
+          academy_id: academy_id
+        }
       });
-      customerId = newCustomer.id;
-      logStep("New customer created", { customerId });
+      logStep("Created new customer", { customerId: customer.id });
+    }
+
+    // Get pricing for the plan
+    const pricing = planPricing[plan_type as keyof typeof planPricing];
+    if (!pricing) {
+      throw new Error(`Invalid plan type: ${plan_type}`);
     }
 
     // Create checkout session
-    const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      customer: customerId,
-      line_items: [{
-        price: plan.stripe_price_id,
-        quantity: 1,
-      }],
-      mode: 'subscription',
-      success_url: `${req.headers.get("origin")}/subscription?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
+      mode: "subscription",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${plan_type.charAt(0).toUpperCase() + plan_type.slice(1)} Plan`,
+              description: `Martial Arts Management - ${plan_type} subscription`
+            },
+            unit_amount: pricing.monthly,
+            recurring: { interval: "month" }
+          },
+          quantity: 1
+        }
+      ],
+      success_url: `${req.headers.get("origin")}/subscription?success=true`,
       cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
       metadata: {
-        supabase_user_id: user.id,
-        plan_id: planId,
-      },
-      subscription_data: {
-        metadata: {
-          supabase_user_id: user.id,
-          plan_id: planId,
-        }
+        academy_id: academy_id,
+        plan_type: plan_type
       }
-    };
+    });
 
-    // Add trial period if specified
-    if (trialDays && trialDays > 0) {
-      sessionParams.subscription_data!.trial_period_days = trialDays;
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
-    // Update or create subscriber record
+    // Update academy subscription with Stripe customer ID
     await supabaseClient
-      .from('subscribers')
-      .upsert({
-        user_id: user.id,
-        email: user.email,
-        stripe_customer_id: customerId,
-        subscribed: false, // Will be updated via webhook
-        subscription_status: 'incomplete',
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
+      .from('academy_subscriptions')
+      .update({
+        stripe_customer_id: customer.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('academy_id', academy_id);
 
-    logStep("Subscriber record updated");
-
-    return new Response(JSON.stringify({ 
-      url: session.url,
-      sessionId: session.id 
-    }), {
+    return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

@@ -30,6 +30,8 @@ import Automations from "./pages/Automations";
 import PerformanceTargets from "./pages/PerformanceTargets";
 import Settings from "./pages/Settings";
 import AcademySetup from "./pages/AcademySetup";
+import AcademySetupPage from "./pages/AcademySetupPage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import TeamManagement from "./pages/TeamManagement";
 import NotFound from "./pages/NotFound";
@@ -64,7 +66,7 @@ const AppRoutes = () => {
         <Route path="/reports" element={user ? <AcademyGatekeeper><Reports /></AcademyGatekeeper> : <Auth />} />
         <Route path="/belt-testing" element={user ? <AcademyGatekeeper><BeltTesting /></AcademyGatekeeper> : <Auth />} />
         <Route path="/payments" element={user ? <AcademyGatekeeper><Payments /></AcademyGatekeeper> : <Auth />} />
-        <Route path="/subscription" element={user ? <AcademyGatekeeper><Subscription /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/subscription" element={user ? <AcademyGatekeeper><SubscriptionPage /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts" element={user ? <AcademyGatekeeper><Contacts /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts/table" element={user ? <AcademyGatekeeper><ContactTable /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts/:id" element={user ? <AcademyGatekeeper><ContactProfile /></AcademyGatekeeper> : <Auth />} />
@@ -72,6 +74,7 @@ const AppRoutes = () => {
         <Route path="/admin/performance-targets" element={user ? <AcademyGatekeeper><PerformanceTargets /></AcademyGatekeeper> : <Auth />} />
         <Route path="/settings" element={user ? <AcademyGatekeeper><Settings /></AcademyGatekeeper> : <Auth />} />
         <Route path="/academy-setup" element={user ? <AcademySetup /> : <Auth />} />
+        <Route path="/setup" element={user ? <AcademySetupPage /> : <Auth />} />
         <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/team" element={user ? <AcademyGatekeeper><TeamManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
