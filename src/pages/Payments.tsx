@@ -80,16 +80,18 @@ const Payments = () => {
           </div>
         </div>
 
-        {/* Payments Navigation Ribbon */}
-        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
-            onClick={() => navigate('/membership-management')}
-          >
-            <Crown className="h-4 w-4" />
-            Memberships
-          </Button>
+        {/* Combined Header and Navigation */}
+        <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+              onClick={() => navigate('/membership-management')}
+            >
+              <Crown className="h-4 w-4" />
+              Memberships
+            </Button>
+          </div>
         </div>
 
         <ComprehensivePaymentManagement />
