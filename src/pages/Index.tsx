@@ -69,17 +69,25 @@ const Index = () => {
     }
     
     // If user has academies but no current academy is loaded, redirect to setup
-    if (!academy) {
+    // BUT NOT if we're in student mode (academy is intentionally null)
+    if (!academy && !studentAcademies.length) {
       return <Navigate to="/academy-setup" replace />;
     }
     
-    // If academy is not fully set up, redirect to setup
-    if (!academy.is_setup_complete) {
+    // If academy is loaded but not fully set up, redirect to setup
+    if (academy && !academy.is_setup_complete) {
       return <Navigate to="/academy-setup" replace />;
     }
     
-    // Otherwise, redirect to dashboard
-    return <Navigate to="/dashboard" replace />;
+    // If academy is loaded and set up, redirect to dashboard
+    if (academy && academy.is_setup_complete) {
+      return <Navigate to="/dashboard" replace />;
+    }
+    
+    // If no academy is loaded and no student academies, redirect to setup
+    if (!academy && studentAcademies.length === 0) {
+      return <Navigate to="/academy-setup" replace />;
+    }
   }
 
   return (
