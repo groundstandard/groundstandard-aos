@@ -27,11 +27,19 @@ const MultiAcademySwitcher = () => {
   }
 
   const handleAcademySwitch = async (academyId: string) => {
-    if (academyId === currentAcademyId) return;
+    console.log('handleAcademySwitch called with:', academyId);
+    console.log('Current academy ID:', currentAcademyId);
+    
+    if (academyId === currentAcademyId) {
+      console.log('Already selected this academy, skipping');
+      return;
+    }
 
     setIsLoading(true);
     try {
+      console.log('Calling switchAcademy function...');
       await switchAcademy(academyId);
+      console.log('switchAcademy completed successfully');
       toast({
         title: "Academy Switched",
         description: "Successfully switched to the selected academy.",

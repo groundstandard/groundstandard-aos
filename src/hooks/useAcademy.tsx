@@ -168,8 +168,9 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   useEffect(() => {
+    console.log('useAcademy: refreshing academy due to deps change', { user: !!user, profile: !!profile, userAcademies: userAcademies.length });
     refreshAcademy();
-  }, [user, profile]);
+  }, [user, profile, userAcademies]);
 
   return (
     <AcademyContext.Provider
