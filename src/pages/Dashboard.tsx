@@ -246,14 +246,6 @@ const Dashboard = () => {
                 <User className="h-4 w-4" />
                 Profile
               </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'settings' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => setSelectedTab('settings')}
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Button>
             </div>
 
             {/* Secondary Navigation Ribbons */}
@@ -295,18 +287,6 @@ const Dashboard = () => {
               </div>
             )}
 
-            {selectedTab === 'settings' && (
-              <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/automations')}>
-                  <Activity className="h-4 w-4" />
-                  Automations
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/profile')}>
-                  <User className="h-4 w-4" />
-                  Profile
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Only show overview content when overview tab is selected */}
