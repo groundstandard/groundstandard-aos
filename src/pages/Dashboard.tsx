@@ -120,12 +120,7 @@ const Dashboard = () => {
               <MultiAcademySwitcher />
               <div className="flex items-center gap-2 sm:gap-3">
                 <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
-                <div>
-                  <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
-                  <p className="text-xs sm:text-sm md:text-lg text-muted-foreground hidden sm:block">
-                    Complete management and analytics for {academy?.name || 'your martial arts academy'}
-                  </p>
-                </div>
+                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
               </div>
             </div>
 
