@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export const AuthForm = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -54,6 +56,9 @@ export const AuthForm = () => {
         title: "Account Created",
         description: "Please check your email to verify your account"
       });
+      
+      // Redirect to dashboard after successful signup
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -81,6 +86,9 @@ export const AuthForm = () => {
         title: "Welcome Back",
         description: "Successfully signed in"
       });
+      
+      // Redirect to dashboard after successful login
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
