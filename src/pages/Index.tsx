@@ -41,11 +41,10 @@ const Index = () => {
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
     // FORCE STUDENT SELECTOR - Always show it when user has student roles (for testing)
-    // Clear localStorage on page load to reset the flag
+    // This ignores ALL other conditions including academy loading state
     if (studentAcademies.length > 0) {
-      // Check if we should force the student selector
-      const shouldForceStudentSelector = !localStorage.getItem('student_academy_selected') || 
-                                          new URLSearchParams(window.location.search).get('student') === 'true';
+      // Always force the student selector for testing - ignore localStorage and academy state
+      const shouldForceStudentSelector = true; // Force it every time for testing
       
       if (shouldForceStudentSelector) {
         if (showAcademySelector) {
