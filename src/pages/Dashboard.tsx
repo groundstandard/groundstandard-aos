@@ -202,6 +202,7 @@ const Dashboard = () => {
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => {
                   setSelectedTab('payments');
+                  navigate('/payments');
                 }}
               >
                 <DollarSign className="h-4 w-4" />
@@ -212,6 +213,7 @@ const Dashboard = () => {
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => {
                   setSelectedTab('attendance');
+                  navigate('/attendance');
                 }}
               >
                 <CheckCircle className="h-4 w-4" />
