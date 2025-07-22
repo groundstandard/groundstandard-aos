@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // ABOUTME: Multi-Academy Switcher Component - Secure academy switching with proper error handling
 
@@ -50,6 +51,21 @@ const MultiAcademySwitcher = () => {
     }
   };
 
+  const getAcademyIcon = (membership: any, logoUrl?: string) => {
+    // If academy has a logo, show it with role icon as fallback
+    if (logoUrl) {
+      return (
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={logoUrl} alt={membership.academy_name} />
+          <AvatarFallback>
+            {getRoleIcon(membership.role)}
+          </AvatarFallback>
+        </Avatar>
+      );
+    }
+    return getRoleIcon(membership.role);
+  };
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'owner':
@@ -85,7 +101,7 @@ const MultiAcademySwitcher = () => {
   if (userAcademies.length === 1) {
     return (
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        {getRoleIcon(currentAcademy?.role || 'student')}
+        {getAcademyIcon(currentAcademy, academy?.logo_url)}
         <span className="font-medium">{academy?.name || 'Loading...'}</span>
         {currentAcademy && getRoleBadge(currentAcademy.role)}
       </div>
@@ -101,7 +117,7 @@ const MultiAcademySwitcher = () => {
           disabled={isLoading}
         >
           <div className="flex items-center space-x-2 truncate">
-            {currentAcademy && getRoleIcon(currentAcademy.role)}
+            {currentAcademy && getAcademyIcon(currentAcademy, academy?.logo_url)}
             <div className="flex flex-col items-start min-w-0">
               <span className="font-medium text-sm truncate">
                 {academy?.name || 'Select Academy'}
@@ -140,7 +156,9 @@ const MultiAcademySwitcher = () => {
               }`}
             >
               <div className="flex items-center space-x-3 w-full">
-                {getRoleIcon(membership.role)}
+                {membership.academy_id === currentAcademyId 
+                  ? getAcademyIcon(membership, academy?.logo_url) 
+                  : getRoleIcon(membership.role)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-medium truncate">

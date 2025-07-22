@@ -24,6 +24,7 @@ export type Database = {
           email: string | null
           id: string
           is_setup_complete: boolean | null
+          logo_url: string | null
           name: string
           owner_id: string | null
           phone: string | null
@@ -45,6 +46,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_setup_complete?: boolean | null
+          logo_url?: string | null
           name: string
           owner_id?: string | null
           phone?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_setup_complete?: boolean | null
+          logo_url?: string | null
           name?: string
           owner_id?: string | null
           phone?: string | null
