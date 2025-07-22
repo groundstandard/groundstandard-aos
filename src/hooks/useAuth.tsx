@@ -178,19 +178,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const switchAcademy = async (academyId: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('switchAcademy: No user found');
+      return;
+    }
+
+    console.log('switchAcademy: Starting academy switch', {
+      fromAcademyId: profile?.last_academy_id,
+      toAcademyId: academyId,
+      userId: user.id
+    });
 
     try {
       // Update last_academy_id in profile
-      const { error } = await supabase
+      console.log('switchAcademy: Updating profile with new last_academy_id');
+      const { data, error } = await supabase
         .from('profiles')
         .update({ last_academy_id: academyId })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
-      if (error) throw error;
+      console.log('switchAcademy: Profile update result', { data, error });
+
+      if (error) {
+        console.error('switchAcademy: Profile update failed', error);
+        throw error;
+      }
 
       // Log the academy switch
-      await supabase
+      console.log('switchAcademy: Logging academy switch');
+      const { error: logError } = await supabase
         .from('academy_switches')
         .insert({
           user_id: user.id,
@@ -198,13 +215,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           to_academy_id: academyId
         });
 
+      if (logError) {
+        console.error('switchAcademy: Academy switch logging failed', logError);
+      }
+
       // Refresh profile to get updated last_academy_id
+      console.log('switchAcademy: Refreshing profile');
       await refreshProfile();
       
+      console.log('switchAcademy: Reloading page');
       // Reload the page to clear any cached academy-specific data
       window.location.reload();
     } catch (error) {
-      console.error('Error switching academy:', error);
+      console.error('switchAcademy: Error occurred', error);
       throw error;
     }
   };
