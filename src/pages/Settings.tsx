@@ -3,7 +3,7 @@ import { useAcademy } from "@/hooks/useAcademy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail, Upload, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Settings = () => {
   const { user, profile } = useAuth();
   const { academy, updateAcademy } = useAcademy();
   const isMobile = useIsMobile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [academyFormData, setAcademyFormData] = useState({
     name: '',
     address: '',
@@ -66,6 +70,91 @@ const Settings = () => {
       toast({
         title: "Error",
         description: "Failed to save academy settings",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !academy?.id) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image must be smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${academy.id}/logo.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('academy-logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('academy-logos')
+        .getPublicUrl(fileName);
+
+      if (urlData?.publicUrl) {
+        // Update academy with logo URL
+        await updateAcademy({ logo_url: urlData.publicUrl });
+        toast({
+          title: "Success",
+          description: "Academy logo uploaded successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload logo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!academy?.id) return;
+
+    try {
+      // Update academy to remove logo URL
+      await updateAcademy({ logo_url: null });
+      toast({
+        title: "Success",
+        description: "Academy logo removed successfully",
+      });
+    } catch (error) {
+      console.error('Logo removal error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove logo. Please try again.",
         variant: "destructive",
       });
     }
@@ -270,6 +359,53 @@ const Settings = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Academy Logo Section */}
+                  <div className="space-y-4">
+                    <Label>Academy Logo</Label>
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={academy?.logo_url} alt={academy?.name} />
+                        <AvatarFallback className="text-lg">
+                          <Database className="h-8 w-8" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="flex items-center gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          {isUploading ? 'Uploading...' : 'Upload Logo'}
+                        </Button>
+                        {academy?.logo_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveLogo}
+                            className="flex items-center gap-2 text-destructive hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                            Remove Logo
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Upload an image (PNG, JPG, or GIF) up to 5MB. Recommended size: 200x200 pixels.
+                    </p>
+                  </div>
+
+                  <Separator />
+
                   <div>
                     <Label htmlFor="academyName">Academy Name</Label>
                     <Input 
