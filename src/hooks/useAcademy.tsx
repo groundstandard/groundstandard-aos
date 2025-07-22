@@ -98,13 +98,29 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       setLoading(true);
+      console.log('useAcademy: Fetching academy data for ID:', academyIdToLoad);
+      
       const { data, error } = await supabase
         .from('academies')
         .select('*')
         .eq('id', academyIdToLoad)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      console.log('useAcademy: Academy fetch result:', { data, error });
+
+      if (error) {
+        console.error('useAcademy: Database error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn('useAcademy: No academy found for ID:', academyIdToLoad);
+        setAcademy(null);
+        setCurrentAcademyId(null);
+        return;
+      }
+
+      console.log('useAcademy: Setting academy data:', data);
       setAcademy(data);
       setCurrentAcademyId(academyIdToLoad);
     } catch (error) {
