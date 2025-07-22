@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import AcademyWelcome from './AcademyWelcome';
+import { StudentAcademySelector } from './StudentAcademySelector';
 
 interface AcademyGatekeeperProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface AcademyGatekeeperProps {
 
 const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
   const { academy, loading } = useAcademy();
-  const { user, profile } = useAuth();
+  const { user, profile, userAcademies } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -25,6 +26,42 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
   // Don't redirect if already on academy setup page
   if (location.pathname === '/academy-setup') {
     return <>{children}</>;
+  }
+
+  // Check if user has student academies and should show student selector
+  if (user && profile && userAcademies) {
+    const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
+    
+    console.log('AcademyGatekeeper - User academies:', userAcademies);
+    console.log('AcademyGatekeeper - Student academies:', studentAcademies);
+    console.log('AcademyGatekeeper - Student academy selected:', localStorage.getItem('student_academy_selected'));
+    
+    // Show student selector when user has multiple student roles and hasn't selected one yet
+    if (studentAcademies.length > 1 && !localStorage.getItem('student_academy_selected')) {
+      return (
+        <StudentAcademySelector 
+          onAcademySelected={() => {
+            console.log('AcademyGatekeeper - Academy selected, setting localStorage flag');
+            localStorage.setItem('student_academy_selected', 'true');
+            // Force a page refresh to reload with the selected academy
+            window.location.reload();
+          }} 
+          studentAcademies={studentAcademies}
+        />
+      );
+    }
+
+    // If user has only one student academy, auto-select it
+    if (studentAcademies.length === 1 && !localStorage.getItem('student_academy_selected')) {
+      localStorage.setItem('student_academy_selected', 'true');
+      // Force a page refresh to reload with the selected academy
+      window.location.reload();
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
   }
 
   // If user doesn't have an academy, redirect to academy setup
