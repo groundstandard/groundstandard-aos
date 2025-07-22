@@ -8,13 +8,10 @@ import { QuickAttendanceDashboard } from "@/components/attendance/QuickAttendanc
 import { StudentAttendanceHistory } from "@/components/attendance/StudentAttendanceHistory";
 import { Navigate, useNavigate } from "react-router-dom";
 import { CheckCircle, Calendar, CalendarDays, Star, Clock } from "lucide-react";
-import { useState } from "react";
-
 const Attendance = () => {
   const { user, loading, profile } = useAuth();
   const { isAdmin } = useEffectiveRole();
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState('attendance');
 
   if (loading) {
     return (
@@ -44,49 +41,6 @@ const Attendance = () => {
           </div>
         </div>
 
-        {/* Attendance Navigation Ribbon */}
-        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
-          <Button 
-            variant="ghost" 
-            className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-            onClick={() => setSelectedTab('attendance')}
-          >
-            <CheckCircle className="h-4 w-4" />
-            Attendance Tracking
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
-            onClick={() => navigate('/class-management')}
-          >
-            <Calendar className="h-4 w-4" />
-            Classes
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
-            onClick={() => navigate('/events')}
-          >
-            <CalendarDays className="h-4 w-4" />
-            Events
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
-            onClick={() => navigate('/belt-testing')}
-          >
-            <Star className="h-4 w-4" />
-            Promotions
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
-            onClick={() => navigate('/checkin')}
-          >
-            <Clock className="h-4 w-4" />
-            Check-In
-          </Button>
-        </div>
         
         {isAdmin ? (
           <AttendanceManagement />
