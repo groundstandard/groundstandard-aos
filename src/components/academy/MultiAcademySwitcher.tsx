@@ -141,21 +141,17 @@ const MultiAcademySwitcher = () => {
                 : ''
             }`}
             disabled={isLoading}
-            asChild
+            onSelect={(e) => {
+              e.preventDefault();
+              console.log('Dropdown item clicked:', {
+                academyId: membership.academy_id,
+                academyName: membership.academy_name,
+                currentAcademyId: currentAcademyId
+              });
+              handleAcademySwitch(membership.academy_id);
+            }}
           >
-            <div
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Dropdown item clicked:', {
-                  academyId: membership.academy_id,
-                  academyName: membership.academy_name,
-                  currentAcademyId: currentAcademyId
-                });
-                handleAcademySwitch(membership.academy_id);
-              }}
-              className="flex items-center space-x-3 w-full cursor-pointer"
-            >
+            <div className="flex items-center space-x-3 w-full">
               {getRoleIcon(membership.role)}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
