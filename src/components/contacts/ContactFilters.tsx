@@ -44,129 +44,140 @@ export const ContactFilters = ({
 
   return (
     <div className="space-y-4">
-      {/* Role Filter Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={filterRole === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("all")}
-          className="flex items-center gap-1"
-        >
-          All ({getRoleCount("all")})
-        </Button>
-        <Button
-          variant={filterRole === "member" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("member")}
-          className="flex items-center gap-1"
-        >
-          Members ({getRoleCount("member")})
-        </Button>
-        <Button
-          variant={filterRole === "visitor" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("visitor")}
-          className="flex items-center gap-1"
-        >
-          Visitors ({getRoleCount("visitor")})
-        </Button>
-        <Button
-          variant={filterRole === "alumni" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("alumni")}
-          className="flex items-center gap-1"
-        >
-          Alumni ({contacts.filter(c => c.membership_status === 'alumni').length})
-        </Button>
-        <Button
-          variant={filterRole === "staff" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("staff")}
-          className="flex items-center gap-1"
-        >
-          Staff ({getRoleCount("staff")})
-        </Button>
-        <Button
-          variant={filterRole === "instructor" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("instructor")}
-          className="flex items-center gap-1"
-        >
-          Instructors ({getRoleCount("instructor")})
-        </Button>
-        <Button
-          variant={filterRole === "admin" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("admin")}
-          className="flex items-center gap-1"
-        >
-          Admins ({getRoleCount("admin")})
-        </Button>
-        <Button
-          variant={filterRole === "student" ? "default" : "outline"}
-          size="sm"
-          onClick={() => onFilterRoleChange("student")}
-          className="flex items-center gap-1"
-        >
-          Students ({getRoleCount("student")})
-        </Button>
-      </div>
-
-      {/* Compact Search and Controls - All on One Line */}
+      {/* Single Unified Filter Interface */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            {/* Search - Compact */}
-            <div className="flex-1 relative min-w-0">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search contacts..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 h-9"
-              />
+          <div className="space-y-4">
+            {/* Role Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={filterRole === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("all")}
+                className="flex items-center gap-1"
+              >
+                All ({getRoleCount("all")})
+              </Button>
+              <Button
+                variant={filterRole === "member" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("member")}
+                className="flex items-center gap-1"
+              >
+                Members ({getRoleCount("member")})
+              </Button>
+              <Button
+                variant={filterRole === "visitor" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("visitor")}
+                className="flex items-center gap-1"
+              >
+                Visitors ({getRoleCount("visitor")})
+              </Button>
+              <Button
+                variant={filterRole === "alumni" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("alumni")}
+                className="flex items-center gap-1"
+              >
+                Alumni ({contacts.filter(c => c.membership_status === 'alumni').length})
+              </Button>
+              <Button
+                variant={filterRole === "staff" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("staff")}
+                className="flex items-center gap-1"
+              >
+                Staff ({getRoleCount("staff")})
+              </Button>
+              <Button
+                variant={filterRole === "instructor" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("instructor")}
+                className="flex items-center gap-1"
+              >
+                Instructors ({getRoleCount("instructor")})
+              </Button>
+              <Button
+                variant={filterRole === "admin" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("admin")}
+                className="flex items-center gap-1"
+              >
+                Admins ({getRoleCount("admin")})
+              </Button>
+              <Button
+                variant={filterRole === "student" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFilterRoleChange("student")}
+                className="flex items-center gap-1"
+              >
+                Students ({getRoleCount("student")})
+              </Button>
             </div>
 
-            {/* Sort Options and Family Toggle */}
-            <div className="flex gap-2 items-center flex-shrink-0">
-              <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className="w-32 h-9">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="role">Role</SelectItem>
-                  <SelectItem value="created_at">Join Date</SelectItem>
-                  <SelectItem value="belt_level">Belt Level</SelectItem>
-                  <SelectItem value="membership_status">Status</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Search and Controls Row */}
+            <div className="flex items-center gap-3">
+              {/* Search - Compact */}
+              <div className="flex-1 relative min-w-0">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-10 h-9"
+                />
+              </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 h-9"
-              >
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
+              {/* Sort Options and Family Toggle */}
+              <div className="flex gap-2 items-center flex-shrink-0">
+                <Select value={sortBy} onValueChange={onSortChange}>
+                  <SelectTrigger className="w-32 h-9">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="role">Role</SelectItem>
+                    <SelectItem value="created_at">Join Date</SelectItem>
+                    <SelectItem value="belt_level">Belt Level</SelectItem>
+                    <SelectItem value="membership_status">Status</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              {/* Family Toggle - Now inline and compact */}
-              <Button
-                variant={showFamiliesOnly ? "default" : "outline"}
-                size="sm"
-                onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
-                className="flex items-center gap-1 px-3 whitespace-nowrap h-9"
-              >
-                <Users className="h-3 w-3" />
-                <span className="hidden sm:inline">Families Only</span>
-                <span className="sm:hidden">Families</span>
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="px-3 h-9"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+
+                {/* Family Toggle - Now inline and compact */}
+                <Button
+                  variant={showFamiliesOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
+                  className="flex items-center gap-1 px-3 whitespace-nowrap h-9"
+                >
+                  <Users className="h-3 w-3" />
+                  <span className="hidden sm:inline">Families Only</span>
+                  <span className="sm:hidden">Families</span>
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary info */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>{contacts.length} contact{contacts.length !== 1 ? 's' : ''} found</span>
+        {getFamilyCount() > 0 && (
+          <span>{getFamilyCount()} Family Member{getFamilyCount() !== 1 ? 's' : ''}</span>
+        )}
+      </div>
     </div>
   );
 };
