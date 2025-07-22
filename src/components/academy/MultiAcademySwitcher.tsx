@@ -135,22 +135,27 @@ const MultiAcademySwitcher = () => {
         {userAcademies.map((membership) => (
           <DropdownMenuItem
             key={membership.academy_id}
-            onClick={() => {
-              console.log('Dropdown item clicked:', {
-                academyId: membership.academy_id,
-                academyName: membership.academy_name,
-                currentAcademyId: currentAcademyId
-              });
-              handleAcademySwitch(membership.academy_id);
-            }}
             className={`p-3 cursor-pointer hover:bg-muted ${
               membership.academy_id === currentAcademyId 
                 ? 'bg-muted ring-1 ring-primary' 
                 : ''
             }`}
             disabled={isLoading}
+            asChild
           >
-            <div className="flex items-center space-x-3 w-full">
+            <div
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Dropdown item clicked:', {
+                  academyId: membership.academy_id,
+                  academyName: membership.academy_name,
+                  currentAcademyId: currentAcademyId
+                });
+                handleAcademySwitch(membership.academy_id);
+              }}
+              className="flex items-center space-x-3 w-full cursor-pointer"
+            >
               {getRoleIcon(membership.role)}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
