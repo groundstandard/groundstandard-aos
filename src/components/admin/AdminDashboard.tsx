@@ -212,7 +212,16 @@ export const AdminDashboard = () => {
       {/* Admin Navigation */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 w-full">
+          <div className="flex flex-wrap gap-2 w-full">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/dashboard')}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </Button>
+            
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
@@ -248,6 +257,7 @@ export const AdminDashboard = () => {
               <FileText className="h-4 w-4" />
               Reporting
             </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
