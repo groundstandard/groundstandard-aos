@@ -67,12 +67,40 @@ serve(async (req) => {
     const plan = subscription.membership_plans;
     if (!plan) throw new Error("Membership plan not found");
 
-    // Calculate renewal price with discount
+    // Check if renewals are enabled for this plan
+    if (!plan.renewal_enabled) {
+      throw new Error("Renewals are not enabled for this membership plan");
+    }
+
+    // Calculate renewal price based on plan settings
     let renewalPrice = plan.base_price_cents;
-    if (subscription.renewal_discount_percentage > 0) {
+    let discountApplied = 0;
+
+    // Check if plan has a new renewal rate
+    if (plan.renewal_new_rate_enabled && plan.renewal_new_rate_cents) {
+      renewalPrice = plan.renewal_new_rate_cents;
+      logStep("Using new renewal rate", { 
+        originalPrice: plan.base_price_cents, 
+        newRate: renewalPrice 
+      });
+    } 
+    // Apply plan-level renewal discount if available
+    else if (plan.renewal_discount_percentage > 0) {
+      const discountAmount = Math.floor(renewalPrice * (plan.renewal_discount_percentage / 100));
+      renewalPrice = renewalPrice - discountAmount;
+      discountApplied = plan.renewal_discount_percentage;
+      logStep("Applied plan renewal discount", { 
+        originalPrice: plan.base_price_cents, 
+        discountPercent: plan.renewal_discount_percentage,
+        finalPrice: renewalPrice 
+      });
+    }
+    // Fall back to subscription-specific discount if no plan-level discount
+    else if (subscription.renewal_discount_percentage > 0) {
       const discountAmount = Math.floor(renewalPrice * (subscription.renewal_discount_percentage / 100));
       renewalPrice = renewalPrice - discountAmount;
-      logStep("Applied discount", { 
+      discountApplied = subscription.renewal_discount_percentage;
+      logStep("Applied subscription discount", { 
         originalPrice: plan.base_price_cents, 
         discountPercent: subscription.renewal_discount_percentage,
         finalPrice: renewalPrice 
@@ -101,7 +129,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: {
               name: `${plan.name} - 12-Month Renewal (Cycle ${subscription.cycle_number + 1})`,
-              description: `Annual membership renewal with ${subscription.renewal_discount_percentage > 0 ? subscription.renewal_discount_percentage + '% discount' : 'standard pricing'}`,
+              description: `Annual membership renewal${discountApplied > 0 ? ` with ${discountApplied}% discount` : ''}${plan.renewal_new_rate_enabled ? ' at updated rate' : ''}`,
             },
             unit_amount: renewalPrice,
             recurring: plan.billing_cycle === 'annual' ? {
@@ -140,7 +168,7 @@ serve(async (req) => {
       url: session.url,
       sessionId: session.id,
       renewalPrice: renewalPrice,
-      discountApplied: subscription.renewal_discount_percentage
+      discountApplied: discountApplied
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

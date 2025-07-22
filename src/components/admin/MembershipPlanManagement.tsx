@@ -30,6 +30,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { SortableAllPlansTable } from './SortableAllPlansTable';
 import { SubscriptionDashboard } from '@/components/subscription/SubscriptionDashboard';
+import { MembershipRenewalSettings } from './MembershipRenewalSettings';
 
 export const MembershipPlanManagement = () => {
   const { profile } = useAuth();
@@ -192,14 +193,19 @@ export const MembershipPlanManagement = () => {
       </div>
 
       <Tabs defaultValue="memberships" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="memberships">Memberships & Plans</TabsTrigger>
+          <TabsTrigger value="renewals">Renewal Settings</TabsTrigger>
           <TabsTrigger value="subscription">My Subscription</TabsTrigger>
           <TabsTrigger value="discounts">Discounts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="memberships" className="space-y-4">
           <SortableAllPlansTable />
+        </TabsContent>
+
+        <TabsContent value="renewals" className="space-y-4">
+          <MembershipRenewalSettings />
         </TabsContent>
 
         <TabsContent value="subscription" className="space-y-4">
