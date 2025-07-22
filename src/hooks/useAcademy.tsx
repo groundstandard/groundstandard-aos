@@ -204,6 +204,19 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   useEffect(() => {
     console.log('useAcademy: refreshing academy due to deps change', { user: !!user, profile: !!profile, userAcademies: userAcademies.length });
+    
+    // Don't refresh academy if we're in student mode
+    const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
+    const forceStudentMode = studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
+    
+    if (forceStudentMode) {
+      console.log('useAcademy: useEffect - Student mode active, skipping refresh');
+      setAcademy(null);
+      setCurrentAcademyId(null);
+      setLoading(false);
+      return;
+    }
+    
     refreshAcademy();
   }, [user, profile, userAcademies]);
 
