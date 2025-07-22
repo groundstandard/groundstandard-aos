@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 export const AuthForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'student' | 'staff'>('student');
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -45,7 +46,8 @@ export const AuthForm = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: formData.firstName,
-            last_name: formData.lastName
+            last_name: formData.lastName,
+            role: 'owner' // Staff users start as academy owners
           }
         }
       });
@@ -54,11 +56,10 @@ export const AuthForm = () => {
 
       toast({
         title: "Account Created",
-        description: "Please check your email to verify your account"
+        description: "Please check your email to verify your account before signing in"
       });
       
-      // Redirect to dashboard after successful signup
-      navigate("/dashboard");
+      // Don't auto-navigate after signup - user needs to verify email first
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -87,8 +88,19 @@ export const AuthForm = () => {
         description: "Successfully signed in"
       });
       
-      // Redirect to dashboard after successful login
-      navigate("/dashboard");
+      // Route based on user role after successful login
+      // We'll need to fetch the user's profile to determine their role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'instructor') {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard"); // Student dashboard
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -108,10 +120,35 @@ export const AuthForm = () => {
           <CardDescription>Access your martial arts academy</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Role Selection */}
+          <div className="mb-6">
+            <Label className="text-sm font-medium">I am a:</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button
+                type="button"
+                variant={selectedRole === 'student' ? 'default' : 'outline'}
+                onClick={() => setSelectedRole('student')}
+                className="w-full"
+              >
+                Student
+              </Button>
+              <Button
+                type="button"
+                variant={selectedRole === 'staff' ? 'default' : 'outline'}
+                onClick={() => setSelectedRole('staff')}
+                className="w-full"
+              >
+                Staff
+              </Button>
+            </div>
+          </div>
+
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signup" disabled={selectedRole === 'student'}>
+                {selectedRole === 'student' ? 'Sign Up (Staff Only)' : 'Sign Up'}
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -144,6 +181,16 @@ export const AuthForm = () => {
             </TabsContent>
             
             <TabsContent value="signup">
+              {selectedRole === 'student' ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">
+                    Student accounts are created by your academy administrator.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Please contact your academy for login credentials.
+                  </p>
+                </div>
+              ) : (
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -201,6 +248,7 @@ export const AuthForm = () => {
                   Create Account
                 </Button>
               </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
