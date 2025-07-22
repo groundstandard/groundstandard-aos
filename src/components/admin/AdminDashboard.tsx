@@ -259,6 +259,22 @@ export const AdminDashboard = () => {
               Reporting
             </Button>
             
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => console.log('Button 1 clicked')}
+            >
+              Button 1
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => console.log('Button 2 clicked')}
+            >
+              Button 2
+            </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
