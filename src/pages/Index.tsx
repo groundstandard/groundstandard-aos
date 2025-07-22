@@ -5,17 +5,47 @@ import Pricing from "@/components/Pricing";
 import Footer from "@/components/Footer";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useAcademy } from "@/hooks/useAcademy";
 import { Navigate } from "react-router-dom";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, userAcademies, loading: authLoading } = useAuth();
+  const { academy, loading: academyLoading } = useAcademy();
   const [showLogin, setShowLogin] = useState(false);
 
-  // If user is authenticated, redirect to dashboard
+  // Show loading while auth is being determined
+  if (authLoading || (user && academyLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, determine where to redirect them
   if (user) {
+    // If user has no academies, redirect to academy setup
+    if (userAcademies.length === 0) {
+      return <Navigate to="/academy-setup" replace />;
+    }
+    
+    // If user has academies but no current academy is loaded, redirect to setup
+    if (!academy) {
+      return <Navigate to="/academy-setup" replace />;
+    }
+    
+    // If academy is not fully set up, redirect to setup
+    if (!academy.is_setup_complete) {
+      return <Navigate to="/academy-setup" replace />;
+    }
+    
+    // Otherwise, redirect to dashboard
     return <Navigate to="/dashboard" replace />;
   }
 

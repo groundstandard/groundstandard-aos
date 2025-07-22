@@ -9,6 +9,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import MultiAcademySwitcher from "@/components/academy/MultiAcademySwitcher";
 
 const Navigation = () => {
   const { user } = useAuth();
@@ -113,13 +114,16 @@ const Navigation = () => {
             {user ? (
               <>
                 {!isMobile && (
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    Dashboard
-                  </Button>
+                  <>
+                    <MultiAcademySwitcher />
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => navigate('/dashboard')}
+                    >
+                      Dashboard
+                    </Button>
+                  </>
                 )}
                 {isMobile && <MobileMenu />}
               </>

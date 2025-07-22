@@ -14,16 +14,27 @@ interface Profile {
   emergency_contact?: string;
   belt_level?: string;
   membership_status: 'active' | 'inactive' | 'alumni';
+  academy_id?: string; // Current academy (will be deprecated)
+  last_academy_id?: string; // Most recent academy for auto-login
   created_at: string;
   updated_at: string;
+}
+
+interface AcademyMembership {
+  academy_id: string;
+  role: string;
+  academy_name: string;
 }
 
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  userAcademies: AcademyMembership[];
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshAcademies: () => Promise<void>;
+  switchAcademy: (academyId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +50,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userAcademies, setUserAcademies] = useState<AcademyMembership[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -103,6 +115,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error('Error fetching profile:', error);
       } else if (data) {
         setProfile(data as Profile);
+        // Also fetch user academies when profile is loaded
+        await fetchUserAcademies(userId);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -111,9 +125,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchUserAcademies = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_user_academies', { target_user_id: userId });
+
+      if (error) {
+        console.error('Error fetching user academies:', error);
+      } else if (data) {
+        setUserAcademies(data as AcademyMembership[]);
+      }
+    } catch (error) {
+      console.error('Error fetching user academies:', error);
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
+    }
+  };
+
+  const refreshAcademies = async () => {
+    if (user) {
+      await fetchUserAcademies(user.id);
+    }
+  };
+
+  const switchAcademy = async (academyId: string) => {
+    if (!user) return;
+
+    try {
+      // Update last_academy_id in profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ last_academy_id: academyId })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      // Log the academy switch
+      await supabase
+        .from('academy_switches')
+        .insert({
+          user_id: user.id,
+          from_academy_id: profile?.last_academy_id,
+          to_academy_id: academyId
+        });
+
+      // Refresh profile to get updated last_academy_id
+      await refreshProfile();
+      
+      // Reload the page to clear any cached academy-specific data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error switching academy:', error);
+      throw error;
     }
   };
 
@@ -136,7 +203,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      userAcademies, 
+      loading, 
+      signOut, 
+      refreshProfile, 
+      refreshAcademies, 
+      switchAcademy 
+    }}>
       {children}
     </AuthContext.Provider>
   );

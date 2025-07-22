@@ -26,6 +26,7 @@ interface Academy {
 
 interface AcademyContextType {
   academy: Academy | null;
+  currentAcademyId: string | null;
   loading: boolean;
   refreshAcademy: () => Promise<void>;
   updateAcademy: (updates: Partial<Academy>) => Promise<void>;
@@ -45,13 +46,45 @@ export const useAcademy = (): AcademyContextType => {
 };
 
 export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, userAcademies } = useAuth();
   const [academy, setAcademy] = useState<Academy | null>(null);
+  const [currentAcademyId, setCurrentAcademyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshAcademy = async () => {
-    if (!user || !(profile as any)?.academy_id) {
+    if (!user || !profile) {
       setAcademy(null);
+      setCurrentAcademyId(null);
+      setLoading(false);
+      return;
+    }
+
+    // Determine which academy to load
+    let academyIdToLoad: string | null = null;
+
+    // Priority 1: Use last_academy_id if user has access to it
+    if (profile.last_academy_id) {
+      const hasAccess = userAcademies.some(membership => 
+        membership.academy_id === profile.last_academy_id
+      );
+      if (hasAccess) {
+        academyIdToLoad = profile.last_academy_id;
+      }
+    }
+
+    // Priority 2: Use first academy in user's list
+    if (!academyIdToLoad && userAcademies.length > 0) {
+      academyIdToLoad = userAcademies[0].academy_id;
+    }
+
+    // Priority 3: Fallback to academy_id for backward compatibility
+    if (!academyIdToLoad && (profile as any).academy_id) {
+      academyIdToLoad = (profile as any).academy_id;
+    }
+
+    if (!academyIdToLoad) {
+      setAcademy(null);
+      setCurrentAcademyId(null);
       setLoading(false);
       return;
     }
@@ -61,14 +94,16 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const { data, error } = await supabase
         .from('academies')
         .select('*')
-        .eq('id', (profile as any).academy_id)
+        .eq('id', academyIdToLoad)
         .single();
 
       if (error) throw error;
       setAcademy(data);
+      setCurrentAcademyId(academyIdToLoad);
     } catch (error) {
       console.error('Error fetching academy:', error);
       setAcademy(null);
+      setCurrentAcademyId(null);
     } finally {
       setLoading(false);
     }
@@ -140,6 +175,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <AcademyContext.Provider
       value={{
         academy,
+        currentAcademyId,
         loading,
         refreshAcademy,
         updateAcademy,
