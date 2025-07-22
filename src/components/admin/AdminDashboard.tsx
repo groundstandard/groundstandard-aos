@@ -260,37 +260,6 @@ export const AdminDashboard = () => {
             </Button>
             
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate('/team-management')}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Team Management
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/events')}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Events
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/belt-testing')}>
-                  <Award className="h-4 w-4 mr-2" />
-                  Belt Testing
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleQuickAction("Memberships")}>
-                  <Users className="h-4 w-4 mr-2" />
-                  Memberships
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/admin/performance-targets')}>
-                  <Target className="h-4 w-4 mr-2" />
-                  Performance Targets
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             
             <Button 
               variant="outline" 
