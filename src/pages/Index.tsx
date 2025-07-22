@@ -40,53 +40,59 @@ const Index = () => {
     // Check if user has student academies and should show student selector
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
-    // Show student selector when user has student roles and hasn't selected one yet
-    if (studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected')) {
-      if (showAcademySelector) {
-        return (
-          <StudentAcademySelector 
-            onAcademySelected={() => setShowAcademySelector(false)} 
-            studentAcademies={studentAcademies}
-          />
-        );
-      } else {
-        // Auto-show academy selector for users with student roles
-        setShowAcademySelector(true);
-        return (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Loading student academies...</p>
-            </div>
-          </div>
-        );
+    console.log('Index.tsx - User academies:', userAcademies);
+    console.log('Index.tsx - Student academies:', studentAcademies);
+    console.log('Index.tsx - Student academy selected:', localStorage.getItem('student_academy_selected'));
+    
+    // Show student selector when user has multiple student roles and hasn't selected one yet
+    if (studentAcademies.length > 1 && !localStorage.getItem('student_academy_selected')) {
+      return (
+        <StudentAcademySelector 
+          onAcademySelected={() => {
+            console.log('Index.tsx - Academy selected, setting localStorage flag');
+            localStorage.setItem('student_academy_selected', 'true');
+          }} 
+          studentAcademies={studentAcademies}
+        />
+      );
+    }
+
+    // If user has only one student academy, auto-select it
+    if (studentAcademies.length === 1 && !localStorage.getItem('student_academy_selected')) {
+      localStorage.setItem('student_academy_selected', 'true');
+      // Auto-select the single academy and redirect to dashboard
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    // Check if user has both student and staff roles
+    const staffAcademies = userAcademies.filter(academy => academy.role !== 'student');
+    
+    // If user has staff roles and no student academies, proceed with normal academy logic
+    if (staffAcademies.length > 0 && studentAcademies.length === 0) {
+      // If user has no academies, redirect to academy setup
+      if (userAcademies.length === 0) {
+        return <Navigate to="/academy-setup" replace />;
+      }
+      
+      // If user has academies but no current academy is loaded, redirect to setup
+      if (!academy) {
+        return <Navigate to="/academy-setup" replace />;
+      }
+      
+      // If academy is loaded but not fully set up, redirect to setup
+      if (academy && !academy.is_setup_complete) {
+        return <Navigate to="/academy-setup" replace />;
+      }
+      
+      // If academy is loaded and set up, redirect to dashboard
+      if (academy && academy.is_setup_complete) {
+        return <Navigate to="/dashboard" replace />;
       }
     }
 
-    // If user has no academies, redirect to academy setup
-    if (userAcademies.length === 0) {
-      return <Navigate to="/academy-setup" replace />;
-    }
-    
-    // If user has academies but no current academy is loaded, redirect to setup
-    // BUT NOT if we're in student mode (academy is intentionally null)
-    if (!academy && !studentAcademies.length) {
-      return <Navigate to="/academy-setup" replace />;
-    }
-    
-    // If academy is loaded but not fully set up, redirect to setup
-    if (academy && !academy.is_setup_complete) {
-      return <Navigate to="/academy-setup" replace />;
-    }
-    
-    // If academy is loaded and set up, redirect to dashboard
-    if (academy && academy.is_setup_complete) {
+    // If user has selected a student academy, redirect to dashboard
+    if (studentAcademies.length > 0 && localStorage.getItem('student_academy_selected')) {
       return <Navigate to="/dashboard" replace />;
-    }
-    
-    // If no academy is loaded and no student academies, redirect to setup
-    if (!academy && studentAcademies.length === 0) {
-      return <Navigate to="/academy-setup" replace />;
     }
   }
 
