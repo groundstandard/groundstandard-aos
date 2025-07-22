@@ -212,7 +212,7 @@ export const AdminDashboard = () => {
       {/* Admin Navigation */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="flex gap-2 w-full overflow-x-auto whitespace-nowrap items-center">{/* force single row */}
+          <div className="flex flex-nowrap gap-2 w-full overflow-x-auto items-center">{/* force all buttons on same line */}
             {/* DEBUG: All 8 buttons should be visible now */}
             <Button
               variant="outline" 
