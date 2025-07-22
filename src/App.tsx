@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,8 +36,6 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import TeamManagement from "./pages/TeamManagement";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
 import { useRoleTesting } from "@/contexts/RoleTestingContext";
@@ -88,26 +87,37 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <AcademyProvider>
-          <SubscriptionProvider>
-            <ViewProvider>
-              <RoleTestingProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AppRoutes />
-                </BrowserRouter>
-              </RoleTestingProvider>
-            </ViewProvider>
-          </SubscriptionProvider>
-        </AcademyProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const queryClient = React.useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: false,
+      },
+    },
+  }), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <AcademyProvider>
+            <SubscriptionProvider>
+              <ViewProvider>
+                <RoleTestingProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AppRoutes />
+                  </BrowserRouter>
+                </RoleTestingProvider>
+              </ViewProvider>
+            </SubscriptionProvider>
+          </AcademyProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
