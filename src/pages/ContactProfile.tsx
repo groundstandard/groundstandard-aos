@@ -139,6 +139,14 @@ const ContactProfile = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [showMarkAttendanceDialog, setShowMarkAttendanceDialog] = useState(false);
+  const [markAttendanceData, setMarkAttendanceData] = useState({
+    class_id: '',
+    date: new Date().toISOString().split('T')[0],
+    status: 'present' as 'present' | 'absent' | 'late' | 'excused',
+    notes: ''
+  });
+  const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string}>>([]);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -235,6 +243,15 @@ const ContactProfile = () => {
         .order('created_at', { ascending: false });
 
       setContactNotes(notesData || []);
+
+      // Fetch available classes for attendance marking
+      const { data: classesData } = await supabase
+        .from('classes')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      setAvailableClasses(classesData || []);
 
     } catch (error) {
       console.error('Error fetching contact data:', error);
@@ -419,6 +436,70 @@ const ContactProfile = () => {
         description: "Failed to delete note",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleMarkAttendance = async () => {
+    if (!contact || !markAttendanceData.class_id) return;
+
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .insert({
+          student_id: contact.id,
+          class_id: markAttendanceData.class_id,
+          date: markAttendanceData.date,
+          status: markAttendanceData.status,
+          notes: markAttendanceData.notes || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Attendance marked successfully",
+      });
+
+      // Refresh attendance data
+      const { data: attendanceData } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('student_id', contact.id)
+        .order('date', { ascending: false })
+        .limit(50);
+
+      setAttendance(attendanceData || []);
+      setShowMarkAttendanceDialog(false);
+      setMarkAttendanceData({
+        class_id: '',
+        date: new Date().toISOString().split('T')[0],
+        status: 'present',
+        notes: ''
+      });
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAttendanceUpdate = () => {
+    // Refresh attendance data after update
+    if (contact) {
+      const fetchUpdatedAttendance = async () => {
+        const { data: attendanceData } = await supabase
+          .from('attendance')
+          .select('*')
+          .eq('student_id', contact.id)
+          .order('date', { ascending: false })
+          .limit(50);
+
+        setAttendance(attendanceData || []);
+      };
+      fetchUpdatedAttendance();
     }
   };
 
@@ -801,21 +882,44 @@ const ContactProfile = () => {
           <TabsContent value="attendance" className="space-y-4">
             <Card className="card-minimal">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Attendance History
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Attendance History
+                  </CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowMarkAttendanceDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Mark Attendance
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {attendance.map((record) => (
-                    <div key={record.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div 
+                      key={record.id} 
+                      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => {
+                        setSelectedAttendance(record);
+                        setShowAttendanceModal(true);
+                      }}
+                    >
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-full ${
-                          record.status === 'present' ? 'bg-green-100' : 'bg-red-100'
+                          record.status === 'present' ? 'bg-green-100' : 
+                          record.status === 'late' ? 'bg-yellow-100' :
+                          record.status === 'excused' ? 'bg-blue-100' : 'bg-red-100'
                         }`}>
                           {record.status === 'present' ? 
                             <CheckCircle className="h-4 w-4 text-green-600" /> :
+                            record.status === 'late' ?
+                            <Clock className="h-4 w-4 text-yellow-600" /> :
+                            record.status === 'excused' ?
+                            <AlertCircle className="h-4 w-4 text-blue-600" /> :
                             <AlertCircle className="h-4 w-4 text-red-600" />
                           }
                         </div>
@@ -1086,6 +1190,96 @@ const ContactProfile = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Mark Attendance Dialog */}
+        <Dialog open={showMarkAttendanceDialog} onOpenChange={setShowMarkAttendanceDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Mark Attendance</DialogTitle>
+              <DialogDescription>
+                Mark attendance for {contact?.first_name} {contact?.last_name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="class">Class</Label>
+                <Select 
+                  value={markAttendanceData.class_id} 
+                  onValueChange={(value) => setMarkAttendanceData({...markAttendanceData, class_id: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClasses.map(cls => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={markAttendanceData.date}
+                  onChange={(e) => setMarkAttendanceData({...markAttendanceData, date: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={markAttendanceData.status} 
+                  onValueChange={(value: 'present' | 'absent' | 'late' | 'excused') => 
+                    setMarkAttendanceData({...markAttendanceData, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="excused">Excused</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  value={markAttendanceData.notes}
+                  onChange={(e) => setMarkAttendanceData({...markAttendanceData, notes: e.target.value})}
+                  placeholder="Add any notes about this attendance..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowMarkAttendanceDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleMarkAttendance}>
+                Mark Attendance
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Attendance Edit Modal */}
+        {selectedAttendance && (
+          <AttendanceEditModal
+            attendance={selectedAttendance}
+            open={showAttendanceModal}
+            onOpenChange={setShowAttendanceModal}
+            onAttendanceUpdated={handleAttendanceUpdate}
+          />
+        )}
 
         {/* Add Family Member Dialog */}
         <AddFamilyMemberDialog
