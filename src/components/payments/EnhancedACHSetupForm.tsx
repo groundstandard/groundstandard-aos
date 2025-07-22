@@ -17,40 +17,12 @@ import { useToast } from "@/hooks/use-toast";
 // You'll need to add your Stripe publishable key here
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_...");
 
-const ACHSetupContent = () => {
-  const { user } = useAuth();
+const ACHSetupContent = ({ clientSecret }: { clientSecret: string }) => {
   const { toast } = useToast();
   const stripe = useStripe();
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
-  const [clientSecret, setClientSecret] = useState("");
   const [setupComplete, setSetupComplete] = useState(false);
-
-  useEffect(() => {
-    setupACHIntent();
-  }, []);
-
-  const setupACHIntent = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('setup-ach-payment', {
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-      setClientSecret(data.client_secret);
-    } catch (error) {
-      console.error("Setup error:", error);
-      toast({
-        title: "Setup Failed",
-        description: "Failed to initialize ACH setup. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,8 +115,60 @@ const ACHSetupContent = () => {
   );
 };
 
-export const EnhancedACHSetupForm = () => (
-  <Elements stripe={stripePromise}>
-    <ACHSetupContent />
-  </Elements>
-);
+export const EnhancedACHSetupForm = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [clientSecret, setClientSecret] = useState("");
+
+  useEffect(() => {
+    setupACHIntent();
+  }, []);
+
+  const setupACHIntent = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('setup-ach-payment', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      setClientSecret(data.client_secret);
+    } catch (error) {
+      console.error("Setup error:", error);
+      toast({
+        title: "Setup Failed",
+        description: "Failed to initialize ACH setup. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (!clientSecret) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <p className="text-muted-foreground">Initializing ACH setup...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Elements 
+      stripe={stripePromise}
+      options={{
+        clientSecret: clientSecret,
+        appearance: {
+          theme: 'stripe',
+        },
+      }}
+    >
+      <ACHSetupContent clientSecret={clientSecret} />
+    </Elements>
+  );
+};
