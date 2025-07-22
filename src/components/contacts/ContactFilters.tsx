@@ -63,12 +63,12 @@ export const ContactFilters = ({
           Members ({getRoleCount("member")})
         </Button>
         <Button
-          variant={filterRole === "student" ? "default" : "outline"}
+          variant={filterRole === "visitor" ? "default" : "outline"}
           size="sm"
-          onClick={() => onFilterRoleChange("student")}
+          onClick={() => onFilterRoleChange("visitor")}
           className="flex items-center gap-1"
         >
-          Students ({getRoleCount("student")})
+          Visitors ({getRoleCount("visitor")})
         </Button>
         <Button
           variant={filterRole === "alumni" ? "default" : "outline"}
@@ -101,6 +101,14 @@ export const ContactFilters = ({
           className="flex items-center gap-1"
         >
           Admins ({getRoleCount("admin")})
+        </Button>
+        <Button
+          variant={filterRole === "student" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("student")}
+          className="flex items-center gap-1"
+        >
+          Students ({getRoleCount("student")})
         </Button>
       </div>
 
