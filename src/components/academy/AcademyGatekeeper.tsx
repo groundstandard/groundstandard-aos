@@ -27,7 +27,7 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // If user doesn't have an academy, show welcome screen
+  // If user doesn't have an academy, redirect to academy setup
   if (!academy && user) {
     return <AcademyWelcome />;
   }

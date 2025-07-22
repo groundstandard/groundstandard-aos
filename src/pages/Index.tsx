@@ -3,15 +3,60 @@ import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import Pricing from "@/components/Pricing";
 import Footer from "@/components/Footer";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
+  const { user } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+
+  // If user is authenticated, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <Hero />
-      <Features />
-      <Pricing />
-      <Footer />
+      
+      {showLogin ? (
+        <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+              <CardDescription>
+                Sign in to access your academy
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AuthForm />
+              <div className="mt-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an academy?{" "}
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-primary hover:underline"
+                    onClick={() => setShowLogin(false)}
+                  >
+                    Create one here
+                  </Button>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <>
+          <Hero onLoginClick={() => setShowLogin(true)} onSignUpClick={() => setShowLogin(false)} />
+          <Features />
+          <Pricing />
+          <Footer />
+        </>
+      )}
     </div>
   );
 };

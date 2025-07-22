@@ -25,6 +25,7 @@ import { ProfileView } from "@/components/profile/ProfileView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import AcademySwitcher from "@/components/academy/AcademySwitcher";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -109,16 +110,19 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-          {/* Main Header - Admin Dashboard Title with Chat and Settings */}
+          {/* Main Header - Admin Dashboard Title with Academy Switcher */}
           <div className="flex justify-between items-center mb-6">
-            {/* Left side - Admin Dashboard Title */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
-              <div>
-                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
-                <p className="text-xs sm:text-sm md:text-lg text-muted-foreground hidden sm:block">
-                  Complete management and analytics for your martial arts academy
-                </p>
+            {/* Left side - Academy Switcher and Title */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <AcademySwitcher />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
+                <div>
+                  <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
+                  <p className="text-xs sm:text-sm md:text-lg text-muted-foreground hidden sm:block">
+                    Complete management and analytics for your martial arts academy
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -471,6 +475,7 @@ const Dashboard = () => {
         {/* Header with reorganized layout */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
+            <AcademySwitcher />
             <Button 
               variant="outline" 
               onClick={() => navigate('/chat')}

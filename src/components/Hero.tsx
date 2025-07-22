@@ -2,7 +2,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Shield, Users } from "lucide-react";
 import heroImage from "@/assets/hero-dojo.jpg";
 
-const Hero = () => {
+interface HeroProps {
+  onLoginClick?: () => void;
+  onSignUpClick?: () => void;
+}
+
+const Hero = ({ onLoginClick, onSignUpClick }: HeroProps) => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
@@ -60,7 +65,23 @@ const Hero = () => {
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button variant="gold" size="xl" className="group">
+            {onLoginClick && (
+              <Button 
+                variant="default" 
+                size="xl" 
+                className="group"
+                onClick={onLoginClick}
+              >
+                Sign In
+                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            )}
+            <Button 
+              variant="gold" 
+              size="xl" 
+              className="group"
+              onClick={() => window.location.href = '/academy-setup'}
+            >
               Start Free Trial
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
