@@ -3,11 +3,13 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { BackButton } from "@/components/ui/BackButton";
 import { AttendanceTracker } from "@/components/attendance/AttendanceTracker";
 import { AttendanceManagement } from "@/components/admin/AttendanceManagement";
+import { QuickAttendanceDashboard } from "@/components/attendance/QuickAttendanceDashboard";
+import { StudentAttendanceHistory } from "@/components/attendance/StudentAttendanceHistory";
 import { Navigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 
 const Attendance = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const { isAdmin } = useEffectiveRole();
 
   if (loading) {
@@ -40,6 +42,10 @@ const Attendance = () => {
         
         {isAdmin ? (
           <AttendanceManagement />
+        ) : profile?.role === 'instructor' ? (
+          <QuickAttendanceDashboard />
+        ) : profile?.role === 'student' ? (
+          <StudentAttendanceHistory />
         ) : (
           <AttendanceTracker />
         )}
