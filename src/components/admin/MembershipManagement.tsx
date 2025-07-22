@@ -17,11 +17,20 @@ interface MembershipPlan {
   description: string;
   base_price_cents: number;
   billing_cycle: string;
+  cycle_length_months?: number;
+  payment_frequency?: string;
   age_group: string;
   is_active: boolean;
   is_class_pack?: boolean;
   is_unlimited?: boolean;
   classes_per_week?: number;
+  class_pack_size?: number;
+  pack_expiry_days?: number;
+  renewal_enabled?: boolean;
+  renewal_discount_percentage?: number;
+  renewal_new_rate_enabled?: boolean;
+  renewal_new_rate_cents?: number;
+  auto_renewal_default?: boolean;
 }
 
 interface Discount {
