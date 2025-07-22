@@ -64,6 +64,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     const forceStudentMode = loginRole === 'student' && studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
     
+    console.log('useAcademy: Student mode check', { loginRole, studentAcademiesCount: studentAcademies.length, studentAcademySelected: localStorage.getItem('student_academy_selected'), forceStudentMode });
+    
     if (forceStudentMode) {
       console.log('useAcademy: Student mode active - preventing automatic academy loading');
       setAcademy(null);

@@ -30,6 +30,7 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
 
   // Only show student academy selector if user logged in as student
   const loginRole = localStorage.getItem('loginRole');
+  console.log('AcademyGatekeeper: Checking student mode', { loginRole, userAcademies: userAcademies?.length, academy: !!academy });
   if (user && profile && userAcademies && loginRole === 'student') {
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
