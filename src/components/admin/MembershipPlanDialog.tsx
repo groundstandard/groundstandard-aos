@@ -33,13 +33,13 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().default(""),
+  description: z.string().optional(),
   base_price_cents: z.number().min(0, "Price must be positive"),
-  billing_cycle: z.string().default("monthly"),
-  age_group: z.string().default("all"),
-  is_active: z.boolean().default(true),
-  is_class_pack: z.boolean().default(false),
-  is_unlimited: z.boolean().default(false),
+  billing_cycle: z.string().min(1, "Billing cycle is required"),
+  age_group: z.string().optional(),
+  is_active: z.boolean(),
+  is_class_pack: z.boolean(),
+  is_unlimited: z.boolean(),
   class_pack_size: z.number().optional(),
   pack_expiry_days: z.number().optional(),
   classes_per_week: z.number().optional(),
@@ -129,17 +129,10 @@ export const MembershipPlanDialog = ({
     try {
       setIsLoading(true);
 
-      const data = {
-        ...values,
-        class_pack_size: values.class_pack_size || null,
-        pack_expiry_days: values.pack_expiry_days || null,
-        classes_per_week: values.classes_per_week || null,
-      };
-
       if (plan) {
         const { error } = await supabase
           .from('membership_plans')
-          .update(data)
+          .update(values)
           .eq('id', plan.id);
 
         if (error) throw error;
@@ -151,7 +144,7 @@ export const MembershipPlanDialog = ({
       } else {
         const { error } = await supabase
           .from('membership_plans')
-          .insert(data);
+          .insert(values);
 
         if (error) throw error;
 

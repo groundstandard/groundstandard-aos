@@ -33,12 +33,12 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().default(""),
+  description: z.string().optional(),
   price_cents: z.number().min(0, "Price must be positive"),
-  option_type: z.string().default("single_class"),
-  age_group: z.string().default("all"),
-  trial_duration_days: z.number().default(0),
-  is_active: z.boolean().default(true),
+  option_type: z.string().optional(),
+  age_group: z.string().optional(),
+  trial_duration_days: z.number().optional(),
+  is_active: z.boolean(),
 });
 
 interface DropInOption {

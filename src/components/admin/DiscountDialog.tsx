@@ -33,11 +33,11 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().default(""),
-  discount_type: z.string().default("percentage"),
+  description: z.string(),
+  discount_type: z.string(),
   discount_value: z.number().min(0, "Discount value must be positive"),
-  applies_to: z.string().default("membership"),
-  is_active: z.boolean().default(true),
+  applies_to: z.string(),
+  is_active: z.boolean(),
 });
 
 interface Discount {
