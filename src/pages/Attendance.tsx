@@ -7,7 +7,7 @@ import { AttendanceManagement } from "@/components/admin/AttendanceManagement";
 import { QuickAttendanceDashboard } from "@/components/attendance/QuickAttendanceDashboard";
 import { StudentAttendanceHistory } from "@/components/attendance/StudentAttendanceHistory";
 import { Navigate, useNavigate } from "react-router-dom";
-import { CheckCircle, Calendar, CalendarDays, Star, Clock } from "lucide-react";
+import { CheckCircle, Calendar, CalendarDays, Star, Clock, Crown } from "lucide-react";
 const Attendance = () => {
   const { user, loading, profile } = useAuth();
   const { isAdmin } = useEffectiveRole();
@@ -43,6 +43,14 @@ const Attendance = () => {
 
         {/* Attendance Navigation Ribbon */}
         <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            onClick={() => navigate('/membership-management')}
+          >
+            <Crown className="h-4 w-4" />
+            Memberships
+          </Button>
           <Button 
             variant="ghost" 
             className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
