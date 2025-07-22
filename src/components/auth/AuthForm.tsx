@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ export const AuthForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'student' | 'staff'>('student');
+  const [roleLoading, setRoleLoading] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,6 +22,64 @@ export const AuthForm = () => {
     lastName: ""
   });
   const { toast } = useToast();
+
+  // Load user's preferred role on component mount
+  useEffect(() => {
+    const loadPreferredRole = async () => {
+      try {
+        // Get current session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // User is logged in, get their preferred role
+          const { data } = await supabase
+            .from('user_preferences')
+            .select('preferred_login_role')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (data?.preferred_login_role) {
+            setSelectedRole(data.preferred_login_role as 'student' | 'staff');
+          }
+        } else {
+          // No session, check if there's a stored preference from anonymous user
+          const storedRole = localStorage.getItem('preferred_login_role');
+          if (storedRole === 'student' || storedRole === 'staff') {
+            setSelectedRole(storedRole);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading preferred role:', error);
+      } finally {
+        setRoleLoading(false);
+      }
+    };
+
+    loadPreferredRole();
+  }, []);
+
+  // Save role preference when changed
+  const handleRoleChange = async (role: 'student' | 'staff') => {
+    setSelectedRole(role);
+    
+    try {
+      // Always store in localStorage for anonymous users
+      localStorage.setItem('preferred_login_role', role);
+      
+      // If user is logged in, also store in database
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: session.user.id,
+            preferred_login_role: role
+          });
+      }
+    } catch (error) {
+      console.error('Error saving role preference:', error);
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -81,7 +140,37 @@ export const AuthForm = () => {
         password: formData.password
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle different error scenarios based on selected role
+        if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
+          if (selectedRole === 'staff') {
+            toast({
+              variant: "destructive",
+              title: "Account Not Found",
+              description: "No staff account found with these credentials. Would you like to create a new account?",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Account Not Found",
+              description: "No student account found. Please contact your academy administrator for access.",
+            });
+          }
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      // Save role preference for this user
+      if (data.user) {
+        await supabase
+          .from('user_preferences')
+          .upsert({
+            user_id: data.user.id,
+            preferred_login_role: selectedRole
+          });
+      }
 
       toast({
         title: "Welcome Back",
@@ -116,16 +205,18 @@ export const AuthForm = () => {
               <Button
                 type="button"
                 variant={selectedRole === 'student' ? 'default' : 'outline'}
-                onClick={() => setSelectedRole('student')}
+                onClick={() => handleRoleChange('student')}
                 className="w-full"
+                disabled={roleLoading}
               >
-                Student
+                Student Sign in
               </Button>
               <Button
                 type="button"
                 variant={selectedRole === 'staff' ? 'default' : 'outline'}
-                onClick={() => setSelectedRole('staff')}
+                onClick={() => handleRoleChange('staff')}
                 className="w-full"
+                disabled={roleLoading}
               >
                 Staff
               </Button>
