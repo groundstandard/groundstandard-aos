@@ -2800,57 +2800,90 @@ export type Database = {
       profiles: {
         Row: {
           academy_id: string
+          address: string | null
           belt_level: string | null
           check_in_pin: string | null
+          city: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
           emergency_contact: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           first_name: string
+          highlevel_contact_id: string | null
           id: string
           last_academy_id: string | null
           last_name: string
           membership_plan_id: string | null
           membership_status: string
+          notes: string | null
           parent_id: string | null
           phone: string | null
           role: string
+          state: string | null
+          stripe_customer_id: string | null
+          student_id: string | null
           updated_at: string
+          zipcode: string | null
         }
         Insert: {
           academy_id: string
+          address?: string | null
           belt_level?: string | null
           check_in_pin?: string | null
+          city?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email: string
           emergency_contact?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           first_name: string
+          highlevel_contact_id?: string | null
           id: string
           last_academy_id?: string | null
           last_name: string
           membership_plan_id?: string | null
           membership_status?: string
+          notes?: string | null
           parent_id?: string | null
           phone?: string | null
           role?: string
+          state?: string | null
+          stripe_customer_id?: string | null
+          student_id?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Update: {
           academy_id?: string
+          address?: string | null
           belt_level?: string | null
           check_in_pin?: string | null
+          city?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
           emergency_contact?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           first_name?: string
+          highlevel_contact_id?: string | null
           id?: string
           last_academy_id?: string | null
           last_name?: string
           membership_plan_id?: string | null
           membership_status?: string
+          notes?: string | null
           parent_id?: string | null
           phone?: string | null
           role?: string
+          state?: string | null
+          stripe_customer_id?: string | null
+          student_id?: string | null
           updated_at?: string
+          zipcode?: string | null
         }
         Relationships: [
           {
