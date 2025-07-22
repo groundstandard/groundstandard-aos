@@ -271,7 +271,7 @@ export const AdminDashboard = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Admin
+                  Settings
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -295,10 +295,6 @@ export const AdminDashboard = () => {
                 <DropdownMenuItem onClick={() => navigate('/admin/performance-targets')}>
                   <Target className="h-4 w-4 mr-2" />
                   Performance Targets
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
