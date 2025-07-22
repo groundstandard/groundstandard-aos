@@ -38,6 +38,7 @@ import {
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useExport } from '@/hooks/useExport';
 
 interface AttendanceRecord {
   id: string;
@@ -107,6 +108,7 @@ type DateRange = {
 export const AttendanceManagement = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const { exportData, loading: exportLoading } = useExport();
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date())
@@ -116,8 +118,16 @@ export const AttendanceManagement = () => {
   const [classFilter, setClassFilter] = useState<string>('all');
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMarkDialog, setShowMarkDialog] = useState(false);
   const [editNotes, setEditNotes] = useState('');
   const [editStatus, setEditStatus] = useState<string>('present');
+  const [newAttendance, setNewAttendance] = useState({
+    student_id: '',
+    class_id: '',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    status: 'present' as const,
+    notes: ''
+  });
 
   // Fetch comprehensive attendance data
   const { data: attendanceData, isLoading, refetch } = useQuery({
@@ -269,6 +279,83 @@ export const AttendanceManagement = () => {
     }
   });
 
+  // Fetch students and classes for dropdowns
+  const { data: students = [] } = useQuery({
+    queryKey: ['students'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .eq('role', 'student')
+        .eq('membership_status', 'active')
+        .order('first_name');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ['classes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Handle marking new attendance
+  const handleMarkAttendance = async () => {
+    if (!newAttendance.student_id || !newAttendance.class_id) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select both student and class'
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .insert({
+          student_id: newAttendance.student_id,
+          class_id: newAttendance.class_id,
+          date: newAttendance.date,
+          status: newAttendance.status,
+          notes: newAttendance.notes || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Attendance marked successfully'
+      });
+
+      setShowMarkDialog(false);
+      setNewAttendance({
+        student_id: '',
+        class_id: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        status: 'present',
+        notes: ''
+      });
+      refetch();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to mark attendance'
+      });
+    }
+  };
+
   // Handle attendance record updates
   const handleUpdateAttendance = async () => {
     if (!selectedRecord) return;
@@ -387,14 +474,102 @@ export const AttendanceManagement = () => {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => exportData('attendance')}
+                disabled={exportLoading}
+              >
                 <Download className="h-4 w-4 mr-2" />
-                Export Data
+                {exportLoading ? 'Exporting...' : 'Export Data'}
               </Button>
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Mark Attendance
-              </Button>
+              <Dialog open={showMarkDialog} onOpenChange={setShowMarkDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Mark Attendance
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Mark Attendance</DialogTitle>
+                    <DialogDescription>
+                      Record attendance for a student in a class session
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="student">Student</Label>
+                        <Select value={newAttendance.student_id} onValueChange={(value) => setNewAttendance({ ...newAttendance, student_id: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select student" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {students.map((student) => (
+                              <SelectItem key={student.id} value={student.id}>
+                                {student.first_name} {student.last_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="class">Class</Label>
+                        <Select value={newAttendance.class_id} onValueChange={(value) => setNewAttendance({ ...newAttendance, class_id: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select class" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {classes.map((cls) => (
+                              <SelectItem key={cls.id} value={cls.id}>
+                                {cls.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="date">Date</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          value={newAttendance.date}
+                          onChange={(e) => setNewAttendance({ ...newAttendance, date: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="status">Status</Label>
+                        <Select value={newAttendance.status} onValueChange={(value: any) => setNewAttendance({ ...newAttendance, status: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="present">Present</SelectItem>
+                            <SelectItem value="absent">Absent</SelectItem>
+                            <SelectItem value="late">Late</SelectItem>
+                            <SelectItem value="excused">Excused</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="notes">Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        value={newAttendance.notes}
+                        onChange={(e) => setNewAttendance({ ...newAttendance, notes: e.target.value })}
+                        placeholder="Additional notes about attendance..."
+                      />
+                    </div>
+                    <Button onClick={handleMarkAttendance} className="w-full">
+                      Mark Attendance
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
