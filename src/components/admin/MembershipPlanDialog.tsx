@@ -129,10 +129,25 @@ export const MembershipPlanDialog = ({
     try {
       setIsLoading(true);
 
+      // Ensure required fields are properly typed for database
+      const dataToSubmit = {
+        name: values.name,
+        description: values.description || "",
+        base_price_cents: values.base_price_cents,
+        billing_cycle: values.billing_cycle,
+        age_group: values.age_group || "all",
+        is_active: values.is_active,
+        is_class_pack: values.is_class_pack,
+        is_unlimited: values.is_unlimited,
+        class_pack_size: values.class_pack_size || null,
+        pack_expiry_days: values.pack_expiry_days || null,
+        classes_per_week: values.classes_per_week || null,
+      };
+
       if (plan) {
         const { error } = await supabase
           .from('membership_plans')
-          .update(values)
+          .update(dataToSubmit)
           .eq('id', plan.id);
 
         if (error) throw error;
@@ -144,7 +159,7 @@ export const MembershipPlanDialog = ({
       } else {
         const { error } = await supabase
           .from('membership_plans')
-          .insert(values);
+          .insert(dataToSubmit);
 
         if (error) throw error;
 

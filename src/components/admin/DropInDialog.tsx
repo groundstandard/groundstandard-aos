@@ -109,10 +109,21 @@ export const DropInDialog = ({
     try {
       setIsLoading(true);
 
+      // Ensure required fields are properly typed for database
+      const dataToSubmit = {
+        name: values.name,
+        description: values.description || "",
+        price_cents: values.price_cents,
+        option_type: values.option_type || "single_class",
+        age_group: values.age_group || "all",
+        trial_duration_days: values.trial_duration_days || 0,
+        is_active: values.is_active,
+      };
+
       if (option) {
         const { error } = await supabase
           .from('drop_in_options')
-          .update(values)
+          .update(dataToSubmit)
           .eq('id', option.id);
 
         if (error) throw error;
@@ -124,7 +135,7 @@ export const DropInDialog = ({
       } else {
         const { error } = await supabase
           .from('drop_in_options')
-          .insert(values);
+          .insert(dataToSubmit);
 
         if (error) throw error;
 

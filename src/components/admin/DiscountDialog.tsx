@@ -104,10 +104,20 @@ export const DiscountDialog = ({
     try {
       setIsLoading(true);
 
+      // Ensure required fields are properly typed for database
+      const dataToSubmit = {
+        name: values.name,
+        description: values.description || "",
+        discount_type: values.discount_type,
+        discount_value: values.discount_value,
+        applies_to: values.applies_to,
+        is_active: values.is_active,
+      };
+
       if (discount) {
         const { error } = await supabase
           .from('discount_types')
-          .update(values)
+          .update(dataToSubmit)
           .eq('id', discount.id);
 
         if (error) throw error;
@@ -119,7 +129,7 @@ export const DiscountDialog = ({
       } else {
         const { error } = await supabase
           .from('discount_types')
-          .insert(values);
+          .insert(dataToSubmit);
 
         if (error) throw error;
 
