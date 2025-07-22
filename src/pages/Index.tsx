@@ -7,7 +7,7 @@ import { AuthForm } from "@/components/auth/AuthForm";
 import { useAuth } from "@/hooks/useAuth";
 import { useAcademy } from "@/hooks/useAcademy";
 import { Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StudentAcademySelector } from "@/components/academy/StudentAcademySelector";
@@ -17,6 +17,11 @@ const Index = () => {
   const { academy, loading: academyLoading } = useAcademy();
   const [showLogin, setShowLogin] = useState(false);
   const [showAcademySelector, setShowAcademySelector] = useState(false);
+
+  // Clear the localStorage flag on page load to always show student selector for testing
+  useEffect(() => {
+    localStorage.removeItem('student_academy_selected');
+  }, []);
 
   // Show loading while auth is being determined
   if (authLoading || (user && academyLoading)) {
@@ -35,29 +40,33 @@ const Index = () => {
     // Check if user has student academies FIRST (for testing purposes)
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
-    // For testing: Force student selector when user has student roles
-    // This ignores academy loading state and always shows selector for testing
-    const forceStudentSelector = studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
-    
-    if (forceStudentSelector) {
-      if (showAcademySelector) {
-        return (
-          <StudentAcademySelector 
-            onAcademySelected={() => setShowAcademySelector(false)} 
-            studentAcademies={studentAcademies}
-          />
-        );
-      } else {
-        // Auto-show academy selector for users with student roles
-        setShowAcademySelector(true);
-        return (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Loading student academies...</p>
+    // FORCE STUDENT SELECTOR - Always show it when user has student roles (for testing)
+    // Clear localStorage on page load to reset the flag
+    if (studentAcademies.length > 0) {
+      // Check if we should force the student selector
+      const shouldForceStudentSelector = !localStorage.getItem('student_academy_selected') || 
+                                          new URLSearchParams(window.location.search).get('student') === 'true';
+      
+      if (shouldForceStudentSelector) {
+        if (showAcademySelector) {
+          return (
+            <StudentAcademySelector 
+              onAcademySelected={() => setShowAcademySelector(false)} 
+              studentAcademies={studentAcademies}
+            />
+          );
+        } else {
+          // Auto-show academy selector for users with student roles
+          setShowAcademySelector(true);
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Loading student academies...</p>
+              </div>
             </div>
-          </div>
-        );
+          );
+        }
       }
     }
 
