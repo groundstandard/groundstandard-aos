@@ -58,13 +58,18 @@ const EnhancedAcademySetup = () => {
     
     setIsSearching(true);
     try {
+      // Use a more direct query to avoid RLS policy issues
       const { data, error } = await supabase
         .from('academies')
-        .select('id, name, city, state, description')
+        .select('id, name, city, state, description, is_setup_complete')
         .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+        .eq('is_setup_complete', true)
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Search error details:', error);
+        throw error;
+      }
       setSearchResults(data || []);
     } catch (error) {
       console.error('Error searching academies:', error);
