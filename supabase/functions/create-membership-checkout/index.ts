@@ -141,6 +141,28 @@ serve(async (req) => {
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
+    // Create subscription record in our database
+    const { data: subscriptionData, error: subscriptionError } = await supabaseAdmin
+      .from('membership_subscriptions')
+      .insert({
+        profile_id: user.id,
+        membership_plan_id: planId,
+        stripe_subscription_id: session.subscription as string,
+        status: 'pending',
+        start_date: new Date().toISOString(),
+        billing_frequency: billingFrequency,
+        auto_renewal: true,
+        billing_amount_cents: unitAmount
+      })
+      .select()
+      .single();
+
+    if (subscriptionError) {
+      logStep("Failed to create subscription record", { error: subscriptionError });
+    } else {
+      logStep("Subscription record created", { subscriptionId: subscriptionData.id });
+    }
+
     return new Response(JSON.stringify({ 
       url: session.url,
       sessionId: session.id,
