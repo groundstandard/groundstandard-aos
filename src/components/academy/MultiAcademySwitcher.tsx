@@ -27,6 +27,26 @@ const MultiAcademySwitcher = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [academyLogos, setAcademyLogos] = useState<Record<string, string>>({});
 
+  // Filter academies based on login role - only show staff roles for staff users
+  const getFilteredAcademies = () => {
+    const loginRole = localStorage.getItem('loginRole');
+    
+    // If logged in as staff, only show academies where they have staff roles
+    if (loginRole === 'staff') {
+      return userAcademies.filter(academy => academy.role !== 'student');
+    }
+    
+    // If logged in as student, only show student roles
+    if (loginRole === 'student') {
+      return userAcademies.filter(academy => academy.role === 'student');
+    }
+    
+    // Default: show all academies
+    return userAcademies;
+  };
+
+  const filteredAcademies = getFilteredAcademies();
+
   // Get effective role for display based on view toggle
   const getEffectiveRole = (membership: any) => {
     const loginRole = localStorage.getItem('loginRole');
@@ -68,7 +88,7 @@ const MultiAcademySwitcher = () => {
     fetchAcademyLogos();
   }, [userAcademies]);
 
-  if (!user || userAcademies.length === 0) {
+  if (!user || filteredAcademies.length === 0) {
     return null;
   }
 
@@ -142,12 +162,13 @@ const MultiAcademySwitcher = () => {
     membership => membership.academy_id === currentAcademyId
   );
 
-  // Only show switcher if user has multiple academies
-  if (userAcademies.length === 1) {
-    const effectiveRole = currentAcademy ? getEffectiveRole(currentAcademy) : currentAcademy?.role;
+  // Only show switcher if user has multiple filtered academies
+  if (filteredAcademies.length === 1) {
+    const currentFilteredAcademy = filteredAcademies[0];
+    const effectiveRole = currentFilteredAcademy ? getEffectiveRole(currentFilteredAcademy) : currentFilteredAcademy?.role;
     return (
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-        {getAcademyIcon(currentAcademy, academy?.logo_url)}
+        {getAcademyIcon(currentFilteredAcademy, academy?.logo_url)}
         <span className="font-medium">{academy?.name || 'Loading...'}</span>
         {effectiveRole && getRoleBadge(effectiveRole)}
       </div>
@@ -184,13 +205,13 @@ const MultiAcademySwitcher = () => {
         className="w-80 bg-background border shadow-lg z-50"
       >
         <DropdownMenuLabel className="font-semibold">
-          Switch Academy ({userAcademies.length})
+          Switch Academy ({filteredAcademies.length})
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
         {/* Scrollable academy list with max height */}
         <div className="max-h-[300px] overflow-y-auto">
-          {userAcademies.map((membership) => (
+          {filteredAcademies.map((membership) => (
             <DropdownMenuItem
               key={membership.academy_id}
               onClick={() => handleAcademySwitch(membership.academy_id)}
