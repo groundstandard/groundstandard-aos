@@ -7,7 +7,7 @@ interface BackButtonProps {
   className?: string;
 }
 
-export const BackButton = ({ fallbackPath = '/admin', className = '' }: BackButtonProps) => {
+export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: BackButtonProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
