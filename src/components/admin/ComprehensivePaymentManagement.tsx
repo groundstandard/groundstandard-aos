@@ -443,27 +443,15 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-6 w-6" />
-                  Comprehensive Payment Management
-                </CardTitle>
-                <CardDescription>
-                  Advanced payment processing, analytics, and automation
-                </CardDescription>
-              </div>
-              {navigate && (
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
-                  onClick={() => navigate('/membership-management')}
-                >
-                  <Crown className="h-4 w-4" />
-                  Memberships
-                </Button>
-              )}
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-6 w-6" />
+                Comprehensive Payment Management
+              </CardTitle>
+              <CardDescription>
+                Advanced payment processing, analytics, and automation
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Popover>
