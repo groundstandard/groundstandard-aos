@@ -136,6 +136,8 @@ const Contacts = () => {
 
   const fetchContacts = async () => {
     try {
+      // RLS policies now automatically filter by academy based on user's membership
+      // No need to explicitly filter by academy_id - the database handles isolation
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -262,7 +264,23 @@ const Contacts = () => {
         return Math.floor(1000 + Math.random() * 9000).toString();
       };
 
-      // Prepare contact data for insertion
+      // Get current user's academy_id from profile
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw new Error('Could not determine your academy');
+      }
+
+      if (!userProfile?.academy_id) {
+        throw new Error('You must be assigned to an academy to create contacts');
+      }
+
+      // Prepare contact data for insertion with academy_id
       const contactData = {
         id: crypto.randomUUID(),
         email: formData.email,
@@ -273,7 +291,8 @@ const Contacts = () => {
         belt_level: formData.belt_level || null,
         emergency_contact_name: formData.emergency_contact || null,
         membership_status: formData.membership_status,
-        check_in_pin: generatePin()
+        check_in_pin: generatePin(),
+        academy_id: userProfile.academy_id  // Ensure contact is assigned to current academy
       };
 
       console.log('Adding contact with data:', contactData);
