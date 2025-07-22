@@ -35,6 +35,7 @@ import AcademySetupPage from "./pages/AcademySetupPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import TeamManagement from "./pages/TeamManagement";
+import MembershipManagement from "./pages/MembershipManagement";
 import NotFound from "./pages/NotFound";
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
@@ -76,6 +77,7 @@ const AppRoutes = () => {
         <Route path="/setup" element={user ? <AcademySetupPage /> : <Auth />} />
         <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/team" element={user ? <AcademyGatekeeper><TeamManagement /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/membership-management" element={user ? <AcademyGatekeeper><MembershipManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
