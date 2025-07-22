@@ -29,7 +29,7 @@ const MembershipManagementPage = () => {
     <div className="min-h-screen bg-gradient-subtle">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
         <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <BackButton />
+          <BackButton fallbackPath="/admin" />
           <div className="flex-1">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
               <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
