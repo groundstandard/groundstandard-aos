@@ -147,7 +147,8 @@ const Contacts = () => {
       const matchesSearch = `${contact.first_name} ${contact.last_name} ${contact.email} ${contact.phone || ''}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesRole = filterRole === "all" || contact.role === filterRole;
+      const matchesRole = filterRole === "all" || 
+        (filterRole === "alumni" ? contact.membership_status === "alumni" : contact.role === filterRole);
       return matchesSearch && matchesRole;
     });
 

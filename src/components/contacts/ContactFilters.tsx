@@ -44,6 +44,66 @@ export const ContactFilters = ({
 
   return (
     <div className="space-y-4">
+      {/* Role Filter Buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={filterRole === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("all")}
+          className="flex items-center gap-1"
+        >
+          All ({getRoleCount("all")})
+        </Button>
+        <Button
+          variant={filterRole === "member" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("member")}
+          className="flex items-center gap-1"
+        >
+          Members ({getRoleCount("member")})
+        </Button>
+        <Button
+          variant={filterRole === "student" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("student")}
+          className="flex items-center gap-1"
+        >
+          Students ({getRoleCount("student")})
+        </Button>
+        <Button
+          variant={filterRole === "alumni" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("alumni")}
+          className="flex items-center gap-1"
+        >
+          Alumni ({contacts.filter(c => c.membership_status === 'alumni').length})
+        </Button>
+        <Button
+          variant={filterRole === "staff" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("staff")}
+          className="flex items-center gap-1"
+        >
+          Staff ({getRoleCount("staff")})
+        </Button>
+        <Button
+          variant={filterRole === "instructor" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("instructor")}
+          className="flex items-center gap-1"
+        >
+          Instructors ({getRoleCount("instructor")})
+        </Button>
+        <Button
+          variant={filterRole === "admin" ? "default" : "outline"}
+          size="sm"
+          onClick={() => onFilterRoleChange("admin")}
+          className="flex items-center gap-1"
+        >
+          Admins ({getRoleCount("admin")})
+        </Button>
+      </div>
+
       {/* Compact Search and Controls - All on One Line */}
       <Card>
         <CardContent className="p-4">
