@@ -94,6 +94,11 @@ serve(async (req) => {
     let unitAmount = plan.base_price_cents;
     let interval = 'month';
     
+    // Validate price exists and is greater than 0
+    if (!unitAmount || unitAmount <= 0) {
+      throw new Error(`Invalid price for plan ${plan.name}: ${unitAmount}`);
+    }
+    
     if (billingFrequency === 'quarterly') {
       unitAmount = Math.floor(plan.base_price_cents * 3 * 0.95); // 5% discount
       interval = 'month';
