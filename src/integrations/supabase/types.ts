@@ -3328,6 +3328,13 @@ export type Database = {
           academy_name: string
         }[]
       }
+      get_user_academy_role: {
+        Args: { target_user_id?: string }
+        Returns: {
+          academy_id: string
+          role: string
+        }[]
+      }
       get_user_role_in_academy: {
         Args: { target_academy_id: string; target_user_id?: string }
         Returns: string
