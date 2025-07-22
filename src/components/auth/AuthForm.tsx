@@ -88,19 +88,8 @@ export const AuthForm = () => {
         description: "Successfully signed in"
       });
       
-      // Route based on user role after successful login
-      // We'll need to fetch the user's profile to determine their role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-      
-      if (profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'instructor') {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard"); // Student dashboard
-      }
+      // Navigate to dashboard - the routing will handle role-based redirection
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
