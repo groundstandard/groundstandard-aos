@@ -170,6 +170,10 @@ export const AuthForm = () => {
             user_id: data.user.id,
             preferred_login_role: selectedRole
           });
+        
+        // Also save to localStorage for immediate access
+        localStorage.setItem('loginRole', selectedRole);
+        console.log('AuthForm: Set loginRole in localStorage:', selectedRole);
       }
 
       toast({
