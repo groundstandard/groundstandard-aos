@@ -40,7 +40,7 @@ export const ViewProvider = ({ children }: { children: ReactNode }) => {
   // Only staff members (not students) can switch views
   // Check the loginRole from localStorage to determine actual access level
   const loginRole = localStorage.getItem('loginRole');
-  const canSwitchView = loginRole === 'staff' || profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'instructor';
+  const canSwitchView = loginRole === 'staff' || profile?.role === 'admin' || profile?.role === 'owner' || profile?.role === 'instructor' || profile?.role === 'staff';
 
   return (
     <ViewContext.Provider value={{ currentView, setCurrentView: handleViewChange, canSwitchView }}>

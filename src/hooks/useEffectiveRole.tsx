@@ -11,11 +11,11 @@ export const useEffectiveRole = () => {
   const isOwnerOrAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   
   // Determine effective role based on view toggle and role testing
-  let effectiveRole: 'student' | 'admin' | 'instructor' | 'owner' = profile?.role || 'student';
+  let effectiveRole: 'student' | 'admin' | 'instructor' | 'owner' | 'staff' = profile?.role || 'student';
   
   // If testing role is active (for role testing context)
   if (isOwner && testRole !== (profile?.role || 'student')) {
-    effectiveRole = testRole as 'student' | 'admin' | 'instructor' | 'owner';
+    effectiveRole = testRole as 'student' | 'admin' | 'instructor' | 'owner' | 'staff';
   }
   // If owner/admin toggled to student view
   else if (isOwnerOrAdmin && currentView === 'student') {

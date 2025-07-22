@@ -18,14 +18,14 @@ export const ViewToggle = () => {
   const isStaffLogin = loginRole === 'staff';
   const isOwnerOrAdmin = profile?.role === 'admin' || profile?.role === 'owner';
 
-  // For staff login or instructors, show Staff View vs Admin View
-  if (isStaffLogin || profile?.role === 'instructor') {
+  // For staff login or instructors, show Student View vs Staff View
+  if (isStaffLogin || profile?.role === 'instructor' || profile?.role === 'staff') {
     return (
       <div className="flex items-center gap-3 p-3 border rounded-lg bg-background/50 backdrop-blur">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <User className="h-4 w-4 text-muted-foreground" />
           <Label htmlFor="view-toggle" className="text-sm font-medium">
-            Staff View
+            Student View
           </Label>
         </div>
         
@@ -37,14 +37,14 @@ export const ViewToggle = () => {
         />
         
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
+          <Users className="h-4 w-4 text-muted-foreground" />
           <Label htmlFor="view-toggle" className="text-sm font-medium">
-            Admin View
+            Staff View
           </Label>
         </div>
         
         <Badge variant={currentView === 'admin' ? 'default' : 'secondary'} className="ml-2">
-          {currentView === 'admin' ? 'Admin' : 'Staff'}
+          {currentView === 'admin' ? 'Staff' : 'Student'}
         </Badge>
       </div>
     );
