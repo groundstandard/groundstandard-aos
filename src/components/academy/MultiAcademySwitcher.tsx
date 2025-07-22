@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ChevronDown, Plus, Building2, Users, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useView } from "@/hooks/useView";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const MultiAcademySwitcher = () => {
   const { user, userAcademies, switchAcademy } = useAuth();
   const { academy, currentAcademyId } = useAcademy();
+  const { currentView } = useView();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [academyLogos, setAcademyLogos] = useState<Record<string, string>>({});
+
+  // Get effective role for display based on view toggle
+  const getEffectiveRole = (membership: any) => {
+    const loginRole = localStorage.getItem('loginRole');
+    
+    // If user logged in as student but is in admin view, show their staff role
+    if (loginRole === 'student' && currentView === 'admin') {
+      // Find their staff role in this academy
+      const staffMembership = userAcademies.find(
+        m => m.academy_id === membership.academy_id && m.role !== 'student'
+      );
+      return staffMembership ? staffMembership.role : membership.role;
+    }
+    
+    return membership.role;
+  };
 
   // Fetch logos for all user academies
   useEffect(() => {
@@ -126,11 +144,12 @@ const MultiAcademySwitcher = () => {
 
   // Only show switcher if user has multiple academies
   if (userAcademies.length === 1) {
+    const effectiveRole = currentAcademy ? getEffectiveRole(currentAcademy) : currentAcademy?.role;
     return (
       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
         {getAcademyIcon(currentAcademy, academy?.logo_url)}
         <span className="font-medium">{academy?.name || 'Loading...'}</span>
-        {currentAcademy && getRoleBadge(currentAcademy.role)}
+        {effectiveRole && getRoleBadge(effectiveRole)}
       </div>
     );
   }
@@ -151,7 +170,7 @@ const MultiAcademySwitcher = () => {
               </span>
               {currentAcademy && (
                 <span className="text-xs text-muted-foreground">
-                  {currentAcademy.role.charAt(0).toUpperCase() + currentAcademy.role.slice(1)}
+                  {getEffectiveRole(currentAcademy).charAt(0).toUpperCase() + getEffectiveRole(currentAcademy).slice(1)}
                 </span>
               )}
             </div>
