@@ -140,6 +140,20 @@ const EnhancedAcademySetup = () => {
   };
 
   const handleStepSubmit = async () => {
+    console.log('handleStepSubmit called, currentStep:', currentStep);
+    console.log('formData:', formData);
+    console.log('isCurrentStepValid:', isCurrentStepValid());
+    
+    if (!isCurrentStepValid()) {
+      console.log('Step validation failed');
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (isCreating) {
@@ -177,6 +191,7 @@ const EnhancedAcademySetup = () => {
       }
       
       if (currentStep < 3) {
+        console.log('Moving to next step from', currentStep, 'to', currentStep + 1);
         setCurrentStep(currentStep + 1);
       } else {
         toast({
