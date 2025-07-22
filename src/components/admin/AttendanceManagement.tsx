@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -128,6 +129,8 @@ export const AttendanceManagement = () => {
     status: 'present' as const,
     notes: ''
   });
+  const [studentSearchOpen, setStudentSearchOpen] = useState(false);
+  const [studentSearchValue, setStudentSearchValue] = useState('');
 
   // Fetch comprehensive attendance data
   const { data: attendanceData, isLoading, refetch } = useQuery({
@@ -285,8 +288,8 @@ export const AttendanceManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email')
-        .eq('role', 'student')
+        .select('id, first_name, last_name, email, phone, belt_level, role')
+        .in('role', ['student', 'member'])
         .eq('membership_status', 'active')
         .order('first_name');
       
@@ -501,18 +504,62 @@ export const AttendanceManagement = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="student">Student</Label>
-                        <Select value={newAttendance.student_id} onValueChange={(value) => setNewAttendance({ ...newAttendance, student_id: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select student" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {students.map((student) => (
-                              <SelectItem key={student.id} value={student.id}>
-                                {student.first_name} {student.last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Popover open={studentSearchOpen} onOpenChange={setStudentSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={studentSearchOpen}
+                              className="w-full justify-between"
+                            >
+                              {newAttendance.student_id
+                                ? students.find((student) => student.id === newAttendance.student_id)?.first_name + " " +
+                                  students.find((student) => student.id === newAttendance.student_id)?.last_name
+                                : "Search and select student..."}
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0">
+                            <Command>
+                              <CommandInput 
+                                placeholder="Search students..." 
+                                value={studentSearchValue}
+                                onValueChange={setStudentSearchValue}
+                              />
+                              <CommandEmpty>No student found.</CommandEmpty>
+                              <CommandGroup>
+                                {students
+                                  .filter((student) => 
+                                    `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                                    student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                                    (student.phone && student.phone.includes(studentSearchValue))
+                                  )
+                                  .map((student) => (
+                                    <CommandItem
+                                      key={student.id}
+                                      value={student.id}
+                                      onSelect={(value) => {
+                                        setNewAttendance({ ...newAttendance, student_id: value });
+                                        setStudentSearchOpen(false);
+                                        setStudentSearchValue('');
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">
+                                          {student.first_name} {student.last_name}
+                                        </span>
+                                        <span className="text-sm text-muted-foreground">
+                                          {student.email} • {student.role} 
+                                          {student.belt_level && ` • ${student.belt_level}`}
+                                          {student.phone && ` • ${student.phone}`}
+                                        </span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div>
                         <Label htmlFor="class">Class</Label>
