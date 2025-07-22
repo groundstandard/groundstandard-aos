@@ -35,6 +35,7 @@ import {
 import { AddFamilyMemberDialog } from "@/components/contacts/AddFamilyMemberDialog";
 import { ActiveMembershipCard } from "@/components/contacts/ActiveMembershipCard";
 import { ClassPacksCard } from "@/components/contacts/ClassPacksCard";
+import GroupedPaymentHistory from "@/components/contacts/GroupedPaymentHistory";
 import PaymentDetailModal from "@/components/contacts/PaymentDetailModal";
 import AttendanceEditModal from "@/components/contacts/AttendanceEditModal";
 
@@ -782,41 +783,15 @@ const ContactProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <div className="space-y-4">
-                     {payments.map((payment) => (
-                       <div 
-                         key={payment.id} 
-                         className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                         onClick={() => {
-                           setSelectedPayment(payment);
-                           setShowPaymentModal(true);
-                         }}
-                       >
-                         <div className="flex-1">
-                           <div className="flex items-center gap-3">
-                             <div className="p-2 rounded-full bg-primary/10">
-                               <DollarSign className="h-4 w-4 text-primary" />
-                             </div>
-                             <div>
-                               <p className="font-medium">{payment.description || 'Payment'}</p>
-                               <p className="text-sm text-muted-foreground">
-                                 {new Date(payment.payment_date).toLocaleDateString()} • {payment.payment_method || 'Credit Card'}
-                               </p>
-                             </div>
-                           </div>
-                         </div>
-                         <div className="text-right">
-                           <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
-                           <Badge variant="outline" className={getStatusColor(payment.status)}>
-                             {payment.status}
-                           </Badge>
-                         </div>
-                       </div>
-                    ))}
-                    {payments.length === 0 && (
-                      <p className="text-muted-foreground text-center py-8">No payment history</p>
-                    )}
-                  </div>
+                  <GroupedPaymentHistory
+                    payments={payments}
+                    onPaymentUpdated={() => {
+                      // Refresh payment data
+                      if (contact?.id) {
+                        fetchContactData(contact.id);
+                      }
+                    }}
+                  />
                 </CardContent>
               </Card>
             </div>
