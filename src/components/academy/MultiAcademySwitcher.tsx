@@ -135,40 +135,45 @@ const MultiAcademySwitcher = () => {
         {userAcademies.map((membership) => (
           <DropdownMenuItem
             key={membership.academy_id}
-            className={`p-3 cursor-pointer hover:bg-muted ${
-              membership.academy_id === currentAcademyId 
-                ? 'bg-muted ring-1 ring-primary' 
-                : ''
-            }`}
-            disabled={isLoading}
-            onSelect={(e) => {
-              e.preventDefault();
-              console.log('Dropdown item clicked:', {
-                academyId: membership.academy_id,
-                academyName: membership.academy_name,
-                currentAcademyId: currentAcademyId
-              });
-              handleAcademySwitch(membership.academy_id);
-            }}
+            className="p-0"
+            asChild
           >
-            <div className="flex items-center space-x-3 w-full">
-              {getRoleIcon(membership.role)}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium truncate">
-                    {membership.academy_name}
-                  </span>
-                  {membership.academy_id === currentAcademyId && (
-                    <Badge variant="default" className="text-xs ml-2">
-                      Current
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 mt-1">
-                  {getRoleBadge(membership.role)}
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Button clicked for academy:', {
+                  academyId: membership.academy_id,
+                  academyName: membership.academy_name,
+                  currentAcademyId: currentAcademyId
+                });
+                handleAcademySwitch(membership.academy_id);
+              }}
+              disabled={isLoading}
+              className={`w-full p-3 text-left cursor-pointer hover:bg-muted ${
+                membership.academy_id === currentAcademyId 
+                  ? 'bg-muted ring-1 ring-primary' 
+                  : ''
+              }`}
+            >
+              <div className="flex items-center space-x-3 w-full">
+                {getRoleIcon(membership.role)}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium truncate">
+                      {membership.academy_name}
+                    </span>
+                    {membership.academy_id === currentAcademyId && (
+                      <Badge variant="default" className="text-xs ml-2">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2 mt-1">
+                    {getRoleBadge(membership.role)}
+                  </div>
                 </div>
               </div>
-            </div>
+            </button>
           </DropdownMenuItem>
         ))}
         
