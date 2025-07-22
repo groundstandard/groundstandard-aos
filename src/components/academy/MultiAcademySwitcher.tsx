@@ -135,7 +135,14 @@ const MultiAcademySwitcher = () => {
         {userAcademies.map((membership) => (
           <DropdownMenuItem
             key={membership.academy_id}
-            onClick={() => handleAcademySwitch(membership.academy_id)}
+            onClick={() => {
+              console.log('Dropdown item clicked:', {
+                academyId: membership.academy_id,
+                academyName: membership.academy_name,
+                currentAcademyId: currentAcademyId
+              });
+              handleAcademySwitch(membership.academy_id);
+            }}
             className={`p-3 cursor-pointer hover:bg-muted ${
               membership.academy_id === currentAcademyId 
                 ? 'bg-muted ring-1 ring-primary' 
