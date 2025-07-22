@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { BackButton } from "@/components/ui/BackButton";
-import MembershipManagement from "@/components/admin/MembershipManagement";
+import { MembershipManagement } from "@/components/admin/MembershipManagement";
 import { Navigate } from "react-router-dom";
 import { Crown } from "lucide-react";
 
