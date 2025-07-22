@@ -1261,6 +1261,12 @@ const ContactProfile = () => {
           payment={selectedPayment}
           open={showPaymentModal}
           onOpenChange={setShowPaymentModal}
+          onPaymentUpdated={() => {
+            // Refresh payment data
+            if (contact?.id) {
+              fetchContactData(contact.id);
+            }
+          }}
         />
 
         {/* Attendance Edit Modal */}

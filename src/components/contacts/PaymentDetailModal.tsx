@@ -1,14 +1,21 @@
-// ABOUTME: Modal component for displaying detailed payment information with full transaction details
-import React from 'react';
+// ABOUTME: Modal component for displaying detailed payment information with full transaction details and refund functionality
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Calendar, Receipt, User, Building } from "lucide-react";
+import { CreditCard, Calendar, Receipt, User, Building, RefreshCw, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Payment {
   id: string;
@@ -34,13 +41,20 @@ interface PaymentDetailModalProps {
   payment: Payment | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPaymentUpdated?: () => void;
 }
 
 const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   payment,
   open,
   onOpenChange,
+  onPaymentUpdated,
 }) => {
+  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+  const { toast } = useToast();
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -62,6 +76,72 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  const handleRefund = async () => {
+    if (!payment || !refundAmount) return;
+
+    const refundAmountCents = Math.round(parseFloat(refundAmount) * 100);
+    
+    if (refundAmountCents <= 0 || refundAmountCents > payment.amount) {
+      toast({
+        title: "Invalid Amount",
+        description: `Refund amount must be between $0.01 and ${formatCurrency(payment.amount)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingRefund(true);
+    try {
+      const isFullRefund = refundAmountCents === payment.amount;
+      
+      const { data, error } = await supabase.functions.invoke('process-refund', {
+        body: {
+          payment_id: payment.id,
+          amount: refundAmountCents,
+          reason: refundReason || 'Refund requested',
+          refund_type: isFullRefund ? 'full' : 'partial',
+          processed_by: (await supabase.auth.getUser()).data.user?.id,
+        },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Refund Processed",
+        description: `Successfully processed ${formatCurrency(refundAmountCents)} refund`,
+      });
+
+      // Reset form
+      setShowRefundForm(false);
+      setRefundAmount('');
+      setRefundReason('');
+      
+      // Refresh payment data
+      if (onPaymentUpdated) {
+        onPaymentUpdated();
+      }
+      
+      // Close modal
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      toast({
+        title: "Refund Failed",
+        description: "Failed to process refund. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingRefund(false);
+    }
+  };
+
+  const canRefund = payment?.status === 'completed' && payment.stripe_invoice_id;
 
   if (!payment) return null;
 
@@ -180,6 +260,68 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             </>
           )}
 
+          {/* Refund Section */}
+          {showRefundForm && (
+            <>
+              <Separator />
+              <div className="space-y-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex items-center gap-2 text-red-800">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="font-medium">Process Refund</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="refund-amount">Refund Amount</Label>
+                    <Input
+                      id="refund-amount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      max={payment.amount / 100}
+                      placeholder="0.00"
+                      value={refundAmount}
+                      onChange={(e) => setRefundAmount(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Maximum refundable: {formatCurrency(payment.amount)}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="refund-reason">Reason (Optional)</Label>
+                    <Textarea
+                      id="refund-reason"
+                      placeholder="Enter reason for refund..."
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowRefundForm(false)}
+                    disabled={isProcessingRefund}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRefund}
+                    disabled={isProcessingRefund || !refundAmount}
+                  >
+                    {isProcessingRefund ? "Processing..." : "Process Refund"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Timestamps */}
           <Separator />
           <div className="text-xs text-muted-foreground space-y-1">
@@ -187,6 +329,34 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
             <div>Updated: {new Date(payment.updated_at).toLocaleString()}</div>
           </div>
         </div>
+
+        {/* Footer with Actions */}
+        {canRefund && !showRefundForm && (
+          <DialogFooter className="border-t pt-4">
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRefundAmount((payment.amount / 100).toString());
+                  setShowRefundForm(true);
+                }}
+                className="flex-1"
+                disabled={isProcessingRefund}
+              >
+                Full Refund
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowRefundForm(true)}
+                className="flex-1"
+                disabled={isProcessingRefund}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Partial Refund
+              </Button>
+            </div>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
