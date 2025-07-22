@@ -177,7 +177,7 @@ const Dashboard = () => {
 
           {/* Navigation Tabs */}
           <div className="space-y-6 mb-8">
-            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">`
+            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
               <Button 
                 variant="ghost" 
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
@@ -202,7 +202,6 @@ const Dashboard = () => {
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => {
                   setSelectedTab('payments');
-                  navigate('/payments');
                 }}
               >
                 <DollarSign className="h-4 w-4" />
@@ -213,22 +212,10 @@ const Dashboard = () => {
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => {
                   setSelectedTab('attendance');
-                  navigate('/attendance');
-                }}
-              >
-                <Calendar className="h-4 w-4" />
-                Attendance
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'checkin' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => {
-                  setSelectedTab('checkin');
-                  navigate('/checkin');
                 }}
               >
                 <CheckCircle className="h-4 w-4" />
-                Check-In
+                Attendance
               </Button>
               <Button 
                 variant="ghost" 
@@ -251,25 +238,47 @@ const Dashboard = () => {
               </Button>
             </div>
 
-            {/* Secondary Settings Navigation - Only shown when Settings is selected */}
-            {selectedTab === 'settings' && (
+            {/* Secondary Navigation Ribbons */}
+            {selectedTab === 'payments' && (
               <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/events')}>
-                  <CalendarDays className="h-4 w-4" />
-                  Events
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/class-management')}>
-                  <Calendar className="h-4 w-4" />
-                  Classes
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
-                  <Star className="h-4 w-4" />
-                  Promotions
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/payments')}>
+                  <DollarSign className="h-4 w-4" />
+                  Payment Portal
                 </Button>
                 <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/membership-management')}>
                   <Crown className="h-4 w-4" />
                   Memberships
                 </Button>
+              </div>
+            )}
+
+            {selectedTab === 'attendance' && (
+              <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/attendance')}>
+                  <CheckCircle className="h-4 w-4" />
+                  Attendance Tracking
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/class-management')}>
+                  <Calendar className="h-4 w-4" />
+                  Classes
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/events')}>
+                  <CalendarDays className="h-4 w-4" />
+                  Events
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
+                  <Star className="h-4 w-4" />
+                  Promotions
+                </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/checkin')}>
+                  <Clock className="h-4 w-4" />
+                  Check-In
+                </Button>
+              </div>
+            )}
+
+            {selectedTab === 'settings' && (
+              <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
                 <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/automations')}>
                   <Activity className="h-4 w-4" />
                   Automations
