@@ -12,16 +12,18 @@ export const BackButton = ({ fallbackPath = '/admin', className = '' }: BackButt
   const location = useLocation();
 
   const handleBack = () => {
-    // Try to go back, but if there's no history, go to dashboard
+    console.log('BackButton handleBack called');
+    console.log('Current location:', location.pathname);
+    console.log('Fallback path:', fallbackPath);
+    console.log('History length:', window.history.length);
+    console.log('History state:', window.history.state);
+    
     try {
-      if (window.history.length > 1) {
-        navigate(-1);
-      } else {
-        navigate(fallbackPath);
-      }
+      console.log('Attempting to navigate to:', fallbackPath);
+      navigate(fallbackPath);
+      console.log('Navigate call completed');
     } catch (error) {
       console.error('Navigation error:', error);
-      navigate(fallbackPath);
     }
   };
 
