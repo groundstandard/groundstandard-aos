@@ -224,86 +224,98 @@ const EnhancedAcademySetup = () => {
     }
   };
 
-  const renderSearchStep = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <Building2 className="h-16 w-16 text-primary mx-auto mb-4" />
-        <h2 className="text-3xl font-bold mb-2">Welcome!</h2>
-        <p className="text-muted-foreground text-lg">
-          Do you want to join an existing academy or create a new one?
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="search">Search for your academy</Label>
-          <div className="flex gap-2">
-            <Input
-              id="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Enter academy name, city, or state..."
-              onKeyPress={(e) => e.key === 'Enter' && searchAcademies()}
-            />
-            <Button onClick={searchAcademies} disabled={isSearching || !searchQuery.trim()}>
-              {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              Search
-            </Button>
-          </div>
-        </div>
-
-        {searchResults.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="font-semibold">Found Academies:</h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {searchResults.map((academy) => (
-                <Card key={academy.id} className="p-4 hover:bg-accent cursor-pointer transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{academy.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {academy.city}, {academy.state}
-                      </p>
-                      {academy.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {academy.description.substring(0, 100)}...
-                        </p>
-                      )}
-                    </div>
-                    <Button 
-                      size="sm" 
-                      onClick={() => joinAcademy(academy.id)}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Join"}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="text-center pt-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1 h-px bg-border"></div>
-            <span className="text-sm text-muted-foreground">OR</span>
-            <div className="flex-1 h-px bg-border"></div>
+  const renderMainScreen = () => (
+    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold">Academy Setup</CardTitle>
+          <CardDescription className="text-lg">
+            Find your academy or create a new one
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="text-center">
+            <Building2 className="h-16 w-16 text-primary mx-auto mb-4" />
+            <h2 className="text-3xl font-bold mb-2">Welcome!</h2>
+            <p className="text-muted-foreground text-lg">
+              Do you want to join an existing academy or create a new one?
+            </p>
           </div>
           
-          <Button 
-            onClick={() => {
-              setShowSearch(false);
-              setIsCreating(true);
-            }}
-            variant="outline"
-            size="lg"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create New Academy
-          </Button>
-        </div>
-      </div>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Search for your academy</h3>
+              <div className="flex gap-2">
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Enter academy name, city, or state..."
+                  onKeyPress={(e) => e.key === 'Enter' && searchAcademies()}
+                  className="flex-1"
+                />
+                <Button onClick={searchAcademies} disabled={isSearching || !searchQuery.trim()}>
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
+                  Search
+                </Button>
+              </div>
+            </div>
+
+            {searchResults.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold">Found Academies:</h3>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {searchResults.map((academy) => (
+                    <Card key={academy.id} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{academy.name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {academy.city}, {academy.state}
+                          </p>
+                          {academy.description && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {academy.description.substring(0, 100)}...
+                            </p>
+                          )}
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={() => joinAcademy(academy.id)}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Join"}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-border"></div>
+                <span className="text-muted-foreground">OR</span>
+                <div className="flex-1 h-px bg-border"></div>
+              </div>
+              
+              <Button 
+                onClick={() => {
+                  setShowSearch(false);
+                  setIsCreating(true);
+                }}
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Academy
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -531,22 +543,7 @@ const EnhancedAcademySetup = () => {
   };
 
   if (showSearch) {
-    return (
-      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold">Academy Setup</CardTitle>
-            <CardDescription>
-              Find your academy or create a new one
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            {renderSearchStep()}
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return renderMainScreen();
   }
 
   return (
