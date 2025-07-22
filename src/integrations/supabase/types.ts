@@ -3388,6 +3388,16 @@ export type Database = {
           state: string
         }[]
       }
+      get_user_academies_by_role: {
+        Args: { target_user_id?: string; role_filter?: string }
+        Returns: {
+          academy_id: string
+          role: string
+          academy_name: string
+          city: string
+          state: string
+        }[]
+      }
       get_user_role_in_academy: {
         Args: { target_academy_id: string; target_user_id?: string }
         Returns: string
