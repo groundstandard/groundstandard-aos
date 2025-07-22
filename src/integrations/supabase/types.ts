@@ -605,6 +605,77 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_cycles: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          cycle_end_date: string
+          cycle_start_date: string
+          discount_applied_cents: number | null
+          due_date: string
+          failure_reason: string | null
+          id: string
+          membership_subscription_id: string
+          next_retry_date: string | null
+          paid_date: string | null
+          payment_method: string | null
+          retry_count: number | null
+          status: string
+          stripe_invoice_id: string | null
+          tax_amount_cents: number | null
+          total_amount_cents: number
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          cycle_end_date: string
+          cycle_start_date: string
+          discount_applied_cents?: number | null
+          due_date: string
+          failure_reason?: string | null
+          id?: string
+          membership_subscription_id: string
+          next_retry_date?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          retry_count?: number | null
+          status?: string
+          stripe_invoice_id?: string | null
+          tax_amount_cents?: number | null
+          total_amount_cents: number
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          cycle_end_date?: string
+          cycle_start_date?: string
+          discount_applied_cents?: number | null
+          due_date?: string
+          failure_reason?: string | null
+          id?: string
+          membership_subscription_id?: string
+          next_retry_date?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          retry_count?: number | null
+          status?: string
+          stripe_invoice_id?: string | null
+          tax_amount_cents?: number | null
+          total_amount_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_cycles_membership_subscription_id_fkey"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_memberships: {
         Row: {
           channel_id: string
@@ -805,25 +876,79 @@ export type Database = {
         }
         Relationships: []
       }
+      class_access_permissions: {
+        Row: {
+          access_type: string
+          additional_fee_cents: number | null
+          class_id: string
+          created_at: string
+          id: string
+          max_sessions_per_period: number | null
+          membership_plan_id: string
+          period_type: string | null
+        }
+        Insert: {
+          access_type?: string
+          additional_fee_cents?: number | null
+          class_id: string
+          created_at?: string
+          id?: string
+          max_sessions_per_period?: number | null
+          membership_plan_id: string
+          period_type?: string | null
+        }
+        Update: {
+          access_type?: string
+          additional_fee_cents?: number | null
+          class_id?: string
+          created_at?: string
+          id?: string
+          max_sessions_per_period?: number | null
+          membership_plan_id?: string
+          period_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_access_permissions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_access_permissions_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_enrollments: {
         Row: {
           class_id: string
           enrolled_at: string
+          enrollment_type: string | null
           id: string
+          membership_subscription_id: string | null
           status: string | null
           student_id: string
         }
         Insert: {
           class_id: string
           enrolled_at?: string
+          enrollment_type?: string | null
           id?: string
+          membership_subscription_id?: string | null
           status?: string | null
           student_id: string
         }
         Update: {
           class_id?: string
           enrolled_at?: string
+          enrollment_type?: string | null
           id?: string
+          membership_subscription_id?: string | null
           status?: string | null
           student_id?: string
         }
@@ -833,6 +958,13 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_membership_subscription_id_fkey"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
             referencedColumns: ["id"]
           },
           {
@@ -2216,17 +2348,22 @@ export type Database = {
       membership_plans: {
         Row: {
           age_group: string | null
+          allowed_class_types: string[] | null
+          auto_billing: boolean | null
           base_price_cents: number
           billing_cycle: string | null
+          billing_frequency: string | null
           class_pack_size: number | null
           classes_per_week: number | null
           created_at: string | null
           cycle_length_months: number | null
           description: string | null
           id: string
+          includes_classes: boolean | null
           is_active: boolean | null
           is_class_pack: boolean | null
           is_unlimited: boolean | null
+          max_classes_per_week: number | null
           name: string
           pack_expiry_days: number | null
           payment_frequency: string | null
@@ -2234,21 +2371,27 @@ export type Database = {
           setup_fee_cents: number | null
           stripe_price_id: string | null
           trial_days: number | null
+          trial_period_days: number | null
           updated_at: string | null
         }
         Insert: {
           age_group?: string | null
+          allowed_class_types?: string[] | null
+          auto_billing?: boolean | null
           base_price_cents: number
           billing_cycle?: string | null
+          billing_frequency?: string | null
           class_pack_size?: number | null
           classes_per_week?: number | null
           created_at?: string | null
           cycle_length_months?: number | null
           description?: string | null
           id?: string
+          includes_classes?: boolean | null
           is_active?: boolean | null
           is_class_pack?: boolean | null
           is_unlimited?: boolean | null
+          max_classes_per_week?: number | null
           name: string
           pack_expiry_days?: number | null
           payment_frequency?: string | null
@@ -2256,21 +2399,27 @@ export type Database = {
           setup_fee_cents?: number | null
           stripe_price_id?: string | null
           trial_days?: number | null
+          trial_period_days?: number | null
           updated_at?: string | null
         }
         Update: {
           age_group?: string | null
+          allowed_class_types?: string[] | null
+          auto_billing?: boolean | null
           base_price_cents?: number
           billing_cycle?: string | null
+          billing_frequency?: string | null
           class_pack_size?: number | null
           classes_per_week?: number | null
           created_at?: string | null
           cycle_length_months?: number | null
           description?: string | null
           id?: string
+          includes_classes?: boolean | null
           is_active?: boolean | null
           is_class_pack?: boolean | null
           is_unlimited?: boolean | null
+          max_classes_per_week?: number | null
           name?: string
           pack_expiry_days?: number | null
           payment_frequency?: string | null
@@ -2278,6 +2427,7 @@ export type Database = {
           setup_fee_cents?: number | null
           stripe_price_id?: string | null
           trial_days?: number | null
+          trial_period_days?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2293,59 +2443,93 @@ export type Database = {
       membership_subscriptions: {
         Row: {
           auto_renewal: boolean | null
+          billing_amount_cents: number | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           cycle_length_months: number | null
           cycle_number: number | null
           discount_expires_at: string | null
+          discount_percentage: number | null
           end_date: string | null
           id: string
           membership_plan_id: string
           next_billing_date: string | null
           notes: string | null
+          pause_end_date: string | null
+          pause_reason: string | null
+          pause_start_date: string | null
           profile_id: string
           renewal_discount_percentage: number | null
           start_date: string
           status: string
           stripe_subscription_id: string | null
+          trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
           auto_renewal?: boolean | null
+          billing_amount_cents?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           cycle_length_months?: number | null
           cycle_number?: number | null
           discount_expires_at?: string | null
+          discount_percentage?: number | null
           end_date?: string | null
           id?: string
           membership_plan_id: string
           next_billing_date?: string | null
           notes?: string | null
+          pause_end_date?: string | null
+          pause_reason?: string | null
+          pause_start_date?: string | null
           profile_id: string
           renewal_discount_percentage?: number | null
           start_date?: string
           status?: string
           stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
           auto_renewal?: boolean | null
+          billing_amount_cents?: number | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           cycle_length_months?: number | null
           cycle_number?: number | null
           discount_expires_at?: string | null
+          discount_percentage?: number | null
           end_date?: string | null
           id?: string
           membership_plan_id?: string
           next_billing_date?: string | null
           notes?: string | null
+          pause_end_date?: string | null
+          pause_reason?: string | null
+          pause_start_date?: string | null
           profile_id?: string
           renewal_discount_percentage?: number | null
           start_date?: string
           status?: string
           stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "membership_subscriptions_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "membership_subscriptions_membership_plan_id_fkey"
             columns: ["membership_plan_id"]
@@ -3491,6 +3675,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      can_contact_enroll_in_class: {
+        Args: { contact_uuid: string; class_uuid: string }
+        Returns: Json
+      }
       check_absent_members: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3513,6 +3701,10 @@ export type Database = {
           invitee_email: string
           invitee_role?: string
         }
+        Returns: string
+      }
+      create_next_billing_cycle: {
+        Args: { subscription_uuid: string }
         Returns: string
       }
       generate_check_in_pin: {
@@ -3542,9 +3734,31 @@ export type Database = {
           enrollment_status: string
         }[]
       }
+      get_contact_class_access: {
+        Args: { contact_uuid: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          access_type: string
+          additional_fee_cents: number
+          max_sessions_per_period: number
+          period_type: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_family_members: {
+        Args: { contact_uuid: string }
+        Returns: {
+          contact_id: string
+          first_name: string
+          last_name: string
+          email: string
+          relationship_type: string
+          is_emergency_contact: boolean
+        }[]
       }
       get_instructor_classes_today: {
         Args: { instructor_uuid: string }
