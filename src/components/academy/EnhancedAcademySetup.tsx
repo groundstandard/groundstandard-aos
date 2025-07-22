@@ -58,19 +58,30 @@ const EnhancedAcademySetup = () => {
     
     setIsSearching(true);
     try {
-      // Use a more direct query to avoid RLS policy issues
+      // Clear previous results first
+      setSearchResults([]);
+      
+      // Search for completed academies that are publicly searchable
       const { data, error } = await supabase
         .from('academies')
-        .select('id, name, city, state, description, is_setup_complete')
-        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
+        .select('id, name, city, state, description')
         .eq('is_setup_complete', true)
+        .or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,state.ilike.%${searchQuery}%`)
         .limit(10);
 
       if (error) {
         console.error('Search error details:', error);
         throw error;
       }
+      
       setSearchResults(data || []);
+      
+      if (data && data.length === 0) {
+        toast({
+          title: "No Results",
+          description: "No academies found matching your search.",
+        });
+      }
     } catch (error) {
       console.error('Error searching academies:', error);
       toast({
