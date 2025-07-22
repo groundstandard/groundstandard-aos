@@ -212,8 +212,9 @@ export const AdminDashboard = () => {
       {/* Admin Navigation */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="flex flex-wrap gap-2 w-full">
-            <Button 
+          <div className="flex gap-2 w-full overflow-x-auto min-h-[40px]">
+            {/* DEBUG: All 8 buttons should be visible now */}
+            <Button
               variant="outline" 
               className="flex items-center gap-2"
               onClick={() => navigate('/dashboard')}
