@@ -8,10 +8,17 @@ import { Loader2, GraduationCap, MapPin } from "lucide-react";
 
 interface StudentAcademySelectorProps {
   onAcademySelected: () => void;
+  studentAcademies: Array<{
+    academy_id: string;
+    role: string;
+    academy_name: string;
+    city: string;
+    state: string;
+  }>;
 }
 
-export const StudentAcademySelector = ({ onAcademySelected }: StudentAcademySelectorProps) => {
-  const { userAcademies, switchAcademy } = useAuth();
+export const StudentAcademySelector = ({ onAcademySelected, studentAcademies }: StudentAcademySelectorProps) => {
+  const { switchAcademy } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedAcademyId, setSelectedAcademyId] = useState<string | null>(null);
@@ -49,7 +56,7 @@ export const StudentAcademySelector = ({ onAcademySelected }: StudentAcademySele
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {userAcademies.map((academy) => (
+          {studentAcademies.map((academy) => (
             <Card 
               key={academy.academy_id} 
               className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-primary/20"

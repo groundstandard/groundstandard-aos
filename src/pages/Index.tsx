@@ -37,18 +37,27 @@ const Index = () => {
       return <Navigate to="/academy-setup" replace />;
     }
     
-    // For students with multiple academies, show academy selector
-    if (profile.role === 'student' && userAcademies.length > 1 && !academy) {
+    // Check if user has student academies (we'll show student selector for testing)
+    const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
+    
+    // For testing: If user has student academies and we want to test student flow
+    // Show student selector when user has student roles (regardless of other roles)
+    if (studentAcademies.length > 0 && !academy) {
       if (showAcademySelector) {
-        return <StudentAcademySelector onAcademySelected={() => setShowAcademySelector(false)} />;
+        return (
+          <StudentAcademySelector 
+            onAcademySelected={() => setShowAcademySelector(false)} 
+            studentAcademies={studentAcademies}
+          />
+        );
       } else {
-        // Auto-show academy selector for students
+        // Auto-show academy selector for users with student roles
         setShowAcademySelector(true);
         return (
           <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Loading academies...</p>
+              <p className="mt-2 text-muted-foreground">Loading student academies...</p>
             </div>
           </div>
         );
