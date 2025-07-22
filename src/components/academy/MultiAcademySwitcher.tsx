@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, Plus, Building2, Users, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAcademy } from "@/hooks/useAcademy";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +23,32 @@ const MultiAcademySwitcher = () => {
   const { academy, currentAcademyId } = useAcademy();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [academyLogos, setAcademyLogos] = useState<Record<string, string>>({});
+
+  // Fetch logos for all user academies
+  useEffect(() => {
+    const fetchAcademyLogos = async () => {
+      if (!userAcademies.length) return;
+      
+      const academyIds = userAcademies.map(membership => membership.academy_id);
+      const { data, error } = await supabase
+        .from('academies')
+        .select('id, logo_url')
+        .in('id', academyIds);
+      
+      if (data && !error) {
+        const logoMap: Record<string, string> = {};
+        data.forEach(academy => {
+          if (academy.logo_url) {
+            logoMap[academy.id] = academy.logo_url;
+          }
+        });
+        setAcademyLogos(logoMap);
+      }
+    };
+
+    fetchAcademyLogos();
+  }, [userAcademies]);
 
   if (!user || userAcademies.length === 0) {
     return null;
@@ -156,9 +183,7 @@ const MultiAcademySwitcher = () => {
               }`}
             >
               <div className="flex items-center space-x-3 w-full">
-                {membership.academy_id === currentAcademyId 
-                  ? getAcademyIcon(membership, academy?.logo_url) 
-                  : getRoleIcon(membership.role)}
+                {getAcademyIcon(membership, academyLogos[membership.academy_id])}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-medium truncate">
