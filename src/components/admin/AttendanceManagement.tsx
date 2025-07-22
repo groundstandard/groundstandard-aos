@@ -283,7 +283,7 @@ export const AttendanceManagement = () => {
   });
 
   // Fetch students and classes for dropdowns
-  const { data: students = [] } = useQuery({
+  const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ['students'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -520,44 +520,48 @@ export const AttendanceManagement = () => {
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-full p-0">
-                            <Command>
-                              <CommandInput 
-                                placeholder="Search students..." 
-                                value={studentSearchValue}
-                                onValueChange={setStudentSearchValue}
-                              />
-                              <CommandEmpty>No student found.</CommandEmpty>
-                              <CommandGroup>
-                                {students
-                                  .filter((student) => 
-                                    `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                    student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                    (student.phone && student.phone.includes(studentSearchValue))
-                                  )
-                                  .map((student) => (
-                                    <CommandItem
-                                      key={student.id}
-                                      value={student.id}
-                                      onSelect={(value) => {
-                                        setNewAttendance({ ...newAttendance, student_id: value });
-                                        setStudentSearchOpen(false);
-                                        setStudentSearchValue('');
-                                      }}
-                                    >
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">
-                                          {student.first_name} {student.last_name}
-                                        </span>
-                                        <span className="text-sm text-muted-foreground">
-                                          {student.email} • {student.role} 
-                                          {student.belt_level && ` • ${student.belt_level}`}
-                                          {student.phone && ` • ${student.phone}`}
-                                        </span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                              </CommandGroup>
-                            </Command>
+                            {studentsLoading ? (
+                              <div className="p-4 text-center">Loading students...</div>
+                            ) : (
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Search students..." 
+                                  value={studentSearchValue}
+                                  onValueChange={setStudentSearchValue}
+                                />
+                                <CommandEmpty>No student found.</CommandEmpty>
+                                <CommandGroup>
+                                  {students && Array.isArray(students) && students
+                                    .filter((student) => 
+                                      `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                                      student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                                      (student.phone && student.phone.includes(studentSearchValue))
+                                    )
+                                    .map((student) => (
+                                      <CommandItem
+                                        key={student.id}
+                                        value={student.id}
+                                        onSelect={(value) => {
+                                          setNewAttendance({ ...newAttendance, student_id: value });
+                                          setStudentSearchOpen(false);
+                                          setStudentSearchValue('');
+                                        }}
+                                      >
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">
+                                            {student.first_name} {student.last_name}
+                                          </span>
+                                          <span className="text-sm text-muted-foreground">
+                                            {student.email} • {student.role} 
+                                            {student.belt_level && ` • ${student.belt_level}`}
+                                            {student.phone && ` • ${student.phone}`}
+                                          </span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </Command>
+                            )}
                           </PopoverContent>
                         </Popover>
                       </div>
