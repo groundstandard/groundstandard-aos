@@ -37,35 +37,29 @@ const Index = () => {
 
   // If user is authenticated, determine where to redirect them
   if (user && profile) {
-    // Check if user has student academies FIRST (for testing purposes)
+    // Check if user has student academies and should show student selector
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
-    // FORCE STUDENT SELECTOR - Always show it when user has student roles (for testing)
-    // This ignores ALL other conditions including academy loading state
-    if (studentAcademies.length > 0) {
-      // Always force the student selector for testing - ignore localStorage and academy state
-      const shouldForceStudentSelector = true; // Force it every time for testing
-      
-      if (shouldForceStudentSelector) {
-        if (showAcademySelector) {
-          return (
-            <StudentAcademySelector 
-              onAcademySelected={() => setShowAcademySelector(false)} 
-              studentAcademies={studentAcademies}
-            />
-          );
-        } else {
-          // Auto-show academy selector for users with student roles
-          setShowAcademySelector(true);
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Loading student academies...</p>
-              </div>
+    // Show student selector when user has student roles and hasn't selected one yet
+    if (studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected')) {
+      if (showAcademySelector) {
+        return (
+          <StudentAcademySelector 
+            onAcademySelected={() => setShowAcademySelector(false)} 
+            studentAcademies={studentAcademies}
+          />
+        );
+      } else {
+        // Auto-show academy selector for users with student roles
+        setShowAcademySelector(true);
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading student academies...</p>
             </div>
-          );
-        }
+          </div>
+        );
       }
     }
 

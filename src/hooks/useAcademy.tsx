@@ -59,6 +59,18 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
 
+    // Check if we're in student mode (force student selector)
+    const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
+    const forceStudentMode = studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
+    
+    if (forceStudentMode) {
+      console.log('useAcademy: Student mode active - preventing automatic academy loading');
+      setAcademy(null);
+      setCurrentAcademyId(null);
+      setLoading(false);
+      return;
+    }
+
     // Determine which academy to load
     let academyIdToLoad: string | null = null;
 
