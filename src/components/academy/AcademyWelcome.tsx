@@ -1,14 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAcademy } from '@/hooks/useAcademy';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import JoinAcademyForm from './JoinAcademyForm';
 
 const AcademyWelcome = () => {
   const { user, profile } = useAuth();
   const { academy } = useAcademy();
+  const [showJoinForm, setShowJoinForm] = useState(false);
+
+  if (showJoinForm) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
+        <JoinAcademyForm onBack={() => setShowJoinForm(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
@@ -49,18 +59,22 @@ const AcademyWelcome = () => {
               </Link>
             </Card>
             
-            <Card className="p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start gap-4">
+            <Card className="p-6 hover:shadow-md transition-shadow cursor-pointer">
+              <div 
+                className="flex items-start gap-4"
+                onClick={() => setShowJoinForm(true)}
+              >
                 <div className="p-3 rounded-lg bg-secondary/10">
                   <Users className="h-6 w-6 text-secondary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold mb-2">Join Existing Academy</h3>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Have an invitation? Contact your academy administrator to get access.
+                    Have an invitation code? Enter it here to join your academy.
                   </p>
-                  <div className="text-sm text-muted-foreground">
-                    Coming soon
+                  <div className="flex items-center text-sm text-secondary">
+                    <span>Enter invitation code</span>
+                    <ArrowRight className="h-4 w-4 ml-1" />
                   </div>
                 </div>
               </div>

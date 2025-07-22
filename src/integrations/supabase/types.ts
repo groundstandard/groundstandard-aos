@@ -87,6 +87,7 @@ export type Database = {
           email: string
           expires_at: string
           id: string
+          invitation_code: string | null
           inviter_id: string
           role: string
           status: string
@@ -99,6 +100,7 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
+          invitation_code?: string | null
           inviter_id: string
           role: string
           status?: string
@@ -111,6 +113,7 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
+          invitation_code?: string | null
           inviter_id?: string
           role?: string
           status?: string
@@ -3192,7 +3195,19 @@ export type Database = {
         Args: { academy_uuid: string; limit_type: string }
         Returns: number
       }
+      create_academy_invitation: {
+        Args: {
+          academy_uuid: string
+          invitee_email: string
+          invitee_role?: string
+        }
+        Returns: string
+      }
       generate_check_in_pin: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_invitation_code: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
@@ -3215,6 +3230,10 @@ export type Database = {
       join_academy: {
         Args: { academy_uuid: string }
         Returns: boolean
+      }
+      join_academy_with_code: {
+        Args: { code: string }
+        Returns: Json
       }
       process_expired_class_packs: {
         Args: Record<PropertyKey, never>
