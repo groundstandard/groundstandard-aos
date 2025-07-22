@@ -120,15 +120,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (data) {
         console.log('Profile fetched successfully:', data);
         setProfile(data as Profile);
+        console.log('Profile state updated, now fetching academies...');
         // Only fetch user academies after profile is successfully set
         try {
           await fetchUserAcademies(userId);
+          console.log('Academies fetched successfully');
         } catch (academyError) {
           console.error('Error fetching academies (but profile is loaded):', academyError);
         }
+      } else {
+        console.log('No profile data found');
+        setProfile(null);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -136,16 +142,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserAcademies = async (userId: string) => {
     try {
+      console.log('Fetching academies for user:', userId);
       const { data, error } = await supabase
         .rpc('get_user_academies', { target_user_id: userId });
 
+      console.log('Academy fetch result:', { data, error });
       if (error) {
         console.error('Error fetching user academies:', error);
+        setUserAcademies([]);
       } else if (data) {
+        console.log('Setting user academies:', data);
         setUserAcademies(data as AcademyMembership[]);
+      } else {
+        console.log('No academy data returned');
+        setUserAcademies([]);
       }
     } catch (error) {
       console.error('Error fetching user academies:', error);
+      setUserAcademies([]);
     }
   };
 
