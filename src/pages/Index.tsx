@@ -32,16 +32,11 @@ const Index = () => {
 
   // If user is authenticated, determine where to redirect them
   if (user && profile) {
-    // If user has no academies, redirect to academy setup
-    if (userAcademies.length === 0) {
-      return <Navigate to="/academy-setup" replace />;
-    }
-    
-    // Check if user has student academies (we'll show student selector for testing)
+    // Check if user has student academies FIRST (for testing purposes)
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
     // For testing: If user has student academies, always show student selector
-    // This forces the student academy selection even if an academy is already loaded
+    // This takes priority over all other conditions
     if (studentAcademies.length > 0) {
       if (showAcademySelector) {
         return (
@@ -62,6 +57,11 @@ const Index = () => {
           </div>
         );
       }
+    }
+
+    // If user has no academies, redirect to academy setup
+    if (userAcademies.length === 0) {
+      return <Navigate to="/academy-setup" replace />;
     }
     
     // If user has academies but no current academy is loaded, redirect to setup
