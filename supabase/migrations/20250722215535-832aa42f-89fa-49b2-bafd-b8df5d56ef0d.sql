@@ -1,0 +1,1 @@
+UPDATE profiles SET role = 'owner' WHERE email = 'bobby@groundstandard.com';
