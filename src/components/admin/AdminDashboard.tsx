@@ -248,25 +248,6 @@ export const AdminDashboard = () => {
               <FileText className="h-4 w-4" />
               Reporting
             </Button>
-            
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => handleQuickAction("Automations")}
-            >
-              <Zap className="h-4 w-4" />
-              Automations
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => navigate('/profile')}
-            >
-              <User className="h-4 w-4" />
-              Profile
-            </Button>
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
@@ -298,6 +279,24 @@ export const AdminDashboard = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => handleQuickAction("Automations")}
+            >
+              <Zap className="h-4 w-4" />
+              Automations
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="h-4 w-4" />
+              Profile
+            </Button>
           </div>
         </CardContent>
       </Card>
