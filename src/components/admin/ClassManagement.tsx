@@ -67,7 +67,7 @@ export const ClassManagement = () => {
   ]);
 
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || profile?.role === 'owner') {
       fetchClasses();
     }
   }, [profile]);
@@ -210,7 +210,7 @@ export const ClassManagement = () => {
     }
   };
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
     return (
       <Card className="shadow-card border-0">
         <CardContent className="p-6">
