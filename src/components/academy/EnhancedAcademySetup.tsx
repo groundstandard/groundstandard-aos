@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { BackButton } from '@/components/ui/BackButton';
 
 const EnhancedAcademySetup = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { academy, updateAcademy, refreshAcademy } = useAcademy();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,7 +112,10 @@ const EnhancedAcademySetup = () => {
         throw new Error('Failed to join academy - update unsuccessful');
       }
 
-      // Refresh academy context
+      // Refresh profile to get updated academy_id
+      await refreshProfile();
+      
+      // Then refresh academy context
       await refreshAcademy();
       
       toast({
