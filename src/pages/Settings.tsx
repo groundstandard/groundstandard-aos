@@ -3,7 +3,7 @@ import { useAcademy } from "@/hooks/useAcademy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail, Upload, X } from "lucide-react";
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail, Upload, X, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Settings = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { academy, updateAcademy } = useAcademy();
   const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -532,6 +532,29 @@ const Settings = () => {
                         <p className="text-sm text-muted-foreground">Allow promotional emails to students</p>
                       </div>
                       <Switch />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Account Management
+                    </h4>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Sign Out</Label>
+                        <p className="text-sm text-muted-foreground">Sign out of your administrator account</p>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        onClick={signOut}
+                        className="flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
