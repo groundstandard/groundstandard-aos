@@ -12,11 +12,16 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
   const location = useLocation();
 
   const handleBack = () => {
-    // Check if there's history to go back to
-    if (window.history.length > 1 && window.history.state?.idx > 0) {
+    console.log('BackButton clicked - current path:', location.pathname);
+    console.log('History length:', window.history.length);
+    console.log('History state:', window.history.state);
+    
+    try {
+      // Try going back first
       navigate(-1);
-    } else {
-      // If no history, go to fallback path
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // If navigation fails, go to fallback
       navigate(fallbackPath);
     }
   };
