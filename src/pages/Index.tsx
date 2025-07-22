@@ -10,11 +10,13 @@ import { Navigate } from "react-router-dom";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { StudentAcademySelector } from "@/components/academy/StudentAcademySelector";
 
 const Index = () => {
-  const { user, userAcademies, loading: authLoading } = useAuth();
+  const { user, profile, userAcademies, loading: authLoading } = useAuth();
   const { academy, loading: academyLoading } = useAcademy();
   const [showLogin, setShowLogin] = useState(false);
+  const [showAcademySelector, setShowAcademySelector] = useState(false);
 
   // Show loading while auth is being determined
   if (authLoading || (user && academyLoading)) {
@@ -29,10 +31,28 @@ const Index = () => {
   }
 
   // If user is authenticated, determine where to redirect them
-  if (user) {
+  if (user && profile) {
     // If user has no academies, redirect to academy setup
     if (userAcademies.length === 0) {
       return <Navigate to="/academy-setup" replace />;
+    }
+    
+    // For students with multiple academies, show academy selector
+    if (profile.role === 'student' && userAcademies.length > 1 && !academy) {
+      if (showAcademySelector) {
+        return <StudentAcademySelector onAcademySelected={() => setShowAcademySelector(false)} />;
+      } else {
+        // Auto-show academy selector for students
+        setShowAcademySelector(true);
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-muted-foreground">Loading academies...</p>
+            </div>
+          </div>
+        );
+      }
     }
     
     // If user has academies but no current academy is loaded, redirect to setup
