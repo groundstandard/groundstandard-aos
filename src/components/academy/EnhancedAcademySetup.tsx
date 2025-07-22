@@ -98,13 +98,19 @@ const EnhancedAcademySetup = () => {
     try {
       setIsSubmitting(true);
       
-      // Update user's profile to link to this academy
-      const { error } = await supabase
-        .from('profiles')
-        .update({ academy_id: academyId })
-        .eq('id', user?.id);
+      // Use the secure database function to join academy
+      const { data, error } = await supabase.rpc('join_academy', {
+        academy_uuid: academyId
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Join academy error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Failed to join academy - update unsuccessful');
+      }
 
       // Refresh academy context
       await refreshAcademy();

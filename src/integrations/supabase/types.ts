@@ -3212,6 +3212,10 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      join_academy: {
+        Args: { academy_uuid: string }
+        Returns: boolean
+      }
       process_expired_class_packs: {
         Args: Record<PropertyKey, never>
         Returns: undefined
