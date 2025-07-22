@@ -25,11 +25,13 @@ import { ProfileView } from "@/components/profile/ProfileView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import AcademySwitcher from "@/components/academy/AcademySwitcher";
+import MultiAcademySwitcher from "@/components/academy/MultiAcademySwitcher";
+import { useAcademy } from "@/hooks/useAcademy";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useEffectiveRole();
+  const { academy, currentAcademyId } = useAcademy();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,49 +57,49 @@ const Dashboard = () => {
   const quickStats = [
     {
       title: "Total Students",
-      value: "847",
-      change: "+12.5%",
-      trend: "up",
+      value: "0", // Will be replaced with academy-specific data
+      change: "No data",
+      trend: "neutral",
       icon: Users,
       color: "text-blue-600"
     },
     {
       title: "Active Classes",
-      value: "24",
-      change: "+8.2%", 
-      trend: "up",
+      value: "0", // Will be replaced with academy-specific data
+      change: "No data", 
+      trend: "neutral",
       icon: Calendar,
       color: "text-green-600"
     },
     {
       title: "Monthly Revenue",
-      value: "$18,420",
-      change: "+15.3%",
-      trend: "up", 
+      value: "$0", // Will be replaced with academy-specific data
+      change: "No data",
+      trend: "neutral", 
       icon: DollarSign,
       color: "text-purple-600"
     },
     {
       title: "Attendance Rate",
-      value: "94.2%",
-      change: "+2.1%",
-      trend: "up",
+      value: "0%", // Will be replaced with academy-specific data
+      change: "No data",
+      trend: "neutral",
       icon: TrendingUp,
       color: "text-orange-600"
     },
     {
       title: "Belt Tests",
-      value: "18",
-      change: "Pending",
+      value: "0", // Will be replaced with academy-specific data
+      change: "No data",
       trend: "neutral",
       icon: Award,
       color: "text-yellow-600"
     },
     {
       title: "Active Subscriptions", 
-      value: "743",
-      change: "+5.7%",
-      trend: "up",
+      value: "0", // Will be replaced with academy-specific data
+      change: "No data",
+      trend: "neutral",
       icon: Crown,
       color: "text-indigo-600"
     }
@@ -114,13 +116,13 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-6">
             {/* Left side - Academy Switcher and Title */}
             <div className="flex items-center gap-3 sm:gap-4">
-              <AcademySwitcher />
+              <MultiAcademySwitcher />
               <div className="flex items-center gap-2 sm:gap-3">
                 <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
                 <div>
                   <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
                   <p className="text-xs sm:text-sm md:text-lg text-muted-foreground hidden sm:block">
-                    Complete management and analytics for your martial arts academy
+                    Complete management and analytics for {academy?.name || 'your martial arts academy'}
                   </p>
                 </div>
               </div>
@@ -475,7 +477,7 @@ const Dashboard = () => {
         {/* Header with reorganized layout */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            <AcademySwitcher />
+            <MultiAcademySwitcher />
             <Button 
               variant="outline" 
               onClick={() => navigate('/chat')}
