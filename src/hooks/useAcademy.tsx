@@ -62,13 +62,20 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Determine which academy to load
     let academyIdToLoad: string | null = null;
 
+    console.log('useAcademy: Determining academy to load', {
+      'profile.last_academy_id': profile.last_academy_id,
+      'userAcademies': userAcademies.map(a => a.academy_id)
+    });
+
     // Priority 1: Use last_academy_id if user has access to it
     if (profile.last_academy_id) {
       const hasAccess = userAcademies.some(membership => 
         membership.academy_id === profile.last_academy_id
       );
+      console.log('useAcademy: last_academy_id access check', { hasAccess });
       if (hasAccess) {
         academyIdToLoad = profile.last_academy_id;
+        console.log('useAcademy: Using last_academy_id:', academyIdToLoad);
       }
     }
 
