@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ViewProvider } from "@/hooks/useView";
 import { RoleTestingProvider } from "@/contexts/RoleTestingContext";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
+import { MembershipSubscriptionProvider } from "@/hooks/useMembershipSubscription";
 import { AcademyProvider } from "@/hooks/useAcademy";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -108,7 +109,8 @@ const App = () => {
         <AuthProvider>
           <AcademyProvider>
             <SubscriptionProvider>
-              <ViewProvider>
+              <MembershipSubscriptionProvider>
+                <ViewProvider>
                 <RoleTestingProvider>
                   <Toaster />
                   <Sonner />
@@ -117,6 +119,7 @@ const App = () => {
                   </BrowserRouter>
                 </RoleTestingProvider>
               </ViewProvider>
+              </MembershipSubscriptionProvider>
             </SubscriptionProvider>
           </AcademyProvider>
         </AuthProvider>
