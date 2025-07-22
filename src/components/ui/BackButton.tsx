@@ -12,8 +12,17 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
   const location = useLocation();
 
   const handleBack = () => {
-    // Go back one step in browser history
-    navigate(-1);
+    // Try to go back, but fallback to dashboard if history is unavailable
+    try {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate(fallbackPath);
+      }
+    } catch (error) {
+      // Fallback to dashboard if navigation fails
+      navigate(fallbackPath);
+    }
   };
 
   // Don't show back button on dashboard
