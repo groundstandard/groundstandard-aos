@@ -1,15 +1,19 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { BackButton } from "@/components/ui/BackButton";
+import { Button } from "@/components/ui/button";
 import { ComprehensivePaymentManagement } from "@/components/admin/ComprehensivePaymentManagement";
 import { PaymentPortal } from "@/components/payments/PaymentPortal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Navigate } from "react-router-dom";
-import { CreditCard } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { CreditCard, DollarSign, Crown } from "lucide-react";
+import { useState } from "react";
 
 const Payments = () => {
   const { user, loading, profile } = useAuth();
   const { isAdmin } = useEffectiveRole();
+  const navigate = useNavigate();
+  const [selectedTab, setSelectedTab] = useState('payments');
 
   if (loading) {
     return (
@@ -78,6 +82,27 @@ const Payments = () => {
             </p>
           </div>
         </div>
+
+        {/* Payments Navigation Ribbon */}
+        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
+          <Button 
+            variant="ghost" 
+            className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+            onClick={() => setSelectedTab('payments')}
+          >
+            <DollarSign className="h-4 w-4" />
+            Payment Portal
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
+            onClick={() => navigate('/membership-management')}
+          >
+            <Crown className="h-4 w-4" />
+            Memberships
+          </Button>
+        </div>
+
         <ComprehensivePaymentManagement />
       </div>
     </div>

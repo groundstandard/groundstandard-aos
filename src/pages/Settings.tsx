@@ -2,11 +2,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAcademy } from "@/hooks/useAcademy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
-import { Navigate } from "react-router-dom";
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail, Upload, X, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Palette, Mail, Upload, X, LogOut, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -21,8 +21,10 @@ const Settings = () => {
   const { user, profile, signOut } = useAuth();
   const { academy, updateAcademy } = useAcademy();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('settings');
   const [academyFormData, setAcademyFormData] = useState({
     name: '',
     address: '',
@@ -178,6 +180,26 @@ const Settings = () => {
               Manage your account settings and preferences
             </p>
           </div>
+        </div>
+
+        {/* Settings Navigation Ribbon */}
+        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
+          <Button 
+            variant="ghost" 
+            className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'settings' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+            onClick={() => setSelectedTab('settings')}
+          >
+            <SettingsIcon className="h-4 w-4" />
+            Profile Settings
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
+            onClick={() => navigate('/automations')}
+          >
+            <Activity className="h-4 w-4" />
+            Automations
+          </Button>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
