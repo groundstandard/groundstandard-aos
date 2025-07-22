@@ -38,13 +38,18 @@ import {
   Calculator,
   Eye,
   ArrowLeft,
-  RotateCcw
+  RotateCcw,
+  Crown
 } from 'lucide-react';
 import { RefundManagement } from '@/components/payments/RefundManagement';
 import { TaxManagement } from '@/components/payments/TaxManagement';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+
+interface ComprehensivePaymentManagementProps {
+  navigate?: (path: string) => void;
+}
 
 interface PaymentAnalytics {
   total_revenue: number;
@@ -107,7 +112,7 @@ type DateRange = {
   to: Date;
 };
 
-export const ComprehensivePaymentManagement = () => {
+export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymentManagementProps) => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -438,15 +443,27 @@ export const ComprehensivePaymentManagement = () => {
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-6 w-6" />
-                Comprehensive Payment Management
-              </CardTitle>
-              <CardDescription>
-                Advanced payment processing, analytics, and automation
-              </CardDescription>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-6 w-6" />
+                  Comprehensive Payment Management
+                </CardTitle>
+                <CardDescription>
+                  Advanced payment processing, analytics, and automation
+                </CardDescription>
+              </div>
+              {navigate && (
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+                  onClick={() => navigate('/membership-management')}
+                >
+                  <Crown className="h-4 w-4" />
+                  Memberships
+                </Button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Popover>
