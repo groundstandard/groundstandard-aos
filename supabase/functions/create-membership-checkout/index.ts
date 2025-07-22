@@ -62,7 +62,7 @@ serve(async (req) => {
     if (planError || !plan) {
       throw new Error(`Membership plan not found: ${planError?.message}`);
     }
-    logStep("Membership plan found", { planName: plan.name, price: plan.price_cents });
+    logStep("Membership plan found", { planName: plan.name, price: plan.base_price_cents });
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -91,18 +91,18 @@ serve(async (req) => {
     }
 
     // Calculate price based on billing frequency
-    let unitAmount = plan.price_cents;
+    let unitAmount = plan.base_price_cents;
     let interval = 'month';
     
     if (billingFrequency === 'quarterly') {
-      unitAmount = Math.floor(plan.price_cents * 3 * 0.95); // 5% discount
+      unitAmount = Math.floor(plan.base_price_cents * 3 * 0.95); // 5% discount
       interval = 'month';
     } else if (billingFrequency === 'annually') {
-      unitAmount = Math.floor(plan.price_cents * 12 * 0.85); // 15% discount
+      unitAmount = Math.floor(plan.base_price_cents * 12 * 0.85); // 15% discount
       interval = 'year';
     }
 
-    logStep("Price calculated", { originalPrice: plan.price_cents, finalPrice: unitAmount, interval });
+    logStep("Price calculated", { originalPrice: plan.base_price_cents, finalPrice: unitAmount, interval });
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
