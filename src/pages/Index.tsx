@@ -35,9 +35,11 @@ const Index = () => {
     // Check if user has student academies FIRST (for testing purposes)
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
-    // For testing: If user has student academies, always show student selector
-    // This takes priority over all other conditions
-    if (studentAcademies.length > 0) {
+    // For testing: Force student selector when user has student roles
+    // This ignores academy loading state and always shows selector for testing
+    const forceStudentSelector = studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
+    
+    if (forceStudentSelector) {
       if (showAcademySelector) {
         return (
           <StudentAcademySelector 

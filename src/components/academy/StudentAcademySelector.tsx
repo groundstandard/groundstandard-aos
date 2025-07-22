@@ -29,6 +29,7 @@ export const StudentAcademySelector = ({ onAcademySelected, studentAcademies }: 
 
     try {
       await switchAcademy(academyId);
+      localStorage.setItem('student_academy_selected', 'true');
       onAcademySelected();
     } catch (error) {
       console.error('Error switching academy:', error);
