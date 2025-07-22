@@ -35,6 +35,8 @@ import {
 import { AddFamilyMemberDialog } from "@/components/contacts/AddFamilyMemberDialog";
 import { ActiveMembershipCard } from "@/components/contacts/ActiveMembershipCard";
 import { ClassPacksCard } from "@/components/contacts/ClassPacksCard";
+import PaymentDetailModal from "@/components/contacts/PaymentDetailModal";
+import AttendanceEditModal from "@/components/contacts/AttendanceEditModal";
 
 interface Contact {
   id: string;
@@ -59,6 +61,16 @@ interface Payment {
   payment_method?: string;
   description?: string;
   student_id: string;
+  stripe_invoice_id?: string;
+  payment_method_type?: string;
+  ach_bank_name?: string;
+  ach_last4?: string;
+  tax_amount?: number;
+  subtotal_amount?: number;
+  applied_credits?: number;
+  failure_reason?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Attendance {
@@ -68,6 +80,7 @@ interface Attendance {
   notes?: string;
   class_id: string;
   student_id: string;
+  created_at: string;
 }
 
 interface MembershipPlan {
@@ -121,6 +134,10 @@ const ContactProfile = () => {
   const [showAddNoteDialog, setShowAddNoteDialog] = useState(false);
   const [showAddFamilyDialog, setShowAddFamilyDialog] = useState(false);
   const [editingNote, setEditingNote] = useState<ContactNote | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -652,7 +669,14 @@ const ContactProfile = () => {
                   <CardContent>
                     <div className="space-y-3">
                       {payments.slice(0, 5).map((payment) => (
-                        <div key={payment.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                        <div 
+                          key={payment.id} 
+                          className="flex items-center justify-between py-2 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded p-2 transition-colors"
+                          onClick={() => {
+                            setSelectedPayment(payment);
+                            setShowPaymentModal(true);
+                          }}
+                        >
                           <div>
                             <p className="font-medium">{payment.description || 'Payment'}</p>
                             <p className="text-sm text-muted-foreground">
@@ -683,26 +707,33 @@ const ContactProfile = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {attendance.slice(0, 10).map((record) => (
-                        <div key={record.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                          <div>
-                            <p className="text-sm">
-                              {new Date(record.date).toLocaleDateString()}
-                            </p>
-                            {record.notes && (
-                              <p className="text-xs text-muted-foreground">{record.notes}</p>
-                            )}
-                          </div>
-                          <Badge variant="outline" className={getStatusColor(record.status)}>
-                            {record.status}
-                          </Badge>
-                        </div>
-                      ))}
-                      {attendance.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">No attendance recorded</p>
-                      )}
-                    </div>
+                     <div className="space-y-3">
+                       {attendance.slice(0, 10).map((record) => (
+                         <div 
+                           key={record.id} 
+                           className="flex items-center justify-between py-2 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded p-2 transition-colors"
+                           onClick={() => {
+                             setSelectedAttendance(record);
+                             setShowAttendanceModal(true);
+                           }}
+                         >
+                           <div>
+                             <p className="text-sm">
+                               {new Date(record.date).toLocaleDateString()}
+                             </p>
+                             {record.notes && (
+                               <p className="text-xs text-muted-foreground">{record.notes}</p>
+                             )}
+                           </div>
+                           <Badge variant="outline" className={getStatusColor(record.status)}>
+                             {record.status}
+                           </Badge>
+                         </div>
+                       ))}
+                       {attendance.length === 0 && (
+                         <p className="text-muted-foreground text-center py-4">No attendance recorded</p>
+                       )}
+                     </div>
                   </CardContent>
                 </Card>
               </div>
@@ -751,29 +782,36 @@ const ContactProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {payments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-full bg-primary/10">
-                              <DollarSign className="h-4 w-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{payment.description || 'Payment'}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(payment.payment_date).toLocaleDateString()} • {payment.payment_method || 'Credit Card'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
-                          <Badge variant="outline" className={getStatusColor(payment.status)}>
-                            {payment.status}
-                          </Badge>
-                        </div>
-                      </div>
+                   <div className="space-y-4">
+                     {payments.map((payment) => (
+                       <div 
+                         key={payment.id} 
+                         className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                         onClick={() => {
+                           setSelectedPayment(payment);
+                           setShowPaymentModal(true);
+                         }}
+                       >
+                         <div className="flex-1">
+                           <div className="flex items-center gap-3">
+                             <div className="p-2 rounded-full bg-primary/10">
+                               <DollarSign className="h-4 w-4 text-primary" />
+                             </div>
+                             <div>
+                               <p className="font-medium">{payment.description || 'Payment'}</p>
+                               <p className="text-sm text-muted-foreground">
+                                 {new Date(payment.payment_date).toLocaleDateString()} • {payment.payment_method || 'Credit Card'}
+                               </p>
+                             </div>
+                           </div>
+                         </div>
+                         <div className="text-right">
+                           <p className="font-bold text-lg">{formatCurrency(payment.amount)}</p>
+                           <Badge variant="outline" className={getStatusColor(payment.status)}>
+                             {payment.status}
+                           </Badge>
+                         </div>
+                       </div>
                     ))}
                     {payments.length === 0 && (
                       <p className="text-muted-foreground text-center py-8">No payment history</p>
@@ -1217,6 +1255,26 @@ const ContactProfile = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Payment Detail Modal */}
+        <PaymentDetailModal
+          payment={selectedPayment}
+          open={showPaymentModal}
+          onOpenChange={setShowPaymentModal}
+        />
+
+        {/* Attendance Edit Modal */}
+        <AttendanceEditModal
+          attendance={selectedAttendance}
+          open={showAttendanceModal}
+          onOpenChange={setShowAttendanceModal}
+          onAttendanceUpdated={() => {
+            // Refresh attendance data
+            if (contact?.id) {
+              fetchContactData(contact.id);
+            }
+          }}
+        />
       </div>
     </div>
   );
