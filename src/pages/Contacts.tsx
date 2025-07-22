@@ -264,6 +264,7 @@ const Contacts = () => {
 
       // Prepare contact data for insertion
       const contactData = {
+        id: crypto.randomUUID(),
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
