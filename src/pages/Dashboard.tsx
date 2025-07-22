@@ -111,9 +111,9 @@ const Dashboard = () => {
   if (isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-subtle">
-        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header - Admin Dashboard Title with Academy Switcher */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-3">
             {/* Left side - Academy Switcher and Title */}
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Show academy switcher for all admin/owner roles */}
