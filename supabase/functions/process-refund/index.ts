@@ -81,19 +81,41 @@ serve(async (req) => {
       try {
         logStep("Processing Stripe refund");
         
-        const stripeRefund = await stripe.refunds.create({
-          amount: refundAmount,
-          payment_intent: payment.stripe_payment_intent_id,
-          reason: 'requested_by_customer',
-          metadata: {
-            refund_reason: reason,
-            processed_by: processed_by
+        let stripeRefund;
+        if (payment.stripe_payment_intent_id) {
+          // Refund using payment intent
+          stripeRefund = await stripe.refunds.create({
+            amount: refundAmount,
+            payment_intent: payment.stripe_payment_intent_id,
+            reason: 'requested_by_customer',
+            metadata: {
+              refund_reason: reason,
+              processed_by: processed_by
+            }
+          });
+        } else if (payment.stripe_invoice_id) {
+          // For invoice-based payments, we need to get the charge first
+          const invoice = await stripe.invoices.retrieve(payment.stripe_invoice_id);
+          if (invoice.charge) {
+            stripeRefund = await stripe.refunds.create({
+              amount: refundAmount,
+              charge: invoice.charge as string,
+              reason: 'requested_by_customer',
+              metadata: {
+                refund_reason: reason,
+                processed_by: processed_by
+              }
+            });
+          } else {
+            throw new Error("No charge found for invoice");
           }
-        });
+        }
 
-        stripeRefundId = stripeRefund.id;
-        refundStatus = stripeRefund.status === 'succeeded' ? 'completed' : 'pending';
-        logStep("Stripe refund processed", { stripeRefundId, status: refundStatus });
+        if (stripeRefund) {
+          stripeRefundId = stripeRefund.id;
+          refundStatus = stripeRefund.status === 'succeeded' ? 'completed' : 'pending';
+          logStep("Stripe refund processed", { stripeRefundId, status: refundStatus });
+        }
         
       } catch (stripeError) {
         logStep("Stripe refund failed", { error: stripeError.message });
