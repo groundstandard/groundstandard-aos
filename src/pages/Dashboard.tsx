@@ -258,6 +258,10 @@ const Dashboard = () => {
                   <CalendarDays className="h-4 w-4" />
                   Events
                 </Button>
+                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/class-management')}>
+                  <Calendar className="h-4 w-4" />
+                  Classes
+                </Button>
                 <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
                   <Star className="h-4 w-4" />
                   Promotions
