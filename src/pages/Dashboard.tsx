@@ -232,6 +232,20 @@ const Dashboard = () => {
               </Button>
               <Button 
                 variant="ghost" 
+                className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
+                onClick={() => console.log('Button 1 clicked')}
+              >
+                Button 1
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
+                onClick={() => console.log('Button 2 clicked')}
+              >
+                Button 2
+              </Button>
+              <Button 
+                variant="ghost" 
                 className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'settings' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
                 onClick={() => setSelectedTab('settings')}
               >
