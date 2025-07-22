@@ -24,6 +24,8 @@ interface AcademyMembership {
   academy_id: string;
   role: string;
   academy_name: string;
+  city: string;
+  state: string;
 }
 
 interface AuthContextType {

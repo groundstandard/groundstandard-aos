@@ -157,21 +157,26 @@ const MultiAcademySwitcher = () => {
             >
               <div className="flex items-center space-x-3 w-full">
                 {getRoleIcon(membership.role)}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium truncate">
-                      {membership.academy_name}
-                    </span>
-                    {membership.academy_id === currentAcademyId && (
-                      <Badge variant="default" className="text-xs ml-2">
-                        Current
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2 mt-1">
-                    {getRoleBadge(membership.role)}
-                  </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium truncate">
+                    {membership.academy_name}
+                  </span>
+                  {membership.academy_id === currentAcademyId && (
+                    <Badge variant="default" className="text-xs ml-2">
+                      Current
+                    </Badge>
+                  )}
                 </div>
+                <div className="flex items-center space-x-2 mt-1">
+                  {getRoleBadge(membership.role)}
+                  {membership.city && membership.state && (
+                    <span className="text-xs text-muted-foreground">
+                      {membership.city}, {membership.state}
+                    </span>
+                  )}
+                </div>
+              </div>
               </div>
             </button>
           </DropdownMenuItem>

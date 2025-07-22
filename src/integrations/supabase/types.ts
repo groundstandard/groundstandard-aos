@@ -3326,6 +3326,8 @@ export type Database = {
           academy_id: string
           role: string
           academy_name: string
+          city: string
+          state: string
         }[]
       }
       get_user_role_in_academy: {
