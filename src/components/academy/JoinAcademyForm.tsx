@@ -127,13 +127,25 @@ const JoinAcademyForm = ({ onBack }: JoinAcademyFormProps) => {
           </Button>
         </form>
         
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 space-y-2">
           <Button 
             variant="ghost" 
             onClick={onBack}
             disabled={loading}
           >
             ← Back to options
+          </Button>
+          
+          <div className="text-sm text-muted-foreground">
+            Don't have an invitation code?
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => window.location.href = '/auth'}
+            disabled={loading}
+          >
+            Login or Create Account
           </Button>
         </div>
       </CardContent>
