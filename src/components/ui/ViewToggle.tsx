@@ -13,12 +13,13 @@ export const ViewToggle = () => {
     return null;
   }
 
-  // Only owners/admins can switch to student view
+  // Check if user logged in as staff
+  const loginRole = localStorage.getItem('loginRole');
+  const isStaffLogin = loginRole === 'staff';
   const isOwnerOrAdmin = profile?.role === 'admin' || profile?.role === 'owner';
-  const isInstructor = profile?.role === 'instructor';
 
-  // For instructors, show Staff View vs Admin View
-  if (isInstructor) {
+  // For staff login or instructors, show Staff View vs Admin View
+  if (isStaffLogin || profile?.role === 'instructor') {
     return (
       <div className="flex items-center gap-3 p-3 border rounded-lg bg-background/50 backdrop-blur">
         <div className="flex items-center gap-2">
