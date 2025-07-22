@@ -27,7 +27,8 @@ import {
   ContactRound,
   ChevronDown,
   Bell,
-  User
+  User,
+  Zap
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -196,23 +197,14 @@ export const AdminDashboard = () => {
         
         <div className="flex items-center gap-3">
           <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={() => handleQuickAction("Notifications")}
+            onClick={handleRefreshStats}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+            className="gap-2"
           >
-            <Bell className="h-4 w-4" />
-            Notifications
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex items-center gap-2"
-            onClick={() => navigate('/profile')}
-          >
-            <User className="h-4 w-4" />
-            Profile
+            <TrendingUp className="h-4 w-4" />
+            {refreshing ? "Refreshing..." : "Refresh Stats"}
           </Button>
         </div>
       </div>
@@ -220,7 +212,7 @@ export const AdminDashboard = () => {
       {/* Admin Navigation */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-3 lg:grid-cols-7 gap-4">
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
@@ -255,6 +247,24 @@ export const AdminDashboard = () => {
             >
               <FileText className="h-4 w-4" />
               Reporting
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => handleQuickAction("Automations")}
+            >
+              <Zap className="h-4 w-4" />
+              Automations
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="h-4 w-4" />
+              Profile
             </Button>
             
             <DropdownMenu>

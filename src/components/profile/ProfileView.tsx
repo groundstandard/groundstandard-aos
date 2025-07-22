@@ -14,7 +14,11 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export const ProfileView = () => {
+interface ProfileViewProps {
+  section?: 'personal' | 'subscription' | 'academy' | 'account';
+}
+
+export const ProfileView = ({ section = 'personal' }: ProfileViewProps) => {
   const navigate = useNavigate();
   const { profile, user, signOut } = useAuth();
   const { academy } = useAcademy();
@@ -113,7 +117,7 @@ export const ProfileView = () => {
     );
   }
 
-  return (
+  const renderPersonalSection = () => (
     <div className="space-y-6">
       {/* Profile Header */}
       <Card className="card-minimal shadow-elegant">
@@ -121,7 +125,7 @@ export const ProfileView = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              My Profile
+              Personal Information
             </CardTitle>
             {!isEditing ? (
               <Button
@@ -185,12 +189,6 @@ export const ProfileView = () => {
                   <Shield className="h-3 w-3" />
                   {profile.role === 'admin' ? 'Admin' : profile.role === 'instructor' ? 'Instructor' : 'Student'}
                 </Badge>
-                {subscriptionInfo?.subscribed && (
-                  <Badge variant="default" className="gap-1 bg-gradient-primary text-white">
-                    <Crown className="h-3 w-3" />
-                    {subscriptionInfo.subscription_tier || 'Premium'}
-                  </Badge>
-                )}
               </div>
               <p className="text-muted-foreground">{profile.email}</p>
               {profile.belt_level && (
@@ -300,37 +298,11 @@ export const ProfileView = () => {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
 
-      {/* Account Information */}
-      <Card className="card-minimal shadow-soft">
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Email Address</Label>
-              <div className="mt-1 p-2 bg-muted/30 rounded-md text-muted-foreground">
-                {profile.email}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Contact admin to change email address
-              </p>
-            </div>
-            <div>
-              <Label>Member Since</Label>
-              <div className="mt-1 p-2">
-                {new Date(profile.created_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+  const renderSubscriptionSection = () => (
+    <div className="space-y-6">
       {/* Subscription Status */}
       <Card className="card-minimal shadow-soft">
         <CardHeader>
@@ -415,7 +387,11 @@ export const ProfileView = () => {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
 
+  const renderAcademySection = () => (
+    <div className="space-y-6">
       {/* Academy Information */}
       {academy && (
         <Card className="card-minimal shadow-soft">
@@ -455,6 +431,40 @@ export const ProfileView = () => {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+
+  const renderAccountSection = () => (
+    <div className="space-y-6">
+      {/* Account Information */}
+      <Card className="card-minimal shadow-soft">
+        <CardHeader>
+          <CardTitle>Account Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Email Address</Label>
+              <div className="mt-1 p-2 bg-muted/30 rounded-md text-muted-foreground">
+                {profile.email}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Contact admin to change email address
+              </p>
+            </div>
+            <div>
+              <Label>Member Since</Label>
+              <div className="mt-1 p-2">
+                {new Date(profile.created_at).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Account Actions */}
       <Card className="card-minimal shadow-soft">
@@ -476,4 +486,15 @@ export const ProfileView = () => {
       </Card>
     </div>
   );
+
+  switch (section) {
+    case 'subscription':
+      return renderSubscriptionSection();
+    case 'academy':
+      return renderAcademySection();
+    case 'account':
+      return renderAccountSection();
+    default:
+      return renderPersonalSection();
+  }
 };
