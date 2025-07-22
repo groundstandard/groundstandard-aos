@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle } from 'lucide-react';
+import { AssignMembershipDialog } from './AssignMembershipDialog';
 
 interface MembershipSubscription {
   id: string;
@@ -34,6 +35,7 @@ interface ActiveMembershipCardProps {
 export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) => {
   const [membership, setMembership] = useState<MembershipSubscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -160,9 +162,25 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         <CardContent>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">No active membership found</p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAssignDialog(true)}
+            >
               Assign Membership
             </Button>
+            <AssignMembershipDialog
+              open={showAssignDialog}
+              onOpenChange={setShowAssignDialog}
+              contact={{ 
+                id: contactId || '', 
+                first_name: '', 
+                last_name: '', 
+                email: '', 
+                membership_status: '' 
+              }}
+              onSuccess={fetchActiveMembership}
+            />
           </div>
         </CardContent>
       </Card>

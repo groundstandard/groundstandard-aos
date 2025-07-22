@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useMembershipSubscription } from "@/hooks/useMembershipSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard, DollarSign, Calendar, Users } from "lucide-react";
 
@@ -42,7 +43,7 @@ export const AssignMembershipDialog = ({ contact, open, onOpenChange, onSuccess 
   const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { createCheckout } = useSubscription();
+  const { createCheckout } = useMembershipSubscription();
 
   useEffect(() => {
     if (open) {
