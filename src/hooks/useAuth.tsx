@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -113,10 +114,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
+        // Don't try to fetch academies if profile fetch failed
+        setLoading(false);
+        return;
       } else if (data) {
+        console.log('Profile fetched successfully:', data);
         setProfile(data as Profile);
-        // Also fetch user academies when profile is loaded
-        await fetchUserAcademies(userId);
+        // Only fetch user academies after profile is successfully set
+        try {
+          await fetchUserAcademies(userId);
+        } catch (academyError) {
+          console.error('Error fetching academies (but profile is loaded):', academyError);
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
