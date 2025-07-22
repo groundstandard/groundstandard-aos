@@ -233,16 +233,18 @@ const Dashboard = () => {
               <Button 
                 variant="ghost" 
                 className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
-                onClick={() => console.log('Button 1 clicked')}
+                onClick={() => navigate('/automations')}
               >
-                Button 1
+                <Activity className="h-4 w-4" />
+                Automations
               </Button>
               <Button 
                 variant="ghost" 
                 className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
-                onClick={() => console.log('Button 2 clicked')}
+                onClick={() => navigate('/profile')}
               >
-                Button 2
+                <User className="h-4 w-4" />
+                Profile
               </Button>
               <Button 
                 variant="ghost" 
