@@ -116,8 +116,8 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-6">
             {/* Left side - Academy Switcher and Title */}
             <div className="flex items-center gap-3 sm:gap-4">
-              {/* Only show academy switcher for admin/owner roles */}
-              {(profile?.role === 'admin' || profile?.role === 'owner') && <MultiAcademySwitcher />}
+              {/* Show academy switcher for all admin/owner roles */}
+              <MultiAcademySwitcher />
               <div className="flex items-center gap-2 sm:gap-3">
                 <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
                 <div>
