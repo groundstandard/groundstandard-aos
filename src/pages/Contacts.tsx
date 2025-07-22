@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,11 +70,11 @@ interface ContactFormData {
 }
 
 const Contacts = () => {
-  const { profile } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [contactsLoading, setContactsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [sortBy, setSortBy] = useState("name");
@@ -101,6 +101,19 @@ const Contacts = () => {
     relationship_type: "none",
     linked_contact_id: undefined
   });
+
+  // Authentication guard
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   useEffect(() => {
     fetchContacts();
@@ -138,7 +151,7 @@ const Contacts = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setContactsLoading(false);
     }
   };
 
@@ -228,18 +241,96 @@ const Contacts = () => {
 
   const handleAddContact = async () => {
     try {
-      // Simple demo implementation for now
+      // Check authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Authentication required');
+      }
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to add contacts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate a unique check-in PIN
+      const generatePin = () => {
+        return Math.floor(1000 + Math.random() * 9000).toString();
+      };
+
+      // Prepare contact data for insertion
+      const contactData = {
+        email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        role: formData.role,
+        phone: formData.phone || null,
+        belt_level: formData.belt_level || null,
+        emergency_contact_name: formData.emergency_contact || null,
+        membership_status: formData.membership_status,
+        check_in_pin: generatePin()
+      };
+
+      console.log('Adding contact with data:', contactData);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(contactData as any)
+        .select();
+
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Failed to create contact - no data returned');
+      }
+
+      const newContact = data[0];
+
+      // Handle family relationship if a parent contact was selected
+      if (formData.linked_contact_id && formData.relationship_type !== 'none') {
+        const relationshipData = {
+          primary_contact_id: formData.linked_contact_id,
+          related_contact_id: newContact.id,
+          relationship_type: formData.relationship_type,
+          is_emergency_contact: true
+        };
+
+        const { error: relationshipError } = await supabase
+          .from('family_relationships')
+          .insert([relationshipData]);
+
+        if (relationshipError) {
+          console.error('Error creating family relationship:', relationshipError);
+          // Don't fail the contact creation, just warn
+          toast({
+            title: "Warning",
+            description: "Contact created but family relationship could not be established",
+            variant: "destructive",
+          });
+        }
+      }
+
       toast({
-        title: "Contact Creation Demo",
-        description: `${formData.first_name} would be added${formData.linked_contact_id ? ' and linked as a family member' : ''}. This is a demo of the enhanced form functionality.`,
+        title: "Success",
+        description: `${newContact.first_name} ${newContact.last_name} has been added successfully!`,
       });
+
+      // Update the contacts list
+      fetchContacts();
       setShowAddDialog(false);
       resetForm();
     } catch (error) {
       console.error('Error adding contact:', error);
       toast({
         title: "Error",
-        description: "Failed to add contact",
+        description: error instanceof Error ? error.message : "Failed to add contact",
         variant: "destructive",
       });
     }
@@ -360,7 +451,7 @@ const Contacts = () => {
 
   // Enhanced ContactForm is now imported from separate component
 
-  if (loading) {
+  if (contactsLoading) {
     return <div className="p-8">Loading contacts...</div>;
   }
 
