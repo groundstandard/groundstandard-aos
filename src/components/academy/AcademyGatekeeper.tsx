@@ -28,10 +28,12 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // Check if user has student academies and should show student selector
-  if (user && profile && userAcademies) {
+  // Only show student academy selector if user logged in as student
+  const loginRole = localStorage.getItem('loginRole');
+  if (user && profile && userAcademies && loginRole === 'student') {
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
+    console.log('AcademyGatekeeper - Login role:', loginRole);
     console.log('AcademyGatekeeper - User academies:', userAcademies);
     console.log('AcademyGatekeeper - Student academies:', studentAcademies);
     console.log('AcademyGatekeeper - Student academy selected:', localStorage.getItem('student_academy_selected'));
