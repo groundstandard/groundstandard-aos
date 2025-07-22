@@ -212,7 +212,7 @@ export const AdminDashboard = () => {
       {/* Admin Navigation */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="grid grid-cols-3 lg:grid-cols-7 gap-4 w-full">{/* force layout update */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 w-full">
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
