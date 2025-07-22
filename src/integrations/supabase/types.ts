@@ -137,6 +137,44 @@ export type Database = {
           },
         ]
       }
+      academy_memberships: {
+        Row: {
+          academy_id: string
+          id: string
+          invited_by: string | null
+          is_active: boolean | null
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          academy_id: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          academy_id?: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_memberships_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_setup_progress: {
         Row: {
           academy_id: string
@@ -223,6 +261,51 @@ export type Database = {
             foreignKeyName: "academy_subscriptions_academy_id_fkey"
             columns: ["academy_id"]
             isOneToOne: true
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_switches: {
+        Row: {
+          from_academy_id: string | null
+          id: string
+          ip_address: unknown | null
+          switched_at: string | null
+          to_academy_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          from_academy_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          switched_at?: string | null
+          to_academy_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          from_academy_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          switched_at?: string | null
+          to_academy_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_switches_from_academy_id_fkey"
+            columns: ["from_academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_switches_to_academy_id_fkey"
+            columns: ["to_academy_id"]
+            isOneToOne: false
             referencedRelation: "academies"
             referencedColumns: ["id"]
           },
@@ -2721,6 +2804,7 @@ export type Database = {
           emergency_contact: string | null
           first_name: string
           id: string
+          last_academy_id: string | null
           last_name: string
           membership_plan_id: string | null
           membership_status: string
@@ -2738,6 +2822,7 @@ export type Database = {
           emergency_contact?: string | null
           first_name: string
           id: string
+          last_academy_id?: string | null
           last_name: string
           membership_plan_id?: string | null
           membership_status?: string
@@ -2755,6 +2840,7 @@ export type Database = {
           emergency_contact?: string | null
           first_name?: string
           id?: string
+          last_academy_id?: string | null
           last_name?: string
           membership_plan_id?: string | null
           membership_status?: string
@@ -2767,6 +2853,13 @@ export type Database = {
           {
             foreignKeyName: "profiles_academy_id_fkey"
             columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_last_academy_id_fkey"
+            columns: ["last_academy_id"]
             isOneToOne: false
             referencedRelation: "academies"
             referencedColumns: ["id"]
@@ -3227,6 +3320,18 @@ export type Database = {
         Args: { other_user_id: string }
         Returns: string
       }
+      get_user_academies: {
+        Args: { target_user_id?: string }
+        Returns: {
+          academy_id: string
+          role: string
+          academy_name: string
+        }[]
+      }
+      get_user_role_in_academy: {
+        Args: { target_academy_id: string; target_user_id?: string }
+        Returns: string
+      }
       join_academy: {
         Args: { academy_uuid: string }
         Returns: boolean
@@ -3245,6 +3350,10 @@ export type Database = {
       }
       update_user_role: {
         Args: { target_user_id: string; new_role: string }
+        Returns: boolean
+      }
+      user_has_academy_access: {
+        Args: { target_academy_id: string; target_user_id?: string }
         Returns: boolean
       }
     }
