@@ -1139,6 +1139,112 @@ export type Database = {
           },
         ]
       }
+      contact_discounts: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          contact_id: string
+          created_at: string
+          discount_type_id: string
+          expires_at: string | null
+          id: string
+          max_usage: number | null
+          notes: string | null
+          status: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id: string
+          created_at?: string
+          discount_type_id: string
+          expires_at?: string | null
+          id?: string
+          max_usage?: number | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id?: string
+          created_at?: string
+          discount_type_id?: string
+          expires_at?: string | null
+          id?: string
+          max_usage?: number | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_discounts_discount_type_id_fkey"
+            columns: ["discount_type_id"]
+            isOneToOne: false
+            referencedRelation: "discount_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_drop_ins: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          contact_id: string
+          created_at: string
+          drop_in_option_id: string
+          expiry_date: string | null
+          id: string
+          notes: string | null
+          purchase_date: string
+          status: string
+          updated_at: string
+          used_date: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id: string
+          created_at?: string
+          drop_in_option_id: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date?: string
+          status?: string
+          updated_at?: string
+          used_date?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id?: string
+          created_at?: string
+          drop_in_option_id?: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date?: string
+          status?: string
+          updated_at?: string
+          used_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_drop_ins_drop_in_option_id_fkey"
+            columns: ["drop_in_option_id"]
+            isOneToOne: false
+            referencedRelation: "drop_in_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_imports: {
         Row: {
           created_at: string
@@ -1179,6 +1285,59 @@ export type Database = {
             columns: ["imported_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_memberships: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          contact_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          membership_plan_id: string
+          monthly_price_cents: number | null
+          notes: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          membership_plan_id: string
+          monthly_price_cents?: number | null
+          notes?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          contact_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          membership_plan_id?: string
+          monthly_price_cents?: number | null
+          notes?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_memberships_membership_plan_id_fkey"
+            columns: ["membership_plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
             referencedColumns: ["id"]
           },
         ]
