@@ -3346,6 +3346,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      switch_user_academy: {
+        Args: { target_academy_id: string }
+        Returns: Json
+      }
       test_profile_access: {
         Args: Record<PropertyKey, never>
         Returns: boolean

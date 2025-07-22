@@ -56,22 +56,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Clear any stale auth state on mount
-    const clearStaleState = () => {
-      const lastClear = localStorage.getItem('auth_state_cleared');
-      const now = Date.now();
-      const oneHour = 60 * 60 * 1000;
-      
-      if (!lastClear || (now - parseInt(lastClear)) > oneHour) {
-        // Clear potentially stale auth data
-        localStorage.removeItem('supabase.auth.token');
-        sessionStorage.clear();
-        localStorage.setItem('auth_state_cleared', now.toString());
-      }
-    };
-
-    clearStaleState();
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -95,9 +79,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }, 0);
         } else {
           setProfile(null);
+          setUserAcademies([]);
           setLoading(false);
-          // Clear any cached data on sign out
-          localStorage.removeItem('auth_state_cleared');
         }
       }
     );
@@ -116,20 +99,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
-        // Don't try to fetch academies if profile fetch failed
         setLoading(false);
         return;
       } else if (data) {
         console.log('Profile fetched successfully:', data);
         setProfile(data as Profile);
-        console.log('Profile state updated, now fetching academies...');
-        // Only fetch user academies after profile is successfully set
-        try {
-          await fetchUserAcademies(userId);
-          console.log('Academies fetched successfully');
-        } catch (academyError) {
-          console.error('Error fetching academies (but profile is loaded):', academyError);
-        }
+        // Fetch user academies after profile is set
+        await fetchUserAcademies(userId);
       } else {
         console.log('No profile data found');
         setProfile(null);
@@ -180,50 +156,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const switchAcademy = async (academyId: string) => {
     if (!user) {
       console.error('switchAcademy: No user found');
-      return;
+      throw new Error('No user found');
     }
 
-    console.log('switchAcademy: Starting academy switch', {
-      fromAcademyId: profile?.last_academy_id,
-      toAcademyId: academyId,
-      userId: user.id
-    });
+    console.log('switchAcademy: Starting academy switch to:', academyId);
 
     try {
-      // Update last_academy_id in profile
-      console.log('switchAcademy: Updating profile with new last_academy_id');
+      // Use the secure database function to switch academy
       const { data, error } = await supabase
-        .from('profiles')
-        .update({ last_academy_id: academyId })
-        .eq('id', user.id)
-        .select();
+        .rpc('switch_user_academy', { target_academy_id: academyId });
 
-      console.log('switchAcademy: Profile update result', { data, error });
+      console.log('switchAcademy: Database function result', { data, error });
 
       if (error) {
-        console.error('switchAcademy: Profile update failed', error);
+        console.error('switchAcademy: Database function failed', error);
         throw error;
       }
 
-      // Log the academy switch
-      console.log('switchAcademy: Logging academy switch');
-      const { error: logError } = await supabase
-        .from('academy_switches')
-        .insert({
-          user_id: user.id,
-          from_academy_id: profile?.last_academy_id,
-          to_academy_id: academyId
-        });
+      // Type cast the response to access the jsonb properties
+      const result = data as { success: boolean; error?: string; old_academy_id?: string; new_academy_id?: string };
 
-      if (logError) {
-        console.error('switchAcademy: Academy switch logging failed', logError);
+      if (!result?.success) {
+        console.error('switchAcademy: Switch failed', result?.error);
+        throw new Error(result?.error || 'Academy switch failed');
       }
 
+      console.log('switchAcademy: Success! Refreshing profile...');
+      
       // Refresh profile to get updated last_academy_id
-      console.log('switchAcademy: Refreshing profile');
       await refreshProfile();
       
-      console.log('switchAcademy: Reloading page');
+      console.log('switchAcademy: Reloading page to refresh academy context');
       // Reload the page to clear any cached academy-specific data
       window.location.reload();
     } catch (error) {

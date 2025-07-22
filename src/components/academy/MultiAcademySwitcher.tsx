@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
-// ABOUTME: Multi-Academy Switcher Component - Allows users to seamlessly switch between academies they belong to
+// ABOUTME: Multi-Academy Switcher Component - Secure academy switching with proper error handling
 
 const MultiAcademySwitcher = () => {
   const { user, userAcademies, switchAcademy } = useAuth();
@@ -27,19 +27,13 @@ const MultiAcademySwitcher = () => {
   }
 
   const handleAcademySwitch = async (academyId: string) => {
-    console.log('handleAcademySwitch called with:', academyId);
-    console.log('Current academy ID:', currentAcademyId);
-    
     if (academyId === currentAcademyId) {
-      console.log('Already selected this academy, skipping');
-      return;
+      return; // Already selected
     }
 
     setIsLoading(true);
     try {
-      console.log('Calling switchAcademy function...');
       await switchAcademy(academyId);
-      console.log('switchAcademy completed successfully');
       toast({
         title: "Academy Switched",
         description: "Successfully switched to the selected academy.",
@@ -48,7 +42,7 @@ const MultiAcademySwitcher = () => {
       console.error('Error switching academy:', error);
       toast({
         title: "Error",
-        description: "Failed to switch academy. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to switch academy. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -137,7 +131,7 @@ const MultiAcademySwitcher = () => {
             key={membership.academy_id}
             onClick={() => handleAcademySwitch(membership.academy_id)}
             disabled={isLoading}
-            className={`cursor-pointer ${
+            className={`p-3 cursor-pointer hover:bg-muted ${
               membership.academy_id === currentAcademyId 
                 ? 'bg-muted ring-1 ring-primary' 
                 : ''
