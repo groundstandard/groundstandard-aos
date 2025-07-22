@@ -33,18 +33,18 @@ interface ActiveMembershipCardProps {
 }
 
 export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) => {
-  const [membership, setMembership] = useState<MembershipSubscription | null>(null);
+  const [memberships, setMemberships] = useState<MembershipSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (contactId) {
-      fetchActiveMembership();
+      fetchActiveMemberships();
     }
   }, [contactId]);
 
-  const fetchActiveMembership = async () => {
+  const fetchActiveMemberships = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -61,24 +61,20 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           )
         `)
         .eq('profile_id', contactId)
-        .eq('status', 'active')
-        .single();
+        .in('status', ['active', 'paused'])
+        .order('created_at', { ascending: false });
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error) throw error;
 
-      setMembership(data);
+      setMemberships(data || []);
     } catch (error) {
-      console.error('Error fetching membership:', error);
+      console.error('Error fetching memberships:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRenewMembership = async () => {
-    if (!membership) return;
-
+  const handleRenewMembership = async (membership: MembershipSubscription) => {
     try {
       const { data, error } = await supabase.functions.invoke('create-membership-renewal', {
         body: {
@@ -126,7 +122,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     }
   };
 
-  const getDaysUntilExpiry = () => {
+  const getDaysUntilExpiry = (membership: MembershipSubscription) => {
     if (!membership?.end_date) return null;
     const endDate = new Date(membership.end_date);
     const today = new Date();
@@ -135,8 +131,8 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     return diffDays;
   };
 
-  const isExpiringSoon = () => {
-    const daysLeft = getDaysUntilExpiry();
+  const isExpiringSoon = (membership: MembershipSubscription) => {
+    const daysLeft = getDaysUntilExpiry(membership);
     return daysLeft !== null && daysLeft <= 30 && daysLeft > 0;
   };
 
@@ -150,25 +146,28 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     );
   }
 
-  if (!membership) {
+  if (!memberships || memberships.length === 0) {
     return (
       <Card className="card-minimal">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5" />
-            Active Membership
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <p className="text-muted-foreground mb-4">No active membership found</p>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5" />
+              Active Memberships
+            </CardTitle>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => setShowAssignDialog(true)}
             >
+              <Crown className="h-4 w-4 mr-2" />
               Assign Membership
             </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <p className="text-muted-foreground mb-4">No active memberships found</p>
             <AssignMembershipDialog
               open={showAssignDialog}
               onOpenChange={setShowAssignDialog}
@@ -179,7 +178,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                 email: '', 
                 membership_status: '' 
               }}
-              onSuccess={fetchActiveMembership}
+              onSuccess={fetchActiveMemberships}
             />
           </div>
         </CardContent>
@@ -187,126 +186,108 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     );
   }
 
-  const daysLeft = getDaysUntilExpiry();
-  const plan = membership.membership_plans;
-
   return (
-    <Card className="card-minimal shadow-elegant">
+    <Card className="card-minimal">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Crown className="h-5 w-5" />
-          Active Membership
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5" />
+            Active Memberships ({memberships.length})
+          </CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowAssignDialog(true)}
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            Add Membership
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg">{plan.name}</h3>
-              <Badge variant="outline" className={getStatusColor(membership.status)}>
-                {membership.status}
-              </Badge>
-              {plan.billing_cycle === 'annual' && (
-                <Badge variant="secondary" className="gap-1">
-                  <Repeat className="h-3 w-3" />
-                  12-Month Cycle
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{plan.description}</p>
-            <div className="flex items-center gap-4 text-sm">
-              <span className="font-medium">
-                {formatCurrency(plan.base_price_cents)} / {plan.billing_cycle}
-              </span>
-              {plan.is_unlimited ? (
-                <span className="text-primary">Unlimited Classes</span>
-              ) : (
-                <span>{plan.classes_per_week} classes/week</span>
-              )}
-            </div>
-          </div>
-        </div>
+      <CardContent className="space-y-3">
+        {memberships.map((membership) => {
+          const daysLeft = getDaysUntilExpiry(membership);
+          const plan = membership.membership_plans;
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              Start Date
-            </div>
-            <p className="font-medium">
-              {new Date(membership.start_date).toLocaleDateString()}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              End Date
-            </div>
-            <p className="font-medium">
-              {membership.end_date ? new Date(membership.end_date).toLocaleDateString() : 'Ongoing'}
-            </p>
-          </div>
-        </div>
-
-        {plan.billing_cycle === 'annual' && (
-          <div className="border rounded-lg p-3 bg-muted/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">12-Month Cycle #{membership.cycle_number}</p>
-                <p className="text-xs text-muted-foreground">
-                  {membership.auto_renewal ? 'Auto-renewal enabled' : 'Manual renewal required'}
-                </p>
+          return (
+            <div key={membership.id} className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">{plan.name}</h4>
+                    <Badge variant="outline" className={getStatusColor(membership.status)}>
+                      {membership.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{plan.description}</p>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="font-medium">
+                      {formatCurrency(plan.base_price_cents)} / {plan.billing_cycle}
+                    </span>
+                    {plan.is_unlimited ? (
+                      <span className="text-primary">Unlimited Classes</span>
+                    ) : (
+                      <span>{plan.classes_per_week} classes/week</span>
+                    )}
+                  </div>
+                </div>
               </div>
-              {membership.renewal_discount_percentage > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {membership.renewal_discount_percentage}% discount
-                </Badge>
-              )}
-            </div>
-            
-            {membership.discount_expires_at && (
-              <div className="mt-2 text-xs text-amber-600">
-                Discount expires: {new Date(membership.discount_expires_at).toLocaleDateString()}
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Start:</span>{' '}
+                  <span className="font-medium">
+                    {new Date(membership.start_date).toLocaleDateString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">End:</span>{' '}
+                  <span className="font-medium">
+                    {membership.end_date ? new Date(membership.end_date).toLocaleDateString() : 'Ongoing'}
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {daysLeft !== null && (
-          <div className={`border rounded-lg p-3 ${
-            isExpiringSoon() ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'
-          }`}>
-            <div className="flex items-center gap-2">
-              {isExpiringSoon() ? (
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-              ) : (
-                <CheckCircle className="h-4 w-4 text-green-600" />
+              {daysLeft !== null && (
+                <div className={`flex items-center justify-between p-2 rounded text-sm ${
+                  isExpiringSoon(membership) ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'
+                }`}>
+                  <span className="font-medium">
+                    {daysLeft > 0 ? `${daysLeft} days remaining` : 'Expired'}
+                  </span>
+                  {isExpiringSoon(membership) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleRenewMembership(membership)}
+                    >
+                      Renew
+                    </Button>
+                  )}
+                </div>
               )}
-              <span className={`text-sm font-medium ${
-                isExpiringSoon() ? 'text-amber-800' : 'text-green-800'
-              }`}>
-                {daysLeft > 0 ? `${daysLeft} days remaining` : 'Expired'}
-              </span>
-            </div>
-            
-            {isExpiringSoon() && plan.billing_cycle === 'annual' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2 w-full"
-                onClick={handleRenewMembership}
-              >
-                Renew for Next 12-Month Cycle
-              </Button>
-            )}
-          </div>
-        )}
 
-        {membership.next_billing_date && (
-          <div className="text-xs text-muted-foreground">
-            Next billing: {new Date(membership.next_billing_date).toLocaleDateString()}
-          </div>
-        )}
+              {membership.next_billing_date && (
+                <div className="text-xs text-muted-foreground">
+                  Next billing: {new Date(membership.next_billing_date).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <AssignMembershipDialog
+          open={showAssignDialog}
+          onOpenChange={setShowAssignDialog}
+          contact={{ 
+            id: contactId || '', 
+            first_name: '', 
+            last_name: '', 
+            email: '', 
+            membership_status: '' 
+          }}
+          onSuccess={fetchActiveMemberships}
+        />
       </CardContent>
     </Card>
   );
