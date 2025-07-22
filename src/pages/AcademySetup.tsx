@@ -1,7 +1,7 @@
-import AcademySetup from '@/components/academy/AcademySetup';
+import EnhancedAcademySetup from '@/components/academy/EnhancedAcademySetup';
 
 const AcademySetupPage = () => {
-  return <AcademySetup />;
+  return <EnhancedAcademySetup />;
 };
 
 export default AcademySetupPage;
