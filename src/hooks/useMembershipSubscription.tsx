@@ -19,7 +19,7 @@ interface MembershipSubscription {
   membership_plan?: {
     name: string;
     description?: string;
-    price_cents: number;
+    base_price_cents: number;
     billing_frequency: string;
   };
 }
@@ -68,7 +68,7 @@ export const MembershipSubscriptionProvider = ({ children }: MembershipSubscript
           membership_plan:membership_plans(
             name,
             description,
-            price_cents,
+            base_price_cents,
             billing_frequency
           )
         `)
