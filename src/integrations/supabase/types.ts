@@ -2799,7 +2799,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          academy_id: string
+          academy_id: string | null
           address: string | null
           belt_level: string | null
           check_in_pin: string | null
@@ -2828,7 +2828,7 @@ export type Database = {
           zipcode: string | null
         }
         Insert: {
-          academy_id: string
+          academy_id?: string | null
           address?: string | null
           belt_level?: string | null
           check_in_pin?: string | null
@@ -2857,7 +2857,7 @@ export type Database = {
           zipcode?: string | null
         }
         Update: {
-          academy_id?: string
+          academy_id?: string | null
           address?: string | null
           belt_level?: string | null
           check_in_pin?: string | null
