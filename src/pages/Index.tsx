@@ -40,9 +40,9 @@ const Index = () => {
     // Check if user has student academies (we'll show student selector for testing)
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
     
-    // For testing: If user has student academies and we want to test student flow
-    // Show student selector when user has student roles (regardless of other roles)
-    if (studentAcademies.length > 0 && !academy) {
+    // For testing: If user has student academies, always show student selector
+    // This forces the student academy selection even if an academy is already loaded
+    if (studentAcademies.length > 0) {
       if (showAcademySelector) {
         return (
           <StudentAcademySelector 
