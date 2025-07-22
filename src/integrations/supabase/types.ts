@@ -3351,6 +3351,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      test_profile_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       update_payment_analytics: {
         Args: { start_date: string; end_date: string }
         Returns: undefined
