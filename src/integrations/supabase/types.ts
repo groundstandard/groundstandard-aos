@@ -3315,9 +3315,31 @@ export type Database = {
         Args: { academy_uuid: string }
         Returns: Json
       }
+      get_class_enrolled_students: {
+        Args: { class_uuid: string }
+        Returns: {
+          student_id: string
+          first_name: string
+          last_name: string
+          email: string
+          belt_level: string
+          enrollment_status: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_instructor_classes_today: {
+        Args: { instructor_uuid: string }
+        Returns: {
+          class_id: string
+          class_name: string
+          start_time: string
+          end_time: string
+          max_students: number
+          day_of_week: number
+        }[]
       }
       get_or_create_dm_channel: {
         Args: { other_user_id: string }
