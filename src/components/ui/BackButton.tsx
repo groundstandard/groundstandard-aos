@@ -12,17 +12,26 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
   const location = useLocation();
 
   const handleBack = () => {
-    // Try to go back, but fallback to dashboard if history is unavailable
-    try {
-      if (window.history.length > 1) {
-        navigate(-1);
-      } else {
-        navigate(fallbackPath);
-      }
-    } catch (error) {
-      // Fallback to dashboard if navigation fails
-      navigate(fallbackPath);
-    }
+    // Define route hierarchy for better navigation
+    const routeHierarchy: Record<string, string> = {
+      '/membership-management': '/dashboard',
+      '/contacts': '/dashboard',
+      '/payments': '/dashboard',
+      '/attendance': '/dashboard',
+      '/reports': '/dashboard',
+      '/team-management': '/dashboard',
+      '/events': '/dashboard',
+      '/belt-testing': '/dashboard',
+      '/admin/performance-targets': '/dashboard',
+      '/settings': '/dashboard',
+      '/profile': '/dashboard',
+    };
+
+    // Get the parent route for current path
+    const parentRoute = routeHierarchy[location.pathname] || fallbackPath;
+    
+    // Always navigate to the logical parent instead of relying on browser history
+    navigate(parentRoute);
   };
 
   // Don't show back button on dashboard
