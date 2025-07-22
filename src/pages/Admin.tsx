@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
+import { useView } from "@/hooks/useView";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
@@ -38,6 +39,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const { isAdmin } = useEffectiveRole();
+  const { setCurrentView } = useView();
   const { subscriptionInfo } = useSubscription();
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -45,6 +47,11 @@ const Admin = () => {
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [scheduleClassOpen, setScheduleClassOpen] = useState(false);
   const [processPaymentOpen, setProcessPaymentOpen] = useState(false);
+
+  // Force admin view when this component loads
+  useEffect(() => {
+    setCurrentView('admin');
+  }, [setCurrentView]);
 
   if (loading) {
     return (

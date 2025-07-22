@@ -181,8 +181,12 @@ export const AuthForm = () => {
         description: "Successfully signed in"
       });
       
-      // Navigate to dashboard - the routing will handle role-based redirection
-      navigate("/dashboard");
+      // Navigate based on selected role
+      if (selectedRole === 'staff') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
