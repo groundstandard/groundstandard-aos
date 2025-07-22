@@ -16,12 +16,14 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
     console.log('History length:', window.history.length);
     console.log('History state:', window.history.state);
     
-    try {
-      // Try going back first
+    // Check if we can actually go back in history
+    const canGoBack = window.history.state?.idx > 0 || window.history.length > 1;
+    
+    if (canGoBack) {
+      console.log('Going back in history');
       navigate(-1);
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // If navigation fails, go to fallback
+    } else {
+      console.log('No history to go back to, using fallback:', fallbackPath);
       navigate(fallbackPath);
     }
   };
