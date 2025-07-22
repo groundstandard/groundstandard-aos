@@ -135,35 +135,16 @@ const MultiAcademySwitcher = () => {
         {userAcademies.map((membership) => (
           <DropdownMenuItem
             key={membership.academy_id}
-            className="p-0"
-            asChild
+            onClick={() => handleAcademySwitch(membership.academy_id)}
+            disabled={isLoading}
+            className={`cursor-pointer ${
+              membership.academy_id === currentAcademyId 
+                ? 'bg-muted ring-1 ring-primary' 
+                : ''
+            }`}
           >
-            <button
-              type="button"
-              onClick={() => {
-                console.log('Button clicked for academy:', {
-                  academyId: membership.academy_id,
-                  academyName: membership.academy_name,
-                  currentAcademyId: currentAcademyId
-                });
-                
-                // Direct test - manually call switchAcademy
-                console.log('About to call handleAcademySwitch...');
-                handleAcademySwitch(membership.academy_id).then(() => {
-                  console.log('handleAcademySwitch completed successfully');
-                }).catch((error) => {
-                  console.error('handleAcademySwitch failed:', error);
-                });
-              }}
-              disabled={isLoading}
-              className={`w-full p-3 text-left cursor-pointer hover:bg-muted ${
-                membership.academy_id === currentAcademyId 
-                  ? 'bg-muted ring-1 ring-primary' 
-                  : ''
-              }`}
-            >
-              <div className="flex items-center space-x-3 w-full">
-                {getRoleIcon(membership.role)}
+            <div className="flex items-center space-x-3 w-full">
+              {getRoleIcon(membership.role)}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="font-medium truncate">
@@ -184,8 +165,7 @@ const MultiAcademySwitcher = () => {
                   )}
                 </div>
               </div>
-              </div>
-            </button>
+            </div>
           </DropdownMenuItem>
         ))}
         
