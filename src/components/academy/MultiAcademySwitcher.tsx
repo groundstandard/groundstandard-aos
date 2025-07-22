@@ -146,7 +146,14 @@ const MultiAcademySwitcher = () => {
                   academyName: membership.academy_name,
                   currentAcademyId: currentAcademyId
                 });
-                handleAcademySwitch(membership.academy_id);
+                
+                // Direct test - manually call switchAcademy
+                console.log('About to call handleAcademySwitch...');
+                handleAcademySwitch(membership.academy_id).then(() => {
+                  console.log('handleAcademySwitch completed successfully');
+                }).catch((error) => {
+                  console.error('handleAcademySwitch failed:', error);
+                });
               }}
               disabled={isLoading}
               className={`w-full p-3 text-left cursor-pointer hover:bg-muted ${
