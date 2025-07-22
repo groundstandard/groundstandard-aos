@@ -379,9 +379,21 @@ const Contacts = () => {
       console.log('Updating contact with session:', session.user.email);
       console.log('Form data:', formData);
       
+      // Prepare update data excluding relationship fields
+      const updateData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        belt_level: formData.belt_level,
+        emergency_contact: formData.emergency_contact,
+        membership_status: formData.membership_status
+      };
+      
       const { data, error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update(updateData)
         .eq('id', selectedContact.id)
         .select();
 
