@@ -54,7 +54,7 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Index />} />
-        <Route path="/auth" element={!user ? <Auth /> : <AcademyGatekeeper><Dashboard /></AcademyGatekeeper>} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="/dashboard" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Auth />} />
         <Route path="/classes" element={user ? <AcademyGatekeeper><Classes /></AcademyGatekeeper> : <Auth />} />
         <Route path="/attendance" element={user ? <AcademyGatekeeper><Attendance /></AcademyGatekeeper> : <Auth />} />

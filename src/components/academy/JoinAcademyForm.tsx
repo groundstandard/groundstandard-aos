@@ -142,7 +142,7 @@ const JoinAcademyForm = ({ onBack }: JoinAcademyFormProps) => {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => window.location.href = '/auth'}
+            onClick={() => navigate('/auth')}
             disabled={loading}
           >
             Login or Create Account
