@@ -27,13 +27,15 @@ const MultiAcademySwitcher = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [academyLogos, setAcademyLogos] = useState<Record<string, string>>({});
 
-  // Filter academies based on login role - only show staff roles for staff users
+  // Filter academies based on login role - only show appropriate roles
   const getFilteredAcademies = () => {
     const loginRole = localStorage.getItem('loginRole');
     
     // If logged in as staff, only show academies where they have staff roles
     if (loginRole === 'staff') {
-      return userAcademies.filter(academy => academy.role !== 'student');
+      return userAcademies.filter(academy => 
+        ['owner', 'admin', 'instructor', 'operations'].includes(academy.role)
+      );
     }
     
     // If logged in as student, only show student roles
