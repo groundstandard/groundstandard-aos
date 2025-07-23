@@ -83,6 +83,9 @@ interface Attendance {
   class_id: string;
   student_id: string;
   created_at: string;
+  classes?: {
+    name: string;
+  };
 }
 
 interface MembershipPlan {
@@ -229,7 +232,10 @@ const ContactProfile = () => {
       // Fetch attendance history
       const { data: attendanceData } = await supabase
         .from('attendance')
-        .select('*')
+        .select(`
+          *,
+          classes(name)
+        `)
         .eq('student_id', contactId)
         .order('date', { ascending: false })
         .limit(50);
@@ -472,7 +478,10 @@ const ContactProfile = () => {
       // Refresh attendance data
       const { data: attendanceData } = await supabase
         .from('attendance')
-        .select('*')
+        .select(`
+          *,
+          classes(name)
+        `)
         .eq('student_id', contact.id)
         .order('date', { ascending: false })
         .limit(50);
@@ -501,7 +510,10 @@ const ContactProfile = () => {
       const fetchUpdatedAttendance = async () => {
         const { data: attendanceData } = await supabase
           .from('attendance')
-          .select('*')
+          .select(`
+            *,
+            classes(name)
+          `)
           .eq('student_id', contact.id)
           .order('date', { ascending: false })
           .limit(50);
@@ -808,14 +820,21 @@ const ContactProfile = () => {
                              setShowAttendanceModal(true);
                            }}
                          >
-                           <div>
-                             <p className="text-sm">
-                               {new Date(record.date).toLocaleDateString()}
-                             </p>
-                             {record.notes && (
-                               <p className="text-xs text-muted-foreground">{record.notes}</p>
-                             )}
-                           </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-sm font-medium">
+                                  {new Date(record.date).toLocaleDateString()}
+                                </p>
+                                {record.classes?.name && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {record.classes.name}
+                                  </Badge>
+                                )}
+                              </div>
+                              {record.notes && (
+                                <p className="text-xs text-muted-foreground">{record.notes}</p>
+                              )}
+                            </div>
                            <Badge variant="outline" className={getStatusColor(record.status)}>
                              {record.status}
                            </Badge>
