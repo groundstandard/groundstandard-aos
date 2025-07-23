@@ -3018,6 +3018,47 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_action_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_id: string
+          processed_by: string | null
+          reason: string
+          stripe_result: Json | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_id: string
+          processed_by?: string | null
+          reason: string
+          stripe_result?: Json | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_id?: string
+          processed_by?: string | null
+          reason?: string
+          stripe_result?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_action_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_analytics: {
         Row: {
           average_payment_value: number
