@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,6 +111,7 @@ type DateRange = {
 export const AttendanceManagement = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { exportData, loading: exportLoading } = useExport();
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
@@ -802,7 +804,11 @@ export const AttendanceManagement = () => {
                   </TableHeader>
                   <TableBody>
                     {attendanceData?.stats.studentStats.map((student) => (
-                      <TableRow key={student.student_id}>
+                      <TableRow 
+                        key={student.student_id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/contacts/${student.student_id}?tab=attendance`)}
+                      >
                         <TableCell className="font-medium">{student.student_name}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{student.belt_level}</Badge>
