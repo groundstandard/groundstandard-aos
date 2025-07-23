@@ -50,124 +50,117 @@ export const ChatInterface = () => {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock data for now - will implement with Supabase later
+  // Load real chat data from Supabase
   useEffect(() => {
-    // Initialize mock channels
-    const mockChannels: Channel[] = [
-      {
-        id: 'general',
-        name: 'general',
-        description: 'Academy-wide announcements and discussions',
-        type: 'public',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 25,
-        unread_count: 2,
-        last_message: 'Welcome to the academy!',
-        last_activity: new Date(Date.now() - 300000).toISOString()
-      },
-      {
-        id: 'beginners',
-        name: 'beginners',
-        description: 'Support for new students',
-        type: 'public',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 12,
-        unread_count: 0,
-        last_message: 'Great progress in class today!',
-        last_activity: new Date(Date.now() - 600000).toISOString()
-      },
-      {
-        id: 'announcements',
-        name: 'announcements',
-        description: 'Important academy updates',
-        type: 'public',
-        is_admin_only: false,
-        created_by: 'admin',
-        member_count: 30,
-        unread_count: 1,
-        last_message: 'Holiday schedule update',
-        last_activity: new Date(Date.now() - 900000).toISOString()
-      }
-    ];
+    if (!profile) return;
+    
+    const loadChatData = async () => {
+      try {
+        // Fetch channels from database
+        const { data: channelsData, error: channelsError } = await supabase
+          .from('chat_channels')
+          .select('*')
+          .order('created_at', { ascending: true });
 
-    // Add admin-only channels if user is admin
-    if (profile?.role === 'admin') {
-      mockChannels.push(
-        {
-          id: 'admin-team',
-          name: 'admin-team',
-          description: 'Private admin discussions',
-          type: 'private',
-          is_admin_only: true,
-          created_by: 'admin',
-          member_count: 3,
-          unread_count: 0,
-          last_message: 'Staff meeting notes',
-          last_activity: new Date(Date.now() - 1200000).toISOString()
-        },
-        {
-          id: 'instructors',
-          name: 'instructors',
-          description: 'Instructor coordination',
-          type: 'private',
-          is_admin_only: true,
-          created_by: 'admin',
-          member_count: 5,
-          unread_count: 3,
-          last_message: 'Schedule adjustments needed',
-          last_activity: new Date(Date.now() - 180000).toISOString()
+        if (channelsError) {
+          console.error('Error fetching channels:', channelsError);
+          // Create default channels if none exist
+          const defaultChannels: Channel[] = [
+            {
+              id: 'general',
+              name: 'general',
+              description: 'Academy-wide announcements and discussions',
+              type: 'public',
+              is_admin_only: false,
+              created_by: profile.id,
+              member_count: 0,
+              unread_count: 0,
+              last_message: '',
+              last_activity: new Date().toISOString()
+            }
+          ];
+          setChannels(defaultChannels);
+        } else {
+          // Convert database format to component format
+          const formattedChannels: Channel[] = (channelsData || []).map(ch => ({
+            id: ch.id,
+            name: ch.name,
+            description: ch.description || '',
+            type: ch.type as 'public' | 'private' | 'direct',
+            is_admin_only: ch.is_admin_only || false,
+            created_by: ch.created_by || '',
+            member_count: ch.member_count || 0,
+            unread_count: 0, // TODO: Implement unread count
+            last_message: '', // TODO: Implement last message
+            last_activity: ch.updated_at || ch.created_at
+          }));
+          setChannels(formattedChannels);
         }
-      );
-    }
 
-    // Mock messages
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        content: 'Welcome to the academy chat! Feel free to ask questions and connect with fellow martial artists. 🥋',
-        sender_id: 'instructor-1',
-        sender_name: 'Sensei Johnson',
-        sender_role: 'admin',
-        created_at: new Date(Date.now() - 7200000).toISOString(),
-        reactions: [
-          { emoji: '👋', count: 5, users: ['user1', 'user2'] },
-          { emoji: '🥋', count: 3, users: ['user3'] }
-        ]
-      },
-      {
-        id: '2',
-        content: 'Thank you! Excited to be part of this community.',
-        sender_id: 'student-1',
-        sender_name: 'Alex Chen',
-        sender_role: 'student',
-        created_at: new Date(Date.now() - 6900000).toISOString()
-      },
-      {
-        id: '3',
-        content: 'Quick reminder: Classes are canceled on Monday due to the holiday. We\'ll resume normal schedule on Tuesday.',
-        sender_id: 'instructor-1',
-        sender_name: 'Sensei Johnson',
-        sender_role: 'admin',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        thread_count: 2
-      },
-      {
-        id: '4',
-        content: 'Got it, thanks for the heads up! 👍',
-        sender_id: 'student-2',
-        sender_name: 'Sarah Kim',
-        sender_role: 'student',
-        created_at: new Date(Date.now() - 1800000).toISOString(),
-        reactions: [{ emoji: '👍', count: 4, users: ['user1', 'user2', 'user3', 'user4'] }]
+        // Load messages for the current channel
+        if (activeChannel) {
+          const { data: messagesData, error: messagesError } = await supabase
+            .from('chat_messages')
+            .select(`
+              id,
+              content,
+              sender_id,
+              created_at,
+              thread_count,
+              profiles!sender_id (
+                first_name,
+                last_name,
+                role
+              )
+            `)
+            .eq('channel_id', activeChannel)
+            .order('created_at', { ascending: true })
+            .limit(50);
+
+          if (messagesError) {
+            console.error('Error fetching messages:', messagesError);
+            // Show sample welcome message if no messages exist
+            setMessages([
+              {
+                id: 'welcome',
+                content: 'Welcome to the academy chat! Feel free to ask questions and connect with fellow martial artists. 🥋',
+                sender_id: 'system',
+                sender_name: 'Academy Bot',
+                sender_role: 'admin',
+                created_at: new Date().toISOString()
+              }
+            ]);
+          } else {
+            // Convert database format to component format
+            const formattedMessages: Message[] = (messagesData || []).map(msg => {
+              const profile = msg.profiles as any;
+              return {
+                id: msg.id,
+                content: msg.content || '',
+                sender_id: msg.sender_id,
+                sender_name: profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown User',
+                sender_role: profile?.role || 'student',
+                created_at: msg.created_at,
+                thread_count: msg.thread_count || 0
+              };
+            });
+            setMessages(formattedMessages);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading chat data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load chat data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    setChannels(mockChannels);
-    setMessages(mockMessages);
-    setLoading(false);
-  }, [profile]);
+    loadChatData();
+  }, [profile, activeChannel, toast]);
 
   useEffect(() => {
     scrollToBottom();

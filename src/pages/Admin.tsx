@@ -6,6 +6,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,25 @@ import {
   User
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+// Helper function to format time ago
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 60) {
+    return `${minutes} minutes ago`;
+  } else if (hours < 24) {
+    return `${hours} hours ago`;
+  } else {
+    return `${days} days ago`;
+  }
+};
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -103,54 +123,235 @@ const Admin = () => {
     }
   };
 
-  const handleRefreshStats = async () => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalStudents: 0,
+    activeClasses: 0,
+    monthlyRevenue: 0,
+    attendanceRate: 0,
+    beltTests: 0,
+    activeSubscriptions: 0,
+    loading: true
+  });
+
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setRefreshing(true);
+      
+      // Fetch total students
+      const { data: students } = await supabase
+        .from('profiles')
+        .select('id, membership_status, created_at')
+        .eq('role', 'student');
+      
+      // Fetch active classes
+      const { data: classes } = await supabase
+        .from('classes')
+        .select('id, is_active')
+        .eq('is_active', true);
+      
+      // Fetch attendance for rate calculation (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: attendance } = await supabase
+        .from('attendance')
+        .select('id, status, date')
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+      
+      // Fetch payments for monthly revenue (current month)
+      const currentMonth = new Date();
+      const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('amount, status, payment_date')
+        .eq('status', 'completed')
+        .gte('payment_date', firstDayOfMonth.toISOString().split('T')[0]);
+      
+      // Fetch pending belt tests
+      const { data: beltTests } = await supabase
+        .from('belt_tests')
+        .select('id, status')
+        .eq('status', 'scheduled');
+
+      // Fetch recent activity (last 24 hours)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      // Get recent enrollments
+      const { data: recentEnrollments } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, created_at')
+        .eq('role', 'student')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Get recent payments
+      const { data: recentPayments } = await supabase
+        .from('payments')
+        .select('id, amount, student_id, payment_date, profiles(first_name, last_name)')
+        .eq('status', 'completed')
+        .gte('payment_date', yesterday.toISOString())
+        .order('payment_date', { ascending: false })
+        .limit(5);
+
+      // Get recent belt tests
+      const { data: recentBeltTests } = await supabase
+        .from('belt_tests')
+        .select('id, test_date, student_id, current_belt, target_belt, profiles(first_name, last_name)')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // Get recent attendance (today)
+      const today = new Date().toISOString().split('T')[0];
+      const { data: recentAttendance } = await supabase
+        .from('attendance')
+        .select('id, date, status, class_id, classes(name), profiles(first_name, last_name)')
+        .eq('date', today)
+        .eq('status', 'present')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // Combine and format activity data
+      const activities = [];
+
+      // Add enrollments
+      recentEnrollments?.forEach(enrollment => {
+        activities.push({
+          action: "New student enrollment",
+          details: `${enrollment.first_name} ${enrollment.last_name} joined the academy`,
+          time: formatTimeAgo(enrollment.created_at),
+          type: "enrollment"
+        });
+      });
+
+      // Add payments
+      recentPayments?.forEach(payment => {
+        const student = payment.profiles as any;
+        activities.push({
+          action: "Payment received",
+          details: `$${(payment.amount / 100)} from ${student?.first_name} ${student?.last_name}`,
+          time: formatTimeAgo(payment.payment_date),
+          type: "payment"
+        });
+      });
+
+      // Add belt tests
+      recentBeltTests?.forEach(test => {
+        const student = test.profiles as any;
+        activities.push({
+          action: "Belt test scheduled",
+          details: `${student?.first_name} ${student?.last_name} registered for ${test.target_belt} test`,
+          time: formatTimeAgo(test.test_date),
+          type: "test"
+        });
+      });
+
+      // Add attendance
+      recentAttendance?.forEach(att => {
+        const student = att.profiles as any;
+        const classInfo = att.classes as any;
+        activities.push({
+          action: "Class attendance",
+          details: `${student?.first_name} ${student?.last_name} attended ${classInfo?.name}`,
+          time: formatTimeAgo(att.date),
+          type: "class"
+        });
+      });
+
+      // Sort by time and take most recent
+      const sortedActivities = activities
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 4);
+
+      setRecentActivity(sortedActivities);
+      
+      // Calculate stats
+      const totalStudents = students?.length || 0;
+      const activeStudents = students?.filter(s => s.membership_status === 'active').length || 0;
+      const activeClasses = classes?.length || 0;
+      const totalAttendance = attendance?.length || 0;
+      const presentAttendance = attendance?.filter(a => a.status === 'present').length || 0;
+      const attendanceRate = totalAttendance > 0 ? Math.round((presentAttendance / totalAttendance) * 100) : 0;
+      const monthlyRevenue = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+      const beltTestCount = beltTests?.length || 0;
+      
+      setDashboardStats({
+        totalStudents,
+        activeClasses,
+        monthlyRevenue: Math.round(monthlyRevenue / 100), // Convert cents to dollars
+        attendanceRate,
+        beltTests: beltTestCount,
+        activeSubscriptions: activeStudents,
+        loading: false
+      });
+      
       toast({
         title: "Success",
         description: "Dashboard statistics refreshed",
       });
-    }, 1000);
+      
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh dashboard statistics",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
+
+  const handleRefreshStats = () => {
+    fetchDashboardStats();
+  };
+
+  // Load dashboard stats on component mount
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
 
   const quickStats = [
     {
       title: "Total Students",
-      value: "847",
-      change: "+12.5%",
+      value: dashboardStats.loading ? "..." : dashboardStats.totalStudents.toString(),
+      change: "+12.5%", // TODO: Calculate from historical data
       trend: "up",
       icon: Users,
       color: "text-blue-600"
     },
     {
       title: "Active Classes",
-      value: "24",
-      change: "+8.2%", 
+      value: dashboardStats.loading ? "..." : dashboardStats.activeClasses.toString(),
+      change: "+8.2%", // TODO: Calculate from historical data
       trend: "up",
       icon: Calendar,
       color: "text-green-600"
     },
     {
       title: "Monthly Revenue",
-      value: "$18,420",
-      change: "+15.3%",
+      value: dashboardStats.loading ? "..." : `$${dashboardStats.monthlyRevenue.toLocaleString()}`,
+      change: "+15.3%", // TODO: Calculate from historical data
       trend: "up", 
       icon: DollarSign,
       color: "text-purple-600"
     },
     {
       title: "Attendance Rate",
-      value: "94.2%",
-      change: "+2.1%",
+      value: dashboardStats.loading ? "..." : `${dashboardStats.attendanceRate}%`,
+      change: "+2.1%", // TODO: Calculate from historical data
       trend: "up",
       icon: TrendingUp,
       color: "text-orange-600"
     },
     {
       title: "Belt Tests",
-      value: "18",
+      value: dashboardStats.loading ? "..." : dashboardStats.beltTests.toString(),
       change: "Pending",
       trend: "neutral",
       icon: Award,
@@ -158,8 +359,8 @@ const Admin = () => {
     },
     {
       title: "Active Subscriptions", 
-      value: "743",
-      change: "+5.7%",
+      value: dashboardStats.loading ? "..." : dashboardStats.activeSubscriptions.toString(),
+      change: "+5.7%", // TODO: Calculate from historical data
       trend: "up",
       icon: Crown,
       color: "text-indigo-600"
@@ -305,41 +506,24 @@ const Admin = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                {
-                  action: "New student enrollment",
-                  details: "Sarah Johnson joined Advanced Karate",
-                  time: "2 minutes ago",
-                  type: "enrollment"
-                },
-                {
-                  action: "Payment received",
-                  details: "$150 monthly subscription from Mike Chen",
-                  time: "15 minutes ago", 
-                  type: "payment"
-                },
-                {
-                  action: "Belt test scheduled",
-                  details: "3 students registered for Black Belt test",
-                  time: "1 hour ago",
-                  type: "test"
-                },
-                {
-                  action: "Class completed",
-                  details: "Evening Judo session with 18 participants",
-                  time: "2 hours ago",
-                  type: "class"
-                }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.details}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                    <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.action}</p>
+                      <p className="text-xs text-muted-foreground">{activity.details}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No recent activity</p>
+                  <p className="text-xs">Activity will appear here as students interact with your academy</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

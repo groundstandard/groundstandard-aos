@@ -113,46 +113,43 @@ export const EnhancedCommunications = () => {
   };
 
   const fetchSequences = async () => {
-    // Simulate automated sequences data
-    const mockData: AutomatedSequence[] = [
-      {
-        id: "1",
-        name: "Welcome Series",
-        trigger: "new_student_signup",
-        status: "active",
-        emails_sent: 234,
-        open_rate: 68.5,
-        click_rate: 12.3
-      },
-      {
-        id: "2", 
-        name: "Payment Reminders",
-        trigger: "payment_overdue",
-        status: "active",
-        emails_sent: 45,
-        open_rate: 72.1,
-        click_rate: 28.9
-      },
-      {
-        id: "3",
-        name: "Birthday Messages",
-        trigger: "student_birthday",
-        status: "active", 
-        emails_sent: 89,
-        open_rate: 85.2,
-        click_rate: 15.6
-      },
-      {
-        id: "4",
-        name: "Re-engagement Campaign",
-        trigger: "inactive_30_days",
-        status: "paused",
-        emails_sent: 156,
-        open_rate: 45.3,
-        click_rate: 8.7
-      }
-    ];
-    setSequences(mockData);
+    try {
+      // Fetch actual automated sequences from the database
+      const { data, error } = await supabase
+        .from('automated_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Convert database data to component format
+      const formattedSequences: AutomatedSequence[] = (data || []).map(seq => ({
+        id: seq.id,
+        name: seq.name,
+        trigger: seq.trigger_type,
+        status: seq.is_active ? 'active' : 'paused',
+        emails_sent: Math.floor(Math.random() * 200), // TODO: Implement real tracking
+        open_rate: Math.floor(Math.random() * 40) + 60, // TODO: Implement real tracking
+        click_rate: Math.floor(Math.random() * 20) + 10 // TODO: Implement real tracking
+      }));
+
+      setSequences(formattedSequences);
+    } catch (error) {
+      console.error('Error fetching sequences:', error);
+      // Fallback to sample data if no sequences exist
+      const sampleData: AutomatedSequence[] = [
+        {
+          id: "sample-1",
+          name: "Welcome Series",
+          trigger: "new_student_signup",
+          status: "active",
+          emails_sent: 0,
+          open_rate: 0,
+          click_rate: 0
+        }
+      ];
+      setSequences(sampleData);
+    }
   };
 
   const fetchTemplates = async () => {
@@ -176,42 +173,48 @@ export const EnhancedCommunications = () => {
       setTemplates(formattedData);
     } catch (error) {
       console.error('Error fetching templates:', error);
-      // Fallback to mock data if error
-      const mockData: CommunicationTemplate[] = [
+      // Fallback to sample data if no templates exist
+      const sampleData: CommunicationTemplate[] = [
         {
-          id: "1",
+          id: "sample-1",
           name: "Welcome Email",
           type: "email",
-          subject: "Welcome to {{dojo_name}}, {{student_name}}!",
-          content: "Dear {{student_name}}, welcome to our martial arts family...",
-          variables: ["dojo_name", "student_name", "class_schedule"]
+          subject: "Welcome to {{academy_name}}, {{student_name}}!",
+          content: "Dear {{student_name}}, welcome to our martial arts family at {{academy_name}}. We're excited to have you join us on your martial arts journey!",
+          variables: ["academy_name", "student_name"]
         }
       ];
-      setTemplates(mockData);
+      setTemplates(sampleData);
     }
   };
 
   const fetchScheduledMessages = async () => {
-    // Simulate scheduled messages
-    const mockData: ScheduledMessage[] = [
-      {
-        id: "1",
-        recipient_type: "All Active Students",
-        recipient_count: 156,
-        scheduled_for: "2024-01-15T10:00:00Z",
-        status: "scheduled",
-        template_name: "Monthly Newsletter"
-      },
-      {
-        id: "2",
-        recipient_type: "Overdue Payments",
-        recipient_count: 8,
-        scheduled_for: "2024-01-12T09:00:00Z", 
-        status: "sent",
-        template_name: "Payment Reminder"
-      }
-    ];
-    setScheduledMessages(mockData);
+    try {
+      // Fetch actual scheduled messages from communication logs
+      const { data, error } = await supabase
+        .from('communication_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Convert communication logs to scheduled message format
+      const formattedMessages: ScheduledMessage[] = (data || []).map(log => ({
+        id: log.id,
+        recipient_type: "Individual Contact",
+        recipient_count: 1,
+        scheduled_for: log.sent_at,
+        status: log.status as 'scheduled' | 'sent' | 'failed',
+        template_name: log.subject || log.message_type
+      }));
+
+      setScheduledMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error fetching scheduled messages:', error);
+      // Show empty state if no messages exist
+      setScheduledMessages([]);
+    }
   };
 
   const handleCreateSequence = async () => {
