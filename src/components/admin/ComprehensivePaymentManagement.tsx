@@ -908,25 +908,51 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
+                <CardTitle>Payment Analytics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{schedules?.length || 0}</div>
-                    <div className="text-sm text-muted-foreground">Active Schedules</div>
+                    <div className="flex items-center justify-center mb-2">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">
+                      ${((analytics?.total_revenue || 0) / 100).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Revenue</div>
+                    <div className="text-xs text-muted-foreground">
+                      {analytics?.successful_payments || 0} successful payments
+                    </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">{lateFees?.length || 0}</div>
-                    <div className="text-sm text-muted-foreground">Late Fees</div>
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {analytics?.payment_conversion_rate?.toFixed(1) || 0.0}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Conversion Rate</div>
+                    <div className="text-xs text-muted-foreground">Payment success rate</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{reminders?.filter(r => r.status === 'pending').length || 0}</div>
-                    <div className="text-sm text-muted-foreground">Pending Reminders</div>
+                    <div className="flex items-center justify-center mb-2">
+                      <AlertTriangle className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      ${((analytics?.outstanding_amount || 0) / 100).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Outstanding</div>
+                    <div className="text-xs text-muted-foreground">Pending payments</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">95%</div>
-                    <div className="text-sm text-muted-foreground">Collection Rate</div>
+                    <div className="flex items-center justify-center mb-2">
+                      <BarChart3 className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">
+                      ${((analytics?.average_payment_value || 0) / 100).toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Avg Payment</div>
+                    <div className="text-xs text-muted-foreground">Per transaction</div>
                   </div>
                 </div>
               </CardContent>
