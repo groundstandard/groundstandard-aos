@@ -51,6 +51,8 @@ export const CalendarAttendanceView = () => {
 
       const dateStr = selectedDate.toISOString().split('T')[0];
       const dayOfWeek = selectedDate.getDay();
+      
+      console.log('Selected date:', dateStr, 'Day of week (JS getDay()):', dayOfWeek);
 
       // Get classes scheduled for this day of the week
       const { data: classSchedules, error } = await supabase
@@ -65,7 +67,7 @@ export const CalendarAttendanceView = () => {
             max_students,
             instructor_id,
             start_date,
-            profiles!classes_instructor_id_fkey (
+            profiles (
               first_name,
               last_name
             )
@@ -130,7 +132,9 @@ export const CalendarAttendanceView = () => {
           return {
             id: schedule.classes.id,
             name: schedule.classes.name,
-            instructor_name: `${schedule.classes.profiles.first_name} ${schedule.classes.profiles.last_name}`,
+            instructor_name: schedule.classes.profiles ? 
+              `${schedule.classes.profiles.first_name} ${schedule.classes.profiles.last_name}` : 
+              'No instructor assigned',
             start_time: schedule.start_time,
             end_time: schedule.end_time,
             max_students: schedule.classes.max_students,
