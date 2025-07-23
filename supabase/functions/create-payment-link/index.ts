@@ -53,30 +53,30 @@ serve(async (req) => {
     }
     logStep("Admin permissions verified");
 
-    const { student_id, amount, description, expires_in_hours } = await req.json();
-    logStep("Request data parsed", { student_id, amount, description, expires_in_hours });
+    const { contact_id, amount, description, expires_in_hours } = await req.json();
+    logStep("Request data parsed", { contact_id, amount, description, expires_in_hours });
 
-    if (!student_id || !amount) {
-      throw new Error('Missing required fields: student_id and amount');
+    if (!contact_id || !amount) {
+      throw new Error('Missing required fields: contact_id and amount');
     }
 
-    // Get student details
-    const { data: student, error: studentError } = await supabaseClient
+    // Get contact details
+    const { data: contact, error: contactError } = await supabaseClient
       .from('profiles')
       .select('first_name, last_name, email')
-      .eq('id', student_id)
+      .eq('id', contact_id)
       .single();
 
-    if (studentError || !student) {
-      throw new Error('Student not found');
+    if (contactError || !contact) {
+      throw new Error('Contact not found');
     }
-    logStep("Student found", { studentEmail: student.email });
+    logStep("Contact found", { contactEmail: contact.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     // Check if customer exists
     const customers = await stripe.customers.list({ 
-      email: student.email, 
+      email: contact.email, 
       limit: 1 
     });
     
@@ -86,8 +86,8 @@ serve(async (req) => {
       logStep("Existing customer found", { customerId });
     } else {
       const customer = await stripe.customers.create({
-        email: student.email,
-        name: `${student.first_name} ${student.last_name}`,
+        email: contact.email,
+        name: `${contact.first_name} ${contact.last_name}`,
       });
       customerId = customer.id;
       logStep("New customer created", { customerId });
@@ -122,7 +122,7 @@ serve(async (req) => {
     const { error: insertError } = await supabaseClient
       .from('payment_links')
       .insert({
-        student_id,
+        student_id: contact_id,
         stripe_payment_link_id: paymentLink.id,
         amount: Math.round(parseFloat(amount) * 100),
         description: description || 'Payment',

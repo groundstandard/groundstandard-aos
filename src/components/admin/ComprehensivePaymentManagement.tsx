@@ -130,21 +130,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   
   // Form states
   const [paymentLinkForm, setPaymentLinkForm] = useState({
-    student_id: '',
+    contact_id: '',
     amount: '',
     description: '',
     expires_in_hours: '24'
   });
   
   const [reminderForm, setReminderForm] = useState({
-    student_id: '',
+    contact_id: '',
     payment_due_date: '',
     amount: '',
     reminder_type: 'first_notice'
   });
   
   const [scheduleForm, setScheduleForm] = useState({
-    student_id: '',
+    contact_id: '',
     amount: '',
     frequency: 'monthly',
     start_date: '',
@@ -267,14 +267,14 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
-  // Fetch all students for dropdowns
-  const { data: students } = useQuery({
-    queryKey: ['students'],
+  // Fetch all contacts for dropdowns
+  const { data: contacts } = useQuery({
+    queryKey: ['contacts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email')
-        .eq('role', 'student')
+        .in('role', ['student', 'member'])
         .order('first_name');
 
       if (error) throw error;
@@ -297,7 +297,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         description: 'Payment link has been generated successfully.'
       });
       setShowPaymentLinkDialog(false);
-      setPaymentLinkForm({ student_id: '', amount: '', description: '', expires_in_hours: '24' });
+      setPaymentLinkForm({ contact_id: '', amount: '', description: '', expires_in_hours: '24' });
       // Open the payment link in a new tab
       window.open(data.url, '_blank');
     },
@@ -325,7 +325,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         description: 'Payment reminder has been sent successfully.'
       });
       setShowReminderDialog(false);
-      setReminderForm({ student_id: '', payment_due_date: '', amount: '', reminder_type: 'first_notice' });
+      setReminderForm({ contact_id: '', payment_due_date: '', amount: '', reminder_type: 'first_notice' });
       queryClient.invalidateQueries({ queryKey: ['payment-reminders'] });
     },
     onError: (error: any) => {
@@ -344,7 +344,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
       const { data, error } = await supabase
         .from('payment_schedules')
         .insert({
-          student_id: formData.student_id,
+          student_id: formData.contact_id,
           amount: Math.round(parseFloat(formData.amount) * 100),
           frequency: formData.frequency,
           start_date: formData.start_date,
@@ -362,7 +362,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         description: 'Recurring payment schedule has been set up successfully.'
       });
       setShowScheduleDialog(false);
-      setScheduleForm({ student_id: '', amount: '', frequency: 'monthly', start_date: '', payment_method: 'card' });
+      setScheduleForm({ contact_id: '', amount: '', frequency: 'monthly', start_date: '', payment_method: 'card' });
       queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
     },
     onError: (error: any) => {
@@ -450,26 +450,26 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                   <LinkIcon className="h-6 w-6 text-blue-600" />
                   <h3 className="font-semibold text-sm">Create Payment Link</h3>
                 </div>
-                <p className="text-xs text-muted-foreground">Generate payment links for students</p>
+                <p className="text-xs text-muted-foreground">Generate payment links for contacts</p>
               </CardContent>
             </Card>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Payment Link</DialogTitle>
-              <DialogDescription>Generate a payment link for a specific student</DialogDescription>
+              <DialogDescription>Generate a payment link for a specific contact</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Student</Label>
-                <Select value={paymentLinkForm.student_id} onValueChange={(value) => setPaymentLinkForm(prev => ({ ...prev, student_id: value }))}>
+                <Label>Contact</Label>
+                <Select value={paymentLinkForm.contact_id} onValueChange={(value) => setPaymentLinkForm(prev => ({ ...prev, contact_id: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
+                    <SelectValue placeholder="Select Contact" />
                   </SelectTrigger>
                   <SelectContent>
-                    {students?.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name} ({student.email})
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.first_name} {contact.last_name} ({contact.email})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -567,21 +567,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Send Payment Reminder</DialogTitle>
-              <DialogDescription>Send a payment reminder to a student</DialogDescription>
+              <DialogDescription>Send a payment reminder to a contact</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Student</Label>
-                <Select value={reminderForm.student_id} onValueChange={(value) => 
-                  setReminderForm({...reminderForm, student_id: value})
+                <Label>Contact</Label>
+                <Select value={reminderForm.contact_id} onValueChange={(value) => 
+                  setReminderForm({...reminderForm, contact_id: value})
                 }>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
+                    <SelectValue placeholder="Select Contact" />
                   </SelectTrigger>
                   <SelectContent>
-                    {students?.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name}
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.first_name} {contact.last_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -647,21 +647,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Payment Schedule</DialogTitle>
-              <DialogDescription>Set up recurring payments for a student</DialogDescription>
+              <DialogDescription>Set up recurring payments for a contact</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Student</Label>
-                <Select value={scheduleForm.student_id} onValueChange={(value) => 
-                  setScheduleForm({...scheduleForm, student_id: value})
+                <Label>Contact</Label>
+                <Select value={scheduleForm.contact_id} onValueChange={(value) => 
+                  setScheduleForm({...scheduleForm, contact_id: value})
                 }>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select student" />
+                    <SelectValue placeholder="Select Contact" />
                   </SelectTrigger>
                   <SelectContent>
-                    {students?.map((student) => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.first_name} {student.last_name}
+                    {contacts?.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.first_name} {contact.last_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
