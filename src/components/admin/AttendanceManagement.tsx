@@ -35,6 +35,7 @@ import {
   PieChart,
   Calendar as CalendarDays
 } from 'lucide-react';
+import { CalendarAttendanceView } from '@/components/attendance/CalendarAttendanceView';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -735,8 +736,9 @@ export const AttendanceManagement = () => {
 
       {/* Detailed Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
           <TabsTrigger value="classes">Classes</TabsTrigger>
           <TabsTrigger value="records">Records</TabsTrigger>
@@ -808,6 +810,10 @@ export const AttendanceManagement = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-4">
+          <CalendarAttendanceView />
         </TabsContent>
 
         <TabsContent value="students" className="space-y-4">
