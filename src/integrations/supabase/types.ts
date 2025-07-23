@@ -376,6 +376,7 @@ export type Database = {
       }
       attendance: {
         Row: {
+          academy_id: string | null
           class_id: string
           created_at: string
           date: string
@@ -385,6 +386,7 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          academy_id?: string | null
           class_id: string
           created_at?: string
           date: string
@@ -394,6 +396,7 @@ export type Database = {
           student_id: string
         }
         Update: {
+          academy_id?: string | null
           class_id?: string
           created_at?: string
           date?: string
@@ -404,6 +407,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "attendance_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "attendance_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
@@ -412,6 +422,107 @@ export type Database = {
           },
           {
             foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_notifications: {
+        Row: {
+          academy_id: string
+          admin_notification_enabled: boolean | null
+          consecutive_absence_threshold: number | null
+          created_at: string | null
+          id: string
+          instructor_notification_enabled: boolean | null
+          notification_methods: string[] | null
+          notify_absences: boolean | null
+          notify_late_arrivals: boolean | null
+          parent_notification_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          academy_id: string
+          admin_notification_enabled?: boolean | null
+          consecutive_absence_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          instructor_notification_enabled?: boolean | null
+          notification_methods?: string[] | null
+          notify_absences?: boolean | null
+          notify_late_arrivals?: boolean | null
+          parent_notification_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          academy_id?: string
+          admin_notification_enabled?: boolean | null
+          consecutive_absence_threshold?: number | null
+          created_at?: string | null
+          id?: string
+          instructor_notification_enabled?: boolean | null
+          notification_methods?: string[] | null
+          notify_absences?: boolean | null
+          notify_late_arrivals?: boolean | null
+          parent_notification_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_notifications_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_streaks: {
+        Row: {
+          class_id: string
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_updated_date: string | null
+          longest_streak: number | null
+          streak_type: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_id: string
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_updated_date?: string | null
+          longest_streak?: number | null
+          streak_type: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_id?: string
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_updated_date?: string | null
+          longest_streak?: number | null
+          streak_type?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_streaks_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_streaks_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
