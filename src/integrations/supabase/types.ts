@@ -1233,6 +1233,8 @@ export type Database = {
       classes: {
         Row: {
           age_group: string | null
+          class_length_type: string | null
+          class_length_value: number | null
           created_at: string
           description: string | null
           duration_minutes: number
@@ -1246,6 +1248,8 @@ export type Database = {
         }
         Insert: {
           age_group?: string | null
+          class_length_type?: string | null
+          class_length_value?: number | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -1259,6 +1263,8 @@ export type Database = {
         }
         Update: {
           age_group?: string | null
+          class_length_type?: string | null
+          class_length_value?: number | null
           created_at?: string
           description?: string | null
           duration_minutes?: number
