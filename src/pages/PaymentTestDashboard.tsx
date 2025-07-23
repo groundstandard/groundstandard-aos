@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PaymentTestSuite } from "@/utils/paymentTestSuite";
 import { useToast } from "@/hooks/use-toast";
+import { WebhookSecretConfig } from "@/components/payments/WebhookSecretConfig";
+import { ProductionReadinessChecker } from "@/components/payments/ProductionReadinessChecker";
 import { Play, CheckCircle, XCircle, AlertCircle, ExternalLink } from "lucide-react";
 
 const PaymentTestDashboard = () => {
@@ -245,44 +247,11 @@ const PaymentTestDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Webhook Secret Setup */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Webhook Secret Configuration</CardTitle>
-          <CardDescription>
-            Configure your Stripe webhook secret for production
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              You need to add your Stripe Webhook Secret to complete the webhook configuration.
-            </AlertDescription>
-          </Alert>
-          <Button 
-            onClick={() => window.open('https://supabase.com/dashboard/project/yhriiykdnpuutzexjdee/settings/functions', '_blank')}
-            className="w-full"
-          >
-            Configure Webhook Secret in Supabase
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Production Readiness */}
+      <ProductionReadinessChecker />
 
-      {/* Next Steps */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Next Steps for Production:</strong>
-          <ol className="list-decimal list-inside mt-2 space-y-1">
-            <li>Add STRIPE_WEBHOOK_SECRET to Supabase secrets (click button above)</li>
-            <li>Configure webhook endpoints in Stripe Dashboard</li>
-            <li>Test payment flows in Stripe test mode</li>
-            <li>Enable live mode when ready for production</li>
-          </ol>
-        </AlertDescription>
-      </Alert>
+      {/* Webhook Configuration */}
+      <WebhookSecretConfig onConfigured={() => window.location.reload()} />
     </div>
   );
 };
