@@ -68,9 +68,12 @@ export const ClassManagement = () => {
     description: '',
     instructor_id: '',
     max_students: 20,
+    unlimited_students: false,
     duration_minutes: 60,
     skill_level: 'all',
     age_group: 'all',
+    class_length_type: 'indefinite', // 'indefinite' | 'weeks' | 'sessions'
+    class_length_value: '',
   });
 
   const [scheduleData, setScheduleData] = useState<ClassSchedule[]>([
@@ -210,9 +213,12 @@ export const ClassManagement = () => {
       description: '',
       instructor_id: '',
       max_students: 20,
+      unlimited_students: false,
       duration_minutes: 60,
       skill_level: 'all',
       age_group: 'all',
+      class_length_type: 'indefinite',
+      class_length_value: '',
     });
     setScheduleData([
       { class_id: '', day_of_week: 1, start_time: '18:00', end_time: '19:00' }
@@ -374,20 +380,32 @@ export const ClassManagement = () => {
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                    <div>
-                      <Label htmlFor="name" className={isMobile ? 'text-sm' : ''}>Class Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                        className="input-clean"
+                  <div>
+                    <Label htmlFor="name" className={isMobile ? 'text-sm' : ''}>Class Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                      className="input-clean"
+                    />
+                  </div>
+
+                  <div className={`space-y-4`}>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="unlimited_students"
+                        checked={formData.unlimited_students}
+                        onChange={(e) => setFormData({ ...formData, unlimited_students: e.target.checked })}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                       />
+                      <Label htmlFor="unlimited_students" className={isMobile ? 'text-sm' : ''}>Unlimited Students</Label>
                     </div>
-                    {!isMobile && (
+                    
+                    {!formData.unlimited_students && (
                       <div>
-                        <Label htmlFor="max_students">Max Students</Label>
+                        <Label htmlFor="max_students" className={isMobile ? 'text-sm' : ''}>Max Students</Label>
                         <Input
                           id="max_students"
                           type="number"
@@ -399,20 +417,6 @@ export const ClassManagement = () => {
                       </div>
                     )}
                   </div>
-
-                  {isMobile && (
-                    <div>
-                      <Label htmlFor="max_students_mobile" className="text-sm">Max Students</Label>
-                      <Input
-                        id="max_students_mobile"
-                        type="number"
-                        value={formData.max_students}
-                        onChange={(e) => setFormData({ ...formData, max_students: parseInt(e.target.value) })}
-                        required
-                        className="input-clean"
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <Label htmlFor="description" className={isMobile ? 'text-sm' : ''}>Description</Label>
@@ -488,6 +492,36 @@ export const ClassManagement = () => {
                           <SelectItem value="adults">Adults (18+)</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className={isMobile ? 'text-sm' : ''}>Class Duration</Label>
+                    <div className="space-y-3">
+                      <Select
+                        value={formData.class_length_type}
+                        onValueChange={(value) => setFormData({ ...formData, class_length_type: value, class_length_value: '' })}
+                      >
+                        <SelectTrigger className="input-clean">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="indefinite">Ongoing/Indefinite</SelectItem>
+                          <SelectItem value="weeks">Number of Weeks</SelectItem>
+                          <SelectItem value="sessions">Number of Sessions</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      {formData.class_length_type !== 'indefinite' && (
+                        <Input
+                          type="number"
+                          placeholder={`Enter number of ${formData.class_length_type}`}
+                          value={formData.class_length_value}
+                          onChange={(e) => setFormData({ ...formData, class_length_value: e.target.value })}
+                          className="input-clean"
+                          min="1"
+                        />
+                      )}
                     </div>
                   </div>
 
@@ -715,15 +749,18 @@ export const ClassManagement = () => {
                             size="sm"
                             onClick={() => {
                               setEditingClass(classItem);
-                              setFormData({
-                                name: classItem.name,
-                                description: classItem.description || '',
-                                instructor_id: classItem.instructor_id || '',
-                                max_students: classItem.max_students,
-                                duration_minutes: classItem.duration_minutes,
-                                skill_level: classItem.skill_level || 'all',
-                                age_group: classItem.age_group || 'all',
-                              });
+                            setFormData({
+                              name: classItem.name,
+                              description: classItem.description || '',
+                              instructor_id: classItem.instructor_id || '',
+                              max_students: classItem.max_students,
+                              unlimited_students: false,
+                              duration_minutes: classItem.duration_minutes,
+                              skill_level: classItem.skill_level || 'all',
+                              age_group: classItem.age_group || 'all',
+                              class_length_type: 'indefinite',
+                              class_length_value: '',
+                            });
                               setIsDialogOpen(true);
                             }}
                             className="px-2"
@@ -784,9 +821,12 @@ export const ClassManagement = () => {
                               description: classItem.description || '',
                               instructor_id: classItem.instructor_id || '',
                               max_students: classItem.max_students,
+                              unlimited_students: false,
                               duration_minutes: classItem.duration_minutes,
                               skill_level: classItem.skill_level || 'all',
                               age_group: classItem.age_group || 'all',
+                              class_length_type: 'indefinite',
+                              class_length_value: '',
                             });
                             setIsDialogOpen(true);
                           }}
