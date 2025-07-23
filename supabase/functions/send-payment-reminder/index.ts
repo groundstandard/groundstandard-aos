@@ -15,18 +15,27 @@ serve(async (req) => {
   }
 
   try {
-    const { type, contactId, data } = await req.json();
+    const { contact_id, payment_due_date, amount, reminder_type, message, type, contactId, data } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
+
+    // Handle both API call types - direct payment reminder or notification service
+    const finalContactId = contact_id || contactId;
+    const finalType = type || 'payment_reminder';
+    
+    if (!finalContactId) {
+      throw new Error("Contact ID is required");
+    }
 
     // Get contact information
     const { data: contact } = await supabase
       .from("profiles")
       .select("email, first_name, last_name")
-      .eq("id", contactId)
+      .eq("id", finalContactId)
       .single();
 
     if (!contact) {
@@ -36,7 +45,7 @@ serve(async (req) => {
     let emailContent = "";
     let subject = "";
 
-    switch (type) {
+    switch (finalType) {
       case "payment_failed":
         subject = "Payment Failed - Action Required";
         emailContent = generatePaymentFailedEmail(contact, data);
@@ -64,41 +73,58 @@ serve(async (req) => {
       
       case "payment_reminder":
         subject = "Payment Reminder";
-        emailContent = generatePaymentReminderEmail(contact, data);
+        emailContent = generatePaymentReminderEmail(contact, { 
+          amount: amount ? parseFloat(amount) * 100 : (data?.amount || 5000),
+          due_date: payment_due_date || data?.due_date,
+          description: message || data?.description || 'Payment due',
+          ...data 
+        });
         break;
       
       default:
-        throw new Error(`Unknown notification type: ${type}`);
+        throw new Error(`Unknown notification type: ${finalType}`);
     }
 
-    // Send email
-    const emailResponse = await resend.emails.send({
-      from: "Academy Billing <billing@resend.dev>",
-      to: [contact.email],
-      subject: subject,
-      html: emailContent,
-    });
+    // Send email if Resend is configured
+    let emailId = null;
+    if (Deno.env.get("RESEND_API_KEY")) {
+      const emailResponse = await resend.emails.send({
+        from: "Academy Billing <billing@resend.dev>",
+        to: [contact.email],
+        subject: subject,
+        html: emailContent,
+      });
+      emailId = emailResponse.data?.id;
+    }
 
     // Log the communication
     await supabase
       .from("communication_logs")
       .insert({
-        contact_id: contactId,
+        contact_id: finalContactId,
         message_type: "email",
         subject: subject,
         content: emailContent,
         status: "sent",
         sent_at: new Date().toISOString(),
         metadata: {
-          type: type,
-          resend_id: emailResponse.data?.id,
+          type: finalType,
+          resend_id: emailId,
+          amount: amount,
+          due_date: payment_due_date,
+          reminder_type: reminder_type,
           ...data
         }
       });
 
-    console.log(`Sent ${type} notification to ${contact.email}`);
+    console.log(`Sent ${finalType} notification to ${contact.email}`);
 
-    return new Response(JSON.stringify({ success: true, emailId: emailResponse.data?.id }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailId: emailId,
+      contact_name: `${contact.first_name} ${contact.last_name}`,
+      contact_email: contact.email
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
