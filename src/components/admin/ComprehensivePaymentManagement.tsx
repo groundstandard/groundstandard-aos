@@ -492,10 +492,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4 text-center">
-                <LinkIcon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <h3 className="font-semibold">Create Payment Link</h3>
-                <p className="text-sm text-muted-foreground">Generate payment links for students</p>
+              <CardContent className="p-3 text-center">
+                <LinkIcon className="h-6 w-6 mx-auto mb-1 text-blue-600" />
+                <h3 className="font-semibold text-sm">Create Payment Link</h3>
+                <p className="text-xs text-muted-foreground">Generate payment links for students</p>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -573,10 +573,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('refunds')}
         >
-          <CardContent className="p-4 text-center">
-            <RotateCcw className="h-8 w-8 mx-auto mb-2 text-green-600" />
-            <h3 className="font-semibold">Refunds & Credits</h3>
-            <p className="text-sm text-muted-foreground">Process refunds and manage credits</p>
+          <CardContent className="p-3 text-center">
+            <RotateCcw className="h-6 w-6 mx-auto mb-1 text-green-600" />
+            <h3 className="font-semibold text-sm">Refunds & Credits</h3>
+            <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
           </CardContent>
         </Card>
 
@@ -585,10 +585,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('taxes')}
         >
-          <CardContent className="p-4 text-center">
-            <Calculator className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-            <h3 className="font-semibold">Tax Management</h3>
-            <p className="text-sm text-muted-foreground">Configure tax rates and compliance</p>
+          <CardContent className="p-3 text-center">
+            <Calculator className="h-6 w-6 mx-auto mb-1 text-purple-600" />
+            <h3 className="font-semibold text-sm">Tax Management</h3>
+            <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
           </CardContent>
         </Card>
 
@@ -596,10 +596,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4 text-center">
-                <Bell className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-                <h3 className="font-semibold">Send Reminder</h3>
-                <p className="text-sm text-muted-foreground">Send payment reminders</p>
+              <CardContent className="p-3 text-center">
+                <Bell className="h-6 w-6 mx-auto mb-1 text-orange-600" />
+                <h3 className="font-semibold text-sm">Send Reminder</h3>
+                <p className="text-xs text-muted-foreground">Send payment reminders</p>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -674,10 +674,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4 text-center">
-                <Clock className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <h3 className="font-semibold">Setup Recurring</h3>
-                <p className="text-sm text-muted-foreground">Create payment schedules</p>
+              <CardContent className="p-3 text-center">
+                <Clock className="h-6 w-6 mx-auto mb-1 text-green-600" />
+                <h3 className="font-semibold text-sm">Setup Recurring</h3>
+                <p className="text-xs text-muted-foreground">Create payment schedules</p>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -750,10 +750,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         </Dialog>
 
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-4 text-center">
-            <Calculator className="h-8 w-8 mx-auto mb-2 text-red-600" />
-            <h3 className="font-semibold">Calculate Late Fees</h3>
-            <p className="text-sm text-muted-foreground">Process overdue payments</p>
+          <CardContent className="p-3 text-center">
+            <Calculator className="h-6 w-6 mx-auto mb-1 text-red-600" />
+            <h3 className="font-semibold text-sm">Calculate Late Fees</h3>
+            <p className="text-xs text-muted-foreground">Process overdue payments</p>
             <Button 
               variant="outline" 
               size="sm" 
