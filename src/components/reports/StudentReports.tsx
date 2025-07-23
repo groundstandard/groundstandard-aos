@@ -21,9 +21,9 @@ export const StudentReports = () => {
         .eq('role', 'member')
         .order('created_at', { ascending: false });
 
-      // Get enrollment data
-      const { data: enrollments } = await supabase
-        .from('class_enrollments')
+      // Get reservation data
+      const { data: reservations } = await supabase
+        .from('class_reservations')
         .select(`
           *,
           classes(name),
@@ -39,7 +39,7 @@ export const StudentReports = () => {
 
       // Calculate student statistics
       const studentStats = students?.map(student => {
-        const studentEnrollments = enrollments?.filter(e => e.student_id === student.id) || [];
+        const studentReservations = reservations?.filter(r => r.student_id === student.id) || [];
         const studentAttendance = recentAttendance?.filter(a => a.student_id === student.id) || [];
         
         const totalSessions = studentAttendance.length;
@@ -48,7 +48,7 @@ export const StudentReports = () => {
 
         return {
           ...student,
-          enrolledClasses: studentEnrollments.length,
+          enrolledClasses: studentReservations.length,
           recentAttendanceRate: attendanceRate,
           totalRecentSessions: totalSessions,
           joinDate: student.created_at

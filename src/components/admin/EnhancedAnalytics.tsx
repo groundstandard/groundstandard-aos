@@ -241,25 +241,25 @@ export const EnhancedAnalytics = () => {
       const classData: ClassPopularityData[] = [];
       
       for (const cls of classes || []) {
-        const { data: enrollments } = await supabase
-          .from('class_enrollments')
+        const { data: reservations } = await supabase
+          .from('class_reservations')
           .select('id')
           .eq('class_id', cls.id)
-          .eq('status', 'active');
+          .eq('status', 'reserved');
 
         const { data: attendance } = await supabase
           .from('attendance')
           .select('status')
           .eq('class_id', cls.id);
 
-        const enrollmentCount = enrollments?.length || 0;
+        const reservationCount = reservations?.length || 0;
         const totalAttendance = attendance?.length || 0;
         const presentCount = attendance?.filter(a => a.status === 'present').length || 0;
         const attendanceRate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
         
         classData.push({
           class_name: cls.name,
-          enrollments: enrollmentCount,
+          enrollments: reservationCount,
           attendance_rate: attendanceRate,
           satisfaction: 4.5 // Default satisfaction score since we don't have reviews yet
         });

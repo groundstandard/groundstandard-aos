@@ -112,12 +112,12 @@ export const ProgressTracker = () => {
       const monthlyRecords = records.filter(r => new Date(r.date) >= monthStart);
       const monthlyAttendance = monthlyRecords.filter(r => r.status === 'present').length;
 
-      // Get enrolled classes count
-      const { count: enrolledCount } = await supabase
-        .from('class_enrollments')
+      // Get reserved classes count
+      const { count: reservedCount } = await supabase
+        .from('class_reservations')
         .select('*', { count: 'exact', head: true })
         .eq('student_id', profile?.id)
-        .eq('status', 'active');
+        .eq('status', 'reserved');
 
       setProgressStats({
         totalClasses,
@@ -125,7 +125,7 @@ export const ProgressTracker = () => {
         attendanceRate,
         currentStreak,
         monthlyAttendance,
-        enrolledClasses: enrolledCount || 0
+        enrolledClasses: reservedCount || 0
       });
 
     } catch (error: any) {

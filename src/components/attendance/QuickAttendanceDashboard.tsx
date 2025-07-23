@@ -129,12 +129,12 @@ export const QuickAttendanceDashboard = () => {
 
     setLoading(true);
     try {
-      // Get enrolled students for this class
-      const { data: enrollments, error: enrollError } = await supabase
-        .from('class_enrollments')
+      // Get reserved students for this class
+      const { data: reservations, error: reservationError } = await supabase
+        .from('class_reservations')
         .select(`
           student_id,
-          profiles!class_enrollments_student_id_fkey(
+          profiles(
             id,
             first_name,
             last_name,
@@ -143,9 +143,9 @@ export const QuickAttendanceDashboard = () => {
           )
         `)
         .eq('class_id', selectedClass)
-        .eq('status', 'active');
+        .eq('status', 'reserved');
 
-      if (enrollError) throw enrollError;
+      if (reservationError) throw reservationError;
 
       // Get existing attendance for selected date
       const { data: attendance, error: attendanceError } = await supabase
@@ -157,8 +157,8 @@ export const QuickAttendanceDashboard = () => {
       if (attendanceError) throw attendanceError;
 
       // Combine student data with attendance status
-        const studentsWithAttendance: Student[] = (enrollments || []).map(enrollment => {
-          const student = enrollment.profiles;
+        const studentsWithAttendance: Student[] = (reservations || []).map(reservation => {
+          const student = reservation.profiles;
           const attendanceRecord = attendance?.find(att => att.student_id === student.id);
 
           return {

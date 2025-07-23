@@ -20,9 +20,9 @@ export const ClassReports = () => {
         `)
         .order('created_at', { ascending: false });
 
-      // Get enrollments per class
-      const { data: enrollments } = await supabase
-        .from('class_enrollments')
+      // Get reservations per class
+      const { data: reservations } = await supabase
+        .from('class_reservations')
         .select(`
           class_id,
           status,
@@ -42,8 +42,8 @@ export const ClassReports = () => {
 
       // Calculate class statistics
       const classStats = classes?.map(classItem => {
-        const classEnrollments = enrollments?.filter(e => e.class_id === classItem.id) || [];
-        const activeEnrollments = classEnrollments.filter(e => e.status === 'active');
+        const classReservations = reservations?.filter(r => r.class_id === classItem.id) || [];
+        const activeReservations = classReservations.filter(r => r.status === 'reserved');
         const classAttendance = attendance?.filter(a => a.class_id === classItem.id) || [];
         
         const totalSessions = classAttendance.length;
@@ -52,13 +52,13 @@ export const ClassReports = () => {
         
         // Calculate capacity utilization
         const capacityUtilization = classItem.max_students > 0 
-          ? Math.round((activeEnrollments.length / classItem.max_students) * 100) 
+          ? Math.round((activeReservations.length / classItem.max_students) * 100) 
           : 0;
 
         return {
           ...classItem,
-          totalEnrolled: classEnrollments.length,
-          activeEnrolled: activeEnrollments.length,
+          totalEnrolled: classReservations.length,
+          activeEnrolled: activeReservations.length,
           attendanceRate,
           totalSessions,
           capacityUtilization,
@@ -69,8 +69,8 @@ export const ClassReports = () => {
       // Summary statistics
       const totalClasses = classes?.length || 0;
       const activeClasses = classes?.filter(c => c.is_active).length || 0;
-      const totalEnrollments = enrollments?.length || 0;
-      const activeEnrollments = enrollments?.filter(e => e.status === 'active').length || 0;
+      const totalEnrollments = reservations?.length || 0;
+      const activeEnrollments = reservations?.filter(r => r.status === 'reserved').length || 0;
 
       return {
         classes: classStats || [],

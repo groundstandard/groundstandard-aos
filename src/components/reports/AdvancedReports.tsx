@@ -194,15 +194,15 @@ export const AdvancedReports = () => {
           created_at
         `);
 
-      // Get enrollment data
-      const { data: enrollments } = await supabase
-        .from('class_enrollments')
+      // Get reservation data
+      const { data: reservations } = await supabase
+        .from('class_reservations')
         .select(`
           id,
           student_id,
           class_id,
           status,
-          enrolled_at,
+          reserved_at,
           classes(name),
           profiles(first_name, last_name)
         `);
@@ -250,7 +250,7 @@ export const AdvancedReports = () => {
       return {
         students: students || [],
         classes: classes || [],
-        enrollments: enrollments || [],
+        enrollments: reservations || [],
         attendance: attendance || [],
         payments: payments || []
       };
@@ -278,14 +278,15 @@ export const AdvancedReports = () => {
             .in('id', operation.targetIds);
           break;
         case 'class_enrollment':
-          const enrollmentData = operation.targetIds.map(studentId => ({
+          const reservationData = operation.targetIds.map(studentId => ({
             student_id: studentId,
             class_id: operation.data.classId,
-            status: 'active'
+            status: 'reserved',
+            reserved_at: new Date().toISOString()
           }));
           await supabase
-            .from('class_enrollments')
-            .insert(enrollmentData);
+            .from('class_reservations')
+            .insert(reservationData);
           break;
       }
     },

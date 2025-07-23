@@ -84,7 +84,7 @@ export const CalendarAttendanceView = () => {
               .from('class_reservations')
             .select(`
               student_id,
-              profiles!class_reservations_student_id_fkey (
+              profiles (
                 id,
                 first_name,
                 last_name,

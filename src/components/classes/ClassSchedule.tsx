@@ -71,20 +71,20 @@ export const ClassSchedule = () => {
 
       if (schedulesError) throw schedulesError;
 
-      // Fetch enrollment counts and user enrollments
-      const { data: enrollmentsData, error: enrollmentsError } = await supabase
-        .from('class_enrollments')
+      // Fetch reservation counts and user reservations
+      const { data: reservationsData, error: reservationsError } = await supabase
+        .from('class_reservations')
         .select('class_id, student_id')
-        .eq('status', 'active');
+        .eq('status', 'reserved');
 
-      if (enrollmentsError) throw enrollmentsError;
+      if (reservationsError) throw reservationsError;
 
       // Combine data
       const classesWithSchedules = classesData.map(classItem => {
         const schedules = schedulesData.filter(s => s.class_id === classItem.id);
-        const enrollments = enrollmentsData.filter(e => e.class_id === classItem.id);
-        const enrollment_count = enrollments.length;
-        const is_enrolled = enrollments.some(e => e.student_id === profile?.id);
+        const reservations = reservationsData.filter(r => r.class_id === classItem.id);
+        const enrollment_count = reservations.length;
+        const is_enrolled = reservations.some(r => r.student_id === profile?.id);
 
         return {
           ...classItem,
@@ -109,22 +109,22 @@ export const ClassSchedule = () => {
   const enrollInClass = async (classId: string) => {
     // Check subscription limits for free users
     if (!subscriptionInfo?.subscribed) {
-      const { data: userEnrollments, error: enrollmentError } = await supabase
-        .from('class_enrollments')
+      const { data: userReservations, error: reservationError } = await supabase
+        .from('class_reservations')
         .select('id')
         .eq('student_id', profile?.id)
-        .eq('status', 'active');
+        .eq('status', 'reserved');
 
-      if (enrollmentError) {
+      if (reservationError) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to check enrollment limits'
+          description: 'Failed to check reservation limits'
         });
         return;
       }
 
-      if (userEnrollments && userEnrollments.length >= 3) {
+      if (userReservations && userReservations.length >= 3) {
          toast({
            variant: 'destructive',
            title: 'Upgrade Required',
@@ -145,18 +145,19 @@ export const ClassSchedule = () => {
 
     try {
       const { error } = await supabase
-        .from('class_enrollments')
+        .from('class_reservations')
         .insert({
           class_id: classId,
           student_id: profile?.id,
-          status: 'active'
+          status: 'reserved',
+          reserved_at: new Date().toISOString()
         });
 
       if (error) throw error;
 
       toast({
         title: 'Success',
-        description: 'Successfully enrolled in class!'
+        description: 'Successfully reserved a spot in class!'
       });
 
       fetchClassesWithSchedules();
@@ -164,15 +165,15 @@ export const ClassSchedule = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to enroll in class'
+        description: error.message || 'Failed to reserve class'
       });
     }
   };
 
-  const unenrollFromClass = async (classId: string) => {
+  const cancelClassReservation = async (classId: string) => {
     try {
       const { error } = await supabase
-        .from('class_enrollments')
+        .from('class_reservations')
         .delete()
         .eq('class_id', classId)
         .eq('student_id', profile?.id);
@@ -181,7 +182,7 @@ export const ClassSchedule = () => {
 
       toast({
         title: 'Success',
-        description: 'Successfully unenrolled from class'
+        description: 'Successfully canceled class reservation'
       });
 
       fetchClassesWithSchedules();
@@ -189,7 +190,7 @@ export const ClassSchedule = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to unenroll from class'
+        description: error.message || 'Failed to cancel reservation'
       });
     }
   };
@@ -207,14 +208,14 @@ export const ClassSchedule = () => {
     return format(date, 'h:mm a');
   };
 
-  const getUserEnrollmentCount = () => {
+  const getUserReservationCount = () => {
     return classes.reduce((count, classItem) => {
       return count + (classItem.is_enrolled ? 1 : 0);
     }, 0);
   };
 
-  const isEnrollmentLimited = () => {
-    return !subscriptionInfo?.subscribed && getUserEnrollmentCount() >= 3;
+  const isReservationLimited = () => {
+    return !subscriptionInfo?.subscribed && getUserReservationCount() >= 3;
   };
 
   if (loading) {
@@ -243,7 +244,7 @@ export const ClassSchedule = () => {
                     Free Plan - Limited to 3 Classes
                   </p>
                   <p className="text-sm text-amber-600">
-                    You're using {getUserEnrollmentCount()}/3 free enrollments. 
+                    You're using {getUserReservationCount()}/3 free reservations. 
                     Upgrade for unlimited access.
                   </p>
                 </div>
@@ -326,9 +327,9 @@ export const ClassSchedule = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => unenrollFromClass(classItem.id)}
+                                onClick={() => cancelClassReservation(classItem.id)}
                               >
-                                Unenroll
+                                Cancel
                               </Button>
                             ) : (
                               <div className="space-y-2">
@@ -337,14 +338,14 @@ export const ClassSchedule = () => {
                                   onClick={() => enrollInClass(classItem.id)}
                                   disabled={
                                     classItem.enrollment_count >= classItem.max_students ||
-                                    isEnrollmentLimited()
+                                    isReservationLimited()
                                   }
-                                  className={isEnrollmentLimited() ? "opacity-60" : ""}
+                                  className={isReservationLimited() ? "opacity-60" : ""}
                                 >
                                   {classItem.enrollment_count >= classItem.max_students ? 'Full' : 
-                                   isEnrollmentLimited() ? 'Upgrade Required' : 'Enroll'}
+                                   isReservationLimited() ? 'Upgrade Required' : 'Reserve'}
                                 </Button>
-                                {isEnrollmentLimited() && (
+                                {isReservationLimited() && (
                                   <div className="flex items-center gap-1 text-xs text-amber-600">
                                     <Lock className="h-3 w-3" />
                                     <span>Free limit reached</span>
@@ -380,7 +381,7 @@ export const ClassSchedule = () => {
                       {classItem.is_enrolled && (
                         <div className="mt-3 flex items-center gap-2">
                           <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
-                            Enrolled
+                            Reserved
                           </Badge>
                           {subscriptionInfo?.subscribed && (
                             <Badge variant="secondary" className="bg-gradient-primary text-white">
