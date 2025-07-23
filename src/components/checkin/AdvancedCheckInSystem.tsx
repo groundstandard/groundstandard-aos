@@ -544,7 +544,7 @@ export const AdvancedCheckInSystem = () => {
                   <SelectContent>
                     {todayClasses.map((schedule: any) => (
                       <SelectItem key={schedule.id} value={schedule.class_id}>
-                        {schedule.classes.name} ({schedule.start_time} - {schedule.end_time})
+                        {schedule.classes?.name || 'Unknown Class'} ({schedule.start_time} - {schedule.end_time})
                       </SelectItem>
                     ))}
                   </SelectContent>
