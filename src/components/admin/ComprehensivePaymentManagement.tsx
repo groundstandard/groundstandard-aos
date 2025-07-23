@@ -487,68 +487,6 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         </CardHeader>
       </Card>
 
-      {/* Analytics Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${((analytics?.total_revenue || 0) / 100).toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {analytics?.successful_payments || 0} successful payments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(analytics?.payment_conversion_rate || 0).toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Payment success rate
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${((analytics?.outstanding_amount || 0) / 100).toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Pending payments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Payment</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${((analytics?.average_payment_value || 0) / 100).toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Per transaction
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -905,6 +843,69 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 </div>
               </CardContent>
             </Card>
+
+            {/* Analytics Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ${((analytics?.total_revenue || 0) / 100).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics?.successful_payments || 0} successful payments
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {(analytics?.payment_conversion_rate || 0).toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Payment success rate
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ${((analytics?.outstanding_amount || 0) / 100).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Pending payments
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg Payment</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    ${((analytics?.average_payment_value || 0) / 100).toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Per transaction
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
           </div>
         </TabsContent>
