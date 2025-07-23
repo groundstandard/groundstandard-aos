@@ -147,10 +147,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   
   const [scheduleForm, setScheduleForm] = useState({
     contact_id: '',
-    amount: '',
-    frequency: 'monthly',
-    start_date: '',
-    payment_method: 'card'
+    membership_plan_id: '',
+    start_date: ''
   });
 
   // Fetch payment analytics
@@ -284,6 +282,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
+  // Fetch active membership plans for the recurring setup dialog
+  const { data: membershipPlans } = useQuery({
+    queryKey: ['membership-plans'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('membership_plans')
+        .select('id, name, base_price_cents, billing_frequency')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Create payment link mutation
   const createPaymentLinkMutation = useMutation({
     mutationFn: async (formData: typeof paymentLinkForm) => {
@@ -337,20 +350,17 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
-  // Create payment schedule mutation
+  // Create membership subscription mutation
   const createScheduleMutation = useMutation({
     mutationFn: async (formData: typeof scheduleForm) => {
-      const nextPaymentDate = new Date(formData.start_date);
       const { data, error } = await supabase
-        .from('payment_schedules')
+        .from('membership_subscriptions')
         .insert({
-          student_id: formData.contact_id,
-          amount: Math.round(parseFloat(formData.amount) * 100),
-          frequency: formData.frequency,
+          profile_id: formData.contact_id,
+          membership_plan_id: formData.membership_plan_id,
+          status: 'active',
           start_date: formData.start_date,
-          next_payment_date: nextPaymentDate.toISOString().split('T')[0],
-          payment_method: formData.payment_method,
-          status: 'active'
+          next_billing_date: formData.start_date
         });
       
       if (error) throw error;
@@ -358,18 +368,18 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     },
     onSuccess: () => {
       toast({
-        title: 'Payment Schedule Created',
-        description: 'Recurring payment schedule has been set up successfully.'
+        title: 'Membership Added',
+        description: 'Membership has been added successfully.'
       });
       setShowScheduleDialog(false);
-      setScheduleForm({ contact_id: '', amount: '', frequency: 'monthly', start_date: '', payment_method: 'card' });
-      queryClient.invalidateQueries({ queryKey: ['payment-schedules'] });
+      setScheduleForm({ contact_id: '', membership_plan_id: '', start_date: '' });
+      queryClient.invalidateQueries({ queryKey: ['membership-subscriptions'] });
     },
     onError: (error: any) => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to create payment schedule'
+        description: error.message || 'Failed to add membership'
       });
     }
   });
@@ -657,19 +667,28 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </div>
               <div>
                 <Label>Select Subscription Plan</Label>
-                <Select value={scheduleForm.frequency} onValueChange={(value) => 
-                  setScheduleForm({...scheduleForm, frequency: value})
+                <Select value={scheduleForm.membership_plan_id} onValueChange={(value) => 
+                  setScheduleForm({...scheduleForm, membership_plan_id: value})
                 }>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a plan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="basic">Basic Plan - $29/month</SelectItem>
-                    <SelectItem value="premium">Premium Plan - $49/month</SelectItem>
-                    <SelectItem value="elite">Elite Plan - $99/month</SelectItem>
-                    <SelectItem value="family">Family Plan - $149/month</SelectItem>
+                    {membershipPlans?.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name} - ${(plan.base_price_cents / 100).toFixed(2)}/{plan.billing_frequency}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={scheduleForm.start_date}
+                  onChange={(e) => setScheduleForm({...scheduleForm, start_date: e.target.value})}
+                />
               </div>
               <Button 
                 onClick={() => createScheduleMutation.mutate(scheduleForm)}
