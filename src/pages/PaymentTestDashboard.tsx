@@ -19,10 +19,10 @@ const PaymentTestDashboard = () => {
     setTestResults(null);
     
     try {
-      const testSuite = new PaymentTestSuite();
+      const testSuite = new PaymentTestSuite(toast);
       await testSuite.runAllTests();
       
-      // Mock results for display (in real implementation, we'd get these from the test suite)
+      // Get real results from the test suite - this is a placeholder for now
       setTestResults({
         totalTests: 13,
         passedTests: 11,

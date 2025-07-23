@@ -25,6 +25,9 @@ serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!webhookSecret) {
+      logStep("WARNING: STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled");
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -45,12 +48,23 @@ serve(async (req) => {
         logStep("Webhook signature verified", { eventType: event.type });
       } catch (err) {
         logStep("Webhook signature verification failed", { error: err.message });
-        return new Response('Webhook signature verification failed', { status: 400 });
+        return new Response(JSON.stringify({ error: 'Webhook signature verification failed' }), { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     } else {
-      // If no webhook secret, parse the body directly (for testing)
-      event = JSON.parse(body);
-      logStep("Webhook processed without signature verification", { eventType: event.type });
+      // If no webhook secret or signature, parse the body directly (for testing)
+      try {
+        event = JSON.parse(body);
+        logStep("Webhook processed without signature verification", { eventType: event.type });
+      } catch (err) {
+        logStep("Failed to parse webhook body", { error: err.message });
+        return new Response(JSON.stringify({ error: 'Invalid webhook payload' }), { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Handle the event

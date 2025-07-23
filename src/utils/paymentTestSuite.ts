@@ -14,11 +14,10 @@ interface TestSuite {
 }
 
 export class PaymentTestSuite {
-  private toast: any;
+  private toastFn: any;
 
-  constructor() {
-    const { toast } = useToast();
-    this.toast = toast;
+  constructor(toastFn?: any) {
+    this.toastFn = toastFn || (() => {});
   }
 
   async runAllTests(): Promise<void> {
@@ -92,7 +91,7 @@ export class PaymentTestSuite {
     console.log(`   ❌ Failed: ${failedTests}`);
     console.log(`   📈 Success Rate: ${Math.round((passedTests / totalTests) * 100)}%`);
 
-    this.toast({
+    this.toastFn({
       title: "Payment Tests Complete",
       description: `${passedTests}/${totalTests} tests passed (${Math.round((passedTests / totalTests) * 100)}%)`,
       variant: passedTests === totalTests ? "default" : "destructive"
