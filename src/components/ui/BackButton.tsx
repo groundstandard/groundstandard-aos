@@ -18,12 +18,8 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
       return;
     }
     
-    // Check if we can go back in history, otherwise use fallback
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(fallbackPath);
-    }
+    // Always navigate to fallback path (dashboard) for reliable navigation
+    navigate(fallbackPath);
   };
 
   // Don't show back button on dashboard
