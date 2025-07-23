@@ -113,7 +113,6 @@ serve(async (req) => {
           url: `${req.headers.get('origin') || 'https://app.groundstandard.com'}/payments?success=true`,
         },
       },
-      expires_at: Math.floor((Date.now() + (parseInt(expires_in_hours) * 60 * 60 * 1000)) / 1000),
     });
 
     logStep("Payment link created", { paymentLinkId: paymentLink.id, url: paymentLink.url });
@@ -126,7 +125,7 @@ serve(async (req) => {
         stripe_payment_link_id: paymentLink.id,
         amount: Math.round(parseFloat(amount) * 100),
         description: description || 'Payment',
-        expires_at: new Date(paymentLink.expires_at * 1000).toISOString(),
+        expires_at: new Date(Date.now() + (parseInt(expires_in_hours) * 60 * 60 * 1000)).toISOString(),
         url: paymentLink.url,
         created_by: user.id,
         status: 'active'
@@ -142,7 +141,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       url: paymentLink.url,
-      expires_at: paymentLink.expires_at,
+      expires_at: new Date(Date.now() + (parseInt(expires_in_hours) * 60 * 60 * 1000)).toISOString(),
       payment_link_id: paymentLink.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
