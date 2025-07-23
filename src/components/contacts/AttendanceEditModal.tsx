@@ -69,8 +69,7 @@ const AttendanceEditModal: React.FC<AttendanceEditModalProps> = ({
         .from('attendance')
         .update({
           status,
-          notes: notes.trim() || null,
-          updated_at: new Date().toISOString()
+          notes: notes.trim() || null
         })
         .eq('id', attendance.id);
 
