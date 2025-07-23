@@ -30,6 +30,9 @@ interface Attendance {
   status: string;
   notes?: string;
   created_at: string;
+  classes?: {
+    name: string;
+  };
 }
 
 interface AttendanceEditModalProps {
@@ -122,25 +125,38 @@ const AttendanceEditModal: React.FC<AttendanceEditModalProps> = ({
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* Date and Current Status */}
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">
-                  {new Date(attendance.date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-                <p className="text-sm text-muted-foreground">Class Date</p>
+          {/* Date and Class Info */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-3">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">
+                    {new Date(attendance.date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Class Date</p>
+                </div>
               </div>
+              <Badge variant="outline" className={getStatusColor(attendance.status)}>
+                {attendance.status}
+              </Badge>
             </div>
-            <Badge variant="outline" className={getStatusColor(attendance.status)}>
-              {attendance.status}
-            </Badge>
+            
+            {/* Class Name */}
+            {attendance.classes?.name && (
+              <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <User className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="font-medium text-primary">{attendance.classes.name}</p>
+                  <p className="text-sm text-muted-foreground">Class Name</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status Selection */}
