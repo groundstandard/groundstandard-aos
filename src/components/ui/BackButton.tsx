@@ -12,19 +12,14 @@ export const BackButton = ({ fallbackPath = '/dashboard', className = '' }: Back
   const location = useLocation();
 
   const handleBack = () => {
-    console.log('BackButton: handleBack called');
-    console.log('BackButton: window.history.length:', window.history.length);
-    console.log('BackButton: current location:', location.pathname);
-    console.log('BackButton: fallbackPath:', fallbackPath);
-    
-    // Check if there's history to go back to
-    if (window.history.length > 1) {
-      console.log('BackButton: Using navigate(-1)');
-      navigate(-1);
-    } else {
-      console.log('BackButton: Using fallback path');
-      navigate(fallbackPath);
+    // Special handling for class management - typically comes from attendance
+    if (location.pathname === '/class-management') {
+      navigate('/attendance');
+      return;
     }
+    
+    // For other pages, try to go back in history
+    navigate(-1);
   };
 
   // Don't show back button on dashboard
