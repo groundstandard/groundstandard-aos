@@ -188,7 +188,7 @@ export const ClassManagement = () => {
         const updateData = {
           name: formData.name,
           description: formData.description,
-          instructor_id: formData.instructor_id,
+          instructor_id: formData.instructor_id || null,
           duration_minutes: formData.duration_minutes,
           max_students: formData.unlimited_students ? null : formData.max_students,
           skill_level: formData.skill_level,
@@ -233,7 +233,7 @@ export const ClassManagement = () => {
         const insertData = {
           name: formData.name,
           description: formData.description,
-          instructor_id: formData.instructor_id,
+          instructor_id: formData.instructor_id || null,
           duration_minutes: formData.duration_minutes,
           max_students: formData.unlimited_students ? null : formData.max_students,
           skill_level: formData.skill_level,
