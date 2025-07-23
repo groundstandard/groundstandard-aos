@@ -560,31 +560,33 @@ export const ClassManagement = () => {
           {loading ? (
             <div className="text-center">Loading classes...</div>
           ) : viewMode === 'table' ? (
-            // Table View
+            // Table View - Responsive design
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none min-w-[200px]"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center gap-2">
-                        Name
+                        Class Name
                         {getSortIcon('name')}
                       </div>
                     </TableHead>
+                    <TableHead className="hidden lg:table-cell min-w-[120px]">Instructor</TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none min-w-[100px]"
                       onClick={() => handleSort('max_students')}
                     >
                       <div className="flex items-center gap-2">
-                        Max Students
+                        <span className="hidden sm:inline">Max Students</span>
+                        <span className="sm:hidden">Max</span>
                         {getSortIcon('max_students')}
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none min-w-[90px]"
                       onClick={() => handleSort('duration_minutes')}
                     >
                       <div className="flex items-center gap-2">
@@ -593,7 +595,7 @@ export const ClassManagement = () => {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none hidden md:table-cell min-w-[100px]"
                       onClick={() => handleSort('skill_level')}
                     >
                       <div className="flex items-center gap-2">
@@ -602,7 +604,7 @@ export const ClassManagement = () => {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none hidden md:table-cell min-w-[100px]"
                       onClick={() => handleSort('age_group')}
                     >
                       <div className="flex items-center gap-2">
@@ -611,7 +613,7 @@ export const ClassManagement = () => {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none min-w-[80px]"
                       onClick={() => handleSort('is_active')}
                     >
                       <div className="flex items-center gap-2">
@@ -620,7 +622,7 @@ export const ClassManagement = () => {
                       </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none hidden xl:table-cell min-w-[80px]"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center gap-2">
@@ -628,7 +630,7 @@ export const ClassManagement = () => {
                         {getSortIcon('created_at')}
                       </div>
                     </TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="min-w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -638,10 +640,34 @@ export const ClassManagement = () => {
                         <div>
                           <div className="font-semibold">{classItem.name}</div>
                           {classItem.description && (
-                            <div className="text-xs text-muted-foreground truncate max-w-xs">
+                            <div className="text-xs text-muted-foreground truncate max-w-[180px]">
                               {classItem.description}
                             </div>
                           )}
+                          {/* Show instructor on mobile */}
+                          <div className="lg:hidden text-xs text-muted-foreground mt-1">
+                            {(classItem as any).profiles ? 
+                              `${(classItem as any).profiles.first_name} ${(classItem as any).profiles.last_name}` : 
+                              'Unassigned'
+                            }
+                          </div>
+                          {/* Show skill/age on smaller screens */}
+                          <div className="md:hidden flex gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {classItem.skill_level}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {classItem.age_group}
+                            </Badge>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <div className="text-sm">
+                          {(classItem as any).profiles ? 
+                            `${(classItem as any).profiles.first_name} ${(classItem as any).profiles.last_name}` : 
+                            'Unassigned'
+                          }
                         </div>
                       </TableCell>
                       <TableCell>
@@ -656,31 +682,31 @@ export const ClassManagement = () => {
                           {classItem.duration_minutes}min
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge variant="outline" className="text-xs">
                           {classItem.skill_level}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge variant="outline" className="text-xs">
                           {classItem.age_group}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={classItem.is_active ? "default" : "secondary"}>
+                        <Badge variant={classItem.is_active ? "default" : "secondary"} className="text-xs">
                           {classItem.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
                         {new Date(classItem.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => toggleClassStatus(classItem.id, classItem.is_active)}
-                            className="text-xs"
+                            className="text-xs px-2"
                           >
                             {classItem.is_active ? 'Deactivate' : 'Activate'}
                           </Button>
@@ -689,17 +715,18 @@ export const ClassManagement = () => {
                             size="sm"
                             onClick={() => {
                               setEditingClass(classItem);
-                            setFormData({
-                              name: classItem.name,
-                              description: classItem.description || '',
-                              instructor_id: classItem.instructor_id || '',
-                              max_students: classItem.max_students,
-                              duration_minutes: classItem.duration_minutes,
-                              skill_level: classItem.skill_level || 'all',
-                              age_group: classItem.age_group || 'all',
-                            });
+                              setFormData({
+                                name: classItem.name,
+                                description: classItem.description || '',
+                                instructor_id: classItem.instructor_id || '',
+                                max_students: classItem.max_students,
+                                duration_minutes: classItem.duration_minutes,
+                                skill_level: classItem.skill_level || 'all',
+                                age_group: classItem.age_group || 'all',
+                              });
                               setIsDialogOpen(true);
                             }}
+                            className="px-2"
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>
