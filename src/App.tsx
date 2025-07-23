@@ -10,6 +10,8 @@ import { RoleTestingProvider } from "@/contexts/RoleTestingContext";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import { MembershipSubscriptionProvider } from "@/hooks/useMembershipSubscription";
 import { AcademyProvider } from "@/hooks/useAcademy";
+import { MobileAppInstallPrompt } from "@/components/mobile/MobileAppInstallPrompt";
+import { MobileEnhancements } from "@/components/mobile/MobileEnhancements";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -85,6 +87,10 @@ const AppRoutes = () => {
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Mobile App Features */}
+      <MobileEnhancements />
+      <MobileAppInstallPrompt />
       
       {/* Role switcher ribbon for owners */}
       {user && <RoleSwitcher currentTestRole={testRole} onRoleChange={setTestRole} />}

@@ -330,6 +330,41 @@
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+    }
+    
+    /* Native app specific styles */
+    .native-app {
+      /* Prevent zoom on input focus */
+      font-size: 16px;
+    }
+    
+    .native-app input, .native-app textarea, .native-app select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .platform-ios {
+      /* Safe area handling for iOS notch */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    .platform-android {
+      /* Android specific styles */
+    }
+    
+    /* PWA specific styles */
+    @media (display-mode: standalone) {
+      body {
+        user-select: none; /* Prevent text selection in standalone mode */
+      }
+      
+      /* Hide elements that don't make sense in standalone mode */
+      .pwa-hide {
+        display: none !important;
+      }
+    }
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
       -ms-overflow-style: none;
     }
     
