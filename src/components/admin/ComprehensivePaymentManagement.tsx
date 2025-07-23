@@ -696,8 +696,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Payment Schedule</DialogTitle>
-              <DialogDescription>Set up recurring payments for a contact</DialogDescription>
+              <DialogTitle>Add Membership</DialogTitle>
+              <DialogDescription>Select a subscription plan for a contact</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -718,45 +718,27 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 </Select>
               </div>
               <div>
-                <Label>Amount ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={scheduleForm.amount}
-                  onChange={(e) => setScheduleForm({...scheduleForm, amount: e.target.value})}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <Label>Frequency</Label>
+                <Label>Select Subscription Plan</Label>
                 <Select value={scheduleForm.frequency} onValueChange={(value) => 
                   setScheduleForm({...scheduleForm, frequency: value})
                 }>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Choose a plan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
+                    <SelectItem value="basic">Basic Plan - $29/month</SelectItem>
+                    <SelectItem value="premium">Premium Plan - $49/month</SelectItem>
+                    <SelectItem value="elite">Elite Plan - $99/month</SelectItem>
+                    <SelectItem value="family">Family Plan - $149/month</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>Start Date</Label>
-                <Input
-                  type="date"
-                  value={scheduleForm.start_date}
-                  onChange={(e) => setScheduleForm({...scheduleForm, start_date: e.target.value})}
-                />
               </div>
               <Button 
                 onClick={() => createScheduleMutation.mutate(scheduleForm)}
                 disabled={createScheduleMutation.isPending}
                 className="w-full"
               >
-                {createScheduleMutation.isPending ? 'Creating...' : 'Create Schedule'}
+                {createScheduleMutation.isPending ? 'Adding...' : 'Add Membership'}
               </Button>
             </div>
           </DialogContent>
