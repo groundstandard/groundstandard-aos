@@ -26,6 +26,7 @@ interface Class {
   age_group: string;
   is_active: boolean;
   created_at: string;
+  start_date: string;
 }
 
 interface ClassSchedule {
@@ -74,6 +75,7 @@ export const ClassManagement = () => {
     age_group: 'all',
     class_length_type: 'indefinite', // 'indefinite' | 'weeks' | 'sessions'
     class_length_value: '',
+    start_date: new Date().toISOString().split('T')[0], // Default to today
   });
 
   const [scheduleData, setScheduleData] = useState<ClassSchedule[]>([
@@ -195,6 +197,7 @@ export const ClassManagement = () => {
           age_group: formData.age_group,
           class_length_type: formData.class_length_type,
           class_length_value: formData.class_length_type === 'indefinite' ? null : parseInt(formData.class_length_value),
+          start_date: formData.start_date,
         };
         
         const { error } = await supabase
@@ -242,6 +245,7 @@ export const ClassManagement = () => {
           age_group: formData.age_group,
           class_length_type: formData.class_length_type,
           class_length_value: formData.class_length_type === 'indefinite' ? null : parseInt(formData.class_length_value),
+          start_date: formData.start_date,
         };
         
         const { data: classData, error: classError } = await supabase
@@ -294,6 +298,7 @@ export const ClassManagement = () => {
       age_group: 'all',
       class_length_type: 'indefinite',
       class_length_value: '',
+      start_date: new Date().toISOString().split('T')[0],
     });
     setScheduleData([
       { class_id: '', day_of_week: 1, start_time: '18:00', end_time: '19:00' }
@@ -601,6 +606,18 @@ export const ClassManagement = () => {
                   </div>
 
                   <div>
+                    <Label htmlFor="start_date" className={isMobile ? 'text-sm' : ''}>Class Start Date</Label>
+                    <Input
+                      id="start_date"
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      required
+                      className="input-clean"
+                    />
+                  </div>
+
+                  <div>
                     <div className="flex justify-between items-center mb-4">
                       <Label>Class Schedule</Label>
                       <Button type="button" variant="outline" size="sm" onClick={addScheduleSlot}>
@@ -833,6 +850,7 @@ export const ClassManagement = () => {
                               age_group: classItem.age_group || 'all',
                               class_length_type: 'indefinite',
                               class_length_value: '',
+                              start_date: classItem.start_date || new Date().toISOString().split('T')[0],
                             });
                             fetchClassSchedules(classItem.id);
                             setIsDialogOpen(true);
@@ -901,6 +919,7 @@ export const ClassManagement = () => {
                               age_group: classItem.age_group || 'all',
                               class_length_type: 'indefinite',
                               class_length_value: '',
+                              start_date: classItem.start_date || new Date().toISOString().split('T')[0],
                             });
                             fetchClassSchedules(classItem.id);
                             setIsDialogOpen(true);

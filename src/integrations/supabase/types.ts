@@ -1244,6 +1244,7 @@ export type Database = {
           max_students: number | null
           name: string
           skill_level: string | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -1259,6 +1260,7 @@ export type Database = {
           max_students?: number | null
           name: string
           skill_level?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -1274,6 +1276,7 @@ export type Database = {
           max_students?: number | null
           name?: string
           skill_level?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
