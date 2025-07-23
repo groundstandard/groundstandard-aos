@@ -52,7 +52,7 @@ export const CalendarAttendanceView = () => {
       const dateStr = selectedDate.toISOString().split('T')[0];
       const dayOfWeek = selectedDate.getDay();
 
-      // Get classes scheduled for this day of the week that have started
+      // Get classes scheduled for this day of the week
       const { data: classSchedules, error } = await supabase
         .from('class_schedules')
         .select(`
@@ -72,8 +72,7 @@ export const CalendarAttendanceView = () => {
           )
         `)
         .eq('day_of_week', dayOfWeek)
-        .eq('classes.is_active', true)
-        .lte('classes.start_date', dateStr);
+        .eq('classes.is_active', true);
 
       if (error) throw error;
 
