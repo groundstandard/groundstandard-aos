@@ -29,6 +29,11 @@ serve(async (req) => {
       logStep("WARNING: STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled");
     }
 
+    logStep("Environment variables checked", { 
+      hasStripeKey: !!stripeKey,
+      hasWebhookSecret: !!webhookSecret 
+    });
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
