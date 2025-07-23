@@ -214,8 +214,10 @@ export const ClassManagement = () => {
 
         // Create new schedules
         const schedulesToInsert = scheduleData.map(schedule => ({
-          ...schedule,
-          class_id: editingClass.id
+          class_id: editingClass.id,
+          day_of_week: schedule.day_of_week,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time
         }));
 
         const { error: scheduleError } = await supabase
