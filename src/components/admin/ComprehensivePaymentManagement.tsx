@@ -147,9 +147,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   
   const [scheduleForm, setScheduleForm] = useState({
     contact_id: '',
-    membership_plan_id: '',
-    start_date: ''
+    membership_plan_id: ''
   });
+  
+  const [selectedContact, setSelectedContact] = useState<any>(null);
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -288,9 +289,9 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     queryFn: async () => {
       const { data, error } = await supabase
         .from('membership_plans')
-        .select('id, name, base_price_cents, billing_frequency')
+        .select('id, name, description, base_price_cents, billing_cycle, classes_per_week, is_unlimited, trial_days, setup_fee_cents')
         .eq('is_active', true)
-        .order('name');
+        .order('base_price_cents', { ascending: true });
 
       if (error) throw error;
       return data;
@@ -350,39 +351,34 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
-  // Create membership subscription mutation
-  const createScheduleMutation = useMutation({
-    mutationFn: async (formData: typeof scheduleForm) => {
-      const { data, error } = await supabase
-        .from('membership_subscriptions')
-        .insert({
-          profile_id: formData.contact_id,
-          membership_plan_id: formData.membership_plan_id,
-          status: 'active',
-          start_date: formData.start_date,
-          next_billing_date: formData.start_date
-        });
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Membership Added',
-        description: 'Membership has been added successfully.'
-      });
-      setShowScheduleDialog(false);
-      setScheduleForm({ contact_id: '', membership_plan_id: '', start_date: '' });
-      queryClient.invalidateQueries({ queryKey: ['membership-subscriptions'] });
-    },
-    onError: (error: any) => {
+  // Handle contact selection
+  const handleContactSelect = async (contactId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, membership_status')
+      .eq('id', contactId)
+      .single();
+    
+    if (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to add membership'
+        description: 'Failed to load contact information'
       });
+      return;
     }
-  });
+    
+    setSelectedContact(data);
+    setScheduleForm({ contact_id: contactId, membership_plan_id: '' });
+  };
+
+  // Format price helper
+  const formatPrice = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
+  };
 
   // Generate financial report mutation
   const generateReportMutation = useMutation({
@@ -642,60 +638,147 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </CardContent>
             </Card>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add Membership</DialogTitle>
-              <DialogDescription>Select a subscription plan for a contact</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Assign Membership
+              </DialogTitle>
+              <DialogDescription>
+                Assign a membership plan to a contact
+              </DialogDescription>
             </DialogHeader>
+
             <div className="space-y-4">
-              <div>
-                <Label>Contact</Label>
-                <Select value={scheduleForm.contact_id} onValueChange={(value) => 
-                  setScheduleForm({...scheduleForm, contact_id: value})
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Contact" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contacts?.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.first_name} {contact.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Select Subscription Plan</Label>
-                <Select value={scheduleForm.membership_plan_id} onValueChange={(value) => 
-                  setScheduleForm({...scheduleForm, membership_plan_id: value})
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {membershipPlans?.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} - ${(plan.base_price_cents / 100).toFixed(2)}/{plan.billing_frequency}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Start Date</Label>
-                <Input
-                  type="date"
-                  value={scheduleForm.start_date}
-                  onChange={(e) => setScheduleForm({...scheduleForm, start_date: e.target.value})}
-                />
-              </div>
+              {!selectedContact ? (
+                <div>
+                  <Label>Contact</Label>
+                  <Select value={scheduleForm.contact_id} onValueChange={handleContactSelect}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Select Contact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contacts?.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.id}>
+                          {contact.first_name} {contact.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Name:</span> {selectedContact.first_name} {selectedContact.last_name}
+                      </div>
+                      <div>
+                        <span className="font-medium">Email:</span> {selectedContact.email}
+                      </div>
+                      <div>
+                        <span className="font-medium">Current Status:</span>
+                        <Badge className="ml-2" variant={selectedContact.membership_status === 'active' ? 'default' : 'secondary'}>
+                          {selectedContact.membership_status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedContact && (
+                <>
+                  <div>
+                    <Label htmlFor="membership-plan">Select Membership Plan</Label>
+                    <Select value={scheduleForm.membership_plan_id} onValueChange={(value) => 
+                      setScheduleForm({...scheduleForm, membership_plan_id: value})
+                    }>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Choose a membership plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {membershipPlans?.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.id}>
+                            <div className="flex justify-between items-center w-full">
+                              <span>{plan.name}</span>
+                              <span className="ml-4 font-medium">
+                                {formatPrice(plan.base_price_cents)}/{plan.billing_cycle}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {scheduleForm.membership_plan_id && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <DollarSign className="h-5 w-5" />
+                          Plan Details
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {(() => {
+                          const selectedPlanData = membershipPlans?.find(plan => plan.id === scheduleForm.membership_plan_id);
+                          if (!selectedPlanData) return null;
+                          
+                          return (
+                            <>
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="font-medium">Price:</span> {formatPrice(selectedPlanData.base_price_cents)}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Billing:</span> {selectedPlanData.billing_cycle}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Classes:</span> 
+                                  {selectedPlanData.is_unlimited ? ' Unlimited' : ` ${selectedPlanData.classes_per_week}/week`}
+                                </div>
+                                {selectedPlanData.setup_fee_cents > 0 && (
+                                  <div>
+                                    <span className="font-medium">Setup Fee:</span> {formatPrice(selectedPlanData.setup_fee_cents)}
+                                  </div>
+                                )}
+                              </div>
+                              {selectedPlanData.trial_days > 0 && (
+                                <div className="flex items-center gap-2 text-sm text-green-600">
+                                  <CalendarIcon className="h-4 w-4" />
+                                  {selectedPlanData.trial_days} day free trial included
+                                </div>
+                              )}
+                              {selectedPlanData.description && (
+                                <p className="text-sm text-muted-foreground">{selectedPlanData.description}</p>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => {
+                setShowScheduleDialog(false);
+                setSelectedContact(null);
+                setScheduleForm({ contact_id: '', membership_plan_id: '' });
+              }}>
+                Cancel
+              </Button>
               <Button 
-                onClick={() => createScheduleMutation.mutate(scheduleForm)}
-                disabled={createScheduleMutation.isPending}
-                className="w-full"
+                disabled={!scheduleForm.contact_id || !scheduleForm.membership_plan_id}
+                className="min-w-[120px]"
               >
-                {createScheduleMutation.isPending ? 'Adding...' : 'Add Membership'}
+                Proceed to Payment
               </Button>
             </div>
           </DialogContent>
