@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAcademy } from "@/hooks/useAcademy";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,9 +37,153 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export const AdminDashboard = () => {
   const { profile } = useAuth();
   const { subscriptionInfo } = useSubscription();
+  const { academy } = useAcademy();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Real data states
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    monthlyRevenue: 0,
+    attendanceRate: 0,
+    beltPromotions: 0,
+    loading: true
+  });
+  
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [systemHealth, setSystemHealth] = useState({
+    attendance: { status: "good", value: 0 },
+    payments: { status: "good", value: 0 },
+    engagement: { status: "good", value: 0 },
+    retention: { status: "good", value: 0 }
+  });
+
+  // Fetch real data from database
+  const fetchDashboardData = async () => {
+    if (!academy?.id) return;
+    
+    try {
+      setStats(prev => ({ ...prev, loading: true }));
+      
+      // Fetch total students for current academy
+      const { data: studentsData } = await supabase
+        .from('academy_memberships')
+        .select('id')
+        .eq('academy_id', academy.id)
+        .eq('is_active', true)
+        .eq('role', 'student');
+      
+      // Fetch monthly revenue from payments
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const { data: paymentsData } = await supabase
+        .from('payments')
+        .select('amount')
+        .eq('status', 'completed')
+        .gte('payment_date', `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-01`);
+      
+      // Fetch attendance rate
+      const { data: attendanceData } = await supabase
+        .from('attendance')
+        .select('status')
+        .eq('academy_id', academy.id)
+        .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+      
+      // Fetch belt promotions this quarter
+      const quarterStart = new Date(currentYear, Math.floor(currentMonth / 3) * 3, 1);
+      const { data: beltTestsData } = await supabase
+        .from('belt_tests')
+        .select('id')
+        .eq('status', 'passed')
+        .gte('test_date', quarterStart.toISOString().split('T')[0]);
+      
+      // Fetch recent activities
+      const { data: activitiesData } = await supabase
+        .from('contact_activities')
+        .select(`
+          *,
+          profiles!contact_activities_contact_id_fkey(first_name, last_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      // Calculate metrics
+      const totalStudents = studentsData?.length || 0;
+      const monthlyRevenue = paymentsData?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+      const attendanceRate = attendanceData?.length > 0 
+        ? (attendanceData.filter(a => a.status === 'present').length / attendanceData.length) * 100
+        : 0;
+      const beltPromotions = beltTestsData?.length || 0;
+      
+      setStats({
+        totalStudents,
+        monthlyRevenue,
+        attendanceRate,
+        beltPromotions,
+        loading: false
+      });
+      
+      // Format recent activities
+      const formattedActivities = activitiesData?.map(activity => ({
+        type: activity.activity_type,
+        message: activity.activity_description || activity.activity_title,
+        time: new Date(activity.created_at).toLocaleString(),
+        icon: activity.activity_type === 'payment' ? DollarSign : 
+              activity.activity_type === 'attendance' ? Target :
+              activity.activity_type === 'belt_test' ? Award : Users,
+        color: activity.activity_type === 'payment' ? 'text-green-500' :
+               activity.activity_type === 'attendance' ? 'text-purple-500' :
+               activity.activity_type === 'belt_test' ? 'text-yellow-500' : 'text-blue-500'
+      })) || [];
+      
+      setRecentActivities(formattedActivities);
+      
+      // Calculate system health
+      setSystemHealth({
+        attendance: { 
+          status: attendanceRate > 85 ? "excellent" : attendanceRate > 70 ? "good" : "warning", 
+          value: Math.round(attendanceRate) 
+        },
+        payments: { 
+          status: monthlyRevenue > 10000 ? "excellent" : monthlyRevenue > 5000 ? "good" : "warning", 
+          value: Math.min(100, Math.round(monthlyRevenue / 200)) 
+        },
+        engagement: { 
+          status: totalStudents > 100 ? "excellent" : totalStudents > 50 ? "good" : "warning", 
+          value: Math.min(100, totalStudents * 2) 
+        },
+        retention: { 
+          status: "good", 
+          value: Math.max(80, Math.min(100, 90 + (totalStudents / 20))) 
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  useEffect(() => {
+    if (academy?.id) {
+      fetchDashboardData();
+    }
+  }, [academy?.id]);
+
+  const handleRefreshStats = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+    setRefreshing(false);
+    toast({
+      title: "Success",
+      description: "Dashboard statistics refreshed",
+    });
+  };
 
   const handleQuickAction = (action: string) => {
     toast({
@@ -45,88 +191,6 @@ export const AdminDashboard = () => {
       description: `${action} feature will be implemented soon`,
     });
   };
-
-  const handleRefreshStats = async () => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
-      toast({
-        title: "Success",
-        description: "Dashboard statistics refreshed",
-      });
-    }, 1000);
-  };
-
-  const quickStats = [
-    {
-      title: "Total Students",
-      value: "247",
-      change: "+12",
-      changeType: "increase",
-      icon: Users,
-      description: "Active members",
-      color: "text-blue-600"
-    },
-    {
-      title: "Monthly Revenue",
-      value: "$18,540",
-      change: "+8.2%",
-      changeType: "increase",
-      icon: DollarSign,
-      description: "This month",
-      color: "text-green-600"
-    },
-    {
-      title: "Class Attendance",
-      value: "89%",
-      change: "+5.1%",
-      changeType: "increase",
-      icon: Target,
-      description: "Weekly average",
-      color: "text-purple-600"
-    },
-    {
-      title: "Belt Promotions",
-      value: "23",
-      change: "+3",
-      changeType: "increase",
-      icon: Award,
-      description: "This quarter",
-      color: "text-orange-600"
-    }
-  ];
-
-  const recentActivities = [
-    {
-      type: "enrollment",
-      message: "5 new students enrolled in Advanced Karate",
-      time: "2 hours ago",
-      icon: Users,
-      color: "text-blue-500"
-    },
-    {
-      type: "payment",
-      message: "Premium subscription renewed by 12 members",
-      time: "4 hours ago",
-      icon: DollarSign,
-      color: "text-green-500"
-    },
-    {
-      type: "achievement",
-      message: "Belt testing completed for 8 students",
-      time: "1 day ago",
-      icon: Award,
-      color: "text-yellow-500"
-    },
-    {
-      type: "class",
-      message: "New Beginner's Class scheduled for next week",
-      time: "2 days ago",
-      icon: Calendar,
-      color: "text-purple-500"
-    }
-  ];
 
   const upcomingTasks = [
     {
@@ -154,13 +218,6 @@ export const AdminDashboard = () => {
       category: "Scheduling"
     }
   ];
-
-  const systemHealth = {
-    attendance: { status: "good", value: 95 },
-    payments: { status: "excellent", value: 98 },
-    engagement: { status: "good", value: 87 },
-    retention: { status: "excellent", value: 94 }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -290,11 +347,18 @@ export const AdminDashboard = () => {
             <Users className="h-3 w-3 text-blue-600" />
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <div className="text-lg font-bold">247</div>
+            <div className="text-lg font-bold">
+              {stats.loading ? '...' : stats.totalStudents}
+            </div>
             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-2 w-2 text-green-500" />
-              <span className="text-green-500">+12</span>
-              <span>Active members</span>
+              {stats.totalStudents === 0 ? (
+                <span>No data from last month</span>
+              ) : (
+                <>
+                  <TrendingUp className="h-2 w-2 text-green-500" />
+                  <span className="text-green-500">Active members</span>
+                </>
+              )}
             </div>
           </CardContent>
           <div className="absolute right-0 top-0 w-1 h-full bg-blue-600" />
@@ -306,11 +370,18 @@ export const AdminDashboard = () => {
             <DollarSign className="h-3 w-3 text-green-600" />
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <div className="text-lg font-bold">$18,540</div>
+            <div className="text-lg font-bold">
+              {stats.loading ? '...' : stats.monthlyRevenue > 0 ? `$${(stats.monthlyRevenue / 100).toLocaleString()}` : '$0'}
+            </div>
             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-2 w-2 text-green-500" />
-              <span className="text-green-500">+8.2%</span>
-              <span>This month</span>
+              {stats.monthlyRevenue === 0 ? (
+                <span>No data from last month</span>
+              ) : (
+                <>
+                  <TrendingUp className="h-2 w-2 text-green-500" />
+                  <span className="text-green-500">This month</span>
+                </>
+              )}
             </div>
           </CardContent>
           <div className="absolute right-0 top-0 w-1 h-full bg-green-600" />
@@ -318,15 +389,22 @@ export const AdminDashboard = () => {
 
         <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
-            <CardTitle className="text-xs font-medium">Class Attendance</CardTitle>
+            <CardTitle className="text-xs font-medium">Attendance Rate</CardTitle>
             <Target className="h-3 w-3 text-purple-600" />
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <div className="text-lg font-bold">89%</div>
+            <div className="text-lg font-bold">
+              {stats.loading ? '...' : stats.attendanceRate > 0 ? `${Math.round(stats.attendanceRate)}%` : '0%'}
+            </div>
             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-2 w-2 text-green-500" />
-              <span className="text-green-500">+5.1%</span>
-              <span>Weekly average</span>
+              {stats.attendanceRate === 0 ? (
+                <span>No data from last month</span>
+              ) : (
+                <>
+                  <TrendingUp className="h-2 w-2 text-green-500" />
+                  <span className="text-green-500">Weekly average</span>
+                </>
+              )}
             </div>
           </CardContent>
           <div className="absolute right-0 top-0 w-1 h-full bg-purple-600" />
@@ -334,15 +412,22 @@ export const AdminDashboard = () => {
 
         <Card className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
-            <CardTitle className="text-xs font-medium">Belt Promotions</CardTitle>
+            <CardTitle className="text-xs font-medium">Belt Tests</CardTitle>
             <Award className="h-3 w-3 text-orange-600" />
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <div className="text-lg font-bold">23</div>
+            <div className="text-lg font-bold">
+              {stats.loading ? '...' : stats.beltPromotions}
+            </div>
             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-2 w-2 text-green-500" />
-              <span className="text-green-500">+3</span>
-              <span>This quarter</span>
+              {stats.beltPromotions === 0 ? (
+                <span>No data from last month</span>
+              ) : (
+                <>
+                  <TrendingUp className="h-2 w-2 text-green-500" />
+                  <span className="text-green-500">This quarter</span>
+                </>
+              )}
             </div>
           </CardContent>
           <div className="absolute right-0 top-0 w-1 h-full bg-orange-600" />
