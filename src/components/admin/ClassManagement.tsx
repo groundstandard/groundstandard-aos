@@ -66,6 +66,7 @@ export const ClassManagement = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    instructor_id: '',
     max_students: 20,
     duration_minutes: 60,
     skill_level: 'all',
@@ -75,6 +76,8 @@ export const ClassManagement = () => {
   const [scheduleData, setScheduleData] = useState<ClassSchedule[]>([
     { class_id: '', day_of_week: 1, start_time: '18:00', end_time: '19:00' }
   ]);
+  
+  const [instructors, setInstructors] = useState<Array<{id: string, first_name: string, last_name: string}>>([]);
 
   // View and sorting state with persistence
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() => {
@@ -99,6 +102,7 @@ export const ClassManagement = () => {
   useEffect(() => {
     if (profile?.role === 'admin' || profile?.role === 'owner') {
       fetchClasses();
+      fetchInstructors();
     }
   }, [profile]);
 
@@ -106,7 +110,13 @@ export const ClassManagement = () => {
     try {
       const { data, error } = await supabase
         .from('classes')
-        .select('*')
+        .select(`
+          *,
+          profiles!classes_instructor_id_fkey (
+            first_name,
+            last_name
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -119,6 +129,21 @@ export const ClassManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchInstructors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('role', ['instructor', 'admin', 'owner'])
+        .order('first_name');
+
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch instructors:', error);
     }
   };
 
@@ -143,10 +168,7 @@ export const ClassManagement = () => {
         // Create new class
         const { data: classData, error: classError } = await supabase
           .from('classes')
-          .insert({
-            ...formData,
-            instructor_id: profile?.id
-          })
+          .insert(formData)
           .select()
           .single();
 
@@ -186,6 +208,7 @@ export const ClassManagement = () => {
     setFormData({
       name: '',
       description: '',
+      instructor_id: '',
       max_students: 20,
       duration_minutes: 60,
       skill_level: 'all',
@@ -399,6 +422,25 @@ export const ClassManagement = () => {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="input-clean"
                     />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="instructor" className={isMobile ? 'text-sm' : ''}>Instructor</Label>
+                    <Select
+                      value={formData.instructor_id}
+                      onValueChange={(value) => setFormData({ ...formData, instructor_id: value })}
+                    >
+                      <SelectTrigger className="input-clean">
+                        <SelectValue placeholder="Select an instructor" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {instructors.map((instructor) => (
+                          <SelectItem key={instructor.id} value={instructor.id}>
+                            {instructor.first_name} {instructor.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
@@ -647,14 +689,15 @@ export const ClassManagement = () => {
                             size="sm"
                             onClick={() => {
                               setEditingClass(classItem);
-                              setFormData({
-                                name: classItem.name,
-                                description: classItem.description || '',
-                                max_students: classItem.max_students,
-                                duration_minutes: classItem.duration_minutes,
-                                skill_level: classItem.skill_level || 'all',
-                                age_group: classItem.age_group || 'all',
-                              });
+                            setFormData({
+                              name: classItem.name,
+                              description: classItem.description || '',
+                              instructor_id: classItem.instructor_id || '',
+                              max_students: classItem.max_students,
+                              duration_minutes: classItem.duration_minutes,
+                              skill_level: classItem.skill_level || 'all',
+                              age_group: classItem.age_group || 'all',
+                            });
                               setIsDialogOpen(true);
                             }}
                           >
@@ -712,6 +755,7 @@ export const ClassManagement = () => {
                             setFormData({
                               name: classItem.name,
                               description: classItem.description || '',
+                              instructor_id: classItem.instructor_id || '',
                               max_students: classItem.max_students,
                               duration_minutes: classItem.duration_minutes,
                               skill_level: classItem.skill_level || 'all',
