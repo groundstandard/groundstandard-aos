@@ -342,10 +342,10 @@ const Dashboard = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="text-center">
-                        <div className="text-3xl font-bold">96%</div>
-                        <div className="text-sm text-muted-foreground">of target (90%)</div>
+                        <div className="text-3xl font-bold">0%</div>
+                        <div className="text-sm text-muted-foreground">No data from last month</div>
                       </div>
-                      <Progress value={96} className="h-2" />
+                      <Progress value={0} className="h-2" />
                     </div>
                   </CardContent>
                 </Card>
@@ -374,10 +374,10 @@ const Dashboard = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="text-center">
-                        <div className="text-3xl font-bold">78%</div>
-                        <div className="text-sm text-muted-foreground">of target (80%)</div>
+                        <div className="text-3xl font-bold">0%</div>
+                        <div className="text-sm text-muted-foreground">No data from last month</div>
                       </div>
-                      <Progress value={78} className="h-2" />
+                      <Progress value={0} className="h-2" />
                     </div>
                   </CardContent>
                 </Card>
@@ -406,10 +406,10 @@ const Dashboard = () => {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="text-center">
-                        <div className="text-3xl font-bold">84%</div>
-                        <div className="text-sm text-muted-foreground">of target ($20,000)</div>
+                        <div className="text-3xl font-bold">0%</div>
+                        <div className="text-sm text-muted-foreground">No data from last month</div>
                       </div>
-                      <Progress value={84} className="h-2" />
+                      <Progress value={0} className="h-2" />
                     </div>
                   </CardContent>
                 </Card>
@@ -426,41 +426,11 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      {
-                        action: "New student enrollment",
-                        details: "Sarah Johnson joined Advanced Karate",
-                        time: "2 minutes ago",
-                        type: "enrollment"
-                      },
-                      {
-                        action: "Payment received",
-                        details: "$150 monthly subscription from Mike Chen",
-                        time: "15 minutes ago", 
-                        type: "payment"
-                      },
-                      {
-                        action: "Belt test scheduled",
-                        details: "3 students registered for Black Belt test",
-                        time: "1 hour ago",
-                        type: "test"
-                      },
-                      {
-                        action: "Class completed",
-                        details: "Evening Judo session with 18 participants",
-                        time: "2 hours ago",
-                        type: "class"
-                      }
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                        <div className="w-2 h-2 rounded-full bg-primary mt-2"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.action}</p>
-                          <p className="text-xs text-muted-foreground">{activity.details}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No recent activity</p>
+                      <p className="text-sm">Activity will appear here when students enroll, make payments, or schedule tests</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -558,8 +528,8 @@ const Dashboard = () => {
               <BarChart3 className="h-3 w-3 text-green-500" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-lg font-bold">42</p>
-              <p className="text-xs text-muted-foreground">+3 This month</p>
+              <p className="text-lg font-bold">0</p>
+              <p className="text-xs text-muted-foreground">No data available</p>
             </div>
           </Card>
 
@@ -570,7 +540,7 @@ const Dashboard = () => {
             </div>
             <div className="space-y-0.5">
               <p className="text-lg font-bold">{profile.belt_level || 'White'}</p>
-              <p className="text-xs text-muted-foreground">Next: Yellow</p>
+              <p className="text-xs text-muted-foreground">Next: Not available</p>
             </div>
           </Card>
 
@@ -580,8 +550,8 @@ const Dashboard = () => {
               <Calendar className="h-3 w-3 text-orange-500" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-lg font-bold">Today</p>
-              <p className="text-xs text-muted-foreground">7:00 PM</p>
+              <p className="text-lg font-bold">None</p>
+              <p className="text-xs text-muted-foreground">No classes scheduled</p>
             </div>
           </Card>
         </div>

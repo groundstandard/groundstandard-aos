@@ -444,25 +444,28 @@ const Admin = () => {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Student Retention</span>
-                  <span className="text-sm text-muted-foreground">96%</span>
+                  <span className="text-sm text-muted-foreground">0%</span>
                 </div>
-                <Progress value={96} className="h-2" />
+                <Progress value={0} className="h-2" />
+                <div className="text-xs text-muted-foreground mt-1">No data from last month</div>
               </div>
               
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Class Capacity</span>
-                  <span className="text-sm text-muted-foreground">78%</span>
+                  <span className="text-sm text-muted-foreground">0%</span>
                 </div>
-                <Progress value={78} className="h-2" />
+                <Progress value={0} className="h-2" />
+                <div className="text-xs text-muted-foreground mt-1">No data from last month</div>
               </div>
               
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Revenue Goal</span>
-                  <span className="text-sm text-muted-foreground">84%</span>
+                  <span className="text-sm text-muted-foreground">0%</span>
                 </div>
-                <Progress value={84} className="h-2" />
+                <Progress value={0} className="h-2" />
+                <div className="text-xs text-muted-foreground mt-1">No data from last month</div>
               </div>
             </div>
           </CardContent>
