@@ -136,6 +136,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     expires_in_hours: '24'
   });
   
+  const [generatedPaymentLink, setGeneratedPaymentLink] = useState<string | null>(null);
+  
   const [reminderForm, setReminderForm] = useState({
     contact_id: '',
     payment_due_date: '',
@@ -296,10 +298,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         title: 'Payment Link Created',
         description: 'Payment link has been generated successfully.'
       });
-      setShowPaymentLinkDialog(false);
+      setGeneratedPaymentLink(data.url);
       setPaymentLinkForm({ contact_id: '', amount: '', description: '', expires_in_hours: '24' });
-      // Open the payment link in a new tab
-      window.open(data.url, '_blank');
     },
     onError: (error: any) => {
       toast({
@@ -512,9 +512,56 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 </Select>
               </div>
 
+              {generatedPaymentLink && (
+                <div className="space-y-2 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <Label className="text-green-800 font-medium">Generated Payment Link</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      value={generatedPaymentLink} 
+                      readOnly 
+                      className="bg-white text-sm"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedPaymentLink);
+                        toast({
+                          title: 'Copied!',
+                          description: 'Payment link copied to clipboard'
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setGeneratedPaymentLink(null);
+                        setShowPaymentLinkDialog(false);
+                      }}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(generatedPaymentLink, '_blank')}
+                    >
+                      Open Link
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Button 
                 onClick={() => createPaymentLinkMutation.mutate(paymentLinkForm)}
-                disabled={createPaymentLinkMutation.isPending}
+                disabled={createPaymentLinkMutation.isPending || generatedPaymentLink !== null}
                 className="w-full"
               >
                 {createPaymentLinkMutation.isPending ? 'Creating...' : 'Create Payment Link'}
