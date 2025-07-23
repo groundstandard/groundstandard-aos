@@ -523,19 +523,10 @@ export const AttendanceManagement = () => {
         </Card>
       </div>
 
-      {/* Header with Controls */}
+      {/* Action Controls */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Advanced Attendance Management
-              </CardTitle>
-              <CardDescription>
-                Comprehensive attendance tracking, analytics, and management for all students and classes
-              </CardDescription>
-            </div>
+          <div className="flex items-center justify-end">
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
