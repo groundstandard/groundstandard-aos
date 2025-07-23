@@ -25,12 +25,12 @@ interface ClassSession {
   start_time: string;
   end_time: string;
   max_students: number;
-  enrolled_students: Array<{
+  reserved_students: Array<{
     id: string;
     first_name: string;
     last_name: string;
     belt_level: string;
-    status: 'enrolled' | 'checked_in' | 'absent';
+    status: 'reserved' | 'checked_in' | 'absent';
     check_in_location?: {
       latitude: number;
       longitude: number;
@@ -76,15 +76,15 @@ export const CalendarAttendanceView = () => {
 
       if (error) throw error;
 
-      // For each class, get enrolled students and their attendance for the selected date
-      const classesWithStudents = await Promise.all(
-        classSchedules.map(async (schedule) => {
-          // Get enrolled students
-          const { data: enrollments } = await supabase
-            .from('class_enrollments')
+        // For each class, get reserved students and their attendance for the selected date
+        const classesWithStudents = await Promise.all(
+          classSchedules.map(async (schedule) => {
+            // Get reserved students
+            const { data: reservations } = await supabase
+              .from('class_reservations')
             .select(`
               student_id,
-              profiles!class_enrollments_student_id_fkey (
+              profiles!class_reservations_student_id_fkey (
                 id,
                 first_name,
                 last_name,
@@ -92,7 +92,7 @@ export const CalendarAttendanceView = () => {
               )
             `)
             .eq('class_id', schedule.classes.id)
-            .eq('status', 'active');
+            .eq('status', 'reserved');
 
           // Get attendance records for this date
           const { data: attendanceRecords } = await supabase
@@ -106,17 +106,17 @@ export const CalendarAttendanceView = () => {
             attendanceRecords?.map(record => [record.student_id, record]) || []
           );
 
-          // Combine enrollment and attendance data
-          const enrolledStudents = enrollments?.map(enrollment => {
-            const attendance = attendanceMap.get(enrollment.student_id);
+          // Combine reservation and attendance data
+          const reservedStudents = reservations?.map(reservation => {
+            const attendance = attendanceMap.get(reservation.student_id);
             return {
-              id: enrollment.student_id,
-              first_name: enrollment.profiles.first_name,
-              last_name: enrollment.profiles.last_name,
-              belt_level: enrollment.profiles.belt_level || 'White',
+              id: reservation.student_id,
+              first_name: reservation.profiles.first_name,
+              last_name: reservation.profiles.last_name,
+              belt_level: reservation.profiles.belt_level || 'White',
               status: attendance ? 
                 (attendance.status === 'present' ? 'checked_in' : 'absent') : 
-                'enrolled' as 'enrolled' | 'checked_in' | 'absent',
+                'reserved' as 'reserved' | 'checked_in' | 'absent',
               // Note: Location data would come from a separate check-in system
               // For now, we'll simulate proximity based on check-in status
               check_in_location: attendance?.status === 'present' ? {
@@ -134,7 +134,7 @@ export const CalendarAttendanceView = () => {
             start_time: schedule.start_time,
             end_time: schedule.end_time,
             max_students: schedule.classes.max_students,
-            enrolled_students: enrolledStudents
+            reserved_students: reservedStudents
           };
         })
       );
@@ -168,7 +168,7 @@ export const CalendarAttendanceView = () => {
       case 'absent':
         return <Badge variant="destructive" className={baseClasses}>Absent</Badge>;
       default:
-        return <Badge variant="outline" className={baseClasses}>Enrolled</Badge>;
+        return <Badge variant="outline" className={baseClasses}>Reserved</Badge>;
     }
   };
 
@@ -237,7 +237,7 @@ export const CalendarAttendanceView = () => {
                         </div>
                         <CardDescription>
                           Instructor: {classSession.instructor_name} • 
-                          Capacity: {classSession.enrolled_students.length}/{classSession.max_students}
+                          Capacity: {classSession.reserved_students.length}/{classSession.max_students}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -245,23 +245,23 @@ export const CalendarAttendanceView = () => {
                           <div className="flex items-center gap-4 text-sm">
                             <div className="flex items-center gap-1">
                               <CheckCircle className="h-4 w-4 text-green-600" />
-                              <span>Present: {classSession.enrolled_students.filter(s => s.status === 'checked_in').length}</span>
+                              <span>Present: {classSession.reserved_students.filter(s => s.status === 'checked_in').length}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <XCircle className="h-4 w-4 text-red-600" />
-                              <span>Absent: {classSession.enrolled_students.filter(s => s.status === 'absent').length}</span>
+                              <span>Absent: {classSession.reserved_students.filter(s => s.status === 'absent').length}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                              <span>Not Marked: {classSession.enrolled_students.filter(s => s.status === 'enrolled').length}</span>
+                              <span>Not Marked: {classSession.reserved_students.filter(s => s.status === 'reserved').length}</span>
                             </div>
                           </div>
 
                           {/* Student List */}
                           <div className="space-y-2">
-                            <h4 className="font-medium text-sm">Enrolled Students:</h4>
+                            <h4 className="font-medium text-sm">Reserved Students:</h4>
                             <div className="grid gap-2">
-                              {classSession.enrolled_students.map((student) => {
+                              {classSession.reserved_students.map((student) => {
                                 const isNearAcademy = student.check_in_location && 
                                   student.check_in_location.distance_from_academy !== undefined &&
                                   student.check_in_location.distance_from_academy <= 1;

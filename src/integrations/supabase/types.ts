@@ -563,6 +563,54 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs_comprehensive: {
+        Row: {
+          action: string
+          change_summary: string | null
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          module_name: string | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          record_identifier: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          module_name?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          record_identifier?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          change_summary?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          module_name?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          record_identifier?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       automated_messages: {
         Row: {
           created_at: string
@@ -670,6 +718,48 @@ export type Database = {
           member_delinquent?: boolean
           member_present?: boolean
           member_signed?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      belt_progressions: {
+        Row: {
+          belt_level: string
+          belt_order: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          minimum_classes_required: number
+          minimum_time_months: number
+          next_belt_level: string | null
+          requirements: Json | null
+          updated_at: string
+        }
+        Insert: {
+          belt_level: string
+          belt_order: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_classes_required?: number
+          minimum_time_months?: number
+          next_belt_level?: string | null
+          requirements?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          belt_level?: string
+          belt_order?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_classes_required?: number
+          minimum_time_months?: number
+          next_belt_level?: string | null
+          requirements?: Json | null
           updated_at?: string
         }
         Relationships: []
@@ -1035,58 +1125,6 @@ export type Database = {
           },
         ]
       }
-      class_enrollments: {
-        Row: {
-          class_id: string
-          enrolled_at: string
-          enrollment_type: string | null
-          id: string
-          membership_subscription_id: string | null
-          status: string | null
-          student_id: string
-        }
-        Insert: {
-          class_id: string
-          enrolled_at?: string
-          enrollment_type?: string | null
-          id?: string
-          membership_subscription_id?: string | null
-          status?: string | null
-          student_id: string
-        }
-        Update: {
-          class_id?: string
-          enrolled_at?: string
-          enrollment_type?: string | null
-          id?: string
-          membership_subscription_id?: string | null
-          status?: string | null
-          student_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_enrollments_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_enrollments_membership_subscription_id_fkey"
-            columns: ["membership_subscription_id"]
-            isOneToOne: false
-            referencedRelation: "membership_subscriptions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_enrollments_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       class_pack_usage: {
         Row: {
           attendance_id: string | null
@@ -1191,6 +1229,127 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_reservations: {
+        Row: {
+          cancellation_reason: string | null
+          check_in_location: Json | null
+          checked_in_at: string | null
+          class_id: string
+          id: string
+          membership_subscription_id: string | null
+          no_show: boolean | null
+          reservation_type: string | null
+          reserved_at: string
+          status: string | null
+          student_id: string
+        }
+        Insert: {
+          cancellation_reason?: string | null
+          check_in_location?: Json | null
+          checked_in_at?: string | null
+          class_id: string
+          id?: string
+          membership_subscription_id?: string | null
+          no_show?: boolean | null
+          reservation_type?: string | null
+          reserved_at?: string
+          status?: string | null
+          student_id: string
+        }
+        Update: {
+          cancellation_reason?: string | null
+          check_in_location?: Json | null
+          checked_in_at?: string | null
+          class_id?: string
+          id?: string
+          membership_subscription_id?: string | null
+          no_show?: boolean | null
+          reservation_type?: string | null
+          reserved_at?: string
+          status?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_enrollments_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_membership_subscription_id_fkey"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_schedule_versions: {
+        Row: {
+          change_reason: string | null
+          class_id: string
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          effective_from: string
+          effective_to: string | null
+          end_time: string
+          id: string
+          schedule_id: string
+          start_time: string
+        }
+        Insert: {
+          change_reason?: string | null
+          class_id: string
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          effective_from?: string
+          effective_to?: string | null
+          end_time: string
+          id?: string
+          schedule_id: string
+          start_time: string
+        }
+        Update: {
+          change_reason?: string | null
+          class_id?: string
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          effective_from?: string
+          effective_to?: string | null
+          end_time?: string
+          id?: string
+          schedule_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_schedule_versions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_schedule_versions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "class_schedules"
             referencedColumns: ["id"]
           },
         ]
@@ -3552,6 +3711,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_belt_history: {
+        Row: {
+          belt_level: string
+          classes_completed_at_previous_belt: number | null
+          created_at: string
+          id: string
+          notes: string | null
+          promoted_by: string | null
+          promoted_date: string
+          student_id: string
+          test_score: Json | null
+          time_at_previous_belt_months: number | null
+        }
+        Insert: {
+          belt_level: string
+          classes_completed_at_previous_belt?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          promoted_by?: string | null
+          promoted_date?: string
+          student_id: string
+          test_score?: Json | null
+          time_at_previous_belt_months?: number | null
+        }
+        Update: {
+          belt_level?: string
+          classes_completed_at_previous_belt?: number | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          promoted_by?: string | null
+          promoted_date?: string
+          student_id?: string
+          test_score?: Json | null
+          time_at_previous_belt_months?: number | null
+        }
+        Relationships: []
       }
       subscribers: {
         Row: {
