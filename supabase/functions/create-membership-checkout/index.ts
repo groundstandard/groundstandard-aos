@@ -1,10 +1,11 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,142 +14,192 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     logStep("Function started");
 
-    const { planId, billingFrequency = 'monthly' } = await req.json();
-    logStep("Request body parsed", { planId, billingFrequency });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    if (!planId) {
-      throw new Error("planId is required");
-    }
-
-    // Initialize Supabase with service role for admin operations
-    const supabaseAdmin = createClient(
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    // Initialize user client for authentication
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    const { 
+      contact_id,
+      membership_plan_id,
+      success_url,
+      cancel_url,
+      metadata = {}
+    } = await req.json();
 
-    // Authenticate user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    if (!contact_id || !membership_plan_id) {
+      throw new Error("contact_id and membership_plan_id are required");
+    }
 
-    // Get membership plan details
-    const { data: plan, error: planError } = await supabaseAdmin
-      .from("membership_plans")
-      .select("*")
-      .eq("id", planId)
+    // Get contact details
+    const { data: contact, error: contactError } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', contact_id)
       .single();
 
-    if (planError || !plan) {
-      throw new Error(`Membership plan not found: ${planError?.message}`);
+    if (contactError || !contact) {
+      throw new Error("Contact not found");
     }
-    logStep("Membership plan found", { planName: plan.name, price: plan.base_price_cents });
 
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
+    // Get membership plan details
+    const { data: membershipPlan, error: planError } = await supabaseClient
+      .from('membership_plans')
+      .select('*')
+      .eq('id', membership_plan_id)
+      .single();
+
+    if (planError || !membershipPlan) {
+      throw new Error("Membership plan not found");
+    }
+
+    logStep("Contact and plan found", { 
+      contactId: contact.id, 
+      contactName: `${contact.first_name} ${contact.last_name}`,
+      planName: membershipPlan.name,
+      planPrice: membershipPlan.price_cents 
     });
 
-    // Check if customer exists
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
+    // Find or create Stripe customer
+    let customerId;
     const customers = await stripe.customers.list({ 
-      email: user.email, 
+      email: contact.email, 
       limit: 1 
     });
     
-    let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+      logStep("Found existing Stripe customer", { customerId });
     } else {
+      // Create new customer
       const customer = await stripe.customers.create({
-        email: user.email,
+        email: contact.email,
+        name: `${contact.first_name} ${contact.last_name}`,
+        phone: contact.phone || undefined,
         metadata: {
-          user_id: user.id,
-        },
+          user_id: contact.id,
+          created_by: 'membership-checkout-function'
+        }
       });
       customerId = customer.id;
-      logStep("New customer created", { customerId });
+      logStep("Created new Stripe customer", { customerId });
     }
 
-    // Calculate price based on billing frequency
-    let unitAmount = plan.base_price_cents;
-    let interval = 'month';
+    // Create or get Stripe price
+    let stripePriceId = membershipPlan.stripe_price_id;
     
-    // Validate price exists and is greater than 0
-    if (!unitAmount || unitAmount <= 0) {
-      throw new Error(`Invalid price for plan ${plan.name}: ${unitAmount}`);
-    }
-    
-    if (billingFrequency === 'quarterly') {
-      unitAmount = Math.floor(plan.base_price_cents * 3 * 0.95); // 5% discount
-      interval = 'month';
-    } else if (billingFrequency === 'annually') {
-      unitAmount = Math.floor(plan.base_price_cents * 12 * 0.85); // 15% discount
-      interval = 'year';
+    if (!stripePriceId) {
+      logStep("Creating Stripe price for membership plan");
+      
+      // Create Stripe product first
+      const product = await stripe.products.create({
+        name: membershipPlan.name,
+        description: membershipPlan.description || `${membershipPlan.name} membership plan`,
+        metadata: {
+          membership_plan_id: membershipPlan.id
+        }
+      });
+
+      // Determine if this is a subscription or one-time payment
+      const isRecurring = membershipPlan.billing_frequency && membershipPlan.billing_frequency !== 'one_time';
+      
+      const priceData: any = {
+        product: product.id,
+        unit_amount: membershipPlan.price_cents,
+        currency: 'usd',
+        metadata: {
+          membership_plan_id: membershipPlan.id
+        }
+      };
+
+      if (isRecurring) {
+        priceData.recurring = {
+          interval: membershipPlan.billing_frequency || 'month'
+        };
+      }
+
+      const price = await stripe.prices.create(priceData);
+      stripePriceId = price.id;
+      
+      // Update membership plan with Stripe IDs
+      await supabaseClient
+        .from('membership_plans')
+        .update({
+          stripe_product_id: product.id,
+          stripe_price_id: price.id
+        })
+        .eq('id', membershipPlan.id);
+
+      logStep("Created Stripe product and price", { 
+        productId: product.id, 
+        priceId: price.id,
+        isRecurring 
+      });
     }
 
-    logStep("Price calculated", { originalPrice: plan.base_price_cents, finalPrice: unitAmount, interval });
+    const origin = req.headers.get("origin") || "https://yhriiykdnpuutzexjdee.supabase.co";
+    
+    // Determine checkout mode
+    const isRecurring = membershipPlan.billing_frequency && membershipPlan.billing_frequency !== 'one_time';
+    const mode = isRecurring ? 'subscription' : 'payment';
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionData: any = {
       customer: customerId,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `${plan.name} Membership`,
-              description: plan.description || `${plan.name} membership plan`,
-            },
-            unit_amount: unitAmount,
-            recurring: {
-              interval: interval as 'month' | 'year',
-              interval_count: billingFrequency === 'quarterly' ? 3 : 1,
-            },
-          },
+          price: stripePriceId,
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/contacts/${user.id}?tab=billing&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/contacts/${user.id}?tab=billing&checkout=cancelled`,
+      mode,
+      success_url: success_url || `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&contact_id=${contact_id}`,
+      cancel_url: cancel_url || `${origin}/contacts/${contact_id}`,
       metadata: {
-        user_id: user.id,
-        plan_id: planId,
-        billing_frequency: billingFrequency,
-      },
-    });
+        contact_id: contact.id,
+        membership_plan_id: membershipPlan.id,
+        created_by: 'membership-checkout-function',
+        ...metadata
+      }
+    };
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    if (mode === 'subscription') {
+      sessionData.subscription_data = {
+        metadata: {
+          contact_id: contact.id,
+          membership_plan_id: membershipPlan.id,
+          ...metadata
+        }
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionData);
+
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url,
+      mode 
+    });
 
     return new Response(JSON.stringify({ 
       url: session.url,
-      sessionId: session.id,
-      planName: plan.name,
-      price: unitAmount,
-      billingFrequency
+      session_id: session.id,
+      mode
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
@@ -156,7 +207,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }

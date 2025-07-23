@@ -1,10 +1,11 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const logStep = (step: string, details?: any) => {
@@ -12,14 +13,8 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-SUBSCRIPTION-CHECKOUT] ${step}${detailsStr}`);
 };
 
-const planPricing = {
-  starter: { monthly: 2900, yearly: 29000 }, // prices in cents
-  professional: { monthly: 7900, yearly: 79000 },
-  enterprise: { monthly: 19900, yearly: 199000 }
-};
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -41,82 +36,152 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-
+    
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { plan_type, academy_id } = await req.json();
-    if (!plan_type || !academy_id) {
-      throw new Error("Missing required fields: plan_type and academy_id");
+    const { 
+      membership_plan_id,
+      success_url,
+      cancel_url,
+      trial_period_days = 0,
+      allow_promotion_codes = true,
+      metadata = {}
+    } = await req.json();
+
+    if (!membership_plan_id) {
+      throw new Error("membership_plan_id is required");
     }
 
-    logStep("Request data validated", { plan_type, academy_id });
+    // Get membership plan details
+    const { data: membershipPlan, error: planError } = await supabaseClient
+      .from('membership_plans')
+      .select('*')
+      .eq('id', membership_plan_id)
+      .single();
+
+    if (planError || !membershipPlan) {
+      throw new Error("Membership plan not found");
+    }
+
+    logStep("Membership plan found", { 
+      planId: membershipPlan.id, 
+      name: membershipPlan.name,
+      price: membershipPlan.price_cents 
+    });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
-    // Get or create Stripe customer
-    let customer;
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    // Find or create Stripe customer
+    let customerId;
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    });
+    
     if (customers.data.length > 0) {
-      customer = customers.data[0];
-      logStep("Found existing customer", { customerId: customer.id });
+      customerId = customers.data[0].id;
+      logStep("Found existing Stripe customer", { customerId });
     } else {
-      customer = await stripe.customers.create({
+      // Create new customer
+      const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
           user_id: user.id,
-          academy_id: academy_id
+          created_by: 'subscription-checkout-function'
         }
       });
-      logStep("Created new customer", { customerId: customer.id });
+      customerId = customer.id;
+      logStep("Created new Stripe customer", { customerId });
     }
 
-    // Get pricing for the plan
-    const pricing = planPricing[plan_type as keyof typeof planPricing];
-    if (!pricing) {
-      throw new Error(`Invalid plan type: ${plan_type}`);
+    // Create or get Stripe price
+    let stripePriceId = membershipPlan.stripe_price_id;
+    
+    if (!stripePriceId) {
+      logStep("Creating Stripe price for membership plan");
+      
+      // Create Stripe product first
+      const product = await stripe.products.create({
+        name: membershipPlan.name,
+        description: membershipPlan.description || `${membershipPlan.name} membership plan`,
+        metadata: {
+          membership_plan_id: membershipPlan.id
+        }
+      });
+
+      // Create Stripe price
+      const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: membershipPlan.price_cents,
+        currency: 'usd',
+        recurring: {
+          interval: membershipPlan.billing_frequency || 'month'
+        },
+        metadata: {
+          membership_plan_id: membershipPlan.id
+        }
+      });
+
+      stripePriceId = price.id;
+      
+      // Update membership plan with Stripe IDs
+      await supabaseClient
+        .from('membership_plans')
+        .update({
+          stripe_product_id: product.id,
+          stripe_price_id: price.id
+        })
+        .eq('id', membershipPlan.id);
+
+      logStep("Created Stripe product and price", { 
+        productId: product.id, 
+        priceId: price.id 
+      });
     }
 
+    const origin = req.headers.get("origin") || "https://yhriiykdnpuutzexjdee.supabase.co";
+    
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
-      customer: customer.id,
-      mode: "subscription",
+      customer: customerId,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `${plan_type.charAt(0).toUpperCase() + plan_type.slice(1)} Plan`,
-              description: `Martial Arts Management - ${plan_type} subscription`
-            },
-            unit_amount: pricing.monthly,
-            recurring: { interval: "month" }
-          },
-          quantity: 1
-        }
+          price: stripePriceId,
+          quantity: 1,
+        },
       ],
-      success_url: `${req.headers.get("origin")}/subscription?success=true`,
-      cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
+      mode: 'subscription',
+      success_url: success_url || `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancel_url || `${origin}/payments`,
+      allow_promotion_codes,
+      subscription_data: {
+        trial_period_days: trial_period_days > 0 ? trial_period_days : undefined,
+        metadata: {
+          user_id: user.id,
+          membership_plan_id: membershipPlan.id,
+          ...metadata
+        }
+      },
       metadata: {
-        academy_id: academy_id,
-        plan_type: plan_type
+        user_id: user.id,
+        membership_plan_id: membershipPlan.id,
+        ...metadata
       }
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    logStep("Checkout session created", { 
+      sessionId: session.id, 
+      url: session.url 
+    });
 
-    // Update academy subscription with Stripe customer ID
-    await supabaseClient
-      .from('academy_subscriptions')
-      .update({
-        stripe_customer_id: customer.id,
-        updated_at: new Date().toISOString()
-      })
-      .eq('academy_id', academy_id);
-
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      session_id: session.id
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
@@ -124,7 +189,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }

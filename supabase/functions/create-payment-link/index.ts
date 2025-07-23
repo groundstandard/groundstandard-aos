@@ -1,4 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -22,76 +23,44 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('No authorization header provided');
+    // Get user if authenticated
+    let userId = null;
+    let userEmail = null;
     
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
-    if (!user) throw new Error('User not authenticated');
-    logStep("User authenticated", { userId: user.id });
-
-    // Verify admin role
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || !['admin', 'owner'].includes(profile.role)) {
-      throw new Error('Insufficient permissions');
-    }
-    logStep("Admin permissions verified");
-
-    const { contact_id, amount, description, expires_in_hours } = await req.json();
-    logStep("Request data parsed", { contact_id, amount, description, expires_in_hours });
-
-    if (!contact_id || !amount) {
-      throw new Error('Missing required fields: contact_id and amount');
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData } = await supabaseClient.auth.getUser(token);
+      if (userData.user) {
+        userId = userData.user.id;
+        userEmail = userData.user.email;
+        logStep("User authenticated", { userId, email: userEmail });
+      }
     }
 
-    // Get contact details
-    const { data: contact, error: contactError } = await supabaseClient
-      .from('profiles')
-      .select('first_name, last_name, email')
-      .eq('id', contact_id)
-      .single();
+    const { 
+      amount, 
+      description, 
+      metadata = {},
+      success_url,
+      cancel_url,
+      payment_method_types = ['card']
+    } = await req.json();
 
-    if (contactError || !contact) {
-      throw new Error('Contact not found');
+    if (!amount || !description) {
+      throw new Error("Amount and description are required");
     }
-    logStep("Contact found", { contactEmail: contact.email });
+
+    logStep("Creating payment link", { amount, description });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-
-    // Check if customer exists
-    const customers = await stripe.customers.list({ 
-      email: contact.email, 
-      limit: 1 
-    });
-    
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
-    } else {
-      const customer = await stripe.customers.create({
-        email: contact.email,
-        name: `${contact.first_name} ${contact.last_name}`,
-      });
-      customerId = customer.id;
-      logStep("New customer created", { customerId });
-    }
 
     // Create payment link
     const paymentLink = await stripe.paymentLinks.create({
@@ -100,49 +69,56 @@ serve(async (req) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: description || 'Payment',
+              name: description,
             },
-            unit_amount: Math.round(parseFloat(amount) * 100),
+            unit_amount: amount, // amount in cents
           },
           quantity: 1,
         },
       ],
+      payment_method_types,
+      metadata: {
+        ...metadata,
+        user_id: userId || 'anonymous',
+        created_by: 'payment-link-function'
+      },
       after_completion: {
         type: 'redirect',
         redirect: {
-          url: `${req.headers.get('origin') || 'https://app.groundstandard.com'}/payments?success=true`,
-        },
-      },
+          url: success_url || `${req.headers.get("origin")}/payment-success`
+        }
+      }
     });
 
-    logStep("Payment link created", { paymentLinkId: paymentLink.id, url: paymentLink.url });
+    logStep("Payment link created", { 
+      paymentLinkId: paymentLink.id, 
+      url: paymentLink.url 
+    });
 
-    // Store payment link in database
-    const { error: insertError } = await supabaseClient
-      .from('payment_links')
-      .insert({
-        student_id: contact_id,
-        stripe_payment_link_id: paymentLink.id,
-        amount: Math.round(parseFloat(amount) * 100),
-        description: description || 'Payment',
-        expires_at: new Date(Date.now() + (parseInt(expires_in_hours) * 60 * 60 * 1000)).toISOString(),
-        url: paymentLink.url,
-        created_by: user.id,
-        status: 'active'
-      });
+    // Save payment link to database
+    if (userId) {
+      const { error: insertError } = await supabaseClient
+        .from('payment_links')
+        .insert({
+          user_id: userId,
+          stripe_payment_link_id: paymentLink.id,
+          amount,
+          description,
+          status: 'active',
+          url: paymentLink.url,
+          metadata
+        });
 
-    if (insertError) {
-      logStep("Database insert error", { error: insertError });
-      // Don't throw - payment link is created, just log the error
-    } else {
-      logStep("Payment link stored in database");
+      if (insertError) {
+        logStep("Warning: Could not save to database", insertError);
+      } else {
+        logStep("Saved payment link to database");
+      }
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      url: paymentLink.url,
-      expires_at: new Date(Date.now() + (parseInt(expires_in_hours) * 60 * 60 * 1000)).toISOString(),
-      payment_link_id: paymentLink.id
+    return new Response(JSON.stringify({ 
+      payment_link: paymentLink.url,
+      payment_link_id: paymentLink.id 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
@@ -151,10 +127,7 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: errorMessage 
-    }), {
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
