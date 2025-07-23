@@ -185,9 +185,21 @@ export const ClassManagement = () => {
     try {
       if (editingClass) {
         // Update existing class
+        const updateData = {
+          name: formData.name,
+          description: formData.description,
+          instructor_id: formData.instructor_id,
+          duration_minutes: formData.duration_minutes,
+          max_students: formData.unlimited_students ? null : formData.max_students,
+          skill_level: formData.skill_level,
+          age_group: formData.age_group,
+          class_length_type: formData.class_length_type,
+          class_length_value: formData.class_length_type === 'indefinite' ? null : parseInt(formData.class_length_value),
+        };
+        
         const { error } = await supabase
           .from('classes')
-          .update(formData)
+          .update(updateData)
           .eq('id', editingClass.id);
 
         if (error) throw error;
@@ -218,9 +230,21 @@ export const ClassManagement = () => {
         });
       } else {
         // Create new class
+        const insertData = {
+          name: formData.name,
+          description: formData.description,
+          instructor_id: formData.instructor_id,
+          duration_minutes: formData.duration_minutes,
+          max_students: formData.unlimited_students ? null : formData.max_students,
+          skill_level: formData.skill_level,
+          age_group: formData.age_group,
+          class_length_type: formData.class_length_type,
+          class_length_value: formData.class_length_type === 'indefinite' ? null : parseInt(formData.class_length_value),
+        };
+        
         const { data: classData, error: classError } = await supabase
           .from('classes')
-          .insert(formData)
+          .insert(insertData)
           .select()
           .single();
 
