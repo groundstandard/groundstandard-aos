@@ -29,29 +29,67 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
   const loadPaymentData = async () => {
     try {
       setLoading(true);
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
 
-      // Load subscription data
+      // Load membership subscription data
       const { data: subData } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', userId || (await supabase.auth.getUser()).data.user?.id)
+        .from('membership_subscriptions')
+        .select(`
+          *,
+          membership_plans (
+            name,
+            description,
+            base_price_cents,
+            billing_frequency
+          )
+        `)
+        .eq('profile_id', currentUserId)
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       setSubscription(subData);
 
-      // Load payment history
+      // Load comprehensive payment history with enhanced details
       const { data: payments } = await supabase
         .from('payments')
-        .select('*')
-        .eq('student_id', userId || (await supabase.auth.getUser()).data.user?.id)
+        .select(`
+          *,
+          class_packs (
+            total_classes,
+            remaining_classes
+          )
+        `)
+        .eq('student_id', currentUserId)
         .order('payment_date', { ascending: false })
-        .limit(10);
+        .limit(25);
 
       setPaymentHistory(payments || []);
+
+      // Load failed payments that need attention
+      const { data: failedPayments } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('student_id', currentUserId)
+        .in('status', ['failed', 'requires_action'])
+        .order('payment_date', { ascending: false });
+
+      if (failedPayments && failedPayments.length > 0) {
+        toast({
+          title: "Payment Action Required",
+          description: `You have ${failedPayments.length} payment(s) that need attention.`,
+          variant: "destructive",
+        });
+      }
+
     } catch (error) {
       console.error('Error loading payment data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load payment information",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -231,6 +269,23 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
+          {/* Failed Payments Alert */}
+          {paymentHistory.some(p => p.status === 'failed' || p.status === 'requires_action') && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-800">Payment Issues Detected</p>
+                    <p className="text-sm text-red-700">
+                      Some payments require your attention. Please update your payment method or contact support.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment History */}
           <Card>
             <CardHeader>
@@ -239,7 +294,7 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
                 Payment History
               </CardTitle>
               <CardDescription>
-                Your complete payment history
+                Your complete payment history and transaction details
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -248,16 +303,22 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
                   {paymentHistory.map((payment) => (
                     <div
                       key={payment.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className={`flex items-center justify-between p-3 border rounded-lg ${
+                        payment.status === 'failed' || payment.status === 'requires_action' 
+                          ? 'border-red-200 bg-red-50' 
+                          : ''
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-full ${
                           payment.status === 'completed' ? 'bg-green-100' :
-                          payment.status === 'failed' ? 'bg-red-100' : 'bg-yellow-100'
+                          payment.status === 'failed' || payment.status === 'requires_action' ? 'bg-red-100' : 
+                          'bg-yellow-100'
                         }`}>
                           <DollarSign className={`h-4 w-4 ${
                             payment.status === 'completed' ? 'text-green-600' :
-                            payment.status === 'failed' ? 'text-red-600' : 'text-yellow-600'
+                            payment.status === 'failed' || payment.status === 'requires_action' ? 'text-red-600' : 
+                            'text-yellow-600'
                           }`} />
                         </div>
                         <div>
@@ -270,20 +331,49 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
                               via {payment.payment_method_type === 'ach' ? 'Bank Transfer' : 'Credit Card'}
                             </p>
                           )}
+                          {payment.failure_reason && (
+                            <p className="text-xs text-red-600 mt-1">
+                              {payment.failure_reason}
+                            </p>
+                          )}
+                          {payment.tax_amount && (
+                            <p className="text-xs text-muted-foreground">
+                              Tax: {formatCurrency(payment.tax_amount)}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <Badge variant={payment.status === 'completed' ? 'default' : 'destructive'}>
-                          {payment.status}
+                        <Badge variant={
+                          payment.status === 'completed' ? 'default' : 
+                          payment.status === 'failed' || payment.status === 'requires_action' ? 'destructive' :
+                          'secondary'
+                        }>
+                          {payment.status === 'requires_action' ? 'Action Required' : payment.status}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(payment.payment_date).toLocaleDateString()}
                         </p>
                         {payment.installment_number && (
                           <p className="text-xs text-muted-foreground">
-                            {payment.installment_number}/{payment.total_installments}
+                            Installment {payment.installment_number}/{payment.total_installments}
                           </p>
+                        )}
+                        {payment.retry_count && payment.retry_count > 0 && (
+                          <p className="text-xs text-orange-600">
+                            Retry #{payment.retry_count}
+                          </p>
+                        )}
+                        {(payment.status === 'failed' || payment.status === 'requires_action') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2"
+                            onClick={openCustomerPortal}
+                          >
+                            Update Payment
+                          </Button>
                         )}
                       </div>
                     </div>

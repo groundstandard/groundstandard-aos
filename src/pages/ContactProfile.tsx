@@ -38,6 +38,7 @@ import { ClassPacksCard } from "@/components/contacts/ClassPacksCard";
 import GroupedPaymentHistory from "@/components/contacts/GroupedPaymentHistory";
 import PaymentDetailModal from "@/components/contacts/PaymentDetailModal";
 import AttendanceEditModal from "@/components/contacts/AttendanceEditModal";
+import { StudentPaymentIntegration } from "@/components/payments/StudentPaymentIntegration";
 
 interface Contact {
   id: string;
@@ -208,10 +209,18 @@ const ContactProfile = () => {
 
       setFamilyMembers(familyData || []);
 
-      // Fetch payment history
+      // Fetch comprehensive payment history with related data
       const { data: paymentData } = await supabase
         .from('payments')
-        .select('*')
+        .select(`
+          *,
+          billing_cycles (
+            id,
+            cycle_start_date,
+            cycle_end_date,
+            status
+          )
+        `)
         .eq('student_id', contactId)
         .order('payment_date', { ascending: false });
 
