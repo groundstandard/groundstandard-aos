@@ -69,7 +69,7 @@ interface AttendanceStats {
   totalStudents: number;
   totalSessions: number;
   averageAttendance: number;
-  presentCount: number;
+  presentCount: number; // This will represent "Present Today"
   absentCount: number;
   lateCount: number;
   excusedCount: number;
@@ -186,6 +186,10 @@ export const AttendanceManagement = () => {
       const lateCount = attendance?.filter(a => a.status === 'late').length || 0;
       const excusedCount = attendance?.filter(a => a.status === 'excused').length || 0;
       
+      // Calculate "Present Today" - only today's attendance
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const presentToday = attendance?.filter(a => a.status === 'present' && a.date === today).length || 0;
+      
       const uniqueStudents = new Set(attendance?.map(a => a.student_id)).size;
       const averageAttendance = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
 
@@ -283,7 +287,7 @@ export const AttendanceManagement = () => {
         totalStudents: uniqueStudents,
         totalSessions,
         averageAttendance,
-        presentCount,
+        presentCount: presentToday, // Use presentToday for the "Present Today" metric
         absentCount,
         lateCount,
         excusedCount,
