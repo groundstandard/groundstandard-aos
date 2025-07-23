@@ -3,8 +3,8 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 const logStep = (step: string, details?: any) => {
@@ -13,7 +13,7 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -22,67 +22,85 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
-    const token = authHeader.replace("Bearer ", "");
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('No authorization header provided');
+    
+    const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get or create Stripe customer
-    let customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Find or create Stripe customer
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    });
+    
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
+      logStep("Existing customer found", { customerId });
     } else {
+      // Get user profile for name
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
       const customer = await stripe.customers.create({
         email: user.email,
-        metadata: { supabase_user_id: user.id }
+        name: profile ? `${profile.first_name} ${profile.last_name}` : undefined,
       });
       customerId = customer.id;
-      logStep("Created new customer", { customerId });
+      logStep("New customer created", { customerId });
     }
 
-    // Create Setup Intent for ACH payments
+    // Create SetupIntent for ACH
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
       payment_method_types: ['us_bank_account'],
       usage: 'off_session',
       metadata: {
         user_id: user.id,
-        payment_type: 'ach'
+        setup_type: 'ach_bank_account'
       }
     });
 
-    logStep("Setup Intent created", { setupIntentId: setupIntent.id });
+    logStep("SetupIntent created", { 
+      setupIntentId: setupIntent.id,
+      clientSecret: setupIntent.client_secret 
+    });
 
     return new Response(JSON.stringify({
-      setup_intent_id: setupIntent.id,
+      success: true,
       client_secret: setupIntent.client_secret,
-      customer_id: customerId
+      setup_intent_id: setupIntent.id
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in setup-ach-payment", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: errorMessage 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }

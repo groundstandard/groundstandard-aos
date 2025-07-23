@@ -3,13 +3,25 @@ project_id = "yhriiykdnpuutzexjdee"
 [functions.create-payment-link]
 verify_jwt = true
 
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.setup-ach-payment]
+verify_jwt = true
+
 [functions.send-payment-reminder]
 verify_jwt = true
 
-[functions.process-recurring-payments]
+[functions.generate-financial-report]
 verify_jwt = true
 
-[functions.generate-financial-report]
+[functions.process-refund]
+verify_jwt = true
+
+[functions.create-installment-plan]
+verify_jwt = true
+
+[functions.process-recurring-payments]
 verify_jwt = true
 
 [functions.highlevel-automation]
