@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.validate-webhook-secret]
 verify_jwt = true
+
+[functions.process-payment-action]
+verify_jwt = true

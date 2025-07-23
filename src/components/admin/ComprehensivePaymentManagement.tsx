@@ -43,6 +43,8 @@ import {
 } from 'lucide-react';
 import { RefundManagement } from '@/components/payments/RefundManagement';
 import { TaxManagement } from '@/components/payments/TaxManagement';
+import { PaymentAnalytics } from '@/components/payments/PaymentAnalytics';
+import { PaymentProcessing } from '@/components/payments/PaymentProcessing';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -909,14 +911,14 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="processing">Processing</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="schedules">Schedules</TabsTrigger>
           <TabsTrigger value="reminders">Reminders</TabsTrigger>
-          <TabsTrigger value="late-fees">Late Fees</TabsTrigger>
           <TabsTrigger value="refunds">Refunds</TabsTrigger>
-          <TabsTrigger value="taxes">Taxes</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
 
@@ -1154,12 +1156,16 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </Card>
         </TabsContent>
 
-        <TabsContent value="refunds" className="space-y-6">
-          <RefundManagement />
+        <TabsContent value="processing" className="space-y-6">
+          <PaymentProcessing />
         </TabsContent>
 
-        <TabsContent value="taxes" className="space-y-6">
-          <TaxManagement />
+        <TabsContent value="analytics" className="space-y-6">
+          <PaymentAnalytics />
+        </TabsContent>
+
+        <TabsContent value="refunds" className="space-y-6">
+          <RefundManagement />
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">
