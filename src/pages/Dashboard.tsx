@@ -120,7 +120,7 @@ const Dashboard = () => {
               <MultiAcademySwitcher />
               <div className="flex items-center gap-2 sm:gap-3">
                 <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
-                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground">Admin Dashboard</h1>
+                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground whitespace-nowrap">AgencyDashboard</h1>
               </div>
             </div>
 
