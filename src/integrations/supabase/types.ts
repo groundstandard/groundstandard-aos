@@ -877,6 +877,94 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          academy_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          end_time: string
+          event_type: string
+          id: string
+          instructor_id: string | null
+          is_recurring: boolean
+          location: string | null
+          max_participants: number | null
+          recurrence_end_date: string | null
+          recurrence_pattern: string | null
+          start_date: string
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          end_time: string
+          event_type?: string
+          id?: string
+          instructor_id?: string | null
+          is_recurring?: boolean
+          location?: string | null
+          max_participants?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
+          start_date: string
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          end_time?: string
+          event_type?: string
+          id?: string
+          instructor_id?: string | null
+          is_recurring?: boolean
+          location?: string | null
+          max_participants?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
+          start_date?: string
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_memberships: {
         Row: {
           channel_id: string
@@ -1049,29 +1137,44 @@ export type Database = {
       }
       check_in_settings: {
         Row: {
+          allow_early_checkin_minutes: number | null
+          allow_late_checkin_minutes: number | null
           auto_checkout_hours: number | null
           created_at: string | null
+          enable_location_tracking: boolean | null
           id: string
           kiosk_mode_enabled: boolean | null
+          max_distance_meters: number | null
           require_class_selection: boolean | null
+          require_pin_verification: boolean | null
           updated_at: string | null
           welcome_message: string | null
         }
         Insert: {
+          allow_early_checkin_minutes?: number | null
+          allow_late_checkin_minutes?: number | null
           auto_checkout_hours?: number | null
           created_at?: string | null
+          enable_location_tracking?: boolean | null
           id?: string
           kiosk_mode_enabled?: boolean | null
+          max_distance_meters?: number | null
           require_class_selection?: boolean | null
+          require_pin_verification?: boolean | null
           updated_at?: string | null
           welcome_message?: string | null
         }
         Update: {
+          allow_early_checkin_minutes?: number | null
+          allow_late_checkin_minutes?: number | null
           auto_checkout_hours?: number | null
           created_at?: string | null
+          enable_location_tracking?: boolean | null
           id?: string
           kiosk_mode_enabled?: boolean | null
+          max_distance_meters?: number | null
           require_class_selection?: boolean | null
+          require_pin_verification?: boolean | null
           updated_at?: string | null
           welcome_message?: string | null
         }

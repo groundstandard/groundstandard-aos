@@ -37,11 +37,11 @@ interface CheckInSettings {
   auto_checkout_hours: number;
   require_class_selection: boolean;
   welcome_message: string;
-  allow_early_checkin_minutes: number;
-  allow_late_checkin_minutes: number;
-  require_pin_verification: boolean;
-  enable_location_tracking: boolean;
-  max_distance_meters: number;
+  allow_early_checkin_minutes?: number;
+  allow_late_checkin_minutes?: number;
+  require_pin_verification?: boolean;
+  enable_location_tracking?: boolean;
+  max_distance_meters?: number;
 }
 
 interface CheckInRecord {
@@ -191,8 +191,8 @@ export const AdvancedCheckInSystem = () => {
       if (error) throw error;
       return result;
     },
-    onSuccess: (result) => {
-      if (result.success) {
+    onSuccess: (result: any) => {
+      if (result?.success) {
         toast({
           title: 'Check-in Successful',
           description: `Welcome, ${result.student_name}!`
@@ -203,7 +203,7 @@ export const AdvancedCheckInSystem = () => {
         toast({
           variant: 'destructive',
           title: 'Check-in Failed',
-          description: result.error
+          description: result?.error || 'Check-in failed'
         });
       }
     }
@@ -289,13 +289,13 @@ export const AdvancedCheckInSystem = () => {
                       
                       // Auto-focus next input
                       if (e.target.value && index < 3) {
-                        const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                        const nextInput = (e.target as HTMLInputElement).parentElement?.children[index + 1] as HTMLInputElement;
                         nextInput?.focus();
                       }
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Backspace' && !pinInput[index] && index > 0) {
-                        const prevInput = e.target.parentElement?.children[index - 1] as HTMLInputElement;
+                        const prevInput = (e.target as HTMLInputElement).parentElement?.children[index - 1] as HTMLInputElement;
                         prevInput?.focus();
                       }
                     }}

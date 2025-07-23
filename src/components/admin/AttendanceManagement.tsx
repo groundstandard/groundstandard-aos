@@ -36,6 +36,7 @@ import {
   Calendar as CalendarDays
 } from 'lucide-react';
 import { CalendarAttendanceView } from '@/components/attendance/CalendarAttendanceView';
+import { EnhancedCalendarView } from '@/components/calendar/EnhancedCalendarView';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -814,6 +815,10 @@ export const AttendanceManagement = () => {
 
         <TabsContent value="calendar" className="space-y-4">
           <CalendarAttendanceView />
+        </TabsContent>
+        
+        <TabsContent value="enhanced-calendar" className="space-y-4">
+          <EnhancedCalendarView />
         </TabsContent>
 
         <TabsContent value="students" className="space-y-4">
