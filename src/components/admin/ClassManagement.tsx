@@ -150,6 +150,35 @@ export const ClassManagement = () => {
     }
   };
 
+  const fetchClassSchedules = async (classId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('class_schedules')
+        .select('*')
+        .eq('class_id', classId)
+        .order('day_of_week');
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setScheduleData(data.map(schedule => ({
+          id: schedule.id,
+          class_id: schedule.class_id,
+          day_of_week: schedule.day_of_week,
+          start_time: schedule.start_time,
+          end_time: schedule.end_time
+        })));
+      } else {
+        // No schedules found, set default
+        setScheduleData([
+          { class_id: classId, day_of_week: 1, start_time: '18:00', end_time: '19:00' }
+        ]);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch class schedules:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -162,6 +191,26 @@ export const ClassManagement = () => {
           .eq('id', editingClass.id);
 
         if (error) throw error;
+
+        // Delete existing schedules
+        const { error: deleteError } = await supabase
+          .from('class_schedules')
+          .delete()
+          .eq('class_id', editingClass.id);
+
+        if (deleteError) throw deleteError;
+
+        // Create new schedules
+        const schedulesToInsert = scheduleData.map(schedule => ({
+          ...schedule,
+          class_id: editingClass.id
+        }));
+
+        const { error: scheduleError } = await supabase
+          .from('class_schedules')
+          .insert(schedulesToInsert);
+
+        if (scheduleError) throw scheduleError;
 
         toast({
           title: 'Success',
@@ -525,11 +574,10 @@ export const ClassManagement = () => {
                     </div>
                   </div>
 
-                  {!editingClass && (
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <Label>Class Schedule</Label>
-                        <Button type="button" variant="outline" size="sm" onClick={addScheduleSlot}>
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <Label>Class Schedule</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addScheduleSlot}>
                           <Plus className="h-3 w-3 mr-1" />
                           Add Time Slot
                         </Button>
@@ -575,7 +623,6 @@ export const ClassManagement = () => {
                         </div>
                       ))}
                     </div>
-                  )}
 
                   <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -747,8 +794,8 @@ export const ClassManagement = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              setEditingClass(classItem);
+                          onClick={() => {
+                            setEditingClass(classItem);
                             setFormData({
                               name: classItem.name,
                               description: classItem.description || '',
@@ -761,8 +808,9 @@ export const ClassManagement = () => {
                               class_length_type: 'indefinite',
                               class_length_value: '',
                             });
-                              setIsDialogOpen(true);
-                            }}
+                            fetchClassSchedules(classItem.id);
+                            setIsDialogOpen(true);
+                          }}
                             className="px-2"
                           >
                             <Edit2 className="h-3 w-3" />
@@ -828,6 +876,7 @@ export const ClassManagement = () => {
                               class_length_type: 'indefinite',
                               class_length_value: '',
                             });
+                            fetchClassSchedules(classItem.id);
                             setIsDialogOpen(true);
                           }}
                           className={`${isMobile ? 'px-2' : ''}`}
