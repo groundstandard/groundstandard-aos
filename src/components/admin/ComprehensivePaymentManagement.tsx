@@ -492,10 +492,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3 text-center">
-                <LinkIcon className="h-6 w-6 mx-auto mb-1 text-blue-600" />
-                <h3 className="font-semibold text-sm">Create Payment Link</h3>
-                <p className="text-xs text-muted-foreground">Generate payment links for students</p>
+              <CardContent className="p-3 flex items-center gap-3 text-left">
+                <LinkIcon className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-sm">Create Payment Link</h3>
+                  <p className="text-xs text-muted-foreground">Generate payment links for students</p>
+                </div>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -573,10 +575,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('refunds')}
         >
-          <CardContent className="p-3 text-center">
-            <RotateCcw className="h-6 w-6 mx-auto mb-1 text-green-600" />
-            <h3 className="font-semibold text-sm">Refunds & Credits</h3>
-            <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
+          <CardContent className="p-3 flex items-center gap-3 text-left">
+            <RotateCcw className="h-6 w-6 text-green-600" />
+            <div>
+              <h3 className="font-semibold text-sm">Refunds & Credits</h3>
+              <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -585,10 +589,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('taxes')}
         >
-          <CardContent className="p-3 text-center">
-            <Calculator className="h-6 w-6 mx-auto mb-1 text-purple-600" />
-            <h3 className="font-semibold text-sm">Tax Management</h3>
-            <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
+          <CardContent className="p-3 flex items-center gap-3 text-left">
+            <Calculator className="h-6 w-6 text-purple-600" />
+            <div>
+              <h3 className="font-semibold text-sm">Tax Management</h3>
+              <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -596,10 +602,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3 text-center">
-                <Bell className="h-6 w-6 mx-auto mb-1 text-orange-600" />
-                <h3 className="font-semibold text-sm">Send Reminder</h3>
-                <p className="text-xs text-muted-foreground">Send payment reminders</p>
+              <CardContent className="p-3 flex items-center gap-3 text-left">
+                <Bell className="h-6 w-6 text-orange-600" />
+                <div>
+                  <h3 className="font-semibold text-sm">Send Reminder</h3>
+                  <p className="text-xs text-muted-foreground">Send payment reminders</p>
+                </div>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -674,10 +682,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3 text-center">
-                <Clock className="h-6 w-6 mx-auto mb-1 text-green-600" />
-                <h3 className="font-semibold text-sm">Setup Recurring</h3>
-                <p className="text-xs text-muted-foreground">Create payment schedules</p>
+              <CardContent className="p-3 flex items-center gap-3 text-left">
+                <Clock className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="font-semibold text-sm">Setup Recurring</h3>
+                  <p className="text-xs text-muted-foreground">Create payment schedules</p>
+                </div>
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -750,19 +760,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         </Dialog>
 
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-3 text-center">
-            <Calculator className="h-6 w-6 mx-auto mb-1 text-red-600" />
-            <h3 className="font-semibold text-sm">Calculate Late Fees</h3>
-            <p className="text-xs text-muted-foreground">Process overdue payments</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-2"
-              onClick={() => calculateLateFeesMutation.mutate()}
-              disabled={calculateLateFeesMutation.isPending}
-            >
-              {calculateLateFeesMutation.isPending ? 'Processing...' : 'Calculate'}
-            </Button>
+          <CardContent className="p-3 flex items-center gap-3 text-left">
+            <Calculator className="h-6 w-6 text-red-600" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm">Calculate Late Fees</h3>
+              <p className="text-xs text-muted-foreground">Process overdue payments</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => calculateLateFeesMutation.mutate()}
+                disabled={calculateLateFeesMutation.isPending}
+              >
+                {calculateLateFeesMutation.isPending ? 'Processing...' : 'Calculate'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
