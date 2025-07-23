@@ -332,6 +332,10 @@
       scrollbar-width: none;
     }
     
+    .mobile-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    
     /* Native app specific styles */
     .native-app {
       /* Prevent zoom on input focus */
@@ -362,14 +366,6 @@
       .pwa-hide {
         display: none !important;
       }
-    }
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    
-    .mobile-tabs-scroll::-webkit-scrollbar {
-      display: none;
     }
   }
 
