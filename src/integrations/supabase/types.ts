@@ -2751,12 +2751,14 @@ export type Database = {
           pack_expiry_days: number | null
           payment_frequency: string | null
           plan_type_id: string | null
+          price_cents: number | null
           renewal_discount_percentage: number | null
           renewal_enabled: boolean | null
           renewal_new_rate_cents: number | null
           renewal_new_rate_enabled: boolean | null
           setup_fee_cents: number | null
           stripe_price_id: string | null
+          stripe_product_id: string | null
           trial_days: number | null
           trial_period_days: number | null
           updated_at: string | null
@@ -2784,12 +2786,14 @@ export type Database = {
           pack_expiry_days?: number | null
           payment_frequency?: string | null
           plan_type_id?: string | null
+          price_cents?: number | null
           renewal_discount_percentage?: number | null
           renewal_enabled?: boolean | null
           renewal_new_rate_cents?: number | null
           renewal_new_rate_enabled?: boolean | null
           setup_fee_cents?: number | null
           stripe_price_id?: string | null
+          stripe_product_id?: string | null
           trial_days?: number | null
           trial_period_days?: number | null
           updated_at?: string | null
@@ -2817,12 +2821,14 @@ export type Database = {
           pack_expiry_days?: number | null
           payment_frequency?: string | null
           plan_type_id?: string | null
+          price_cents?: number | null
           renewal_discount_percentage?: number | null
           renewal_enabled?: boolean | null
           renewal_new_rate_cents?: number | null
           renewal_new_rate_enabled?: boolean | null
           setup_fee_cents?: number | null
           stripe_price_id?: string | null
+          stripe_product_id?: string | null
           trial_days?: number | null
           trial_period_days?: number | null
           updated_at?: string | null

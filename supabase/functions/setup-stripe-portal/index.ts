@@ -23,7 +23,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Create a default customer portal configuration for test mode
+    // Create a minimal customer portal configuration for test mode
     const configuration = await stripe.billingPortal.configurations.create({
       business_profile: {
         headline: "Manage your membership",
@@ -42,9 +42,7 @@ serve(async (req) => {
           enabled: false,
         },
         subscription_update: {
-          enabled: true,
-          default_allowed_updates: ["price"],
-          proration_behavior: "create_prorations",
+          enabled: false, // Disable subscription updates to avoid product requirement
         },
       },
     });

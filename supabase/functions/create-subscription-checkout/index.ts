@@ -66,6 +66,11 @@ serve(async (req) => {
       throw new Error("Membership plan not found");
     }
 
+    // Use price_cents (which is now synced with base_price_cents)
+    if (!membershipPlan.price_cents) {
+      throw new Error("Membership plan price not configured");
+    }
+
     logStep("Membership plan found", { 
       planId: membershipPlan.id, 
       name: membershipPlan.name,
@@ -112,13 +117,25 @@ serve(async (req) => {
         }
       });
 
-      // Create Stripe price
-      // Map billing frequency to Stripe intervals
-      let interval = 'month';
-      if (membershipPlan.billing_frequency === 'monthly') interval = 'month';
-      else if (membershipPlan.billing_frequency === 'yearly') interval = 'year';
-      else if (membershipPlan.billing_frequency === 'weekly') interval = 'week';
-      else if (membershipPlan.billing_frequency === 'daily') interval = 'day';
+      // Map billing frequency to Stripe intervals correctly
+      let interval = 'month'; // default
+      switch (membershipPlan.billing_frequency) {
+        case 'daily':
+          interval = 'day';
+          break;
+        case 'weekly':
+          interval = 'week';
+          break;
+        case 'monthly':
+          interval = 'month';
+          break;
+        case 'yearly':
+        case 'annual':
+          interval = 'year';
+          break;
+        default:
+          interval = 'month';
+      }
       
       const price = await stripe.prices.create({
         product: product.id,
