@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,22 @@ export const WebhookSecretConfig = ({ onConfigured }: WebhookSecretConfigProps) 
   const [isConfigured, setIsConfigured] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+
+  // Check initial configuration status
+  useEffect(() => {
+    const checkConfigurationStatus = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('validate-webhook-secret');
+        if (data?.configured) {
+          setIsConfigured(true);
+        }
+      } catch (error) {
+        // Ignore errors during initial check
+      }
+    };
+    
+    checkConfigurationStatus();
+  }, []);
 
   const webhookEndpoint = `https://yhriiykdnpuutzexjdee.supabase.co/functions/v1/stripe-webhook`;
 
@@ -48,6 +64,7 @@ export const WebhookSecretConfig = ({ onConfigured }: WebhookSecretConfigProps) 
       }
 
       setIsConfigured(true);
+      setWebhookSecret(""); // Clear the input field
       toast({
         title: "Success",
         description: "Webhook secret configured successfully",
