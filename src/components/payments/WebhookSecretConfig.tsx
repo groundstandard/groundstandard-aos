@@ -20,7 +20,7 @@ export const WebhookSecretConfig = ({ onConfigured }: WebhookSecretConfigProps) 
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const webhookEndpoint = `${window.location.origin.replace('http://', 'https://')}/functions/v1/stripe-webhook`;
+  const webhookEndpoint = `https://yhriiykdnpuutzexjdee.supabase.co/functions/v1/stripe-webhook`;
 
   const handleConfigureSecret = async () => {
     if (!webhookSecret.trim()) {
@@ -35,12 +35,16 @@ export const WebhookSecretConfig = ({ onConfigured }: WebhookSecretConfigProps) 
     setIsConfiguring(true);
     try {
       // Test the webhook secret by calling a validation function
-      const { error } = await supabase.functions.invoke('validate-webhook-secret', {
+      const { data, error } = await supabase.functions.invoke('validate-webhook-secret', {
         body: { webhook_secret: webhookSecret }
       });
 
       if (error) {
         throw error;
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       setIsConfigured(true);
