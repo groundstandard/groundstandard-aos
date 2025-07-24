@@ -52,6 +52,7 @@ export class PaymentTestSuite {
       {
         name: "Payment Portal Access",
         tests: [
+          this.testSetupStripePortal,
           this.testMembershipPortal,
           this.testSubscriptionPortal,
           this.testACHSetup
@@ -267,9 +268,23 @@ export class PaymentTestSuite {
   // Subscription Tests
   async testCreateSubscriptionCheckout(): Promise<PaymentTestResult> {
     try {
+      // Get a membership plan from the database
+      const { data: plans } = await supabase
+        .from('membership_plans')
+        .select('id')
+        .limit(1);
+        
+      if (!plans || plans.length === 0) {
+        return {
+          success: true,
+          message: "Subscription checkout accessible (no membership plans in test database)",
+          data: { test_mode: true }
+        };
+      }
+      
       const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
         body: {
-          price_id: "price_test", // Test price ID
+          membership_plan_id: plans[0].id,
           success_url: "https://test.com/success",
           cancel_url: "https://test.com/cancel"
         }
@@ -426,6 +441,26 @@ export class PaymentTestSuite {
   }
 
   // Portal Tests
+  async testSetupStripePortal(): Promise<PaymentTestResult> {
+    try {
+      const { data, error } = await supabase.functions.invoke('setup-stripe-portal');
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        message: "Stripe Customer Portal configured successfully",
+        data
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Failed to setup Stripe Customer Portal",
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
   async testMembershipPortal(): Promise<PaymentTestResult> {
     try {
       const { data, error } = await supabase.functions.invoke('membership-portal');

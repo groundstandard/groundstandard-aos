@@ -113,12 +113,19 @@ serve(async (req) => {
       });
 
       // Create Stripe price
+      // Map billing frequency to Stripe intervals
+      let interval = 'month';
+      if (membershipPlan.billing_frequency === 'monthly') interval = 'month';
+      else if (membershipPlan.billing_frequency === 'yearly') interval = 'year';
+      else if (membershipPlan.billing_frequency === 'weekly') interval = 'week';
+      else if (membershipPlan.billing_frequency === 'daily') interval = 'day';
+      
       const price = await stripe.prices.create({
         product: product.id,
         unit_amount: membershipPlan.price_cents,
         currency: 'usd',
         recurring: {
-          interval: membershipPlan.billing_frequency || 'month'
+          interval
         },
         metadata: {
           membership_plan_id: membershipPlan.id

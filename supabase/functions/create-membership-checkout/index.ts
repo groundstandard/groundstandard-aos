@@ -126,8 +126,15 @@ serve(async (req) => {
       };
 
       if (isRecurring) {
+        // Map billing frequency to Stripe intervals
+        let interval = 'month';
+        if (membershipPlan.billing_frequency === 'monthly') interval = 'month';
+        else if (membershipPlan.billing_frequency === 'yearly') interval = 'year';
+        else if (membershipPlan.billing_frequency === 'weekly') interval = 'week';
+        else if (membershipPlan.billing_frequency === 'daily') interval = 'day';
+        
         priceData.recurring = {
-          interval: membershipPlan.billing_frequency || 'month'
+          interval
         };
       }
 
