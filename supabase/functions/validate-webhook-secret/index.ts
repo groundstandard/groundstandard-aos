@@ -31,7 +31,30 @@ serve(async (req) => {
 
     // For configuration requests, accept and validate the webhook secret
     if (req.method === 'POST') {
-      const { webhook_secret } = await req.json();
+      logStep("Processing POST request");
+      
+      let requestBody;
+      try {
+        const bodyText = await req.text();
+        logStep("Request body received", { bodyLength: bodyText.length });
+        
+        if (!bodyText.trim()) {
+          throw new Error("Empty request body");
+        }
+        
+        requestBody = JSON.parse(bodyText);
+        logStep("JSON parsed successfully", { keys: Object.keys(requestBody) });
+      } catch (parseError) {
+        logStep("JSON parsing failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
+        return new Response(JSON.stringify({ 
+          error: "Invalid JSON in request body" 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
+      }
+      
+      const { webhook_secret } = requestBody;
       
       if (!webhook_secret || !webhook_secret.startsWith('whsec_')) {
         logStep("Invalid webhook secret format");
