@@ -7,6 +7,7 @@ import { PaymentTestSuite } from "@/utils/paymentTestSuite";
 import { useToast } from "@/hooks/use-toast";
 import { WebhookSecretConfig } from "@/components/payments/WebhookSecretConfig";
 import { ProductionReadinessChecker } from "@/components/payments/ProductionReadinessChecker";
+import { StripeConnectSetup } from "@/components/payments/StripeConnectSetup";
 import { Play, CheckCircle, XCircle, AlertCircle, ExternalLink } from "lucide-react";
 
 const PaymentTestDashboard = () => {
@@ -252,6 +253,9 @@ const PaymentTestDashboard = () => {
 
       {/* Webhook Configuration */}
       <WebhookSecretConfig onConfigured={() => window.location.reload()} />
+
+      {/* Stripe Connect Setup */}
+      <StripeConnectSetup />
     </div>
   );
 };

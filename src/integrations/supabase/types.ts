@@ -3856,6 +3856,45 @@ export type Database = {
           },
         ]
       }
+      stripe_connected_accounts: {
+        Row: {
+          account_status: string | null
+          charges_enabled: boolean | null
+          created_at: string
+          details_submitted: boolean | null
+          email: string
+          id: string
+          payouts_enabled: boolean | null
+          stripe_account_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          account_status?: string | null
+          charges_enabled?: boolean | null
+          created_at?: string
+          details_submitted?: boolean | null
+          email: string
+          id?: string
+          payouts_enabled?: boolean | null
+          stripe_account_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          account_status?: string | null
+          charges_enabled?: boolean | null
+          created_at?: string
+          details_submitted?: boolean | null
+          email?: string
+          id?: string
+          payouts_enabled?: boolean | null
+          stripe_account_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       student_belt_history: {
         Row: {
           belt_level: string
