@@ -29,6 +29,26 @@ serve(async (req) => {
       hasStripeKey: !!stripeSecretKey 
     });
 
+    // For GET requests, check current configuration status
+    if (req.method === 'GET') {
+      logStep("Processing GET request for status check");
+      const configured = !!(webhookSecret && stripeSecretKey);
+      
+      logStep("Configuration status check", { configured });
+
+      return new Response(JSON.stringify({
+        configured,
+        webhook_secret_set: !!webhookSecret,
+        stripe_key_set: !!stripeSecretKey,
+        message: configured 
+          ? "Webhook configuration is complete" 
+          : "Webhook secret or Stripe key not configured"
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
     // For configuration requests, accept and validate the webhook secret
     if (req.method === 'POST') {
       logStep("Processing POST request");
@@ -76,21 +96,12 @@ serve(async (req) => {
       });
     }
 
-    // For GET requests, check current configuration status
-    const configured = !!(webhookSecret && stripeSecretKey);
-    
-    logStep("Configuration status check", { configured });
-
-    return new Response(JSON.stringify({
-      configured,
-      webhook_secret_set: !!webhookSecret,
-      stripe_key_set: !!stripeSecretKey,
-      message: configured 
-        ? "Webhook configuration is complete" 
-        : "Webhook secret or Stripe key not configured"
+    // Default fallback (should not reach here)
+    return new Response(JSON.stringify({ 
+      error: "Method not allowed" 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+      status: 405,
     });
 
   } catch (error) {
