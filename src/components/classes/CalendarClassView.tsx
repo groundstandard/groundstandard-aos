@@ -355,36 +355,36 @@ export const CalendarClassView = () => {
                                 </div>
                                 
                                 <div className="flex-shrink-0">
-                                  {instance.is_enrolled ? (
-                                    <div className="text-center space-y-1">
-                                      <Badge variant="default" className="bg-primary/10 text-primary border-primary/20 text-xs px-2 py-0">
-                                        Reserved
-                                      </Badge>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-xs px-2 py-1 h-6 min-w-[60px]"
-                                        onClick={() => cancelReservation(instance.class.id)}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  ) : (
+                                  <div className="space-y-1">
                                     <Button
                                       size="sm"
-                                      className="text-xs px-2 py-1 h-6 min-w-[60px]"
+                                      className="text-xs px-2 py-1 h-6 min-w-[60px] w-full"
                                       onClick={() => enrollInClass(instance.class.id)}
                                       disabled={
+                                        instance.is_enrolled ||
                                         !hasAccess ||
                                         instance.enrollment_count >= instance.class.max_students ||
                                         (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3)
                                       }
                                     >
-                                      {!hasAccess ? 'Locked' :
+                                      {instance.is_enrolled ? 'Reserved' :
+                                       !hasAccess ? 'Locked' :
                                        instance.enrollment_count >= instance.class.max_students ? 'Full' : 
                                        (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' : 'Reserve'}
                                     </Button>
-                                  )}
+                                    {instance.is_enrolled && (
+                                      <div className="flex justify-end">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-xs px-2 py-1 h-6 min-w-[50px]"
+                                          onClick={() => cancelReservation(instance.class.id)}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
 
