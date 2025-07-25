@@ -68,7 +68,7 @@ export const CalendarClassView = () => {
       // Get the start of the week for the selected date
       const weekStart = startOfWeek(selectedDate);
       
-      // Fetch classes and schedules
+      // Fetch classes and schedules that are active and have started
       const { data: classesData, error: classesError } = await supabase
         .from('classes')
         .select(`
@@ -76,7 +76,8 @@ export const CalendarClassView = () => {
           class_schedules(*),
           instructor:profiles!instructor_id(first_name, last_name)
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .or(`start_date.is.null,start_date.lte.${format(new Date(), 'yyyy-MM-dd')}`);
 
       if (classesError) throw classesError;
 

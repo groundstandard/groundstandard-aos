@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ViewToggle } from '@/components/ui/ViewToggle';
 import { Plus, Edit2, Clock, Users, Calendar, ArrowUpDown, ArrowUp, ArrowDown, LayoutGrid, List } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAcademy } from '@/hooks/useAcademy';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +62,7 @@ export const ClassManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<Class | null>(null);
   const { profile } = useAuth();
+  const { currentAcademyId } = useAcademy();
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
@@ -246,6 +248,7 @@ export const ClassManagement = () => {
           class_length_type: formData.class_length_type,
           class_length_value: formData.class_length_type === 'indefinite' ? null : parseInt(formData.class_length_value),
           start_date: formData.start_date,
+          academy_id: currentAcademyId || '',
         };
         
         const { data: classData, error: classError } = await supabase
