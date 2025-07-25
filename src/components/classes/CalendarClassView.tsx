@@ -262,7 +262,9 @@ export const CalendarClassView = () => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
-                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/7)] [&_th]:h-12 [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-nav]:flex [&_.rdp-nav]:justify-between [&_.rdp-nav]:w-full [&_.rdp-nav-button]:static [&_.rdp-nav-button_svg]:w-5 [&_.rdp-nav-button_svg]:h-5 text-lg pointer-events-auto"
+                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] [&_.rdp-nav]:absolute [&_.rdp-nav]:top-0 [&_.rdp-nav]:left-0 [&_.rdp-nav]:right-0 [&_.rdp-nav]:flex [&_.rdp-nav]:justify-between [&_.rdp-nav]:items-center [&_.rdp-nav]:p-2 [&_.rdp-nav-button]:z-10 [&_.rdp-nav-button]:bg-background [&_.rdp-nav-button]:border [&_.rdp-nav-button]:rounded-md [&_.rdp-nav-button]:p-2 [&_.rdp-nav-button]:hover:bg-accent [&_.rdp-caption]:text-center [&_.rdp-caption]:flex-1 text-lg pointer-events-auto relative"
+                  showOutsideDays={false}
+                  fixedWeeks={true}
                   modifiers={{
                     hasClasses: (date) => getClassesForDate(date).length > 0
                   }}
