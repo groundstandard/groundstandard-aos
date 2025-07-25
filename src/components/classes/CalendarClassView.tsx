@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Clock, Users, MapPin, Crown, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +53,7 @@ export const CalendarClassView = () => {
   const [classInstances, setClassInstances] = useState<ClassInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
+  const { isAdmin } = useEffectiveRole();
   const { subscriptionInfo } = useSubscription();
   const { toast } = useToast();
 
@@ -193,6 +195,27 @@ export const CalendarClassView = () => {
         description: error.message || 'Failed to cancel reservation'
       });
     }
+  };
+
+  // Helper function to check if a class can be reserved by students
+  const canStudentReserveClass = (classInstance: ClassInstance): boolean => {
+    const now = new Date();
+    const classDateTime = new Date(classInstance.date);
+    const [hours, minutes] = classInstance.schedule.start_time.split(':').map(Number);
+    classDateTime.setHours(hours, minutes, 0, 0);
+    
+    // Check if class is in the past
+    if (classDateTime < now) {
+      return false;
+    }
+    
+    // Check if class started more than 15 minutes ago
+    const fifteenMinutesAfterStart = new Date(classDateTime.getTime() + 15 * 60 * 1000);
+    if (now > fifteenMinutesAfterStart) {
+      return false;
+    }
+    
+    return true;
   };
 
   const formatTime = (timeString: string) => {
@@ -356,7 +379,7 @@ export const CalendarClassView = () => {
                                 
                                 <div className="flex-shrink-0">
                                   <div className="space-y-1">
-                                    <Button
+                                     <Button
                                       size="sm"
                                       className="text-xs px-2 py-1 h-6 min-w-[60px] w-full"
                                       onClick={() => enrollInClass(instance.class.id)}
@@ -364,13 +387,15 @@ export const CalendarClassView = () => {
                                         instance.is_enrolled ||
                                         !hasAccess ||
                                         instance.enrollment_count >= instance.class.max_students ||
-                                        (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3)
+                                        (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ||
+                                        (!isAdmin && !canStudentReserveClass(instance))
                                       }
                                     >
                                       {instance.is_enrolled ? 'Reserved' :
                                        !hasAccess ? 'Locked' :
                                        instance.enrollment_count >= instance.class.max_students ? 'Full' : 
-                                       (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' : 'Reserve'}
+                                       (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' :
+                                       (!isAdmin && !canStudentReserveClass(instance)) ? 'Unavailable' : 'Reserve'}
                                     </Button>
                                     {instance.is_enrolled && (
                                       <div className="flex justify-end">
@@ -379,6 +404,7 @@ export const CalendarClassView = () => {
                                           size="sm"
                                           className="text-xs px-2 py-1 h-6 min-w-[50px]"
                                           onClick={() => cancelReservation(instance.class.id)}
+                                          disabled={!isAdmin && !canStudentReserveClass(instance)}
                                         >
                                           Cancel
                                         </Button>
