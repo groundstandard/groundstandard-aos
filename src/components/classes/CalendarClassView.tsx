@@ -276,7 +276,7 @@ export const CalendarClassView = () => {
                             newDate.setMonth(newDate.getMonth() - 1);
                             setSelectedDate(newDate);
                           }}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8"
                         >
                           ←
                         </Button>
@@ -291,7 +291,7 @@ export const CalendarClassView = () => {
                             newDate.setMonth(newDate.getMonth() + 1);
                             setSelectedDate(newDate);
                           }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8"
                         >
                           →
                         </Button>
