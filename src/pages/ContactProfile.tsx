@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
 import { format } from "date-fns";
@@ -1265,7 +1264,22 @@ const ContactProfile = () => {
         </Dialog>
 
         {/* Mark Attendance Dialog */}
-        <Dialog open={showMarkAttendanceDialog} onOpenChange={setShowMarkAttendanceDialog}>
+        <Dialog 
+          open={showMarkAttendanceDialog} 
+          onOpenChange={(open) => {
+            setShowMarkAttendanceDialog(open);
+            if (!open) {
+              // Reset states when modal closes
+              setShowCalendar(false);
+              setMarkAttendanceData({
+                class_id: '',
+                date: undefined,
+                status: 'present',
+                notes: ''
+              });
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Mark Attendance</DialogTitle>
@@ -1296,31 +1310,43 @@ const ContactProfile = () => {
               <div>
                 <Label>Date</Label>
                 <div className="mt-2">
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !markAttendanceData.date && "text-muted-foreground"
-                    )}
-                    onClick={() => setShowCalendar(!showCalendar)}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {markAttendanceData.date ? format(markAttendanceData.date, "PPP") : <span>Pick a date</span>}
-                  </Button>
+                  <Input
+                    type="date"
+                    value={markAttendanceData.date ? markAttendanceData.date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      const dateValue = e.target.value ? new Date(e.target.value) : undefined;
+                      
+                      // Only allow dates that match class schedule
+                      if (dateValue && markAttendanceData.class_id && classSchedules.length > 0) {
+                        const dayOfWeek = dateValue.getDay();
+                        const isValidDay = classSchedules.some(schedule => schedule.day_of_week === dayOfWeek);
+                        
+                        if (!isValidDay) {
+                          // Show which days are available
+                          const availableDays = classSchedules.map(s => getDayName(s.day_of_week)).join(', ');
+                          toast({
+                            title: "Invalid Date",
+                            description: `This class only runs on: ${availableDays}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                      }
+                      
+                      setMarkAttendanceData({...markAttendanceData, date: dateValue});
+                    }}
+                    className="w-full"
+                  />
                   
-                  {/* Inline calendar within modal */}
-                  {showCalendar && (
-                    <div className="mt-2 border rounded-md">
-                      <Calendar
-                        mode="single"
-                        selected={markAttendanceData.date}
-                        onSelect={(date) => {
-                          setMarkAttendanceData({...markAttendanceData, date});
-                          setShowCalendar(false); // Hide calendar after selection
-                        }}
-                        disabled={getDisabledDates}
-                        className={cn("p-3")}
-                      />
+                  {/* Show available days info */}
+                  {markAttendanceData.class_id && classSchedules.length > 0 && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Available days: {classSchedules.map((schedule, index) => (
+                        <span key={index}>
+                          {getDayName(schedule.day_of_week)} ({formatTime(schedule.start_time)} - {formatTime(schedule.end_time)})
+                          {index < classSchedules.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
