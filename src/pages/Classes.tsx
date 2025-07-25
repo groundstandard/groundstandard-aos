@@ -5,7 +5,7 @@ import { ClassSchedule } from "@/components/classes/ClassSchedule";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
 import { CalendarClassView } from "@/components/classes/CalendarClassView";
-import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
+
 
 const Classes = () => {
   const { loading } = useAuth();
