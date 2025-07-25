@@ -34,7 +34,11 @@ interface AttendanceRecord {
   notes?: string;
 }
 
-export const ClassReservationsSidebar = () => {
+interface ClassReservationsSidebarProps {
+  onReservationChange?: () => void;
+}
+
+export const ClassReservationsSidebar = ({ onReservationChange }: ClassReservationsSidebarProps) => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -194,6 +198,8 @@ export const ClassReservationsSidebar = () => {
       });
 
       fetchData();
+      // Trigger dashboard refresh
+      onReservationChange?.();
     } catch (error: any) {
       toast({
         variant: 'destructive',

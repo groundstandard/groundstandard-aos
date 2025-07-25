@@ -657,7 +657,7 @@ const Dashboard = () => {
 
         {/* Class Reservations */}
         <div className="mt-6">
-          <ClassReservationsSidebar />
+          <ClassReservationsSidebar onReservationChange={refreshData} />
         </div>
 
         {/* View Toggle at bottom center */}
