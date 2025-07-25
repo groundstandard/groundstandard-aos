@@ -293,16 +293,6 @@ export const CalendarClassView = () => {
                   components={{
                     Caption: () => null // Hide the built-in caption completely
                   }}
-                  modifiers={{
-                    hasClasses: (date) => getClassesForDate(date).length > 0
-                  }}
-                  modifiersStyles={{
-                    hasClasses: { 
-                      backgroundColor: 'hsl(var(--primary))',
-                      color: 'white',
-                      fontWeight: 'bold'
-                    }
-                  }}
                 />
               </div>
               
