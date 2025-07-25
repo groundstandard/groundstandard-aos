@@ -55,6 +55,14 @@ function Calendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
+      onMonthChange={(month) => {
+        // Prevent scroll to top when month changes
+        const currentScrollY = window.scrollY;
+        setTimeout(() => {
+          window.scrollTo(0, currentScrollY);
+        }, 0);
+        props.onMonthChange?.(month);
+      }}
       {...props}
     />
   );
