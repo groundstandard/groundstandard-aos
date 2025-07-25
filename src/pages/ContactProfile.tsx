@@ -156,6 +156,7 @@ const ContactProfile = () => {
   });
   const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string; class_schedules?: Array<{day_of_week: number; start_time: string; end_time: string}>}>>([]);
   const [classSchedules, setClassSchedules] = useState<Array<{day_of_week: number; start_time: string; end_time: string}>>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -1294,30 +1295,35 @@ const ContactProfile = () => {
               
               <div>
                 <Label>Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !markAttendanceData.date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {markAttendanceData.date ? format(markAttendanceData.date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={markAttendanceData.date}
-                      onSelect={(date) => setMarkAttendanceData({...markAttendanceData, date})}
-                      disabled={getDisabledDates}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="mt-2">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !markAttendanceData.date && "text-muted-foreground"
+                    )}
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {markAttendanceData.date ? format(markAttendanceData.date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                  
+                  {/* Inline calendar within modal */}
+                  {showCalendar && (
+                    <div className="mt-2 border rounded-md">
+                      <Calendar
+                        mode="single"
+                        selected={markAttendanceData.date}
+                        onSelect={(date) => {
+                          setMarkAttendanceData({...markAttendanceData, date});
+                          setShowCalendar(false); // Hide calendar after selection
+                        }}
+                        disabled={getDisabledDates}
+                        className={cn("p-3")}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
