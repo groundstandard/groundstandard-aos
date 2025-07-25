@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Clock, Users, MapPin, Crown, Calendar as CalendarIcon } from 'lucide-react';
+import { Clock, Users, MapPin, Crown, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, addMonths, subMonths } from 'date-fns';
 import { ClassReservationsSidebar } from './ClassReservationsSidebar';
 
 
@@ -258,20 +258,40 @@ export const CalendarClassView = () => {
             {/* Main Calendar Section - 75% width */}
             <div className="w-3/4 flex flex-col min-h-full">
               <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px]">
-                
+                {/* Custom Navigation Header */}
+                <div className="flex items-center justify-center mb-4 relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-0 h-8 w-8 p-0"
+                    onClick={() => setSelectedDate(subMonths(selectedDate, 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <h2 className="text-lg font-semibold">
+                    {format(selectedDate, 'MMMM yyyy')}
+                  </h2>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 h-8 w-8 p-0"
+                    onClick={() => setSelectedDate(addMonths(selectedDate, 1))}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
-                  className="w-full h-full min-h-[500px] [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_td]:min-h-[4rem] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[4rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto"
+                  className="w-full h-full min-h-[500px] [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_td]:min-h-[4rem] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[4rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto [&_.rdp-nav]:hidden [&_.rdp-caption]:hidden"
                   showOutsideDays={false}
                   fixedWeeks={true}
-                  onMonthChange={(month) => {
-                    // Prevent scroll to top when month changes
-                    const currentScrollY = window.scrollY;
-                    setTimeout(() => {
-                      window.scrollTo(0, currentScrollY);
-                    }, 0);
+                  components={{
+                    Caption: () => null // Hide the built-in caption completely
                   }}
                   modifiers={{
                     hasClasses: (date) => getClassesForDate(date).length > 0
