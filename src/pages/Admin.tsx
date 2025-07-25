@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/ui/BackButton";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SampleDataCreator } from "@/components/admin/SampleDataCreator";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -497,6 +498,9 @@ const Admin = () => {
             );
           })}
         </div>
+
+        {/* Sample Data Creator */}
+        <SampleDataCreator />
 
         {/* Recent Activity */}
         <Card>

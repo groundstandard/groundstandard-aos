@@ -3,6 +3,7 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { BackButton } from "@/components/ui/BackButton";
 import { ClassSchedule } from "@/components/classes/ClassSchedule";
 import { ClassManagement } from "@/components/admin/ClassManagement";
+import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
 
 const Classes = () => {
   const { loading } = useAuth();
@@ -33,11 +34,17 @@ const Classes = () => {
             <ClassManagement />
             <div className="border-t pt-6">
               <h2 className="text-2xl font-semibold mb-4">Student View</h2>
-              <ClassSchedule />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <ClassSchedule />
+                <LocationCheckIn />
+              </div>
             </div>
           </div>
         ) : (
-          <ClassSchedule />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ClassSchedule />
+            <LocationCheckIn />
+          </div>
         )}
       </div>
     </div>

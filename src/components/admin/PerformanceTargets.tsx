@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Target, Users, Calendar, DollarSign, Save } from "lucide-react";
+import { Target, Users, Calendar, DollarSign, Save, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PerformanceKPICalculator } from "./PerformanceKPICalculator";
 
 interface PerformanceTargets {
   id?: string;
@@ -130,8 +131,12 @@ export const PerformanceTargets = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="retention" className="space-y-4">
+      <Tabs defaultValue="kpis" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="kpis" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Current Performance
+          </TabsTrigger>
           <TabsTrigger value="retention" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Student Retention
@@ -145,6 +150,10 @@ export const PerformanceTargets = () => {
             Revenue Goals
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="kpis">
+          <PerformanceKPICalculator />
+        </TabsContent>
 
         <TabsContent value="retention">
           <Card>

@@ -140,6 +140,42 @@ export type Database = {
           },
         ]
       }
+      academy_locations: {
+        Row: {
+          academy_id: string
+          address: string | null
+          check_in_radius_meters: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+        }
+        Insert: {
+          academy_id: string
+          address?: string | null
+          check_in_radius_meters?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+        }
+        Update: {
+          academy_id?: string
+          address?: string | null
+          check_in_radius_meters?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+        }
+        Relationships: []
+      }
       academy_memberships: {
         Row: {
           academy_id: string
@@ -1339,7 +1375,10 @@ export type Database = {
       class_reservations: {
         Row: {
           cancellation_reason: string | null
+          check_in_distance_meters: number | null
           check_in_location: Json | null
+          check_in_verification_time: string | null
+          check_in_verified: boolean | null
           checked_in_at: string | null
           class_id: string
           id: string
@@ -1352,7 +1391,10 @@ export type Database = {
         }
         Insert: {
           cancellation_reason?: string | null
+          check_in_distance_meters?: number | null
           check_in_location?: Json | null
+          check_in_verification_time?: string | null
+          check_in_verified?: boolean | null
           checked_in_at?: string | null
           class_id: string
           id?: string
@@ -1365,7 +1407,10 @@ export type Database = {
         }
         Update: {
           cancellation_reason?: string | null
+          check_in_distance_meters?: number | null
           check_in_location?: Json | null
+          check_in_verification_time?: string | null
+          check_in_verified?: boolean | null
           checked_in_at?: string | null
           class_id?: string
           id?: string
@@ -4351,6 +4396,14 @@ export type Database = {
       }
       user_has_academy_access: {
         Args: { target_academy_id: string; target_user_id?: string }
+        Returns: boolean
+      }
+      verify_location_check_in: {
+        Args: {
+          user_latitude: number
+          user_longitude: number
+          academy_location_id: string
+        }
         Returns: boolean
       }
     }
