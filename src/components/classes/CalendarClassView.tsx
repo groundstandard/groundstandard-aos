@@ -254,15 +254,15 @@ export const CalendarClassView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 h-full">
-          <div className="flex gap-8 h-full">
+          <div className="flex gap-8 h-full min-h-[calc(100vh-200px)]">
             {/* Main Calendar Section - 75% width */}
-            <div className="w-3/4 flex flex-col">
-              <div className="bg-card rounded-lg border p-6 flex-1">
+            <div className="w-3/4 flex flex-col min-h-full">
+              <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px]">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
-                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto"
+                  className="w-full h-full min-h-[500px] [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_td]:min-h-[4rem] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[4rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto"
                   showOutsideDays={false}
                   fixedWeeks={true}
                   components={{
