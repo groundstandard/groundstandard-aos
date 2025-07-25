@@ -118,11 +118,26 @@ export const useStudentDashboard = () => {
             const dayOfWeek = nextSchedule.day_of_week;
             const currentDay = today.getDay();
             
+            // Debug logging to see what's happening
+            console.log('Debug - Next Class Calculation:', {
+              className: classData.name,
+              scheduleData: nextSchedule,
+              dayOfWeek: dayOfWeek,
+              currentDay: currentDay,
+              today: today.toDateString()
+            });
+            
             let daysUntilNext = dayOfWeek - currentDay;
             if (daysUntilNext <= 0) daysUntilNext += 7;
             
             const nextDate = new Date(today);
             nextDate.setDate(today.getDate() + daysUntilNext);
+            
+            console.log('Debug - Date Calculation:', {
+              daysUntilNext,
+              calculatedDate: nextDate.toDateString(),
+              formatted: nextDate.toISOString().split('T')[0]
+            });
 
             // Keep track of the earliest upcoming class
             if (!earliestClass || nextDate < earliestClass.nextDate) {

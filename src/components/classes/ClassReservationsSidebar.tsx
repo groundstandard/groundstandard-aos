@@ -86,11 +86,26 @@ export const ClassReservationsSidebar = () => {
           const dayOfWeek = nextSchedule.day_of_week;
           const currentDay = today.getDay();
           
+          // Debug logging to compare with Dashboard
+          console.log('Debug - My Classes Calculation:', {
+            className: classData.name,
+            scheduleData: nextSchedule,
+            dayOfWeek: dayOfWeek,
+            currentDay: currentDay,
+            today: today.toDateString()
+          });
+          
           let daysUntilNext = dayOfWeek - currentDay;
           if (daysUntilNext <= 0) daysUntilNext += 7;
           
           const nextDate = new Date(today);
           nextDate.setDate(today.getDate() + daysUntilNext);
+          
+          console.log('Debug - My Classes Date Calculation:', {
+            daysUntilNext,
+            calculatedDate: nextDate.toDateString(),
+            formatted: nextDate.toISOString().split('T')[0]
+          });
           
           nextOccurrence = {
             date: nextDate,
