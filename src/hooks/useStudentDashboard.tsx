@@ -128,19 +128,15 @@ export const useStudentDashboard = () => {
           const classItem = schedule.classes;
           if (!classItem) continue;
 
-          const dayDiff = schedule.day_of_week - currentDay;
-          let nextDate = new Date(today);
+          // Use the same logic as ClassReservationsSidebar for consistency
+          const dayOfWeek = schedule.day_of_week;
+          const currentDay = today.getDay();
           
-          if (dayDiff === 0 && schedule.start_time > currentTime) {
-            // Class today but later
-            nextDate = new Date(today);
-          } else if (dayDiff > 0) {
-            // Class later this week
-            nextDate.setDate(today.getDate() + dayDiff);
-          } else {
-            // Class next week
-            nextDate.setDate(today.getDate() + (7 + dayDiff));
-          }
+          let daysUntilNext = dayOfWeek - currentDay;
+          if (daysUntilNext <= 0) daysUntilNext += 7;
+          
+          const nextDate = new Date(today);
+          nextDate.setDate(today.getDate() + daysUntilNext);
 
           // Keep track of the earliest upcoming class
           if (!earliestClass || nextDate < earliestClass.nextDate) {
