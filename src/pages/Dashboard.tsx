@@ -27,6 +27,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import MultiAcademySwitcher from "@/components/academy/MultiAcademySwitcher";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useStudentDashboard } from "@/hooks/useStudentDashboard";
+import { ProgressTracker } from "@/components/student/ProgressTracker";
+import { StudentPaymentSummary } from "@/components/student/StudentPaymentSummary";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -37,6 +40,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState('overview');
+  const { stats: studentStats, loading: studentLoading, refreshData } = useStudentDashboard();
 
   if (!user || !profile) {
     return <div>Loading...</div>;
@@ -528,8 +532,10 @@ const Dashboard = () => {
               <BarChart3 className="h-3 w-3 text-green-500" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-lg font-bold">0</p>
-              <p className="text-xs text-muted-foreground">No data available</p>
+              <p className="text-lg font-bold">{studentLoading ? '...' : studentStats.totalClasses}</p>
+              <p className="text-xs text-muted-foreground">
+                {studentStats.attendanceRate > 0 ? `${studentStats.attendanceRate.toFixed(0)}% attendance rate` : 'No attendance yet'}
+              </p>
             </div>
           </Card>
 
@@ -540,7 +546,9 @@ const Dashboard = () => {
             </div>
             <div className="space-y-0.5">
               <p className="text-lg font-bold">{profile.belt_level || 'White'}</p>
-              <p className="text-xs text-muted-foreground">Next: Not available</p>
+              <p className="text-xs text-muted-foreground">
+                {studentStats.totalClasses > 20 ? 'Ready for testing' : `${Math.max(0, 20 - studentStats.totalClasses)} classes to next`}
+              </p>
             </div>
           </Card>
 
@@ -550,8 +558,19 @@ const Dashboard = () => {
               <Calendar className="h-3 w-3 text-orange-500" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-lg font-bold">None</p>
-              <p className="text-xs text-muted-foreground">No classes scheduled</p>
+              {studentStats.nextClass ? (
+                <>
+                  <p className="text-lg font-bold">{studentStats.nextClass.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(studentStats.nextClass.date).toLocaleDateString()} at {studentStats.nextClass.start_time}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold">None</p>
+                  <p className="text-xs text-muted-foreground">No classes scheduled</p>
+                </>
+              )}
             </div>
           </Card>
         </div>

@@ -117,7 +117,7 @@ export const ProgressTracker = () => {
         .from('class_reservations')
         .select('*', { count: 'exact', head: true })
         .eq('student_id', profile?.id)
-        .eq('status', 'reserved');
+        .in('status', ['reserved', 'active']);
 
       setProgressStats({
         totalClasses,

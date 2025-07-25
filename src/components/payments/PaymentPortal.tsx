@@ -10,6 +10,9 @@ import { CreditCard, Receipt, AlertCircle, Calendar, DollarSign } from 'lucide-r
 import { EnhancedACHSetupForm } from './EnhancedACHSetupForm';
 import { InstallmentPlanForm } from './InstallmentPlanForm';
 import { InstallmentPlanManagement } from './InstallmentPlanManagement';
+import { StudentPaymentSummary } from '@/components/student/StudentPaymentSummary';
+import { useAuth } from '@/hooks/useAuth';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 
 interface PaymentPortalProps {
   userId?: string;
@@ -21,6 +24,13 @@ export const PaymentPortal = ({ userId }: PaymentPortalProps) => {
   const [loading, setLoading] = useState(true);
   const [portalLoading, setPortalLoading] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const { effectiveRole } = useEffectiveRole();
+
+  // Show simplified student summary for students
+  if (effectiveRole === 'student') {
+    return <StudentPaymentSummary />;
+  }
 
   useEffect(() => {
     loadPaymentData();
