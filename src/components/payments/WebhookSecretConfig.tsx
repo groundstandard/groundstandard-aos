@@ -52,7 +52,7 @@ export const WebhookSecretConfig = ({ onConfigured }: WebhookSecretConfigProps) 
     try {
       // Test the webhook secret by calling a validation function
       const { data, error } = await supabase.functions.invoke('validate-webhook-secret', {
-        body: { webhook_secret: webhookSecret }
+        body: JSON.stringify({ webhook_secret: webhookSecret })
       });
 
       if (error) {
