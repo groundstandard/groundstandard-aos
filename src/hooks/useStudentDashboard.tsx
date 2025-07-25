@@ -88,66 +88,78 @@ export const useStudentDashboard = () => {
 
       const enrolledClasses = reservationsData?.length || 0;
 
-      // Fetch next upcoming class with proper academy filtering
+      // Fetch next upcoming class - ONLY from user's reservations
       const today = new Date();
       const currentDay = today.getDay();
       const currentTime = today.toTimeString().slice(0, 5);
 
-      const { data: nextClassData, error: nextClassError } = await supabase
-        .from('class_schedules')
-        .select(`
-          *,
-          classes!inner(
-            id,
-            name,
-            instructor_id,
-            is_active,
-            profiles!classes_instructor_id_fkey (
-              first_name,
-              last_name
-            )
-          )
-        `)
-        .eq('classes.is_active', true)
-        .gte('day_of_week', currentDay)
-        .order('day_of_week', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(10);
-
-      if (nextClassError) throw nextClassError;
-
-      // Find next class occurrence
       let nextClass: NextClass | null = null;
-      
-      for (const schedule of nextClassData || []) {
-        const classItem = schedule.classes;
-        if (!classItem) continue;
 
-        const dayDiff = schedule.day_of_week - currentDay;
-        let nextDate = new Date(today);
+      if (reservationsData && reservationsData.length > 0) {
+        // Get class IDs from user's reservations
+        const reservedClassIds = reservationsData.map(r => r.class_id);
+
+        const { data: nextClassData, error: nextClassError } = await supabase
+          .from('class_schedules')
+          .select(`
+            *,
+            classes!inner(
+              id,
+              name,
+              instructor_id,
+              is_active,
+              profiles!classes_instructor_id_fkey (
+                first_name,
+                last_name
+              )
+            )
+          `)
+          .in('classes.id', reservedClassIds)
+          .eq('classes.is_active', true)
+          .order('day_of_week', { ascending: true })
+          .order('start_time', { ascending: true });
+
+        if (nextClassError) throw nextClassError;
+
+        // Find the next class occurrence from user's reserved classes
+        let earliestClass: { schedule: any, classItem: any, nextDate: Date } | null = null;
         
-        if (dayDiff === 0 && schedule.start_time > currentTime) {
-          // Class today but later
-          nextDate = today;
-        } else if (dayDiff > 0) {
-          // Class later this week
-          nextDate.setDate(today.getDate() + dayDiff);
-        } else {
-          // Class next week
-          nextDate.setDate(today.getDate() + (7 + dayDiff));
+        for (const schedule of nextClassData || []) {
+          const classItem = schedule.classes;
+          if (!classItem) continue;
+
+          const dayDiff = schedule.day_of_week - currentDay;
+          let nextDate = new Date(today);
+          
+          if (dayDiff === 0 && schedule.start_time > currentTime) {
+            // Class today but later
+            nextDate = new Date(today);
+          } else if (dayDiff > 0) {
+            // Class later this week
+            nextDate.setDate(today.getDate() + dayDiff);
+          } else {
+            // Class next week
+            nextDate.setDate(today.getDate() + (7 + dayDiff));
+          }
+
+          // Keep track of the earliest upcoming class
+          if (!earliestClass || nextDate < earliestClass.nextDate) {
+            earliestClass = { schedule, classItem, nextDate };
+          }
         }
 
-        nextClass = {
-          id: classItem.id,
-          name: classItem.name,
-          date: nextDate.toISOString().split('T')[0],
-          start_time: schedule.start_time,
-          end_time: schedule.end_time,
-          instructor_name: classItem.profiles 
-            ? `${classItem.profiles.first_name} ${classItem.profiles.last_name}`
-            : undefined
-        };
-        break; // Take the first (earliest) class
+        if (earliestClass) {
+          nextClass = {
+            id: earliestClass.classItem.id,
+            name: earliestClass.classItem.name,
+            date: earliestClass.nextDate.toISOString().split('T')[0],
+            start_time: earliestClass.schedule.start_time,
+            end_time: earliestClass.schedule.end_time,
+            instructor_name: earliestClass.classItem.profiles 
+              ? `${earliestClass.classItem.profiles.first_name} ${earliestClass.classItem.profiles.last_name}`
+              : undefined
+          };
+        }
       }
 
       setStats({
