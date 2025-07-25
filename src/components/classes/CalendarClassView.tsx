@@ -254,9 +254,9 @@ export const CalendarClassView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-5 gap-6">
             {/* Calendar */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-3">
               <Calendar
                 mode="single"
                 selected={selectedDate}
