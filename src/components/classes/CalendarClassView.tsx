@@ -257,46 +257,7 @@ export const CalendarClassView = () => {
           <div className="flex gap-8 h-full min-h-[calc(100vh-200px)]">
             {/* Main Calendar Section - 75% width */}
             <div className="w-3/4 flex flex-col min-h-full">
-              <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px] relative">
-                {/* Navigation buttons positioned relative to the calendar container */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const newDate = new Date(selectedDate);
-                    newDate.setMonth(newDate.getMonth() - 1);
-                    setSelectedDate(newDate);
-                  }}
-                  className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted"
-                >
-                  ←
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const newDate = new Date(selectedDate);
-                    newDate.setMonth(newDate.getMonth() + 1);
-                    setSelectedDate(newDate);
-                  }}
-                  className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted"
-                >
-                  →
-                </Button>
+              <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px]">
                 
                 <Calendar
                   mode="single"
