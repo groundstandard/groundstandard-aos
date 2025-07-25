@@ -33,6 +33,7 @@ import { ProgressTracker } from "@/components/student/ProgressTracker";
 import { StudentPaymentSummary } from "@/components/student/StudentPaymentSummary";
 import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
 import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
+import { useLocationCheckIn } from "@/hooks/useLocationCheckIn";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -44,6 +45,7 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState('overview');
   const { stats: studentStats, loading: studentLoading, refreshData } = useStudentDashboard();
+  const { canCheckIn, availableReservations, locationError } = useLocationCheckIn();
 
   if (!user || !profile) {
     return <div>Loading...</div>;
@@ -514,14 +516,46 @@ const Dashboard = () => {
           {/* Location-Based Check-In Card */}
           <Dialog>
             <DialogTrigger asChild>
-              <Card className="aspect-square p-3 flex flex-col cursor-pointer hover:shadow-lg transition-shadow">
+              <Card className={`p-3 flex flex-col cursor-pointer hover:shadow-lg transition-all ${
+                canCheckIn 
+                  ? 'border-green-300 bg-green-50 hover:bg-green-100' 
+                  : locationError 
+                    ? 'border-red-300 bg-red-50 hover:bg-red-100'
+                    : 'border-orange-300 bg-orange-50 hover:bg-orange-100'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-medium text-muted-foreground">Location Check-In</h3>
-                  <UserCheck className="h-3 w-3 text-indigo-500" />
+                  <UserCheck className={`h-3 w-3 ${
+                    canCheckIn 
+                      ? 'text-green-600' 
+                      : locationError 
+                        ? 'text-red-600'
+                        : 'text-orange-600'
+                  }`} />
                 </div>
                 <div className="flex flex-col justify-center flex-1 text-center">
-                  <p className="text-sm font-bold mb-1">Check In</p>
-                  <p className="text-xs text-muted-foreground">Location-based check-in</p>
+                  <p className={`text-sm font-bold mb-1 ${
+                    canCheckIn 
+                      ? 'text-green-700' 
+                      : locationError 
+                        ? 'text-red-700'
+                        : 'text-orange-700'
+                  }`}>
+                    {canCheckIn 
+                      ? `Check In (${availableReservations.length})` 
+                      : locationError 
+                        ? 'Location Error'
+                        : 'Check In'
+                    }
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {canCheckIn 
+                      ? 'Classes available'
+                      : locationError 
+                        ? 'Enable location'
+                        : 'No classes nearby'
+                    }
+                  </p>
                 </div>
               </Card>
             </DialogTrigger>
@@ -534,7 +568,7 @@ const Dashboard = () => {
           </Dialog>
 
           {/* Student Since Card */}
-          <Card className="aspect-square p-3 flex flex-col">
+          <Card className="p-3 flex flex-col min-h-[120px]">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-medium text-muted-foreground">Student Since</h3>
               <User className="h-3 w-3 text-blue-500" />
@@ -553,7 +587,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Total Classes Card */}
-          <Card className="aspect-square p-3 flex flex-col">
+          <Card className="p-3 flex flex-col min-h-[120px]">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-medium text-muted-foreground">Total Classes</h3>
               <BarChart3 className="h-3 w-3 text-green-500" />
@@ -567,7 +601,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Current Belt Card */}
-          <Card className="aspect-square p-3 flex flex-col">
+          <Card className="p-3 flex flex-col min-h-[120px]">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-medium text-muted-foreground">Current Belt</h3>
               <Award className="h-3 w-3 text-purple-500" />
@@ -581,7 +615,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Next Class Card */}
-          <Card className="aspect-square p-3 flex flex-col">
+          <Card className="p-3 flex flex-col min-h-[120px]">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-medium text-muted-foreground">Next Class</h3>
               <Calendar className="h-3 w-3 text-orange-500" />
