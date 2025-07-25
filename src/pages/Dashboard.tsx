@@ -19,6 +19,7 @@ import {
   FileText, Award, DollarSign, Users, TrendingUp, Settings, Crown, Star,
   Clock, Target, Activity, Bell, CalendarDays, UserCheck, ChevronDown
 } from "lucide-react";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ProfileView } from "@/components/profile/ProfileView";
@@ -563,7 +564,10 @@ const Dashboard = () => {
                 <>
                   <p className="text-lg font-bold">{studentStats.nextClass.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(studentStats.nextClass.date).toLocaleDateString()} at {studentStats.nextClass.start_time}
+                    {format(new Date(studentStats.nextClass.date), 'EEE, MMM d')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(`2000-01-01T${studentStats.nextClass.start_time}`), 'h:mm a')} - {format(new Date(`2000-01-01T${studentStats.nextClass.end_time}`), 'h:mm a')}
                   </p>
                 </>
               ) : (
