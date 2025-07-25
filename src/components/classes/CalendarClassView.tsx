@@ -98,6 +98,13 @@ export const CalendarClassView = () => {
           for (let i = 0; i < 7; i++) {
             const instanceDate = addDays(weekStart, i);
             if (instanceDate.getDay() === schedule.day_of_week) {
+              // Only create instance if the instance date is on or after the class start date
+              const classStartDate = classItem.start_date ? new Date(classItem.start_date) : null;
+              if (classStartDate && instanceDate < classStartDate) {
+                // Skip this instance - class hasn't started yet for this date
+                return;
+              }
+              
               const reservations = reservationsData.filter(r => r.class_id === classItem.id);
               
               instances.push({
