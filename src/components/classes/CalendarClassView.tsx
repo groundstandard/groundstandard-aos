@@ -262,7 +262,7 @@ export const CalendarClassView = () => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
-                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/7)] [&_th]:h-12 [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] text-lg pointer-events-auto"
+                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/7)] [&_th]:h-12 [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-nav]:flex [&_.rdp-nav]:justify-between [&_.rdp-nav]:w-full [&_.rdp-nav-button]:static [&_.rdp-nav-button_svg]:w-5 [&_.rdp-nav-button_svg]:h-5 text-lg pointer-events-auto"
                   modifiers={{
                     hasClasses: (date) => getClassesForDate(date).length > 0
                   }}
