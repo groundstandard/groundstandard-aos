@@ -32,6 +32,7 @@ import { useStudentDashboard } from "@/hooks/useStudentDashboard";
 import { ProgressTracker } from "@/components/student/ProgressTracker";
 import { StudentPaymentSummary } from "@/components/student/StudentPaymentSummary";
 import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
+import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -508,76 +509,86 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Student Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <Card className="p-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Student Since</h3>
-              <User className="h-3 w-3 text-blue-500" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-lg font-bold">
-                {new Date(profile.created_at).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric'
-                })}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))} days
-              </p>
-            </div>
-          </Card>
+        {/* Main Dashboard Layout */}
+        <div className="flex gap-6 mb-6">
+          {/* Left Side - Location Check-In */}
+          <div className="flex-1">
+            <LocationCheckIn />
+          </div>
 
-          <Card className="p-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Total Classes</h3>
-              <BarChart3 className="h-3 w-3 text-green-500" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-lg font-bold">{studentLoading ? '...' : studentStats.totalClasses}</p>
-              <p className="text-xs text-muted-foreground">
-                {studentStats.attendanceRate > 0 ? `${studentStats.attendanceRate.toFixed(0)}% attendance rate` : 'No attendance yet'}
-              </p>
-            </div>
-          </Card>
-
-          <Card className="p-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Current Belt</h3>
-              <Award className="h-3 w-3 text-purple-500" />
-            </div>
-            <div className="space-y-0.5">
-              <p className="text-lg font-bold">{profile.belt_level || 'White'}</p>
-              <p className="text-xs text-muted-foreground">
-                {studentStats.totalClasses > 20 ? 'Ready for testing' : `${Math.max(0, 20 - studentStats.totalClasses)} classes to next`}
-              </p>
-            </div>
-          </Card>
-
-          <Card className="p-3">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Next Class</h3>
-              <Calendar className="h-3 w-3 text-orange-500" />
-            </div>
-            <div className="space-y-0.5">
-              {studentStats.nextClass ? (
-                <>
-                  <p className="text-lg font-bold">{studentStats.nextClass.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(studentStats.nextClass.date), 'EEE, MMM d')}
+          {/* Right Side - Student Statistics in 2x2 Grid */}
+          <div className="w-80">
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="aspect-square p-3 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-medium text-muted-foreground">Student Since</h3>
+                  <User className="h-3 w-3 text-blue-500" />
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  <p className="text-lg font-bold">
+                    {new Date(profile.created_at).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric'
+                    })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(`2000-01-01T${studentStats.nextClass.start_time}`), 'h:mm a')} - {format(new Date(`2000-01-01T${studentStats.nextClass.end_time}`), 'h:mm a')}
+                    {Math.floor((new Date().getTime() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))} days
                   </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-bold">None</p>
-                  <p className="text-xs text-muted-foreground">No classes scheduled</p>
-                </>
-              )}
+                </div>
+              </Card>
+
+              <Card className="aspect-square p-3 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-medium text-muted-foreground">Total Classes</h3>
+                  <BarChart3 className="h-3 w-3 text-green-500" />
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  <p className="text-lg font-bold">{studentLoading ? '...' : studentStats.totalClasses}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {studentStats.attendanceRate > 0 ? `${studentStats.attendanceRate.toFixed(0)}% attendance` : 'No attendance yet'}
+                  </p>
+                </div>
+              </Card>
+
+              <Card className="aspect-square p-3 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-medium text-muted-foreground">Current Belt</h3>
+                  <Award className="h-3 w-3 text-purple-500" />
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  <p className="text-lg font-bold">{profile.belt_level || 'White'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {studentStats.totalClasses > 20 ? 'Ready for testing' : `${Math.max(0, 20 - studentStats.totalClasses)} classes to next`}
+                  </p>
+                </div>
+              </Card>
+
+              <Card className="aspect-square p-3 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-medium text-muted-foreground">Next Class</h3>
+                  <Calendar className="h-3 w-3 text-orange-500" />
+                </div>
+                <div className="flex flex-col justify-center flex-1">
+                  {studentStats.nextClass ? (
+                    <>
+                      <p className="text-sm font-bold">{studentStats.nextClass.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(studentStats.nextClass.date), 'EEE, MMM d')}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(`2000-01-01T${studentStats.nextClass.start_time}`), 'h:mm a')}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg font-bold">None</p>
+                      <p className="text-xs text-muted-foreground">No classes scheduled</p>
+                    </>
+                  )}
+                </div>
+              </Card>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Student Features Grid */}
