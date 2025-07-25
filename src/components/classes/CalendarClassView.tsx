@@ -254,9 +254,9 @@ export const CalendarClassView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid lg:grid-cols-5 gap-6">
+          <div className="flex gap-6">
             {/* Calendar */}
-            <div className="lg:col-span-3">
+            <div className="w-3/4">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -283,8 +283,8 @@ export const CalendarClassView = () => {
               </div>
             </div>
 
-            {/* Classes for selected date */}
-            <div className="lg:col-span-2">
+            {/* Classes sidebar */}
+            <div className="w-1/4 border-l pl-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">
                   Classes for {format(selectedDate, 'EEEE, MMMM d')}
