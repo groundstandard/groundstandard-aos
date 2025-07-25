@@ -30,7 +30,6 @@ import { useAcademy } from "@/hooks/useAcademy";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
 import { ProgressTracker } from "@/components/student/ProgressTracker";
 import { StudentPaymentSummary } from "@/components/student/StudentPaymentSummary";
-import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -649,11 +648,6 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Class Reservations */}
-        <div className="mt-6">
-          <ClassReservationsSidebar />
         </div>
 
         {/* View Toggle at bottom center */}

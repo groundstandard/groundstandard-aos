@@ -10,6 +10,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
+import { ClassReservationsSidebar } from './ClassReservationsSidebar';
 
 
 // ABOUTME: Calendar-based class selection view for students with real-time class availability
@@ -236,6 +237,20 @@ export const CalendarClassView = () => {
                 </Badge>
               )}
             </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  My Classes
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>My Classes</DialogTitle>
+                </DialogHeader>
+                <ClassReservationsSidebar />
+              </DialogContent>
+            </Dialog>
           </CardTitle>
         </CardHeader>
         <CardContent>
