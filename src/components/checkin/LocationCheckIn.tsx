@@ -289,6 +289,40 @@ export const LocationCheckIn = () => {
         </CardContent>
       </Card>
 
+      {/* Available Classes for Check-in */}
+      {availableLocations.length > 0 && reservations.filter(r => r.status === 'reserved').length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Available Classes for Check-In
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {reservations
+                .filter(r => r.status === 'reserved')
+                .map(reservation => (
+                  <div key={reservation.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{reservation.classes?.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Ready for location check-in
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handleLocationCheckIn(reservation.class_id, availableLocations[0]?.id)}
+                      disabled={loading}
+                      size="sm"
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Check In"}
+                    </Button>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Checked-in Classes */}
       {reservations.filter(r => r.status === 'checked_in').length > 0 && (

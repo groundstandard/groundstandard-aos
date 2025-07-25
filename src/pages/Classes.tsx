@@ -23,9 +23,9 @@ const Classes = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto p-6 space-y-6">
-        <BackButton />
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto p-6 space-y-4">
+        <div className="flex items-center gap-4">
+          <BackButton />
           <h1 className="text-3xl font-bold text-foreground">
             {isAdmin ? 'Class Management' : 'Class Schedule'}
           </h1>
