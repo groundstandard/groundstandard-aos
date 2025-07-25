@@ -261,7 +261,7 @@ export const CalendarClassView = () => {
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
+                className="rounded-md border w-full"
                 modifiers={{
                   hasClasses: (date) => getClassesForDate(date).length > 0
                 }}
