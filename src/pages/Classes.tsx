@@ -4,6 +4,8 @@ import { BackButton } from "@/components/ui/BackButton";
 import { ClassSchedule } from "@/components/classes/ClassSchedule";
 import { ClassManagement } from "@/components/admin/ClassManagement";
 import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
+import { CalendarClassView } from "@/components/classes/CalendarClassView";
+import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
 
 const Classes = () => {
   const { loading } = useAuth();
@@ -41,9 +43,19 @@ const Classes = () => {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <ClassSchedule />
+          <div className="space-y-6">
+            {/* Location-based Check-in at the top */}
             <LocationCheckIn />
+            
+            {/* Main content with calendar and sidebar */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <CalendarClassView />
+              </div>
+              <div className="lg:col-span-1">
+                <ClassReservationsSidebar />
+              </div>
+            </div>
           </div>
         )}
       </div>
