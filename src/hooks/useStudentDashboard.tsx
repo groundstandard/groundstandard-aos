@@ -88,71 +88,59 @@ export const useStudentDashboard = () => {
 
       const enrolledClasses = reservationsData?.length || 0;
 
-      // Fetch next upcoming class - ONLY from user's reservations
-      const today = new Date();
-      const currentDay = today.getDay();
-      const currentTime = today.toTimeString().slice(0, 5);
-
+      // Fetch next upcoming class - use EXACT same approach as ClassReservationsSidebar
       let nextClass: NextClass | null = null;
 
       if (reservationsData && reservationsData.length > 0) {
-        // Get class IDs from user's reservations
+        // Get class IDs from user's reservations (same as ClassReservationsSidebar)
         const reservedClassIds = reservationsData.map(r => r.class_id);
 
-        const { data: nextClassData, error: nextClassError } = await supabase
-          .from('class_schedules')
+        const { data: classesData, error: classesError } = await supabase
+          .from('classes')
           .select(`
             *,
-            classes!inner(
-              id,
-              name,
-              instructor_id,
-              is_active,
-              profiles!classes_instructor_id_fkey (
-                first_name,
-                last_name
-              )
-            )
+            class_schedules(*),
+            profiles!classes_instructor_id_fkey(first_name, last_name)
           `)
-          .in('classes.id', reservedClassIds)
-          .eq('classes.is_active', true)
-          .order('day_of_week', { ascending: true })
-          .order('start_time', { ascending: true });
+          .in('id', reservedClassIds)
+          .eq('is_active', true);
 
-        if (nextClassError) throw nextClassError;
+        if (classesError) throw classesError;
 
-        // Find the next class occurrence from user's reserved classes
-        let earliestClass: { schedule: any, classItem: any, nextDate: Date } | null = null;
+        // Find the next class occurrence using EXACT same logic as ClassReservationsSidebar
+        let earliestClass: { classData: any, nextDate: Date } | null = null;
         
-        for (const schedule of nextClassData || []) {
-          const classItem = schedule.classes;
-          if (!classItem) continue;
-
-          // Use the same logic as ClassReservationsSidebar for consistency
-          const dayOfWeek = schedule.day_of_week;
-          const currentDay = today.getDay();
+        for (const classData of classesData || []) {
+          const nextSchedule = classData?.class_schedules?.[0]; // Same as ClassReservationsSidebar
           
-          let daysUntilNext = dayOfWeek - currentDay;
-          if (daysUntilNext <= 0) daysUntilNext += 7;
-          
-          const nextDate = new Date(today);
-          nextDate.setDate(today.getDate() + daysUntilNext);
+          if (nextSchedule) {
+            const today = new Date();
+            const dayOfWeek = nextSchedule.day_of_week;
+            const currentDay = today.getDay();
+            
+            let daysUntilNext = dayOfWeek - currentDay;
+            if (daysUntilNext <= 0) daysUntilNext += 7;
+            
+            const nextDate = new Date(today);
+            nextDate.setDate(today.getDate() + daysUntilNext);
 
-          // Keep track of the earliest upcoming class
-          if (!earliestClass || nextDate < earliestClass.nextDate) {
-            earliestClass = { schedule, classItem, nextDate };
+            // Keep track of the earliest upcoming class
+            if (!earliestClass || nextDate < earliestClass.nextDate) {
+              earliestClass = { classData, nextDate };
+            }
           }
         }
 
         if (earliestClass) {
+          const nextSchedule = earliestClass.classData?.class_schedules?.[0];
           nextClass = {
-            id: earliestClass.classItem.id,
-            name: earliestClass.classItem.name,
+            id: earliestClass.classData.id,
+            name: earliestClass.classData.name,
             date: earliestClass.nextDate.toISOString().split('T')[0],
-            start_time: earliestClass.schedule.start_time,
-            end_time: earliestClass.schedule.end_time,
-            instructor_name: earliestClass.classItem.profiles 
-              ? `${earliestClass.classItem.profiles.first_name} ${earliestClass.classItem.profiles.last_name}`
+            start_time: nextSchedule.start_time,
+            end_time: nextSchedule.end_time,
+            instructor_name: earliestClass.classData.profiles 
+              ? `${earliestClass.classData.profiles.first_name} ${earliestClass.classData.profiles.last_name}`
               : undefined
           };
         }
