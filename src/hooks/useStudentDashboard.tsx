@@ -44,10 +44,10 @@ export const useStudentDashboard = () => {
     try {
       setLoading(true);
 
-      // Fetch attendance records
+      // Fetch attendance records with academy filtering
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance')
-        .select('*')
+        .select('*, classes!inner(*)')
         .eq('student_id', profile?.id)
         .order('date', { ascending: false });
 
@@ -74,10 +74,13 @@ export const useStudentDashboard = () => {
         a.date.startsWith(thisMonth) && a.status === 'present'
       ).length || 0;
 
-      // Fetch enrolled classes
+      // Fetch enrolled classes with academy filtering
       const { data: reservationsData, error: reservationsError } = await supabase
         .from('class_reservations')
-        .select('*')
+        .select(`
+          *,
+          classes!inner(*)
+        `)
         .eq('student_id', profile?.id)
         .eq('status', 'reserved');
 
@@ -85,76 +88,66 @@ export const useStudentDashboard = () => {
 
       const enrolledClasses = reservationsData?.length || 0;
 
-      // Fetch next upcoming class
+      // Fetch next upcoming class with proper academy filtering
       const today = new Date();
       const currentDay = today.getDay();
-      const currentTime = today.toTimeString().slice(0, 5); // HH:MM format
+      const currentTime = today.toTimeString().slice(0, 5);
 
       const { data: nextClassData, error: nextClassError } = await supabase
-        .from('classes')
+        .from('class_schedules')
         .select(`
-          id,
-          name,
-          instructor_id,
-          class_schedules (
-            day_of_week,
-            start_time,
-            end_time
-          ),
-          profiles!classes_instructor_id_fkey (
-            first_name,
-            last_name
+          *,
+          classes!inner(
+            id,
+            name,
+            instructor_id,
+            is_active,
+            profiles!classes_instructor_id_fkey (
+              first_name,
+              last_name
+            )
           )
         `)
-        .eq('is_active', true);
+        .eq('classes.is_active', true)
+        .gte('day_of_week', currentDay)
+        .order('day_of_week', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(10);
 
       if (nextClassError) throw nextClassError;
 
-      // Find next class based on schedule
+      // Find next class occurrence
       let nextClass: NextClass | null = null;
+      
+      for (const schedule of nextClassData || []) {
+        const classItem = schedule.classes;
+        if (!classItem) continue;
 
-      for (const classItem of nextClassData || []) {
-        for (const schedule of classItem.class_schedules || []) {
-          const dayDiff = schedule.day_of_week - currentDay;
-          const isToday = dayDiff === 0;
-          const isUpcoming = dayDiff > 0 || dayDiff < -3; // Next week
-
-          if (isToday && schedule.start_time > currentTime) {
-            // Class today but later
-            const classDate = today.toISOString().split('T')[0];
-            nextClass = {
-              id: classItem.id,
-              name: classItem.name,
-              date: classDate,
-              start_time: schedule.start_time,
-              end_time: schedule.end_time,
-              instructor_name: classItem.profiles 
-                ? `${classItem.profiles.first_name} ${classItem.profiles.last_name}`
-                : undefined
-            };
-            break;
-          } else if (isUpcoming) {
-            // Next upcoming class this week or next
-            const daysToAdd = dayDiff > 0 ? dayDiff : dayDiff + 7;
-            const nextDate = new Date(today);
-            nextDate.setDate(today.getDate() + daysToAdd);
-            const classDate = nextDate.toISOString().split('T')[0];
-
-            if (!nextClass || nextDate < new Date(nextClass.date + 'T' + nextClass.start_time)) {
-              nextClass = {
-                id: classItem.id,
-                name: classItem.name,
-                date: classDate,
-                start_time: schedule.start_time,
-                end_time: schedule.end_time,
-                instructor_name: classItem.profiles 
-                  ? `${classItem.profiles.first_name} ${classItem.profiles.last_name}`
-                  : undefined
-              };
-            }
-          }
+        const dayDiff = schedule.day_of_week - currentDay;
+        let nextDate = new Date(today);
+        
+        if (dayDiff === 0 && schedule.start_time > currentTime) {
+          // Class today but later
+          nextDate = today;
+        } else if (dayDiff > 0) {
+          // Class later this week
+          nextDate.setDate(today.getDate() + dayDiff);
+        } else {
+          // Class next week
+          nextDate.setDate(today.getDate() + (7 + dayDiff));
         }
-        if (nextClass) break;
+
+        nextClass = {
+          id: classItem.id,
+          name: classItem.name,
+          date: nextDate.toISOString().split('T')[0],
+          start_time: schedule.start_time,
+          end_time: schedule.end_time,
+          instructor_name: classItem.profiles 
+            ? `${classItem.profiles.first_name} ${classItem.profiles.last_name}`
+            : undefined
+        };
+        break; // Take the first (earliest) class
       }
 
       setStats({
