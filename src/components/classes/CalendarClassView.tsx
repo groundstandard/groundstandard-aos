@@ -270,7 +270,7 @@ export const CalendarClassView = () => {
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() - 1);
                     setSelectedDate(newDate);
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    setTimeout(() => window.scrollTo(0, scrollY), 0);
                   }}
                   className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted"
                 >
@@ -287,7 +287,7 @@ export const CalendarClassView = () => {
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() + 1);
                     setSelectedDate(newDate);
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    setTimeout(() => window.scrollTo(0, scrollY), 0);
                   }}
                   className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted"
                 >
