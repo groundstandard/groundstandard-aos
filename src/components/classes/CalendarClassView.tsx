@@ -254,7 +254,7 @@ export const CalendarClassView = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-6">
+          <div className="flex gap-2">
             {/* Calendar */}
             <div className="w-3/4">
               <Calendar
