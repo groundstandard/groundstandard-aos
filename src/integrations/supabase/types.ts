@@ -1539,6 +1539,7 @@ export type Database = {
       }
       classes: {
         Row: {
+          academy_id: string
           age_group: string | null
           class_length_type: string | null
           class_length_value: number | null
@@ -1555,6 +1556,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          academy_id: string
           age_group?: string | null
           class_length_type?: string | null
           class_length_value?: number | null
@@ -1571,6 +1573,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          academy_id?: string
           age_group?: string | null
           class_length_type?: string | null
           class_length_value?: number | null
@@ -1587,6 +1590,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "classes_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "classes_instructor_id_fkey"
             columns: ["instructor_id"]
