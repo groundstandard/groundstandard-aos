@@ -321,89 +321,103 @@ export const CalendarClassView = () => {
                   {format(selectedDate, 'EEEE, MMM d')}
                 </h3>
                 
-                <div className="space-y-4 overflow-y-auto max-h-[600px]">
+                <div className="space-y-3 overflow-y-auto max-h-[600px]">
                   {getClassesForDate(selectedDate).length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Clock className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">No classes scheduled</p>
-                      <p className="text-sm">for this date</p>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-base">No classes scheduled</p>
+                      <p className="text-xs">for this date</p>
                     </div>
                   ) : (
-                    getClassesForDate(selectedDate).map(instance => (
-                      <Card key={`${instance.class.id}-${instance.schedule.id}`} className="shadow-soft border hover:shadow-medium transition-smooth">
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h4 className="font-semibold text-foreground text-base">
-                                  {instance.class.name}
-                                </h4>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {instance.class.description}
-                                </p>
-                              </div>
-                              
-                              <div className="ml-3">
-                                {instance.is_enrolled ? (
-                                  <div className="text-center space-y-2">
-                                    <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
-                                      Reserved
-                                    </Badge>
+                    getClassesForDate(selectedDate).map(instance => {
+                      // Check if student has access based on skill level
+                      const hasAccess = instance.class.skill_level === 'all' || 
+                                       instance.class.skill_level === 'beginner' ||
+                                       profile?.belt_level === instance.class.skill_level;
+                      
+                      return (
+                        <Card 
+                          key={`${instance.class.id}-${instance.schedule.id}`} 
+                          className={`shadow-soft border transition-smooth ${
+                            !hasAccess ? 'opacity-50 bg-muted/30' : 'hover:shadow-medium'
+                          }`}
+                        >
+                          <CardContent className="p-3">
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-foreground text-sm leading-tight break-words">
+                                    {instance.class.name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
+                                    {instance.class.description}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex-shrink-0">
+                                  {instance.is_enrolled ? (
+                                    <div className="text-center space-y-1">
+                                      <Badge variant="default" className="bg-primary/10 text-primary border-primary/20 text-xs px-2 py-0">
+                                        Reserved
+                                      </Badge>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs px-2 py-1 h-6 min-w-[60px]"
+                                        onClick={() => cancelReservation(instance.class.id)}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  ) : (
                                     <Button
-                                      variant="outline"
                                       size="sm"
-                                      className="text-xs px-3 py-1 h-7 w-full"
-                                      onClick={() => cancelReservation(instance.class.id)}
+                                      className="text-xs px-2 py-1 h-6 min-w-[60px]"
+                                      onClick={() => enrollInClass(instance.class.id)}
+                                      disabled={
+                                        !hasAccess ||
+                                        instance.enrollment_count >= instance.class.max_students ||
+                                        (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3)
+                                      }
                                     >
-                                      Cancel
+                                      {!hasAccess ? 'Locked' :
+                                       instance.enrollment_count >= instance.class.max_students ? 'Full' : 
+                                       (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' : 'Reserve'}
                                     </Button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1">
+                                <Badge variant="outline" className="text-xs px-1 py-0">{instance.class.skill_level}</Badge>
+                                <Badge variant="outline" className="text-xs px-1 py-0">{instance.class.age_group}</Badge>
+                              </div>
+
+                              <div className="space-y-1 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {formatTime(instance.schedule.start_time)} - {formatTime(instance.schedule.end_time)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {instance.enrollment_count} / {instance.class.max_students} students
+                                  </span>
+                                </div>
+                                {instance.instructor_name && (
+                                  <div className="flex items-center gap-1">
+                                    <Crown className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{instance.instructor_name}</span>
                                   </div>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    className="text-xs px-3 py-1 h-7"
-                                    onClick={() => enrollInClass(instance.class.id)}
-                                    disabled={
-                                      instance.enrollment_count >= instance.class.max_students ||
-                                      (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3)
-                                    }
-                                  >
-                                    {instance.enrollment_count >= instance.class.max_students ? 'Full' : 
-                                     (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' : 'Reserve'}
-                                  </Button>
                                 )}
                               </div>
                             </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline" className="text-xs">{instance.class.skill_level}</Badge>
-                              <Badge variant="outline" className="text-xs">{instance.class.age_group}</Badge>
-                            </div>
-
-                            <div className="space-y-2 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 flex-shrink-0" />
-                                <span>
-                                  {formatTime(instance.schedule.start_time)} - {formatTime(instance.schedule.end_time)}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 flex-shrink-0" />
-                                <span>
-                                  {instance.enrollment_count} / {instance.class.max_students} students
-                                </span>
-                              </div>
-                              {instance.instructor_name && (
-                                <div className="flex items-center gap-2">
-                                  <Crown className="h-4 w-4 flex-shrink-0" />
-                                  <span>{instance.instructor_name}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
+                          </CardContent>
+                        </Card>
+                      );
+                    })
                   )}
                 </div>
               </div>
