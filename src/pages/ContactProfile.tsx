@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
 import { format } from "date-fns";
@@ -756,7 +755,7 @@ const ContactProfile = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Joined {new Date(contact.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -798,11 +797,13 @@ const ContactProfile = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-4">
-              {/* Active Membership Section */}
-              <ActiveMembershipCard contactId={contact?.id} />
+              {/* Temporarily commented out to debug calendar issue */}
+              {/* <ActiveMembershipCard contactId={contact?.id} />
+              <ClassPacksCard contactId={contact?.id} /> */}
               
-              {/* Class Packs Section */}
-              <ClassPacksCard contactId={contact?.id} />
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Components temporarily removed for debugging</p>
+              </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Recent Payments */}
