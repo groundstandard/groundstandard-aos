@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
 import { format } from "date-fns";
@@ -1311,33 +1313,36 @@ const ContactProfile = () => {
               <div>
                 <Label>Date</Label>
                 <div className="mt-2">
-                  <Input
-                    type="date"
-                    value={markAttendanceData.date ? markAttendanceData.date.toISOString().split('T')[0] : ''}
-                    onChange={(e) => {
-                      const dateValue = e.target.value ? new Date(e.target.value) : undefined;
-                      
-                      // Only allow dates that match class schedule
-                      if (dateValue && markAttendanceData.class_id && classSchedules.length > 0) {
-                        const dayOfWeek = dateValue.getDay();
-                        const isValidDay = classSchedules.some(schedule => schedule.day_of_week === dayOfWeek);
-                        
-                        if (!isValidDay) {
-                          // Show which days are available
-                          const availableDays = classSchedules.map(s => getDayName(s.day_of_week)).join(', ');
-                          toast({
-                            title: "Invalid Date",
-                            description: `This class only runs on: ${availableDays}`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                      }
-                      
-                      setMarkAttendanceData({...markAttendanceData, date: dateValue});
-                    }}
-                    className="w-full"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {markAttendanceData.date ? format(markAttendanceData.date, "PPP") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={markAttendanceData.date}
+                        onSelect={(date) => setMarkAttendanceData({...markAttendanceData, date})}
+                        disabled={(date) => {
+                          // If no class selected, disable all dates
+                          if (!markAttendanceData.class_id || classSchedules.length === 0) {
+                            return true;
+                          }
+                          
+                          // Only allow dates that match the class schedule
+                          const dayOfWeek = date.getDay();
+                          return !classSchedules.some(schedule => schedule.day_of_week === dayOfWeek);
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                   
                   {/* Show available days info */}
                   {markAttendanceData.class_id && classSchedules.length > 0 && (
