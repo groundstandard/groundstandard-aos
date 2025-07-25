@@ -74,7 +74,7 @@ export const CalendarClassView = () => {
         .select(`
           *,
           class_schedules(*),
-          profiles!classes_instructor_id_fkey(first_name, last_name)
+          instructor:profiles!instructor_id(first_name, last_name)
         `)
         .eq('is_active', true);
 
@@ -105,9 +105,9 @@ export const CalendarClassView = () => {
                 date: instanceDate,
                 enrollment_count: reservations.length,
                 is_enrolled: reservations.some(r => r.student_id === profile?.id),
-                instructor_name: classItem.profiles 
-                  ? `${classItem.profiles.first_name} ${classItem.profiles.last_name}`
-                  : undefined
+                instructor_name: classItem.instructor 
+                  ? `${classItem.instructor.first_name} ${classItem.instructor.last_name}`
+                  : 'No Instructor Assigned'
               });
             }
           }
