@@ -41,6 +41,7 @@ import TeamManagement from "./pages/TeamManagement";
 import MembershipManagement from "./pages/MembershipManagement";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PaymentTestDashboard from "./pages/PaymentTestDashboard";
+import StudentAttendanceHistoryPage from "./pages/StudentAttendanceHistory";
 import NotFound from "./pages/NotFound";
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
@@ -63,6 +64,7 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Auth />} />
         <Route path="/classes" element={user ? <AcademyGatekeeper><Classes /></AcademyGatekeeper> : <Auth />} />
         <Route path="/attendance" element={user ? <AcademyGatekeeper><Attendance /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/student-attendance" element={user ? <AcademyGatekeeper><StudentAttendanceHistoryPage /></AcademyGatekeeper> : <Auth />} />
         <Route path="/checkin" element={user ? <AcademyGatekeeper><CheckIn /></AcademyGatekeeper> : <Auth />} />
         <Route path="/admin" element={user ? <AcademyGatekeeper><Admin /></AcademyGatekeeper> : <Auth />} />
         <Route path="/progress" element={user ? <AcademyGatekeeper><Progress /></AcademyGatekeeper> : <Auth />} />

@@ -597,7 +597,7 @@ const Dashboard = () => {
 
           <Card 
             className="card-minimal hover-lift cursor-pointer"
-            onClick={() => navigate('/attendance')}
+            onClick={() => navigate('/student-attendance')}
           >
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
@@ -607,7 +607,7 @@ const Dashboard = () => {
               <CardDescription className="text-xs">Track your class attendance</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
-              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/attendance'); }}>
+              <Button size="sm" className="w-full text-xs" onClick={(e) => { e.stopPropagation(); navigate('/student-attendance'); }}>
                 View Attendance
               </Button>
             </CardContent>
