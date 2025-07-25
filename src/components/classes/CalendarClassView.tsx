@@ -257,7 +257,33 @@ export const CalendarClassView = () => {
           <div className="flex gap-8 h-full min-h-[calc(100vh-200px)]">
             {/* Main Calendar Section - 75% width */}
             <div className="w-3/4 flex flex-col min-h-full">
-              <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px]">
+              <div className="bg-card rounded-lg border p-6 flex-1 min-h-[600px] relative">
+                {/* Navigation buttons positioned relative to the calendar container */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const newDate = new Date(selectedDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    setSelectedDate(newDate);
+                  }}
+                  className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted"
+                >
+                  ←
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const newDate = new Date(selectedDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    setSelectedDate(newDate);
+                  }}
+                  className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted"
+                >
+                  →
+                </Button>
+                
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -267,34 +293,10 @@ export const CalendarClassView = () => {
                   fixedWeeks={true}
                   components={{
                     Caption: ({ displayMonth }) => (
-                      <div className="relative w-full py-4 mb-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const newDate = new Date(selectedDate);
-                            newDate.setMonth(newDate.getMonth() - 1);
-                            setSelectedDate(newDate);
-                          }}
-                          className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-6 hover:bg-muted"
-                        >
-                          ←
-                        </Button>
+                      <div className="w-full py-4 mb-4">
                         <h2 className="text-lg font-semibold text-center">
                           {format(displayMonth, 'MMMM yyyy')}
                         </h2>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const newDate = new Date(selectedDate);
-                            newDate.setMonth(newDate.getMonth() + 1);
-                            setSelectedDate(newDate);
-                          }}
-                          className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-6 hover:bg-muted"
-                        >
-                          →
-                        </Button>
                       </div>
                     )
                   }}
