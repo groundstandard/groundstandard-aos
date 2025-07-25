@@ -263,14 +263,16 @@ export const CalendarClassView = () => {
                   variant="ghost"
                   size="icon"
                   type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const scrollY = window.scrollY;
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() - 1);
                     setSelectedDate(newDate);
-                    setTimeout(() => window.scrollTo(0, scrollY), 0);
                   }}
                   className="absolute left-2 top-2 z-10 h-6 w-6 hover:bg-muted"
                 >
@@ -280,14 +282,16 @@ export const CalendarClassView = () => {
                   variant="ghost"
                   size="icon"
                   type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const scrollY = window.scrollY;
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() + 1);
                     setSelectedDate(newDate);
-                    setTimeout(() => window.scrollTo(0, scrollY), 0);
                   }}
                   className="absolute right-2 top-2 z-10 h-6 w-6 hover:bg-muted"
                 >
