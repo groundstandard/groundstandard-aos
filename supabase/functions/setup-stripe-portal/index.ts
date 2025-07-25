@@ -41,9 +41,7 @@ serve(async (req) => {
         subscription_pause: {
           enabled: false,
         },
-        subscription_update: {
-          enabled: false, // Disable subscription updates to avoid product requirement
-        },
+        // Remove subscription_update entirely to avoid parameter requirements
       },
     });
 
