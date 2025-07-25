@@ -12,13 +12,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   User, 
   Phone, 
   Mail, 
-  Calendar,
+  Calendar as CalendarIcon,
   Award,
   Users,
   CreditCard,
@@ -146,7 +150,7 @@ const ContactProfile = () => {
   const [showMarkAttendanceDialog, setShowMarkAttendanceDialog] = useState(false);
   const [markAttendanceData, setMarkAttendanceData] = useState({
     class_id: '',
-    date: new Date().toISOString().split('T')[0],
+    date: undefined as Date | undefined,
     status: 'present' as 'present' | 'absent' | 'late' | 'excused',
     notes: ''
   });
@@ -485,8 +489,17 @@ const ContactProfile = () => {
     }
   };
 
+  const getDisabledDates = (date: Date) => {
+    if (!markAttendanceData.class_id || classSchedules.length === 0) {
+      return false; // Allow all dates if no class selected
+    }
+    
+    const dayOfWeek = date.getDay();
+    return !classSchedules.some(schedule => schedule.day_of_week === dayOfWeek);
+  };
+
   const handleMarkAttendance = async () => {
-    if (!contact || !markAttendanceData.class_id) return;
+    if (!contact || !markAttendanceData.class_id || !markAttendanceData.date) return;
 
     try {
       const { error } = await supabase
@@ -494,7 +507,7 @@ const ContactProfile = () => {
         .insert({
           student_id: contact.id,
           class_id: markAttendanceData.class_id,
-          date: markAttendanceData.date,
+          date: markAttendanceData.date.toISOString().split('T')[0], // Convert Date to string
           status: markAttendanceData.status,
           notes: markAttendanceData.notes || null
         });
@@ -521,7 +534,7 @@ const ContactProfile = () => {
       setShowMarkAttendanceDialog(false);
       setMarkAttendanceData({
         class_id: '',
-        date: new Date().toISOString().split('T')[0],
+        date: undefined,
         status: 'present',
         notes: ''
       });
@@ -1278,30 +1291,33 @@ const ContactProfile = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Show available times when a class is selected */}
-              {markAttendanceData.class_id && classSchedules.length > 0 && (
-                <div>
-                  <Label>Available Times</Label>
-                  <div className="mt-2 p-3 bg-muted rounded-md">
-                    <div className="text-sm font-medium mb-2">Class Schedule:</div>
-                    {classSchedules.map((schedule, index) => (
-                      <div key={index} className="text-sm text-muted-foreground">
-                        {getDayName(schedule.day_of_week)}: {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
               
               <div>
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={markAttendanceData.date}
-                  onChange={(e) => setMarkAttendanceData({...markAttendanceData, date: e.target.value})}
-                />
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !markAttendanceData.date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {markAttendanceData.date ? format(markAttendanceData.date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={markAttendanceData.date}
+                      onSelect={(date) => setMarkAttendanceData({...markAttendanceData, date})}
+                      disabled={getDisabledDates}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
