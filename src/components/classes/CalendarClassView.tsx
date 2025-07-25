@@ -266,14 +266,12 @@ export const CalendarClassView = () => {
                   className="w-full h-full min-h-[500px] [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_td]:min-h-[4rem] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[4rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto"
                   showOutsideDays={false}
                   fixedWeeks={true}
-                  components={{
-                    Caption: ({ displayMonth }) => (
-                      <div className="w-full py-4 mb-4">
-                        <h2 className="text-lg font-semibold text-center">
-                          {format(displayMonth, 'MMMM yyyy')}
-                        </h2>
-                      </div>
-                    )
+                  onMonthChange={(month) => {
+                    // Prevent scroll to top when month changes
+                    const currentScrollY = window.scrollY;
+                    setTimeout(() => {
+                      window.scrollTo(0, currentScrollY);
+                    }, 0);
                   }}
                   modifiers={{
                     hasClasses: (date) => getClassesForDate(date).length > 0
