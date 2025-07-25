@@ -262,9 +262,42 @@ export const CalendarClassView = () => {
                   mode="single"
                   selected={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
-                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] [&_.rdp-caption]:flex [&_.rdp-caption]:justify-between [&_.rdp-caption]:items-center [&_.rdp-caption]:w-full [&_.rdp-caption]:p-4 [&_.rdp-caption_label]:flex-1 [&_.rdp-caption_label]:text-center [&_.rdp-nav]:contents [&_.rdp-nav-button]:shrink-0 [&_.rdp-nav-button]:bg-background [&_.rdp-nav-button]:border [&_.rdp-nav-button]:rounded-md [&_.rdp-nav-button]:p-2 [&_.rdp-nav-button]:hover:bg-accent text-lg pointer-events-auto"
+                  className="w-full h-full [&_table]:w-full [&_table]:h-full [&_table]:table-fixed [&_td]:w-[calc(100%/7)] [&_td]:h-[calc(100%/6)] [&_th]:w-[calc(100%/7)] [&_th]:h-12 [&_th]:text-center [&_button]:h-full [&_button]:w-full [&_button]:min-h-[3rem] [&_.rdp-head_row]:w-full [&_.rdp-head_cell]:w-[calc(100%/7)] text-lg pointer-events-auto"
                   showOutsideDays={false}
                   fixedWeeks={true}
+                  components={{
+                    Caption: ({ displayMonth }) => (
+                      <div className="flex justify-between items-center w-full p-4 mb-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const newDate = new Date(selectedDate);
+                            newDate.setMonth(newDate.getMonth() - 1);
+                            setSelectedDate(newDate);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          ←
+                        </Button>
+                        <h2 className="text-lg font-semibold">
+                          {format(displayMonth, 'MMMM yyyy')}
+                        </h2>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const newDate = new Date(selectedDate);
+                            newDate.setMonth(newDate.getMonth() + 1);
+                            setSelectedDate(newDate);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          →
+                        </Button>
+                      </div>
+                    )
+                  }}
                   modifiers={{
                     hasClasses: (date) => getClassesForDate(date).length > 0
                   }}
