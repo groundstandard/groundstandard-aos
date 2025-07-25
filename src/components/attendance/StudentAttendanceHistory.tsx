@@ -336,24 +336,7 @@ export const StudentAttendanceHistory = () => {
     <div className="space-y-6">
       {/* Header with Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                My Attendance History
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Track your class attendance and progress over time
-              </p>
-            </div>
-            <Button variant="outline" onClick={exportAttendanceData}>
-              <Download className="h-4 w-4 mr-2" />
-              Export Data
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Popover>
               <PopoverTrigger asChild>
