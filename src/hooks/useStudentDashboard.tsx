@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 interface NextClass {
   id: string;
   name: string;
-  date: string;
+  date: Date;
   start_time: string;
   end_time: string;
   instructor_name?: string;
@@ -151,7 +151,7 @@ export const useStudentDashboard = () => {
           nextClass = {
             id: earliestClass.classData.id,
             name: earliestClass.classData.name,
-            date: earliestClass.nextDate.toISOString().split('T')[0],
+            date: earliestClass.nextDate,
             start_time: nextSchedule.start_time,
             end_time: nextSchedule.end_time,
             instructor_name: earliestClass.classData.profiles 
