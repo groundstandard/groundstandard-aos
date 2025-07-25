@@ -267,34 +267,10 @@ export const CalendarClassView = () => {
                   fixedWeeks={true}
                   components={{
                     Caption: ({ displayMonth }) => (
-                      <div className="relative w-full p-4 mb-4">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            const newDate = new Date(selectedDate);
-                            newDate.setMonth(newDate.getMonth() - 1);
-                            setSelectedDate(newDate);
-                          }}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8"
-                        >
-                          ←
-                        </Button>
+                      <div className="w-full p-4 mb-4">
                         <h2 className="text-lg font-semibold text-center">
                           {format(displayMonth, 'MMMM yyyy')}
                         </h2>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            const newDate = new Date(selectedDate);
-                            newDate.setMonth(newDate.getMonth() + 1);
-                            setSelectedDate(newDate);
-                          }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8"
-                        >
-                          →
-                        </Button>
                       </div>
                     )
                   }}
