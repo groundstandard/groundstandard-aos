@@ -150,7 +150,8 @@ const ContactProfile = () => {
     status: 'present' as 'present' | 'absent' | 'late' | 'excused',
     notes: ''
   });
-  const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string}>>([]);
+  const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string; class_schedules?: Array<{day_of_week: number; start_time: string; end_time: string}>}>>([]);
+  const [classSchedules, setClassSchedules] = useState<Array<{day_of_week: number; start_time: string; end_time: string}>>([]);
   const [formData, setFormData] = useState<ContactFormData>({
     first_name: "",
     last_name: "",
@@ -259,10 +260,14 @@ const ContactProfile = () => {
 
       setContactNotes(notesData || []);
 
-      // Fetch available classes for attendance marking
+      // Fetch available classes for attendance marking with their schedules
       const { data: classesData } = await supabase
         .from('classes')
-        .select('id, name')
+        .select(`
+          id, 
+          name,
+          class_schedules(day_of_week, start_time, end_time)
+        `)
         .eq('is_active', true)
         .order('name');
 
@@ -451,6 +456,32 @@ const ContactProfile = () => {
         description: "Failed to delete note",
         variant: "destructive",
       });
+    }
+  };
+
+  const getDayName = (dayOfWeek: number) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[dayOfWeek] || 'Unknown';
+  };
+
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  const handleClassSelection = (classId: string) => {
+    setMarkAttendanceData({...markAttendanceData, class_id: classId});
+    
+    // Find the selected class and set its schedules
+    const selectedClass = availableClasses.find(cls => cls.id === classId);
+    if (selectedClass && selectedClass.class_schedules) {
+      setClassSchedules(selectedClass.class_schedules);
+    } else {
+      setClassSchedules([]);
     }
   };
 
@@ -1233,7 +1264,7 @@ const ContactProfile = () => {
                 <Label htmlFor="class">Class</Label>
                 <Select 
                   value={markAttendanceData.class_id} 
-                  onValueChange={(value) => setMarkAttendanceData({...markAttendanceData, class_id: value})}
+                  onValueChange={handleClassSelection}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a class" />
@@ -1247,6 +1278,21 @@ const ContactProfile = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Show available times when a class is selected */}
+              {markAttendanceData.class_id && classSchedules.length > 0 && (
+                <div>
+                  <Label>Available Times</Label>
+                  <div className="mt-2 p-3 bg-muted rounded-md">
+                    <div className="text-sm font-medium mb-2">Class Schedule:</div>
+                    {classSchedules.map((schedule, index) => (
+                      <div key={index} className="text-sm text-muted-foreground">
+                        {getDayName(schedule.day_of_week)}: {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div>
                 <Label htmlFor="date">Date</Label>
