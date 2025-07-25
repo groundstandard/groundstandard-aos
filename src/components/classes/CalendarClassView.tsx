@@ -262,7 +262,9 @@ export const CalendarClassView = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() - 1);
                     setSelectedDate(newDate);
@@ -274,7 +276,9 @@ export const CalendarClassView = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
                     const newDate = new Date(selectedDate);
                     newDate.setMonth(newDate.getMonth() + 1);
                     setSelectedDate(newDate);
