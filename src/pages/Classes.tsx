@@ -43,19 +43,12 @@ const Classes = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Location-based Check-in at the top */}
             <LocationCheckIn />
             
-            {/* Main content with calendar and sidebar */}
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <CalendarClassView />
-              </div>
-              <div className="lg:col-span-1">
-                <ClassReservationsSidebar />
-              </div>
-            </div>
+            {/* Calendar takes up full width */}
+            <CalendarClassView />
           </div>
         )}
       </div>

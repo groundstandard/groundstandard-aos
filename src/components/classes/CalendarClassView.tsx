@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { Clock, Users, MapPin, Crown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Clock, Users, MapPin, Crown, Calendar as CalendarIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfWeek } from 'date-fns';
+import { ClassReservationsSidebar } from './ClassReservationsSidebar';
 
 // ABOUTME: Calendar-based class selection view for students with real-time class availability
 
@@ -223,15 +225,31 @@ export const CalendarClassView = () => {
     <div className="space-y-6">
       <Card className="card-minimal">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Class Calendar
-            {subscriptionInfo?.subscribed && (
-              <Badge variant="default" className="ml-2 bg-gradient-primary">
-                <Crown className="h-3 w-3 mr-1" />
-                Premium
-              </Badge>
-            )}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Class Calendar
+              {subscriptionInfo?.subscribed && (
+                <Badge variant="default" className="ml-2 bg-gradient-primary">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Premium
+                </Badge>
+              )}
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  My Classes
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>My Classes</DialogTitle>
+                </DialogHeader>
+                <ClassReservationsSidebar />
+              </DialogContent>
+            </Dialog>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -303,6 +321,7 @@ export const CalendarClassView = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="text-xs px-2 py-1 h-8"
                                   onClick={() => cancelReservation(instance.class.id)}
                                 >
                                   Cancel
@@ -311,6 +330,7 @@ export const CalendarClassView = () => {
                             ) : (
                               <Button
                                 size="sm"
+                                className="text-xs px-2 py-1 h-8"
                                 onClick={() => enrollInClass(instance.class.id)}
                                 disabled={
                                   instance.enrollment_count >= instance.class.max_students ||
@@ -318,7 +338,7 @@ export const CalendarClassView = () => {
                                 }
                               >
                                 {instance.enrollment_count >= instance.class.max_students ? 'Full' : 
-                                 (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade Required' : 'Reserve'}
+                                 (!subscriptionInfo?.subscribed && getUserReservationCount() >= 3) ? 'Upgrade' : 'Reserve'}
                               </Button>
                             )}
                           </div>
