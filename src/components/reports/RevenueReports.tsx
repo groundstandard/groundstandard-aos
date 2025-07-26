@@ -39,7 +39,7 @@ export const RevenueReports = () => {
 
   const fetchRevenueData = async () => {
     try {
-      if (!profile || profile.role !== 'admin') {
+      if (!profile || (profile.role !== 'admin' && profile.role !== 'owner')) {
         toast({
           title: "Access Restricted",
           description: "Revenue reports are only available to administrators.",
