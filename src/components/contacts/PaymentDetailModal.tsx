@@ -1,4 +1,4 @@
-// ABOUTME: Modal component for displaying detailed payment information with full transaction details and refund functionality
+// ABOUTME: Modal component for displaying detailed payment information with full transaction details, refund functionality, and scheduled payment management
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Calendar, Receipt, User, Building, RefreshCw, AlertTriangle } from "lucide-react";
+import { CreditCard, Calendar, Receipt, User, Building, RefreshCw, AlertTriangle, Edit, X, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +54,12 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [isProcessingRefund, setIsProcessingRefund] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editAmount, setEditAmount] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [isProcessingEdit, setIsProcessingEdit] = useState(false);
+  const [isProcessingCancel, setIsProcessingCancel] = useState(false);
   const { toast } = useToast();
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -141,7 +147,105 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
     }
   };
 
+  const handleCancelScheduledPayment = async () => {
+    if (!payment) return;
+
+    setIsProcessingCancel(true);
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', payment.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Cancelled",
+        description: "Scheduled payment has been cancelled successfully",
+      });
+
+      if (onPaymentUpdated) {
+        onPaymentUpdated();
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error cancelling payment:', error);
+      toast({
+        title: "Cancellation Failed",
+        description: "Failed to cancel scheduled payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingCancel(false);
+    }
+  };
+
+  const handleEditScheduledPayment = async () => {
+    if (!payment || !editAmount || !editDate) return;
+
+    const editAmountCents = Math.round(parseFloat(editAmount) * 100);
+    
+    if (editAmountCents <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Amount must be greater than $0.00",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          amount: editAmountCents,
+          description: editDescription || payment.description,
+          payment_date: editDate,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', payment.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Updated",
+        description: "Scheduled payment has been updated successfully",
+      });
+
+      setShowEditForm(false);
+      setEditAmount('');
+      setEditDescription('');
+      setEditDate('');
+
+      if (onPaymentUpdated) {
+        onPaymentUpdated();
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update scheduled payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingEdit(false);
+    }
+  };
+
+  const startEditScheduledPayment = () => {
+    setEditAmount((payment.amount / 100).toString());
+    setEditDescription(payment.description || '');
+    setEditDate(payment.payment_date.split('T')[0]); // Extract date part
+    setShowEditForm(true);
+  };
+
   const canRefund = payment?.status === 'completed' && payment.stripe_invoice_id;
+  const canCancelOrEdit = payment?.status === 'pending' || payment?.status === 'scheduled';
 
   if (!payment) return null;
 
@@ -320,6 +424,73 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
                 </div>
               </div>
             </>
+           )}
+
+          {/* Edit Scheduled Payment Section */}
+          {showEditForm && (
+            <>
+              <Separator />
+              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <Edit className="h-4 w-4" />
+                  <span className="font-medium">Edit Scheduled Payment</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="edit-amount">Amount</Label>
+                    <Input
+                      id="edit-amount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="edit-date">Scheduled Date</Label>
+                    <Input
+                      id="edit-date"
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="edit-description">Description (Optional)</Label>
+                    <Textarea
+                      id="edit-description"
+                      placeholder="Enter payment description..."
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowEditForm(false)}
+                    disabled={isProcessingEdit}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleEditScheduledPayment}
+                    disabled={isProcessingEdit || !editAmount || !editDate}
+                  >
+                    {isProcessingEdit ? "Updating..." : "Update Payment"}
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
 
           {/* Timestamps */}
@@ -331,7 +502,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
         </div>
 
         {/* Footer with Actions */}
-        {canRefund && !showRefundForm && (
+        {canRefund && !showRefundForm && !showEditForm && (
           <DialogFooter className="border-t pt-4">
             <div className="flex gap-2 w-full">
               <Button
@@ -353,6 +524,32 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Partial Refund
+              </Button>
+            </div>
+          </DialogFooter>
+        )}
+
+        {/* Scheduled Payment Actions */}
+        {canCancelOrEdit && !showRefundForm && !showEditForm && (
+          <DialogFooter className="border-t pt-4">
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={startEditScheduledPayment}
+                className="flex-1"
+                disabled={isProcessingEdit || isProcessingCancel}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Payment
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelScheduledPayment}
+                className="flex-1"
+                disabled={isProcessingEdit || isProcessingCancel}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {isProcessingCancel ? "Cancelling..." : "Cancel Payment"}
               </Button>
             </div>
           </DialogFooter>
