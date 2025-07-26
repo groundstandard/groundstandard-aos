@@ -23,30 +23,34 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
-    const supabaseServiceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    // Get auth token from request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
 
-    // Create user client with the authorization header
-    const supabaseUserClient = createClient(
+    // Create Supabase client for user operations using anon key
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
         global: {
           headers: {
-            Authorization: req.headers.get("Authorization") ?? "",
+            Authorization: authHeader,
           },
         },
       }
     );
 
-    // Get the authenticated user
-    const { data: userData, error: userError } = await supabaseUserClient.auth.getUser();
+    // Get the authenticated user (staff member)
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
     if (!user?.id) throw new Error("User not authenticated");
+
+    // Create service client for privileged operations
+    const supabaseServiceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     logStep("User authenticated", { userId: user.id });
 
