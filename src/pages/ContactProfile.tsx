@@ -1338,10 +1338,22 @@ const ContactProfile = () => {
                           // Get the selected class details
                           const selectedClass = availableClasses.find(c => c.id === markAttendanceData.class_id);
                           
+                          // Check if user is staff (admin/owner)
+                          const isStaff = profile?.role === 'admin' || profile?.role === 'owner';
+                          
                           // Disable dates before class start date
                           if (selectedClass?.start_date) {
                             const classStartDate = new Date(selectedClass.start_date);
                             if (date < classStartDate) {
+                              return true;
+                            }
+                          }
+                          
+                          // For non-staff users, disable past dates
+                          if (!isStaff) {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (date < today) {
                               return true;
                             }
                           }
