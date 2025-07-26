@@ -247,26 +247,51 @@ export const EnhancedAssignMembershipDialog = ({
           description: `Manual payment recorded and membership activated for ${contact.first_name}`,
         });
       } else if (paymentMethod === 'integrated') {
-        // Create Stripe checkout session
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-membership-checkout', {
+        // Try to charge stored payment method directly
+        const { data: chargeData, error: chargeError } = await supabase.functions.invoke('charge-stored-payment', {
           body: { 
             contact_id: contact.id,
-            membership_plan_id: selectedPlan,
-            metadata: {
-              membership_subscription_id: membership.id,
-              start_date: startDate
-            }
+            amount_cents: finalPrice,
+            setup_fee_cents: calculateSetupFee(),
+            description: `Membership: ${plan.name}`,
+            membership_subscription_id: membership.id
           },
         });
 
-        if (checkoutError) throw checkoutError;
+        if (chargeError) {
+          // If there's an error, check if it's because no payment method exists
+          if (chargeError.message?.includes('No stored payment method found') || 
+              (chargeData && chargeData.requires_payment_setup)) {
+            toast({
+              title: "Payment Method Required",
+              description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
+              variant: "destructive",
+            });
+            return; // Don't close the dialog yet
+          } else {
+            throw chargeError;
+          }
+        }
 
-        if (checkoutData?.url) {
-          window.open(checkoutData.url, '_blank');
+        if (chargeData?.success) {
           toast({
-            title: "Payment Processing",
-            description: `Redirecting to payment for ${contact.first_name}'s membership...`,
+            title: "Payment Successful",
+            description: `Membership activated for ${contact.first_name}. Payment processed successfully.`,
           });
+        } else if (chargeData?.requires_action) {
+          toast({
+            title: "Payment Authentication Required",
+            description: "This payment requires additional authentication. Please try again or use a different payment method.",
+            variant: "destructive",
+          });
+          return;
+        } else if (chargeData?.requires_payment_setup) {
+          toast({
+            title: "Payment Method Required",
+            description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
+            variant: "destructive",
+          });
+          return;
         }
       } else if (paymentMethod === 'scheduled') {
         toast({
@@ -535,7 +560,7 @@ export const EnhancedAssignMembershipDialog = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="integrated">Online Payment (Stripe)</SelectItem>
+                    <SelectItem value="integrated">Charge Stored Payment Method</SelectItem>
                     <SelectItem value="manual">Manual Payment (Cash/Check)</SelectItem>
                     <SelectItem value="scheduled">Schedule Payment</SelectItem>
                   </SelectContent>
