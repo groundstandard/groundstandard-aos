@@ -51,17 +51,31 @@ interface ActiveMembershipCardProps {
   contactId?: string;
 }
 
+interface MembershipFreeze {
+  id: string;
+  membership_subscription_id: string;
+  start_date: string;
+  end_date: string | null;
+  frozen_amount_cents: number;
+  reason: string;
+  status: string;
+  created_at: string;
+}
+
 export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) => {
   const [memberships, setMemberships] = useState<MembershipSubscription[]>([]);
   const [paymentSchedules, setPaymentSchedules] = useState<Record<string, PaymentSchedule[]>>({});
+  const [membershipFreezes, setMembershipFreezes] = useState<Record<string, MembershipFreeze[]>>({});
   const [expandedMemberships, setExpandedMemberships] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteFreezeDialog, setShowDeleteFreezeDialog] = useState(false);
   const [selectedPaymentSchedule, setSelectedPaymentSchedule] = useState<PaymentSchedule | null>(null);
   const [selectedContactName, setSelectedContactName] = useState('');
   const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
+  const [freezeToDelete, setFreezeToDelete] = useState<MembershipFreeze | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -139,6 +153,18 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         .eq('status', 'active');
 
       if (freezeError) throw freezeError;
+
+      // Group freezes by membership subscription ID
+      const freezesByMembership = (freezeData || []).reduce((acc, freeze) => {
+        const membershipId = freeze.membership_subscription_id;
+        if (!acc[membershipId]) {
+          acc[membershipId] = [];
+        }
+        acc[membershipId].push(freeze);
+        return acc;
+      }, {} as Record<string, MembershipFreeze[]>);
+
+      setMembershipFreezes(freezesByMembership);
 
       // Apply freezes to payment schedule and group by membership subscription ID
       const grouped = (data || []).reduce((acc, schedule) => {
@@ -313,6 +339,43 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
       toast({
         title: "Error",
         description: "Failed to cancel membership",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteFreeze = (freeze: MembershipFreeze) => {
+    setFreezeToDelete(freeze);
+    setShowDeleteFreezeDialog(true);
+  };
+
+  const confirmDeleteFreeze = async () => {
+    if (!freezeToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('membership_freezes')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freezeToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Freeze Removed",
+        description: "The membership freeze has been successfully removed",
+      });
+
+      setShowDeleteFreezeDialog(false);
+      setFreezeToDelete(null);
+      fetchActiveMemberships();
+    } catch (error) {
+      console.error('Error removing freeze:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove freeze",
         variant: "destructive",
       });
     }
@@ -508,6 +571,52 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
 
                 <CollapsibleContent>
                   <div className="border-t p-4 space-y-4">
+                    {/* Active Freezes Section */}
+                    {membershipFreezes[membership.id] && membershipFreezes[membership.id].length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Snowflake className="h-4 w-4" />
+                          Active Freezes ({membershipFreezes[membership.id].length})
+                        </div>
+                        <div className="space-y-2">
+                          {membershipFreezes[membership.id].map((freeze) => (
+                            <div
+                              key={freeze.id}
+                              className="flex items-center justify-between p-3 rounded-lg border bg-blue-50/50 border-blue-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="text-sm">
+                                  <div className="font-medium flex items-center gap-2">
+                                    <Snowflake className="h-3 w-3 text-blue-600" />
+                                    {freeze.reason}
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    From: {new Date(freeze.start_date).toLocaleDateString()}
+                                    {freeze.end_date ? ` to ${new Date(freeze.end_date).toLocaleDateString()}` : ' (Indefinite)'}
+                                  </div>
+                                  <div className="text-xs text-blue-600">
+                                    Frozen Amount: {formatCurrency(freeze.frozen_amount_cents)}
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFreeze(freeze);
+                                }}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Payment Schedule Section */}
                     {schedules.length > 0 ? (
                       <>
                         <div className="flex items-center gap-2 text-sm font-medium">
@@ -628,6 +737,26 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Cancel Membership
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteFreezeDialog} onOpenChange={setShowDeleteFreezeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Freeze</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this freeze? This will restore the original payment amounts for all future payments in this freeze period. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteFreeze}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove Freeze
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
