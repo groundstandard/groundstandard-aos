@@ -57,6 +57,14 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
         elements,
         confirmParams: {
           return_url: window.location.href,
+          payment_method_data: {
+            billing_details: {
+              name: cardholderName,
+              address: {
+                postal_code: zipcode
+              }
+            }
+          }
         },
         redirect: 'if_required'
       });
@@ -127,9 +135,10 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
       <div className="p-3 border rounded-md">
         <PaymentElement options={{
           layout: {
-            type: 'tabs',
+            type: 'accordion',
             defaultCollapsed: false,
           },
+          paymentMethodOrder: ['card'],
           fields: {
             billingDetails: 'never'
           },
