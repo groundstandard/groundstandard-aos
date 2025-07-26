@@ -905,7 +905,7 @@ const ContactProfile = () => {
           <TabsContent value="billing" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               {/* Left Sidebar - Payment Actions & Methods */}
-              <div className="space-y-4">
+              <div className="lg:col-span-2 space-y-4">
                 {/* Payment Actions */}
                 <Card className="card-minimal">
                   <CardHeader>
@@ -945,7 +945,7 @@ const ContactProfile = () => {
               </div>
 
               {/* Payment History */}
-              <Card className="card-minimal lg:col-span-3">
+              <Card className="card-minimal lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
