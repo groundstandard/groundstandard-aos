@@ -356,7 +356,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
       const { error } = await supabase
         .from('membership_freezes')
         .update({ 
-          status: 'cancelled',
+          status: 'ended',
           updated_at: new Date().toISOString()
         })
         .eq('id', freezeToDelete.id);
