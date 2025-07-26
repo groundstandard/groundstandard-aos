@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { loadStripe } from '@stripe/stripe-js';
@@ -39,6 +40,7 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
   clientSecret: string;
 }) => {
   const [loading, setLoading] = useState(false);
+  const [cardholderName, setCardholderName] = useState('');
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -95,6 +97,18 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="cardholderName">Cardholder Name</Label>
+        <Input
+          id="cardholderName"
+          type="text"
+          placeholder="Enter cardholder name"
+          value={cardholderName}
+          onChange={(e) => setCardholderName(e.target.value)}
+          required
+        />
+      </div>
+      
       <div className="p-3 border rounded-md">
         <PaymentElement options={{
           layout: 'tabs'
@@ -105,7 +119,7 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={loading || !stripe}>
+        <Button type="submit" disabled={loading || !stripe || !cardholderName.trim()}>
           {loading ? "Processing..." : "Add Payment Method"}
         </Button>
       </div>
