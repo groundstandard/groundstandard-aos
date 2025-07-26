@@ -111,20 +111,28 @@ serve(async (req) => {
     });
 
     // Get contact's email
+    logStep("Fetching contact data", { contactId: finalContactId });
     const { data: contact, error: contactError } = await supabaseServiceClient
       .from('profiles')
       .select('email, first_name, last_name')
       .eq('id', finalContactId)
       .single();
 
+    logStep("Contact fetch result", { contact, contactError });
+
     if (contactError || !contact) {
+      logStep("Contact not found error", { contactError });
       throw new Error("Contact not found");
     }
 
     // If contact doesn't have an email, we can't process Stripe payments
+    logStep("Checking email validation", { email: contact.email });
     if (!contact.email || contact.email.trim() === '') {
+      logStep("Email validation failed - throwing error");
       throw new Error("Contact must have an email address to process payments");
     }
+    
+    logStep("Email validation passed", { email: contact.email });
 
     // Handle scheduled payments - create a simple payment record with future date
     if (scheduleType === 'future' && scheduledDate) {
