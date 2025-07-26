@@ -52,6 +52,8 @@ export const SubscriptionRenewalDialog = ({
       const updateData: any = {
         auto_renewal: renewalEnabled ? autoRenewal : false,
         renewal_discount_percentage: renewalEnabled && !renewalNewRateEnabled ? discountPercentage : 0,
+        renewal_new_rate_enabled: renewalEnabled ? renewalNewRateEnabled : false,
+        renewal_new_rate_cents: renewalEnabled && renewalNewRateEnabled ? renewalNewRateCents : null,
         updated_at: new Date().toISOString()
       };
 

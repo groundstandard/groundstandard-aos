@@ -2979,6 +2979,8 @@ export type Database = {
           pause_start_date: string | null
           profile_id: string
           renewal_discount_percentage: number | null
+          renewal_new_rate_cents: number | null
+          renewal_new_rate_enabled: boolean
           start_date: string
           status: string
           stripe_subscription_id: string | null
@@ -3006,6 +3008,8 @@ export type Database = {
           pause_start_date?: string | null
           profile_id: string
           renewal_discount_percentage?: number | null
+          renewal_new_rate_cents?: number | null
+          renewal_new_rate_enabled?: boolean
           start_date?: string
           status?: string
           stripe_subscription_id?: string | null
@@ -3033,6 +3037,8 @@ export type Database = {
           pause_start_date?: string | null
           profile_id?: string
           renewal_discount_percentage?: number | null
+          renewal_new_rate_cents?: number | null
+          renewal_new_rate_enabled?: boolean
           start_date?: string
           status?: string
           stripe_subscription_id?: string | null

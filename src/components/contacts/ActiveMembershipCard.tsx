@@ -41,6 +41,8 @@ interface MembershipSubscription {
   cycle_number: number;
   auto_renewal: boolean;
   renewal_discount_percentage: number;
+  renewal_new_rate_enabled?: boolean;
+  renewal_new_rate_cents?: number;
   discount_expires_at: string | null;
   membership_plans: {
     name: string;
@@ -821,6 +823,9 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
             subscriptionId={selectedMembership.id}
             currentAutoRenewal={selectedMembership.auto_renewal}
             currentDiscountPercentage={selectedMembership.renewal_discount_percentage}
+            currentRenewalEnabled={true}
+            currentRenewalNewRateEnabled={selectedMembership.renewal_new_rate_enabled || false}
+            currentRenewalNewRateCents={selectedMembership.renewal_new_rate_cents || 0}
             onSuccess={() => {
               fetchActiveMemberships();
               setSelectedMembership(null);
