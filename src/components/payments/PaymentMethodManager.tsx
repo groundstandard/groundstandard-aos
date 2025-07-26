@@ -41,6 +41,7 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
 }) => {
   const [loading, setLoading] = useState(false);
   const [cardholderName, setCardholderName] = useState('');
+  const [zipcode, setZipcode] = useState('');
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -97,16 +98,30 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="cardholderName">Cardholder Name</Label>
-        <Input
-          id="cardholderName"
-          type="text"
-          placeholder="Enter cardholder name"
-          value={cardholderName}
-          onChange={(e) => setCardholderName(e.target.value)}
-          required
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="cardholderName">Cardholder Name</Label>
+          <Input
+            id="cardholderName"
+            type="text"
+            placeholder="Enter cardholder name"
+            value={cardholderName}
+            onChange={(e) => setCardholderName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="zipcode">ZIP Code</Label>
+          <Input
+            id="zipcode"
+            type="text"
+            placeholder="Enter ZIP code"
+            value={zipcode}
+            onChange={(e) => setZipcode(e.target.value)}
+            maxLength={10}
+            required
+          />
+        </div>
       </div>
       
       <div className="p-3 border rounded-md">
@@ -133,7 +148,7 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={loading || !stripe || !cardholderName.trim()}>
+        <Button type="submit" disabled={loading || !stripe || !cardholderName.trim() || !zipcode.trim()}>
           {loading ? "Processing..." : "Add Payment Method"}
         </Button>
       </div>
