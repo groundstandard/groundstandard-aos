@@ -154,7 +154,7 @@ const ContactProfile = () => {
     status: 'present' as 'present' | 'absent' | 'late' | 'excused',
     notes: ''
   });
-  const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string; class_schedules?: Array<{day_of_week: number; start_time: string; end_time: string}>}>>([]);
+  const [availableClasses, setAvailableClasses] = useState<Array<{id: string; name: string; start_date?: string; class_schedules?: Array<{day_of_week: number; start_time: string; end_time: string}>}>>([]);
   const [classSchedules, setClassSchedules] = useState<Array<{day_of_week: number; start_time: string; end_time: string}>>([]);
   const [showCalendar, setShowCalendar] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
@@ -271,6 +271,7 @@ const ContactProfile = () => {
         .select(`
           id, 
           name,
+          start_date,
           class_schedules(day_of_week, start_time, end_time)
         `)
         .eq('is_active', true)
@@ -1332,6 +1333,17 @@ const ContactProfile = () => {
                           // If no class selected, disable all dates
                           if (!markAttendanceData.class_id || classSchedules.length === 0) {
                             return true;
+                          }
+                          
+                          // Get the selected class details
+                          const selectedClass = availableClasses.find(c => c.id === markAttendanceData.class_id);
+                          
+                          // Disable dates before class start date
+                          if (selectedClass?.start_date) {
+                            const classStartDate = new Date(selectedClass.start_date);
+                            if (date < classStartDate) {
+                              return true;
+                            }
                           }
                           
                           // Only allow dates that match the class schedule
