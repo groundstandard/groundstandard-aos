@@ -110,15 +110,20 @@ serve(async (req) => {
       type: paymentMethod.type 
     });
 
-    // Get contact's Stripe customer ID
+    // Get contact's email
     const { data: contact, error: contactError } = await supabaseServiceClient
       .from('profiles')
-      .select('email')
+      .select('email, first_name, last_name')
       .eq('id', finalContactId)
       .single();
 
     if (contactError || !contact) {
       throw new Error("Contact not found");
+    }
+
+    // If contact doesn't have an email, we can't process Stripe payments
+    if (!contact.email || contact.email.trim() === '') {
+      throw new Error("Contact must have an email address to process payments");
     }
 
     // Handle scheduled payments - create a simple payment record with future date
