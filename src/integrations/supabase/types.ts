@@ -2761,6 +2761,53 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_freezes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          frozen_amount_cents: number
+          id: string
+          membership_subscription_id: string
+          reason: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frozen_amount_cents: number
+          id?: string
+          membership_subscription_id: string
+          reason: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          frozen_amount_cents?: number
+          id?: string
+          membership_subscription_id?: string
+          reason?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_membership_freezes_subscription"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membership_plan_types: {
         Row: {
           contract_length_months: number | null

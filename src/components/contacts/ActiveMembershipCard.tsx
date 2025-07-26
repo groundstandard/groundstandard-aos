@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
+import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
 
 interface PaymentSchedule {
   id: string;
@@ -433,19 +434,17 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">{formatCurrency(schedule.amount_cents)}</span>
-                                {(schedule.status === 'pending' || schedule.status === 'past_due') && (
-                                  <Button
-                                    size="sm"
-                                    variant={isPastDue(schedule.scheduled_date, schedule.status) ? 'destructive' : 'outline'}
-                                    onClick={() => handleMakePayment(schedule)}
-                                  >
-                                    <CreditCard className="h-3 w-3 mr-1" />
-                                    Pay Now
-                                  </Button>
-                                )}
                                 {schedule.status === 'paid' && (
                                   <CheckCircle className="h-4 w-4 text-green-600" />
                                 )}
+                                <PaymentScheduleActions 
+                                  schedule={{
+                                    ...schedule,
+                                    membership_subscription_id: membership.id
+                                  }}
+                                  onUpdate={fetchActiveMemberships}
+                                  onPayNow={handleMakePayment}
+                                />
                               </div>
                             </div>
                           ))}
