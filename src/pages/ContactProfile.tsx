@@ -339,7 +339,12 @@ const ContactProfile = () => {
         .eq('id', contact.id)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505' && error.message.includes('profiles_email_key')) {
+          throw new Error('This email address is already associated with another contact');
+        }
+        throw error;
+      }
       if (!data || data.length === 0) {
         throw new Error('No rows updated - check if you have permission to modify this contact');
       }
