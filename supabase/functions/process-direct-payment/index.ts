@@ -59,6 +59,17 @@ serve(async (req) => {
     const finalPaymentMethodId = paymentMethodId || payment_method_id;
     const finalAmountCents = amountCents || amount_cents;
 
+    // Validate required parameters
+    if (!finalContactId) {
+      throw new Error("Contact ID is required");
+    }
+    if (!finalPaymentMethodId) {
+      throw new Error("Payment method ID is required");
+    }
+    if (!finalAmountCents || finalAmountCents <= 0) {
+      throw new Error("Valid amount is required");
+    }
+
     logStep("Request data", { 
       finalContactId, 
       finalPaymentMethodId, 
@@ -71,7 +82,12 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get payment method details
+    logStep("Looking up payment method", { 
+      finalPaymentMethodId,
+      finalContactId 
+    });
+
+    // Get payment method details - note: finalPaymentMethodId is the stripe_payment_method_id
     const { data: paymentMethod, error: pmError } = await supabaseServiceClient
       .from('payment_methods')
       .select('stripe_payment_method_id, type, last4, brand, bank_name')
@@ -81,7 +97,12 @@ serve(async (req) => {
       .single();
 
     if (pmError || !paymentMethod) {
-      throw new Error("Payment method not found or inactive");
+      logStep("Payment method lookup failed", { 
+        error: pmError,
+        finalPaymentMethodId,
+        finalContactId 
+      });
+      throw new Error(`Payment method not found or inactive: ${pmError?.message || 'No payment method found'}`);
     }
 
     logStep("Payment method found", { 
@@ -172,7 +193,7 @@ serve(async (req) => {
     });
 
     // Record payment in database
-    const paymentData = {
+    const paymentData: any = {
       student_id: finalContactId,
       amount: finalAmountCents,
       description: description + (notes ? ` - ${notes}` : ''),
