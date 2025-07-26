@@ -15,6 +15,7 @@ import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, Chevr
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
+import { MembershipPlanDialog } from '@/components/admin/MembershipPlanDialog';
 
 interface PaymentSchedule {
   id: string;
@@ -82,8 +83,8 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [selectedContactName, setSelectedContactName] = useState('');
   const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
   const [freezeToDelete, setFreezeToDelete] = useState<MembershipFreeze | null>(null);
-  const [membershipToRenew, setMembershipToRenew] = useState<MembershipSubscription | null>(null);
   const [showRenewalDialog, setShowRenewalDialog] = useState(false);
+  const [membershipPlanForRenewal, setMembershipPlanForRenewal] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -389,8 +390,24 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     }
   };
 
-  const handleCustomizeRenewal = (membership: MembershipSubscription) => {
-    setMembershipToRenew(membership);
+  const handleCustomizeRenewal = async (membership: MembershipSubscription) => {
+    // Fetch the full membership plan data
+    const { data: membershipPlan, error } = await supabase
+      .from('membership_plans')
+      .select('*')
+      .eq('id', membership.membership_plan_id)
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load membership plan details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMembershipPlanForRenewal(membershipPlan);
     setShowRenewalDialog(true);
   };
 
@@ -812,77 +829,20 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         </AlertDialogContent>
         </AlertDialog>
 
-        {/* Renewal Settings Dialog */}
-        <Dialog open={showRenewalDialog} onOpenChange={setShowRenewalDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Customize Renewal Terms</DialogTitle>
-              <DialogDescription>
-                Configure renewal settings for {membershipToRenew?.membership_plans?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Auto Renewal</Label>
-                <div className="flex items-center space-x-2">
-                  <Switch 
-                    checked={membershipToRenew?.auto_renewal || false}
-                    onCheckedChange={(checked) => {
-                      if (membershipToRenew) {
-                        // Update auto renewal setting
-                        supabase
-                          .from('membership_subscriptions')
-                          .update({ auto_renewal: checked })
-                          .eq('id', membershipToRenew.id)
-                          .then(() => {
-                            toast({
-                              title: "Auto Renewal Updated",
-                              description: `Auto renewal ${checked ? 'enabled' : 'disabled'}`,
-                            });
-                            fetchActiveMemberships();
-                          });
-                      }
-                    }}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {membershipToRenew?.auto_renewal ? 'Enabled' : 'Disabled'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Renewal Discount (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  defaultValue={membershipToRenew?.renewal_discount_percentage || 0}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value) || 0;
-                    if (membershipToRenew && value >= 0 && value <= 100) {
-                      supabase
-                        .from('membership_subscriptions')
-                        .update({ renewal_discount_percentage: value })
-                        .eq('id', membershipToRenew.id)
-                        .then(() => {
-                          toast({
-                            title: "Renewal Discount Updated",
-                            description: `Renewal discount set to ${value}%`,
-                          });
-                          fetchActiveMemberships();
-                        });
-                    }
-                  }}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowRenewalDialog(false)}>
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Renewal Settings Dialog - Using the existing MembershipPlanDialog */}
+        {membershipPlanForRenewal && (
+          <MembershipPlanDialog
+            open={showRenewalDialog}
+            onOpenChange={setShowRenewalDialog}
+            plan={membershipPlanForRenewal}
+            defaultTab="renewal"
+            onSuccess={() => {
+              fetchActiveMemberships();
+              setShowRenewalDialog(false);
+              setMembershipPlanForRenewal(null);
+            }}
+          />
+        )}
       </CardContent>
     </Card>
   );

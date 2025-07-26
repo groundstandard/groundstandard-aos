@@ -79,6 +79,7 @@ interface MembershipPlanDialogProps {
   onOpenChange: (open: boolean) => void;
   plan?: MembershipPlan | null;
   onSuccess: () => void;
+  defaultTab?: string;
 }
 
 export const MembershipPlanDialog = ({
@@ -86,10 +87,11 @@ export const MembershipPlanDialog = ({
   onOpenChange,
   plan,
   onSuccess,
+  defaultTab = "main",
 }: MembershipPlanDialogProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("main");
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -157,6 +159,13 @@ export const MembershipPlanDialog = ({
       });
     }
   }, [plan, form]);
+
+  // Set active tab when dialog opens
+  useEffect(() => {
+    if (open) {
+      setActiveTab(defaultTab);
+    }
+  }, [open, defaultTab]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
