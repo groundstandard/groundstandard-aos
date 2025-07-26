@@ -32,6 +32,7 @@ interface MembershipPlan {
   is_unlimited: boolean;
   trial_days: number;
   setup_fee_cents: number;
+  signup_fee_cents: number;
 }
 
 interface DiscountType {
@@ -224,16 +225,16 @@ export const EnhancedAssignMembershipDialog = ({
   const calculateSetupFee = () => {
     if (!selectedPlanData) return 0;
     
-    // If setup fee is waived, return 0
+    // If signup fee is waived, return 0
     if (waiveSetupFee) return 0;
     
-    // If there's a custom setup fee, use that
+    // If there's a custom signup fee, use that
     if (customSetupFee && parseFloat(customSetupFee) > 0) {
       return parseFloat(customSetupFee) * 100; // Convert to cents
     }
     
-    // Otherwise use the plan's default setup fee
-    return selectedPlanData.setup_fee_cents;
+    // Otherwise use the plan's default signup fee
+    return selectedPlanData.signup_fee_cents || 0;
   };
 
   const handleCreateMembership = async () => {
@@ -533,47 +534,48 @@ export const EnhancedAssignMembershipDialog = ({
             </CardContent>
           </Card>
 
-          {/* Setup Fee Management */}
+          {/* Signup Fee Management */}
           {selectedPlanData && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Setup Fee Management
+                  Signup Fee
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {selectedPlanData.setup_fee_cents > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span>Default Setup Fee:</span>
-                      <span className="font-medium">{formatPrice(selectedPlanData.setup_fee_cents)}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="waive-setup-fee"
-                        checked={waiveSetupFee}
-                        onCheckedChange={setWaiveSetupFee}
-                      />
-                      <Label htmlFor="waive-setup-fee">Waive setup fee</Label>
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span>Plan Signup Fee:</span>
+                    <span className="font-medium">{formatPrice(selectedPlanData.signup_fee_cents || 0)}</span>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">No setup fee configured for this plan.</p>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="waive-setup-fee"
+                      checked={waiveSetupFee}
+                      onCheckedChange={setWaiveSetupFee}
+                    />
+                    <Label htmlFor="waive-setup-fee">Waive signup fee</Label>
+                  </div>
+                  
+                  {!waiveSetupFee && (
                     <div>
-                      <Label htmlFor="custom-setup-fee">Add Custom Setup Fee (Optional)</Label>
+                      <Label htmlFor="custom-setup-fee">Custom Signup Fee Amount</Label>
                       <Input
                         id="custom-setup-fee"
                         type="number"
-                        placeholder="0.00"
+                        placeholder={((selectedPlanData.signup_fee_cents || 0) / 100).toString()}
                         value={customSetupFee}
                         onChange={(e) => setCustomSetupFee(e.target.value)}
                         className="mt-2"
                       />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Leave blank to use plan default ({formatPrice(selectedPlanData.signup_fee_cents || 0)})
+                      </p>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
