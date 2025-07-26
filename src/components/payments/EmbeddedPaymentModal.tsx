@@ -355,6 +355,7 @@ export const EmbeddedPaymentModal = ({
                       onSelect={setScheduledDate}
                       disabled={(date) => date < new Date()}
                       initialFocus
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
