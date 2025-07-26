@@ -504,6 +504,13 @@ const ContactProfile = () => {
     if (!contact || !markAttendanceData.class_id || !markAttendanceData.date) return;
 
     try {
+      // Get the user's academy_id for the attendance record
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', profile?.id)
+        .single();
+
       const { error } = await supabase
         .from('attendance')
         .insert({
@@ -511,7 +518,8 @@ const ContactProfile = () => {
           class_id: markAttendanceData.class_id,
           date: markAttendanceData.date.toISOString().split('T')[0], // Convert Date to string
           status: markAttendanceData.status,
-          notes: markAttendanceData.notes || null
+          notes: markAttendanceData.notes || null,
+          academy_id: userProfile?.academy_id
         });
 
       if (error) throw error;
