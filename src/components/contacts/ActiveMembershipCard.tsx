@@ -30,6 +30,7 @@ interface PaymentSchedule {
   is_frozen?: boolean;
   freeze_reason?: string;
   original_amount_cents?: number;
+  payment_type?: string;
 }
 
 interface MembershipSubscription {
@@ -703,16 +704,30 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                               }`}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="text-sm">
-                                  <div className="font-medium flex items-center gap-2">
-                                    Payment {schedule.installment_number} of {schedule.total_installments}
-                                    {schedule.is_frozen && (
-                                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-                                        <Snowflake className="h-3 w-3 mr-1" />
-                                        Frozen
-                                      </Badge>
-                                    )}
-                                  </div>
+                                 <div className="text-sm">
+                                   <div className="font-medium flex items-center gap-2">
+                                     {schedule.payment_type === 'signup_fee' ? (
+                                       <>
+                                         <Badge variant="outline" className="text-xs bg-purple-50 text-purple-800 border-purple-200">
+                                           Signup Fee
+                                         </Badge>
+                                       </>
+                                     ) : schedule.payment_type === 'freeze_compensation' ? (
+                                       <>
+                                         <Badge variant="outline" className="text-xs bg-orange-50 text-orange-800 border-orange-200">
+                                           Freeze Compensation
+                                         </Badge>
+                                       </>
+                                     ) : (
+                                       `Payment ${schedule.installment_number} of ${schedule.total_installments}`
+                                     )}
+                                     {schedule.is_frozen && (
+                                       <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                                         <Snowflake className="h-3 w-3 mr-1" />
+                                         Frozen
+                                       </Badge>
+                                     )}
+                                   </div>
                                   <div className="text-muted-foreground">
                                     Due: {new Date(schedule.scheduled_date).toLocaleDateString()}
                                   </div>
@@ -818,7 +833,11 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           contactName={selectedContactName}
           paymentScheduleId={selectedPaymentSchedule.id}
           prefilledAmount={selectedPaymentSchedule.amount_cents}
-          prefilledDescription={`Payment ${selectedPaymentSchedule.installment_number} of ${selectedPaymentSchedule.total_installments}`}
+          prefilledDescription={
+            selectedPaymentSchedule.payment_type === 'signup_fee' ? 'Signup Fee' :
+            selectedPaymentSchedule.payment_type === 'freeze_compensation' ? 'Freeze Compensation' :
+            `Payment ${selectedPaymentSchedule.installment_number} of ${selectedPaymentSchedule.total_installments}`
+          }
           onSuccess={() => {
             fetchActiveMemberships();
             setSelectedPaymentSchedule(null);

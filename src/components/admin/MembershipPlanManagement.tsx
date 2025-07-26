@@ -312,6 +312,7 @@ export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[]
     class_pack_size: '',
     pack_expiry_days: '',
     setup_fee_cents: '',
+    signup_fee_cents: '',
     trial_days: '',
     plan_type_id: null,
     is_active: true
@@ -339,6 +340,7 @@ export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[]
           ...data,
           base_price_cents: parseInt(data.base_price_cents),
           setup_fee_cents: data.setup_fee_cents ? parseInt(data.setup_fee_cents) : 0,
+          signup_fee_cents: data.signup_fee_cents ? parseInt(data.signup_fee_cents) : 0,
           trial_days: data.trial_days ? parseInt(data.trial_days) : 0,
           classes_per_week: data.is_unlimited ? null : parseInt(data.classes_per_week)
         }]);
@@ -361,6 +363,7 @@ export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[]
         class_pack_size: '',
         pack_expiry_days: '',
         setup_fee_cents: '',
+        signup_fee_cents: '',
         trial_days: '',
         plan_type_id: null,
         is_active: true
@@ -433,7 +436,7 @@ export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[]
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <Label htmlFor="base_price_cents" className="text-xs">Price ($)</Label>
+              <Label htmlFor="base_price_cents" className="text-xs">Monthly Price ($)</Label>
               <Input
                 id="base_price_cents"
                 type="number"
@@ -442,6 +445,19 @@ export const CreateMembershipPlanDialog = ({ instructors }: { instructors: any[]
                 value={formData.base_price_cents ? (parseInt(formData.base_price_cents) / 100).toString() : ''}
                 onChange={(e) => setFormData({...formData, base_price_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 required
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="signup_fee_cents" className="text-xs">Signup Fee ($)</Label>
+              <Input
+                id="signup_fee_cents"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={formData.signup_fee_cents ? (parseInt(formData.signup_fee_cents) / 100).toString() : ''}
+                onChange={(e) => setFormData({...formData, signup_fee_cents: e.target.value ? (parseFloat(e.target.value) * 100).toString() : ''})}
                 className="h-8 text-sm"
               />
             </div>

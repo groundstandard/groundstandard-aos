@@ -2871,6 +2871,7 @@ export type Database = {
           renewal_new_rate_cents: number | null
           renewal_new_rate_enabled: boolean | null
           setup_fee_cents: number | null
+          signup_fee_cents: number | null
           stripe_price_id: string | null
           stripe_product_id: string | null
           trial_days: number | null
@@ -2906,6 +2907,7 @@ export type Database = {
           renewal_new_rate_cents?: number | null
           renewal_new_rate_enabled?: boolean | null
           setup_fee_cents?: number | null
+          signup_fee_cents?: number | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
           trial_days?: number | null
@@ -2941,6 +2943,7 @@ export type Database = {
           renewal_new_rate_cents?: number | null
           renewal_new_rate_enabled?: boolean | null
           setup_fee_cents?: number | null
+          signup_fee_cents?: number | null
           stripe_price_id?: string | null
           stripe_product_id?: string | null
           trial_days?: number | null
@@ -3373,6 +3376,60 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_reallocations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          membership_subscription_id: string
+          original_date: string
+          original_payment_id: string
+          reallocated_date: string
+          reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          membership_subscription_id: string
+          original_date: string
+          original_payment_id: string
+          reallocated_date?: string
+          reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          membership_subscription_id?: string
+          original_date?: string
+          original_payment_id?: string
+          reallocated_date?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payment_reallocations_payment"
+            columns: ["original_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payment_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_payment_reallocations_subscription"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_reminders: {
         Row: {
           amount: number
@@ -3416,10 +3473,13 @@ export type Database = {
         Row: {
           amount_cents: number
           created_at: string
+          freeze_compensation: boolean | null
           id: string
           installment_number: number
           membership_subscription_id: string
+          notes: string | null
           payment_method_id: string | null
+          payment_type: string | null
           scheduled_date: string
           status: string
           stripe_invoice_id: string | null
@@ -3429,10 +3489,13 @@ export type Database = {
         Insert: {
           amount_cents: number
           created_at?: string
+          freeze_compensation?: boolean | null
           id?: string
           installment_number: number
           membership_subscription_id: string
+          notes?: string | null
           payment_method_id?: string | null
+          payment_type?: string | null
           scheduled_date: string
           status?: string
           stripe_invoice_id?: string | null
@@ -3442,10 +3505,13 @@ export type Database = {
         Update: {
           amount_cents?: number
           created_at?: string
+          freeze_compensation?: boolean | null
           id?: string
           installment_number?: number
           membership_subscription_id?: string
+          notes?: string | null
           payment_method_id?: string | null
+          payment_type?: string | null
           scheduled_date?: string
           status?: string
           stripe_invoice_id?: string | null
