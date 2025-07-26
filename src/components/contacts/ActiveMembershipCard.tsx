@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
-import { PaymentMethodManager } from '@/components/payments/PaymentMethodManager';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 
 interface PaymentSchedule {
@@ -457,13 +456,6 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                         No payment schedule available for this membership.
                       </div>
                     )}
-                    
-                    <div className="pt-4 border-t">
-                      <PaymentMethodManager
-                        contactId={contactId}
-                        showAddButton={true}
-                      />
-                    </div>
                   </div>
                 </CollapsibleContent>
               </div>
