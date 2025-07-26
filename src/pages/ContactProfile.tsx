@@ -903,46 +903,49 @@ const ContactProfile = () => {
 
           {/* Billing Tab */}
           <TabsContent value="billing" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Payment Actions */}
-              <Card className="card-minimal">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="h-5 w-5" />
-                    Create Payment
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowEmbeddedPaymentModal(true)}
-                  >
-                    Custom Amount
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* Left Sidebar - Payment Actions & Methods */}
+              <div className="space-y-4">
+                {/* Payment Actions */}
+                <Card className="card-minimal">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Plus className="h-5 w-5" />
+                      Create Payment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowEmbeddedPaymentModal(true)}
+                    >
+                      Custom Amount
+                    </Button>
+                  </CardContent>
+                </Card>
 
-              {/* Payment Methods */}
-              <Card className="card-minimal">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment Methods
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {contact && (
-                    <PaymentMethodManager 
-                      contactId={contact.id}
-                      showAddButton={true}
-                    />
-                  )}
-                </CardContent>
-              </Card>
+                {/* Payment Methods */}
+                <Card className="card-minimal">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Payment Methods
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {contact && (
+                      <PaymentMethodManager 
+                        contactId={contact.id}
+                        showAddButton={true}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Payment History */}
-              <Card className="card-minimal lg:col-span-2">
+              <Card className="card-minimal lg:col-span-3">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
