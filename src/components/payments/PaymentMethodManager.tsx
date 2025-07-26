@@ -119,7 +119,8 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
             applePay: 'never',
             googlePay: 'never'
           }
-        }} />
+        }} 
+        />
       </div>
 
       <div className="flex gap-2 justify-end">
@@ -181,7 +182,28 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
   }
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret }}>
+    <Elements stripe={stripePromise} options={{ 
+      clientSecret,
+      appearance: {
+        variables: {
+          colorBackground: '#ffffff',
+        },
+        rules: {
+          '.LinkContainer': {
+            display: 'none !important'
+          },
+          '.PickerItemContainer--selected .PickerItem--Link': {
+            display: 'none !important'
+          },
+          '.TabContainer .Tab--Link': {
+            display: 'none !important'
+          },
+          '.ExpressCheckoutContainer': {
+            display: 'none !important'
+          }
+        }
+      }
+    }}>
       <AddPaymentMethodContent
         contactId={contactId}
         onSuccess={onSuccess}
