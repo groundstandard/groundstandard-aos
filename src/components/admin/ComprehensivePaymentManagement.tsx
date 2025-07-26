@@ -598,14 +598,35 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           },
         });
 
+        console.log('Charge response:', { chargeData, chargeError });
+
+        // Handle the case where payment setup is required (402 status)
+        if (chargeData && chargeData.requires_payment_setup) {
+          console.log('Payment setup required, available contacts:', chargeData.available_contacts);
+          
+          if (chargeData.available_contacts) {
+            setAvailableContacts(chargeData.available_contacts);
+          }
+          
+          setShowPaymentMethodDialog(true);
+          
+          toast({
+            title: "Payment Method Required", 
+            description: `Please add a payment method to complete the membership setup.`,
+            variant: "destructive",
+          });
+          
+          return; // Don't close the dialog yet
+        }
+
         if (chargeError) {
+          console.error('Charge error details:', chargeError);
+          
           // If there's an error, check if it's because no payment method exists
-          if (chargeError.message?.includes('No stored payment method found') || 
-              (chargeData && chargeData.requires_payment_setup)) {
-            
+          if (chargeError.message?.includes('No stored payment method found')) {
             // Show available contacts and prompt to add payment method
-            if (chargeData?.available_contacts) {
-              setAvailableContacts(chargeData.available_contacts);
+            if (chargeError.available_contacts) {
+              setAvailableContacts(chargeError.available_contacts);
             }
             
             // Show payment method setup dialog
@@ -621,6 +642,25 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           } else {
             throw chargeError;
           }
+        }
+
+        // Check if the response data indicates payment setup is required
+        if (chargeData && chargeData.requires_payment_setup) {
+          console.log('Payment setup required, available contacts:', chargeData.available_contacts);
+          
+          if (chargeData.available_contacts) {
+            setAvailableContacts(chargeData.available_contacts);
+          }
+          
+          setShowPaymentMethodDialog(true);
+          
+          toast({
+            title: "Payment Method Required", 
+            description: `Please add a payment method for ${selectedContact.first_name} to complete the membership setup.`,
+            variant: "destructive",
+          });
+          
+          return; // Don't close the dialog yet
         }
 
         if (chargeData?.success) {
