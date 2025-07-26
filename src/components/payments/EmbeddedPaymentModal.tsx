@@ -139,20 +139,53 @@ export const EmbeddedPaymentModal = ({
 
       const { data, error } = response;
 
-      // Check for function-level errors first
+      // Handle Supabase edge function errors
       if (error) {
         console.error('Edge function error:', error);
-        // Edge function returned non-2xx status, try to extract meaningful error
+        
+        // Try to get the actual error message from the response
+        let errorMessage = 'Payment processing failed';
+        
+        // For FunctionsHttpError, the actual error might be in the message or context
         if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
-          throw new Error(error.message);
-        }
-        // If we have context data with error details, use that
-        if (error.context && typeof error.context === 'object') {
-          if (error.context.error) {
-            throw new Error(error.context.error);
+          errorMessage = error.message;
+        } else if (error.context && error.context.error) {
+          errorMessage = error.context.error;
+        } else {
+          // Fallback: make a direct fetch to get the actual error message
+          try {
+            const directResponse = await fetch(
+              `https://yhriiykdnpuutzexjdee.supabase.co/functions/v1/process-direct-payment`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocmlpeWtkbnB1dXR6ZXhqZGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODEwNjAsImV4cCI6MjA2ODQ1NzA2MH0.Xtwogx9B2N8ODzbojiJJPFUpqN9j5GUtFFZHBbv2H9E`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  contactId,
+                  paymentMethodId: selectedPaymentMethod,
+                  amountCents,
+                  description: `Custom payment: ${notes || 'Direct payment'}`,
+                  scheduleType,
+                  scheduledDate: scheduleType === 'future' ? scheduledDate?.toISOString() : undefined,
+                  notes: notes || undefined,
+                }),
+              }
+            );
+            
+            if (!directResponse.ok) {
+              const errorData = await directResponse.json();
+              if (errorData.error) {
+                errorMessage = errorData.error;
+              }
+            }
+          } catch (fetchError) {
+            console.error('Direct fetch error:', fetchError);
           }
         }
-        throw new Error('Edge Function returned a non-2xx status code');
+        
+        throw new Error(errorMessage);
       }
 
       // For 500 errors, the error message might be in the data object
