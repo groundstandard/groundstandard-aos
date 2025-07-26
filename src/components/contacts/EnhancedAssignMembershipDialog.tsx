@@ -71,6 +71,8 @@ export const EnhancedAssignMembershipDialog = ({
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [waiveSetupFee, setWaiveSetupFee] = useState(false);
+  const [customSetupFee, setCustomSetupFee] = useState<string>("");
   
   const { toast } = useToast();
 
@@ -154,6 +156,21 @@ export const EnhancedAssignMembershipDialog = ({
     }
 
     return Math.max(0, discountedPrice);
+  };
+
+  const calculateSetupFee = () => {
+    if (!selectedPlanData) return 0;
+    
+    // If setup fee is waived, return 0
+    if (waiveSetupFee) return 0;
+    
+    // If there's a custom setup fee, use that
+    if (customSetupFee && parseFloat(customSetupFee) > 0) {
+      return parseFloat(customSetupFee) * 100; // Convert to cents
+    }
+    
+    // Otherwise use the plan's default setup fee
+    return selectedPlanData.setup_fee_cents;
   };
 
   const handleCreateMembership = async () => {
@@ -289,6 +306,8 @@ export const EnhancedAssignMembershipDialog = ({
     setManualPaymentAmount("");
     setNotes("");
     setIsActive(true);
+    setWaiveSetupFee(false);
+    setCustomSetupFee("");
   };
 
   const selectedPlanData = membershipPlans.find(plan => plan.id === selectedPlan);
@@ -424,6 +443,51 @@ export const EnhancedAssignMembershipDialog = ({
             </CardContent>
           </Card>
 
+          {/* Setup Fee Management */}
+          {selectedPlanData && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Setup Fee Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {selectedPlanData.setup_fee_cents > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span>Default Setup Fee:</span>
+                      <span className="font-medium">{formatPrice(selectedPlanData.setup_fee_cents)}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="waive-setup-fee"
+                        checked={waiveSetupFee}
+                        onCheckedChange={setWaiveSetupFee}
+                      />
+                      <Label htmlFor="waive-setup-fee">Waive setup fee</Label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">No setup fee configured for this plan.</p>
+                    <div>
+                      <Label htmlFor="custom-setup-fee">Add Custom Setup Fee (Optional)</Label>
+                      <Input
+                        id="custom-setup-fee"
+                        type="number"
+                        placeholder="0.00"
+                        value={customSetupFee}
+                        onChange={(e) => setCustomSetupFee(e.target.value)}
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Family/Billing Assignment */}
           {familyMembers.length > 1 && (
             <Card>
@@ -524,15 +588,23 @@ export const EnhancedAssignMembershipDialog = ({
                     <span>-{formatPrice(selectedPlanData.base_price_cents - calculateDiscountedPrice())}</span>
                   </div>
                 )}
-                {selectedPlanData.setup_fee_cents > 0 && (
+                {(selectedPlanData.setup_fee_cents > 0 || customSetupFee) && (
                   <div className="flex justify-between">
                     <span>Setup Fee:</span>
-                    <span>{formatPrice(selectedPlanData.setup_fee_cents)}</span>
+                    <span className={waiveSetupFee ? 'line-through text-muted-foreground' : ''}>
+                      {formatPrice(calculateSetupFee())}
+                    </span>
+                  </div>
+                )}
+                {waiveSetupFee && selectedPlanData.setup_fee_cents > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Setup Fee Waived:</span>
+                    <span>-{formatPrice(selectedPlanData.setup_fee_cents)}</span>
                   </div>
                 )}
                 <div className="border-t pt-2 flex justify-between font-bold">
                   <span>Total:</span>
-                  <span>{formatPrice(calculateDiscountedPrice() + selectedPlanData.setup_fee_cents)}</span>
+                  <span>{formatPrice(calculateDiscountedPrice() + calculateSetupFee())}</span>
                 </div>
               </CardContent>
             </Card>
@@ -561,9 +633,13 @@ export const EnhancedAssignMembershipDialog = ({
           <Button 
             onClick={handleCreateMembership} 
             disabled={!selectedPlan || loading}
-            className="min-w-[120px]"
+            className="min-w-[180px]"
           >
-            {loading ? "Creating..." : "Create Membership"}
+            {loading ? "Processing..." : 
+             paymentMethod === 'integrated' ? "Proceed to Payment" : 
+             paymentMethod === 'manual' ? "Record Manual Payment" :
+             paymentMethod === 'scheduled' ? "Schedule Payment" :
+             "Create Membership"}
           </Button>
         </div>
       </DialogContent>
