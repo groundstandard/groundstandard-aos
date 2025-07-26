@@ -91,6 +91,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [freezeToEdit, setFreezeToEdit] = useState<MembershipFreeze | null>(null);
   const [showSubscriptionRenewalDialog, setShowSubscriptionRenewalDialog] = useState(false);
   const [selectedMembership, setSelectedMembership] = useState<MembershipSubscription | null>(null);
+  const [contactData, setContactData] = useState<{ id: string; first_name: string; last_name: string; email: string; membership_status: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,12 +105,19 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('first_name, last_name')
+        .select('first_name, last_name, email, membership_status')
         .eq('id', contactId)
         .single();
 
       if (error) throw error;
       setSelectedContactName(`${data.first_name} ${data.last_name}`);
+      setContactData({
+        id: contactId || '',
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        email: data.email || '',
+        membership_status: data.membership_status || ''
+      });
     } catch (error) {
       console.error('Error fetching contact name:', error);
     }
@@ -475,13 +483,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
             <AssignMembershipDialog
               open={showAssignDialog}
               onOpenChange={setShowAssignDialog}
-              contact={{ 
-                id: contactId || '', 
-                first_name: '', 
-                last_name: '', 
-                email: '', 
-                membership_status: '' 
-              }}
+              contact={contactData}
               onSuccess={fetchActiveMemberships}
             />
           </div>
@@ -815,13 +817,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         <AssignMembershipDialog
           open={showAssignDialog}
           onOpenChange={setShowAssignDialog}
-          contact={{ 
-            id: contactId || '', 
-            first_name: '', 
-            last_name: '', 
-            email: '', 
-            membership_status: '' 
-          }}
+          contact={contactData}
           onSuccess={fetchActiveMemberships}
         />
 
