@@ -15,7 +15,7 @@ import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, Chevr
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
-import { MembershipPlanDialog } from '@/components/admin/MembershipPlanDialog';
+import { SubscriptionRenewalDialog } from '@/components/subscription/SubscriptionRenewalDialog';
 
 interface PaymentSchedule {
   id: string;
@@ -83,8 +83,8 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [selectedContactName, setSelectedContactName] = useState('');
   const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
   const [freezeToDelete, setFreezeToDelete] = useState<MembershipFreeze | null>(null);
-  const [showRenewalDialog, setShowRenewalDialog] = useState(false);
-  const [membershipPlanForRenewal, setMembershipPlanForRenewal] = useState<any>(null);
+  const [showSubscriptionRenewalDialog, setShowSubscriptionRenewalDialog] = useState(false);
+  const [selectedMembership, setSelectedMembership] = useState<MembershipSubscription | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -390,25 +390,9 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     }
   };
 
-  const handleCustomizeRenewal = async (membership: MembershipSubscription) => {
-    // Fetch the full membership plan data
-    const { data: membershipPlan, error } = await supabase
-      .from('membership_plans')
-      .select('*')
-      .eq('id', membership.membership_plan_id)
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load membership plan details",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setMembershipPlanForRenewal(membershipPlan);
-    setShowRenewalDialog(true);
+  const handleCustomizeRenewal = (membership: MembershipSubscription) => {
+    setSelectedMembership(membership);
+    setShowSubscriptionRenewalDialog(true);
   };
 
   if (loading) {
@@ -829,17 +813,17 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         </AlertDialogContent>
         </AlertDialog>
 
-        {/* Renewal Settings Dialog - Using the existing MembershipPlanDialog */}
-        {membershipPlanForRenewal && (
-          <MembershipPlanDialog
-            open={showRenewalDialog}
-            onOpenChange={setShowRenewalDialog}
-            plan={membershipPlanForRenewal}
-            defaultTab="renewal"
+        {/* Subscription Renewal Dialog */}
+        {selectedMembership && (
+          <SubscriptionRenewalDialog
+            open={showSubscriptionRenewalDialog}
+            onOpenChange={setShowSubscriptionRenewalDialog}
+            subscriptionId={selectedMembership.id}
+            currentAutoRenewal={selectedMembership.auto_renewal}
+            currentDiscountPercentage={selectedMembership.renewal_discount_percentage}
             onSuccess={() => {
               fetchActiveMemberships();
-              setShowRenewalDialog(false);
-              setMembershipPlanForRenewal(null);
+              setSelectedMembership(null);
             }}
           />
         )}
