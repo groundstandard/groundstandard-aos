@@ -913,17 +913,6 @@ const ContactProfile = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {membershipPlans.map((plan) => (
-                    <Button
-                      key={plan.id}
-                      variant="outline"
-                      className="w-full justify-between"
-                      onClick={() => handleCreatePayment(plan.id, plan.base_price_cents, plan.name)}
-                    >
-                      <span>{plan.name}</span>
-                      <span>{formatCurrency(plan.base_price_cents)}</span>
-                    </Button>
-                  ))}
                   <Button
                     variant="outline"
                     className="w-full"
