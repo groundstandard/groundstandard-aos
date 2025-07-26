@@ -121,45 +121,50 @@ serve(async (req) => {
       throw new Error("Contact not found");
     }
 
-    // Handle scheduled payments
+    // Handle scheduled payments - create a simple payment record with future date
     if (scheduleType === 'future' && scheduledDate) {
       const scheduledDateObj = new Date(scheduledDate);
       if (scheduledDateObj <= new Date()) {
         throw new Error("Scheduled date must be in the future");
       }
 
-      // For scheduled payments, we'll create an invoice instead of payment_schedule
-      // since payment_schedule is specifically for subscription installments
-      const { data: invoiceEntry, error: invoiceError } = await supabaseServiceClient
-        .from('invoices')
-        .insert({
-          user_id: finalContactId,
-          amount: finalAmountCents,
-          status: 'pending',
-          due_date: scheduledDateObj.toISOString().split('T')[0],
-          description: description + (notes ? ` - ${notes}` : ''),
-          line_items: [{
-            plan_id: 'custom',
-            plan_type: 'custom_payment',
-            plan_name: 'Custom Payment',
-            amount: finalAmountCents
-          }],
-          notes: notes || description
-        })
+      // Create a payment record with scheduled status for future processing
+      const scheduledPaymentData: any = {
+        student_id: finalContactId,
+        amount: finalAmountCents / 100, // Convert cents to dollars
+        description: `SCHEDULED: ${description}${notes ? ` - ${notes}` : ''}`,
+        payment_method: paymentMethod.type,
+        payment_method_type: paymentMethod.type,
+        status: 'scheduled',
+        payment_date: scheduledDateObj.toISOString(),
+      };
+
+      // Add type-specific details
+      if (paymentMethod.type === 'card') {
+        scheduledPaymentData.payment_method = `${paymentMethod.brand} ****${paymentMethod.last4}`;
+      } else if (paymentMethod.type === 'us_bank_account') {
+        scheduledPaymentData.payment_method = `${paymentMethod.bank_name} ****${paymentMethod.last4}`;
+        scheduledPaymentData.ach_bank_name = paymentMethod.bank_name;
+        scheduledPaymentData.ach_last4 = paymentMethod.last4;
+      }
+
+      const { data: scheduledPayment, error: scheduleError } = await supabaseServiceClient
+        .from('payments')
+        .insert(scheduledPaymentData)
         .select()
         .single();
 
-      if (invoiceError) {
-        logStep("Error creating invoice", { error: invoiceError });
-        throw new Error(`Failed to schedule payment: ${invoiceError.message}`);
+      if (scheduleError) {
+        logStep("Error creating scheduled payment", { error: scheduleError });
+        throw new Error(`Failed to schedule payment: ${scheduleError.message}`);
       }
 
-      logStep("Payment scheduled successfully", { invoiceId: invoiceEntry.id });
+      logStep("Payment scheduled successfully", { paymentId: scheduledPayment.id });
 
       return new Response(JSON.stringify({
         success: true,
         scheduled: true,
-        invoice_entry: invoiceEntry
+        payment: scheduledPayment
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
