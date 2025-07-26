@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -39,7 +40,9 @@ import {
   Eye,
   ArrowLeft,
   RotateCcw,
-  Crown
+  Crown,
+  Percent,
+  User
 } from 'lucide-react';
 import { RefundManagement } from '@/components/payments/RefundManagement';
 import { TaxManagement } from '@/components/payments/TaxManagement';
@@ -153,6 +156,18 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   });
   
   const [selectedContact, setSelectedContact] = useState<any>(null);
+  
+  // Enhanced Setup Recurring state variables
+  const [discountTypes, setDiscountTypes] = useState<any[]>([]);
+  const [selectedDiscount, setSelectedDiscount] = useState<string>("none");
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [scheduledPaymentDate, setScheduledPaymentDate] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<'manual' | 'integrated' | 'scheduled'>('integrated');
+  const [manualPaymentAmount, setManualPaymentAmount] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [isActive, setIsActive] = useState(true);
+  const [waiveSetupFee, setWaiveSetupFee] = useState(false);
+  const [customSetupFee, setCustomSetupFee] = useState<string>("");
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -332,6 +347,28 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
+  // Fetch discount types for the recurring setup dialog
+  useEffect(() => {
+    const fetchDiscountTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('discount_types')
+          .select('*')
+          .eq('is_active', true)
+          .order('name');
+
+        if (error) throw error;
+        setDiscountTypes(data || []);
+      } catch (error) {
+        console.error('Error fetching discount types:', error);
+      }
+    };
+
+    if (showScheduleDialog) {
+      fetchDiscountTypes();
+    }
+  }, [showScheduleDialog]);
+
   // Create payment link mutation
   const createPaymentLinkMutation = useMutation({
     mutationFn: async (formData: typeof paymentLinkForm) => {
@@ -412,6 +449,57 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
       style: 'currency',
       currency: 'USD',
     }).format(cents / 100);
+  };
+
+  // Calculate discounted price helper
+  const calculateDiscountedPrice = () => {
+    const plan = membershipPlans?.find(p => p.id === scheduleForm.membership_plan_id);
+    const discount = discountTypes.find(d => d.id === selectedDiscount && selectedDiscount !== "none");
+    
+    if (!plan) return 0;
+
+    let discountedPrice = plan.base_price_cents;
+    
+    if (discount) {
+      if (discount.discount_type === 'percentage') {
+        const discountAmount = (plan.base_price_cents * discount.discount_value) / 100;
+        discountedPrice -= discountAmount;
+      } else if (discount.discount_type === 'fixed_amount') {
+        discountedPrice -= discount.discount_value * 100; // Convert to cents
+      }
+    }
+
+    return Math.max(0, discountedPrice);
+  };
+
+  // Calculate setup fee helper
+  const calculateSetupFee = () => {
+    const selectedPlanData = membershipPlans?.find(plan => plan.id === scheduleForm.membership_plan_id);
+    if (!selectedPlanData) return 0;
+    
+    // If setup fee is waived, return 0
+    if (waiveSetupFee) return 0;
+    
+    // If there's a custom setup fee, use that
+    if (customSetupFee && parseFloat(customSetupFee) > 0) {
+      return parseFloat(customSetupFee) * 100; // Convert to cents
+    }
+    
+    // Otherwise use the plan's default setup fee
+    return selectedPlanData.setup_fee_cents;
+  };
+
+  // Reset enhanced form
+  const resetEnhancedForm = () => {
+    setSelectedDiscount("none");
+    setStartDate(new Date().toISOString().split('T')[0]);
+    setScheduledPaymentDate("");
+    setPaymentMethod('integrated');
+    setManualPaymentAmount("");
+    setNotes("");
+    setIsActive(true);
+    setWaiveSetupFee(false);
+    setCustomSetupFee("");
   };
 
   // Generate financial report mutation
@@ -680,38 +768,50 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </CardContent>
             </Card>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Assign Membership
+                Setup Recurring Membership
               </DialogTitle>
               <DialogDescription>
-                Assign a membership plan to a contact
+                {selectedContact && `Create a comprehensive membership for ${selectedContact.first_name} ${selectedContact.last_name}`}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Contact Selection/Information */}
               {!selectedContact ? (
-                <div>
-                  <Label>Contact</Label>
-                  <Select value={scheduleForm.contact_id} onValueChange={handleContactSelect}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select Contact" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contacts?.map((contact) => (
-                        <SelectItem key={contact.id} value={contact.id}>
-                          {contact.first_name} {contact.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Select Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Label>Contact</Label>
+                    <Select value={scheduleForm.contact_id} onValueChange={handleContactSelect}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Select Contact" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contacts?.map((contact) => (
+                          <SelectItem key={contact.id} value={contact.id}>
+                            {contact.first_name} {contact.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </CardContent>
+                </Card>
               ) : (
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Contact Information
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4 text-sm">
@@ -732,79 +832,263 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 </Card>
               )}
 
+              {/* Membership Plan Selection */}
               {selectedContact && (
-                <>
-                  <div>
-                    <Label htmlFor="membership-plan">Select Membership Plan</Label>
-                    <Select value={scheduleForm.membership_plan_id} onValueChange={(value) => 
-                      setScheduleForm({...scheduleForm, membership_plan_id: value})
-                    }>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue placeholder="Choose a membership plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {membershipPlans?.map((plan) => (
-                          <SelectItem key={plan.id} value={plan.id}>
-                            <div className="flex justify-between items-center w-full">
-                              <span>{plan.name}</span>
-                              <span className="ml-4 font-medium">
-                                {formatPrice(plan.base_price_cents)}/{plan.billing_cycle}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {scheduleForm.membership_plan_id && (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <DollarSign className="h-5 w-5" />
-                          Plan Details
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {(() => {
-                          const selectedPlanData = membershipPlans?.find(plan => plan.id === scheduleForm.membership_plan_id);
-                          if (!selectedPlanData) return null;
-                          
-                          return (
-                            <>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <span className="font-medium">Price:</span> {formatPrice(selectedPlanData.base_price_cents)}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Billing:</span> {selectedPlanData.billing_cycle}
-                                </div>
-                                <div>
-                                  <span className="font-medium">Classes:</span> 
-                                  {selectedPlanData.is_unlimited ? ' Unlimited' : ` ${selectedPlanData.classes_per_week}/week`}
-                                </div>
-                                {selectedPlanData.setup_fee_cents > 0 && (
-                                  <div>
-                                    <span className="font-medium">Setup Fee:</span> {formatPrice(selectedPlanData.setup_fee_cents)}
-                                  </div>
-                                )}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Membership Plan</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="membership-plan">Select Plan</Label>
+                      <Select value={scheduleForm.membership_plan_id} onValueChange={(value) => 
+                        setScheduleForm({...scheduleForm, membership_plan_id: value})
+                      }>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Choose a membership plan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {membershipPlans?.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              <div className="flex justify-between items-center w-full">
+                                <span>{plan.name}</span>
+                                <span className="ml-4 font-medium">
+                                  {formatPrice(plan.base_price_cents)}/{plan.billing_cycle}
+                                </span>
                               </div>
-                              {selectedPlanData.trial_days > 0 && (
-                                <div className="flex items-center gap-2 text-sm text-green-600">
-                                  <CalendarIcon className="h-4 w-4" />
-                                  {selectedPlanData.trial_days} day free trial included
-                                </div>
-                              )}
-                              {selectedPlanData.description && (
-                                <p className="text-sm text-muted-foreground">{selectedPlanData.description}</p>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start-date">Start Date</Label>
+                        <Input
+                          id="start-date"
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 mt-6">
+                        <Switch
+                          id="is-active"
+                          checked={isActive}
+                          onCheckedChange={setIsActive}
+                        />
+                        <Label htmlFor="is-active">Activate immediately</Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Discount Selection */}
+              {selectedContact && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Percent className="h-5 w-5" />
+                      Discounts (Optional)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div>
+                      <Label htmlFor="discount">Apply Discount</Label>
+                      <Select value={selectedDiscount} onValueChange={setSelectedDiscount}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Select a discount (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No discount</SelectItem>
+                          {discountTypes.map((discount) => (
+                            <SelectItem key={discount.id} value={discount.id}>
+                              <div className="flex justify-between items-center w-full">
+                                <span>{discount.name}</span>
+                                <span className="ml-4 font-medium">
+                                  {discount.discount_type === 'percentage' 
+                                    ? `${discount.discount_value}%` 
+                                    : discount.discount_type === 'fixed_amount'
+                                    ? formatPrice(discount.discount_value * 100)
+                                    : discount.discount_value}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Setup Fee Management */}
+              {selectedContact && scheduleForm.membership_plan_id && (() => {
+                const selectedPlanData = membershipPlans?.find(plan => plan.id === scheduleForm.membership_plan_id);
+                if (!selectedPlanData) return null;
+                
+                return (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <DollarSign className="h-5 w-5" />
+                        Setup Fee Management
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {selectedPlanData.setup_fee_cents > 0 ? (
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span>Default Setup Fee:</span>
+                            <span className="font-medium">{formatPrice(selectedPlanData.setup_fee_cents)}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id="waive-setup-fee"
+                              checked={waiveSetupFee}
+                              onCheckedChange={setWaiveSetupFee}
+                            />
+                            <Label htmlFor="waive-setup-fee">Waive setup fee</Label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm text-muted-foreground">No setup fee configured for this plan.</p>
+                          <div>
+                            <Label htmlFor="custom-setup-fee">Add Custom Setup Fee (Optional)</Label>
+                            <Input
+                              id="custom-setup-fee"
+                              type="number"
+                              placeholder="0.00"
+                              value={customSetupFee}
+                              onChange={(e) => setCustomSetupFee(e.target.value)}
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+              {/* Payment Options */}
+              {selectedContact && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Payment Method
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Payment Type</Label>
+                      <Select value={paymentMethod} onValueChange={(value: 'manual' | 'integrated' | 'scheduled') => setPaymentMethod(value)}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="integrated">Online Payment (Stripe)</SelectItem>
+                          <SelectItem value="manual">Manual Payment (Cash/Check)</SelectItem>
+                          <SelectItem value="scheduled">Schedule Payment</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {paymentMethod === 'manual' && (
+                      <div>
+                        <Label htmlFor="manual-amount">Payment Amount</Label>
+                        <Input
+                          id="manual-amount"
+                          type="number"
+                          placeholder="0.00"
+                          value={manualPaymentAmount}
+                          onChange={(e) => setManualPaymentAmount(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                    )}
+
+                    {paymentMethod === 'scheduled' && (
+                      <div>
+                        <Label htmlFor="scheduled-date">Scheduled Payment Date</Label>
+                        <Input
+                          id="scheduled-date"
+                          type="date"
+                          value={scheduledPaymentDate}
+                          onChange={(e) => setScheduledPaymentDate(e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Price Summary */}
+              {selectedContact && scheduleForm.membership_plan_id && (() => {
+                const selectedPlanData = membershipPlans?.find(plan => plan.id === scheduleForm.membership_plan_id);
+                const selectedDiscountData = discountTypes.find(discount => discount.id === selectedDiscount && selectedDiscount !== "none");
+                if (!selectedPlanData) return null;
+                
+                return (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">Price Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>Base Price:</span>
+                        <span>{formatPrice(selectedPlanData.base_price_cents)}</span>
+                      </div>
+                      {selectedDiscountData && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Discount ({selectedDiscountData.name}):</span>
+                          <span>-{formatPrice(selectedPlanData.base_price_cents - calculateDiscountedPrice())}</span>
+                        </div>
+                      )}
+                      {(selectedPlanData.setup_fee_cents > 0 || customSetupFee) && (
+                        <div className="flex justify-between">
+                          <span>Setup Fee:</span>
+                          <span className={waiveSetupFee ? 'line-through text-muted-foreground' : ''}>
+                            {formatPrice(calculateSetupFee())}
+                          </span>
+                        </div>
+                      )}
+                      {waiveSetupFee && selectedPlanData.setup_fee_cents > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Setup Fee Waived:</span>
+                          <span>-{formatPrice(selectedPlanData.setup_fee_cents)}</span>
+                        </div>
+                      )}
+                      <div className="border-t pt-2 flex justify-between font-bold">
+                        <span>Total:</span>
+                        <span>{formatPrice(calculateDiscountedPrice() + calculateSetupFee())}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+              {/* Notes */}
+              {selectedContact && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      placeholder="Add any notes about this membership..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      rows={3}
+                    />
+                  </CardContent>
+                </Card>
               )}
             </div>
 
@@ -813,14 +1097,18 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 setShowScheduleDialog(false);
                 setSelectedContact(null);
                 setScheduleForm({ contact_id: '', membership_plan_id: '' });
+                resetEnhancedForm();
               }}>
                 Cancel
               </Button>
               <Button 
                 disabled={!scheduleForm.contact_id || !scheduleForm.membership_plan_id}
-                className="min-w-[120px]"
+                className="min-w-[180px]"
               >
-                Proceed to Payment
+                {paymentMethod === 'integrated' ? "Proceed to Payment" : 
+                 paymentMethod === 'manual' ? "Record Manual Payment" :
+                 paymentMethod === 'scheduled' ? "Schedule Payment" :
+                 "Create Membership"}
               </Button>
             </div>
           </DialogContent>
