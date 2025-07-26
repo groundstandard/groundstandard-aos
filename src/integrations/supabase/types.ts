@@ -3219,6 +3219,56 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          bank_name: string | null
+          brand: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          last4: string | null
+          stripe_payment_method_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          bank_name?: string | null
+          brand?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          last4?: string | null
+          stripe_payment_method_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          bank_name?: string | null
+          brand?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          last4?: string | null
+          stripe_payment_method_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_plans: {
         Row: {
           amount: number
@@ -3296,6 +3346,63 @@ export type Database = {
           student_id?: string
         }
         Relationships: []
+      }
+      payment_schedule: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          installment_number: number
+          membership_subscription_id: string
+          payment_method_id: string | null
+          scheduled_date: string
+          status: string
+          stripe_invoice_id: string | null
+          total_installments: number
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          installment_number: number
+          membership_subscription_id: string
+          payment_method_id?: string | null
+          scheduled_date: string
+          status?: string
+          stripe_invoice_id?: string | null
+          total_installments: number
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          installment_number?: number
+          membership_subscription_id?: string
+          payment_method_id?: string | null
+          scheduled_date?: string
+          status?: string
+          stripe_invoice_id?: string | null
+          total_installments?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_schedule_membership_subscription_id_fkey"
+            columns: ["membership_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "membership_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_schedule_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_schedules: {
         Row: {

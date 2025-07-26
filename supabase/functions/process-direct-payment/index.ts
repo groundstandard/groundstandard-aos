@@ -1,0 +1,188 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[PROCESS-DIRECT-PAYMENT] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const supabaseServiceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseServiceClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    const user = userData.user;
+    if (!user?.id) throw new Error("User not authenticated");
+
+    logStep("User authenticated", { userId: user.id });
+
+    const { 
+      contact_id, 
+      payment_method_id, 
+      amount_cents, 
+      description, 
+      payment_schedule_id 
+    } = await req.json();
+
+    logStep("Request data", { 
+      contact_id, 
+      payment_method_id, 
+      amount_cents, 
+      description, 
+      payment_schedule_id 
+    });
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+    // Get payment method details
+    const { data: paymentMethod, error: pmError } = await supabaseServiceClient
+      .from('payment_methods')
+      .select('stripe_payment_method_id, type, last4, brand, bank_name')
+      .eq('id', payment_method_id)
+      .eq('contact_id', contact_id)
+      .eq('is_active', true)
+      .single();
+
+    if (pmError || !paymentMethod) {
+      throw new Error("Payment method not found or inactive");
+    }
+
+    logStep("Payment method found", { 
+      stripeId: paymentMethod.stripe_payment_method_id,
+      type: paymentMethod.type 
+    });
+
+    // Get contact's Stripe customer ID
+    const { data: contact, error: contactError } = await supabaseServiceClient
+      .from('profiles')
+      .select('email')
+      .eq('id', contact_id)
+      .single();
+
+    if (contactError || !contact) {
+      throw new Error("Contact not found");
+    }
+
+    // Find Stripe customer
+    const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
+    if (customers.data.length === 0) {
+      throw new Error("Stripe customer not found");
+    }
+
+    const customer = customers.data[0];
+    logStep("Customer found", { customerId: customer.id });
+
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount_cents,
+      currency: 'usd',
+      customer: customer.id,
+      payment_method: paymentMethod.stripe_payment_method_id,
+      confirmation_method: 'automatic',
+      confirm: true,
+      return_url: `${req.headers.get("origin")}/contacts/${contact_id}`,
+      description: description,
+      metadata: {
+        contact_id: contact_id,
+        payment_schedule_id: payment_schedule_id || '',
+        processed_by: user.id
+      }
+    });
+
+    logStep("Payment intent created", { 
+      paymentIntentId: paymentIntent.id,
+      status: paymentIntent.status 
+    });
+
+    // Record payment in database
+    const paymentData = {
+      student_id: contact_id,
+      amount: amount_cents,
+      description: description,
+      payment_method: paymentMethod.type,
+      payment_method_type: paymentMethod.type,
+      status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
+      stripe_payment_intent_id: paymentIntent.id,
+      payment_date: new Date().toISOString(),
+    };
+
+    // Add type-specific details
+    if (paymentMethod.type === 'card') {
+      paymentData.payment_method = `${paymentMethod.brand} ****${paymentMethod.last4}`;
+    } else if (paymentMethod.type === 'us_bank_account') {
+      paymentData.payment_method = `${paymentMethod.bank_name} ****${paymentMethod.last4}`;
+      paymentData.ach_bank_name = paymentMethod.bank_name;
+      paymentData.ach_last4 = paymentMethod.last4;
+    }
+
+    const { data: savedPayment, error: paymentError } = await supabaseServiceClient
+      .from('payments')
+      .insert(paymentData)
+      .select()
+      .single();
+
+    if (paymentError) {
+      logStep("Error saving payment", { error: paymentError });
+      throw new Error(`Failed to save payment: ${paymentError.message}`);
+    }
+
+    // Update payment schedule if provided
+    if (payment_schedule_id && paymentIntent.status === 'succeeded') {
+      await supabaseServiceClient
+        .from('payment_schedule')
+        .update({ 
+          status: 'paid',
+          stripe_invoice_id: paymentIntent.id,
+          payment_method_id: payment_method_id
+        })
+        .eq('id', payment_schedule_id);
+
+      logStep("Payment schedule updated");
+    }
+
+    logStep("Payment recorded successfully", { paymentId: savedPayment.id });
+
+    return new Response(JSON.stringify({
+      success: true,
+      payment: savedPayment,
+      stripe_status: paymentIntent.status,
+      requires_action: paymentIntent.status === 'requires_action',
+      client_secret: paymentIntent.client_secret
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});

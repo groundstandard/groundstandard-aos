@@ -2,10 +2,24 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
+import { PaymentMethodManager } from '@/components/payments/PaymentMethodManager';
+import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
+
+interface PaymentSchedule {
+  id: string;
+  scheduled_date: string;
+  amount_cents: number;
+  status: string;
+  installment_number: number;
+  total_installments: number;
+  stripe_invoice_id?: string;
+  payment_method_id?: string;
+}
 
 interface MembershipSubscription {
   id: string;
@@ -34,15 +48,36 @@ interface ActiveMembershipCardProps {
 
 export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) => {
   const [memberships, setMemberships] = useState<MembershipSubscription[]>([]);
+  const [paymentSchedules, setPaymentSchedules] = useState<Record<string, PaymentSchedule[]>>({});
+  const [expandedMemberships, setExpandedMemberships] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedPaymentSchedule, setSelectedPaymentSchedule] = useState<PaymentSchedule | null>(null);
+  const [selectedContactName, setSelectedContactName] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     if (contactId) {
       fetchActiveMemberships();
+      fetchContactName();
     }
   }, [contactId]);
+
+  const fetchContactName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', contactId)
+        .single();
+
+      if (error) throw error;
+      setSelectedContactName(`${data.first_name} ${data.last_name}`);
+    } catch (error) {
+      console.error('Error fetching contact name:', error);
+    }
+  };
 
   const fetchActiveMemberships = async () => {
     try {
@@ -67,10 +102,41 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
       if (error) throw error;
 
       setMemberships(data || []);
+      
+      // Fetch payment schedules for each membership
+      if (data && data.length > 0) {
+        await fetchPaymentSchedules(data.map(m => m.id));
+      }
     } catch (error) {
       console.error('Error fetching memberships:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPaymentSchedules = async (membershipIds: string[]) => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_schedule')
+        .select('*')
+        .in('membership_subscription_id', membershipIds)
+        .order('scheduled_date');
+
+      if (error) throw error;
+
+      // Group by membership subscription ID
+      const grouped = (data || []).reduce((acc, schedule) => {
+        const membershipId = schedule.membership_subscription_id;
+        if (!acc[membershipId]) {
+          acc[membershipId] = [];
+        }
+        acc[membershipId].push(schedule);
+        return acc;
+      }, {} as Record<string, PaymentSchedule[]>);
+
+      setPaymentSchedules(grouped);
+    } catch (error) {
+      console.error('Error fetching payment schedules:', error);
     }
   };
 
@@ -134,6 +200,42 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const isExpiringSoon = (membership: MembershipSubscription) => {
     const daysLeft = getDaysUntilExpiry(membership);
     return daysLeft !== null && daysLeft <= 30 && daysLeft > 0;
+  };
+
+  const toggleMembershipExpansion = (membershipId: string) => {
+    const newExpanded = new Set(expandedMemberships);
+    if (newExpanded.has(membershipId)) {
+      newExpanded.delete(membershipId);
+    } else {
+      newExpanded.add(membershipId);
+    }
+    setExpandedMemberships(newExpanded);
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'failed':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'past_due':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const isPastDue = (scheduledDate: string, status: string) => {
+    const today = new Date();
+    const paymentDate = new Date(scheduledDate);
+    return paymentDate < today && status === 'pending';
+  };
+
+  const handleMakePayment = (schedule: PaymentSchedule) => {
+    setSelectedPaymentSchedule(schedule);
+    setShowPaymentDialog(true);
   };
 
   if (loading) {
@@ -208,71 +310,164 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         {memberships.map((membership) => {
           const daysLeft = getDaysUntilExpiry(membership);
           const plan = membership.membership_plans;
+          const schedules = paymentSchedules[membership.id] || [];
+          const isExpanded = expandedMemberships.has(membership.id);
 
           return (
-            <div key={membership.id} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium">{plan.name}</h4>
-                    <Badge variant="outline" className={getStatusColor(membership.status)}>
-                      {membership.status}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{plan.description}</p>
-                  <div className="flex items-center gap-3 text-sm">
-                    <span className="font-medium">
-                      {formatCurrency(plan.base_price_cents)} / {plan.billing_cycle}
-                    </span>
-                    {plan.is_unlimited ? (
-                      <span className="text-primary">Unlimited Classes</span>
-                    ) : (
-                      <span>{plan.classes_per_week} classes/week</span>
+            <Collapsible key={membership.id} open={isExpanded} onOpenChange={() => toggleMembershipExpansion(membership.id)}>
+              <div className="border rounded-lg">
+                <CollapsibleTrigger asChild>
+                  <div className="p-4 space-y-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{plan.name}</h4>
+                          <Badge variant="outline" className={getStatusColor(membership.status)}>
+                            {membership.status}
+                          </Badge>
+                          {schedules.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {schedules.filter(s => s.status === 'paid').length}/{schedules.length} payments
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{plan.description}</p>
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="font-medium">
+                            {formatCurrency(plan.base_price_cents)} / {plan.billing_cycle}
+                          </span>
+                          {plan.is_unlimited ? (
+                            <span className="text-primary">Unlimited Classes</span>
+                          ) : (
+                            <span>{plan.classes_per_week} classes/week</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {schedules.some(s => isPastDue(s.scheduled_date, s.status)) && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Past Due
+                          </Badge>
+                        )}
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Start:</span>{' '}
+                        <span className="font-medium">
+                          {new Date(membership.start_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">End:</span>{' '}
+                        <span className="font-medium">
+                          {membership.end_date ? new Date(membership.end_date).toLocaleDateString() : 'Ongoing'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {daysLeft !== null && (
+                      <div className={`flex items-center justify-between p-2 rounded text-sm ${
+                        isExpiringSoon(membership) ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'
+                      }`}>
+                        <span className="font-medium">
+                          {daysLeft > 0 ? `${daysLeft} days remaining` : 'Expired'}
+                        </span>
+                        {isExpiringSoon(membership) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenewMembership(membership);
+                            }}
+                          >
+                            Renew
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {membership.next_billing_date && (
+                      <div className="text-xs text-muted-foreground">
+                        Next billing: {new Date(membership.next_billing_date).toLocaleDateString()}
+                      </div>
                     )}
                   </div>
-                </div>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <div className="border-t p-4 space-y-4">
+                    {schedules.length > 0 ? (
+                      <>
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Calendar className="h-4 w-4" />
+                          Payment Schedule ({schedules.length} installments)
+                        </div>
+                        <div className="space-y-2">
+                          {schedules.map((schedule) => (
+                            <div
+                              key={schedule.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                isPastDue(schedule.scheduled_date, schedule.status) ? 'border-red-200 bg-red-50' : 'bg-card'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="text-sm">
+                                  <div className="font-medium">
+                                    Payment {schedule.installment_number} of {schedule.total_installments}
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    Due: {new Date(schedule.scheduled_date).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className={getPaymentStatusColor(schedule.status)}>
+                                  {schedule.status === 'past_due' && isPastDue(schedule.scheduled_date, schedule.status) ? 'Past Due' : schedule.status}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{formatCurrency(schedule.amount_cents)}</span>
+                                {(schedule.status === 'pending' || schedule.status === 'past_due') && (
+                                  <Button
+                                    size="sm"
+                                    variant={isPastDue(schedule.scheduled_date, schedule.status) ? 'destructive' : 'outline'}
+                                    onClick={() => handleMakePayment(schedule)}
+                                  >
+                                    <CreditCard className="h-3 w-3 mr-1" />
+                                    Pay Now
+                                  </Button>
+                                )}
+                                {schedule.status === 'paid' && (
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No payment schedule available for this membership.
+                      </div>
+                    )}
+                    
+                    <div className="pt-4 border-t">
+                      <PaymentMethodManager
+                        contactId={contactId}
+                        showAddButton={true}
+                      />
+                    </div>
+                  </div>
+                </CollapsibleContent>
               </div>
-
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Start:</span>{' '}
-                  <span className="font-medium">
-                    {new Date(membership.start_date).toLocaleDateString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">End:</span>{' '}
-                  <span className="font-medium">
-                    {membership.end_date ? new Date(membership.end_date).toLocaleDateString() : 'Ongoing'}
-                  </span>
-                </div>
-              </div>
-
-              {daysLeft !== null && (
-                <div className={`flex items-center justify-between p-2 rounded text-sm ${
-                  isExpiringSoon(membership) ? 'bg-amber-50 text-amber-800' : 'bg-green-50 text-green-800'
-                }`}>
-                  <span className="font-medium">
-                    {daysLeft > 0 ? `${daysLeft} days remaining` : 'Expired'}
-                  </span>
-                  {isExpiringSoon(membership) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleRenewMembership(membership)}
-                    >
-                      Renew
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {membership.next_billing_date && (
-                <div className="text-xs text-muted-foreground">
-                  Next billing: {new Date(membership.next_billing_date).toLocaleDateString()}
-                </div>
-              )}
-            </div>
+            </Collapsible>
           );
         })}
 
@@ -288,6 +483,22 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           }}
           onSuccess={fetchActiveMemberships}
         />
+
+      {selectedPaymentSchedule && (
+        <DirectPaymentDialog
+          open={showPaymentDialog}
+          onOpenChange={setShowPaymentDialog}
+          contactId={contactId}
+          contactName={selectedContactName}
+          paymentScheduleId={selectedPaymentSchedule.id}
+          prefilledAmount={selectedPaymentSchedule.amount_cents}
+          prefilledDescription={`Payment ${selectedPaymentSchedule.installment_number} of ${selectedPaymentSchedule.total_installments}`}
+          onSuccess={() => {
+            fetchActiveMemberships();
+            setSelectedPaymentSchedule(null);
+          }}
+        />
+      )}
       </CardContent>
     </Card>
   );
