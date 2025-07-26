@@ -285,6 +285,38 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     }
   });
 
+  // Fetch recent payments for activity feed
+  const { data: recentPayments } = useQuery({
+    queryKey: ['recent-payments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Fetch profile data separately for each payment
+      const paymentsWithProfiles = await Promise.all(
+        (data || []).map(async (payment) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email')
+            .eq('id', payment.student_id)
+            .single();
+          
+          return {
+            ...payment,
+            profiles: profile
+          };
+        })
+      );
+      
+      return paymentsWithProfiles;
+    }
+  });
+
   // Fetch active membership plans for the recurring setup dialog
   const { data: membershipPlans } = useQuery({
     queryKey: ['membership-plans'],
@@ -930,20 +962,49 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 text-green-700">Success</Badge>
-                      <span className="text-sm">Payment received from John Doe</span>
+                  {recentPayments && recentPayments.length > 0 ? (
+                    recentPayments.slice(0, 5).map((payment) => {
+                      const getStatusBadge = (status: string) => {
+                        const statusConfig = {
+                          completed: { className: "bg-green-50 text-green-700", label: "Success" },
+                          pending: { className: "bg-yellow-50 text-yellow-700", label: "Pending" },
+                          scheduled: { className: "bg-purple-50 text-purple-700", label: "Scheduled" },
+                          failed: { className: "bg-red-50 text-red-700", label: "Failed" },
+                          processing: { className: "bg-blue-50 text-blue-700", label: "Processing" }
+                        };
+                        return statusConfig[status as keyof typeof statusConfig] || 
+                               { className: "bg-gray-50 text-gray-700", label: status };
+                      };
+                      
+                      const config = getStatusBadge(payment.status);
+                      const customerName = payment.profiles 
+                        ? `${payment.profiles.first_name} ${payment.profiles.last_name}`
+                        : 'Unknown Customer';
+                        
+                      return (
+                        <div key={payment.id} className="flex items-center justify-between p-2 border rounded">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={config.className}>
+                              {config.label}
+                            </Badge>
+                            <span className="text-sm">
+                              {payment.status === 'scheduled' 
+                                ? `Payment scheduled for ${customerName}` 
+                                : `Payment ${payment.status} from ${customerName}`
+                              }
+                            </span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {formatPrice(payment.amount)}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No recent payment activity
                     </div>
-                    <span className="text-sm text-muted-foreground">$150.00</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700">Link</Badge>
-                      <span className="text-sm">Payment link sent to Jane Smith</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">$120.00</span>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
