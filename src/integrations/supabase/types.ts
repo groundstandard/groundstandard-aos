@@ -3477,10 +3477,12 @@ export type Database = {
           id: string
           installment_number: number
           membership_subscription_id: string
+          monthly_amount_cents: number | null
           notes: string | null
           payment_method_id: string | null
           payment_type: string | null
           scheduled_date: string
+          setup_fee_cents: number | null
           status: string
           stripe_invoice_id: string | null
           total_installments: number
@@ -3493,10 +3495,12 @@ export type Database = {
           id?: string
           installment_number: number
           membership_subscription_id: string
+          monthly_amount_cents?: number | null
           notes?: string | null
           payment_method_id?: string | null
           payment_type?: string | null
           scheduled_date: string
+          setup_fee_cents?: number | null
           status?: string
           stripe_invoice_id?: string | null
           total_installments: number
@@ -3509,10 +3513,12 @@ export type Database = {
           id?: string
           installment_number?: number
           membership_subscription_id?: string
+          monthly_amount_cents?: number | null
           notes?: string | null
           payment_method_id?: string | null
           payment_type?: string | null
           scheduled_date?: string
+          setup_fee_cents?: number | null
           status?: string
           stripe_invoice_id?: string | null
           total_installments?: number
