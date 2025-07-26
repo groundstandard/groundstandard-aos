@@ -10,8 +10,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { CreditCard, Building2, Plus, Trash2, Star } from 'lucide-react';
 
-// Initialize Stripe - Replace with your actual Stripe publishable key
-const stripePromise = loadStripe('pk_test_51QZ...');
+// Initialize Stripe with your publishable key
+const stripePromise = loadStripe('pk_test_51RmQDHGfOr7w8D1gouEtCOJY4fQjvKHdOW39g02UUJtG58oRVYEwZ5hpQjkAgoCqIy9P24s5LZPVLZFwo45b16HO00n9YR6UYo');
 
 interface PaymentMethod {
   id: string;
