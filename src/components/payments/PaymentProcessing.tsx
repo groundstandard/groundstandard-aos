@@ -114,6 +114,7 @@ export const PaymentProcessing = () => {
       const stats = {
         pending: 0,
         processing: 0,
+        scheduled: 0,
         completed_today: 0,
         failed_today: 0,
         total_volume: 0
@@ -126,6 +127,9 @@ export const PaymentProcessing = () => {
             break;
           case 'processing':
             stats.processing++;
+            break;
+          case 'scheduled':
+            stats.scheduled++;
             break;
           case 'completed':
             stats.completed_today++;
@@ -281,7 +285,7 @@ export const PaymentProcessing = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -301,6 +305,18 @@ export const PaymentProcessing = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Processing</p>
                 <p className="text-xl font-bold text-blue-600">{stats?.processing || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-purple-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Scheduled</p>
+                <p className="text-xl font-bold text-purple-600">{stats?.scheduled || 0}</p>
               </div>
             </div>
           </CardContent>
