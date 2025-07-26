@@ -123,7 +123,7 @@ export const EmbeddedPaymentModal = ({
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('process-direct-payment', {
+      const response = await supabase.functions.invoke('process-direct-payment', {
         body: {
           contactId,
           paymentMethodId: selectedPaymentMethod,
@@ -135,9 +135,29 @@ export const EmbeddedPaymentModal = ({
         },
       });
 
+      console.log('Payment response:', response);
+
+      const { data, error } = response;
+
       // Check for function-level errors first
       if (error) {
-        throw new Error(error.message || 'Edge function error');
+        console.error('Edge function error:', error);
+        // Edge function returned non-2xx status, try to extract meaningful error
+        if (error.message && error.message !== 'Edge Function returned a non-2xx status code') {
+          throw new Error(error.message);
+        }
+        // If we have context data with error details, use that
+        if (error.context && typeof error.context === 'object') {
+          if (error.context.error) {
+            throw new Error(error.context.error);
+          }
+        }
+        throw new Error('Edge Function returned a non-2xx status code');
+      }
+
+      // For 500 errors, the error message might be in the data object
+      if (data && typeof data === 'object' && data.error) {
+        throw new Error(data.error);
       }
 
       // Check for application-level errors in the response
