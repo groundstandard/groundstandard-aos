@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CreditCard, Calendar, Receipt, User, Building, RefreshCw, AlertTriangle, Edit, X, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -251,7 +252,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
@@ -259,7 +260,8 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <ScrollArea className="flex-1 max-h-[60vh]">
+          <div className="space-y-4 pr-4">
           {/* Payment Status */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Status</span>
@@ -495,11 +497,12 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
           {/* Timestamps */}
           <Separator />
-          <div className="text-xs text-muted-foreground space-y-1">
-            <div>Created: {new Date(payment.created_at).toLocaleString()}</div>
-            <div>Updated: {new Date(payment.updated_at).toLocaleString()}</div>
+           <div className="text-xs text-muted-foreground space-y-1">
+             <div>Created: {new Date(payment.created_at).toLocaleString()}</div>
+             <div>Updated: {new Date(payment.updated_at).toLocaleString()}</div>
+           </div>
           </div>
-        </div>
+        </ScrollArea>
 
         {/* Footer with Actions */}
         {canRefund && !showRefundForm && !showEditForm && (
