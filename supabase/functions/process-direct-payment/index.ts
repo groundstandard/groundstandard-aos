@@ -209,18 +209,15 @@ serve(async (req) => {
       student_id: finalContactId,
       amount: finalAmountCents / 100, // Convert cents to dollars for numeric field
       description: description + (notes ? ` - ${notes}` : ''),
-      payment_method: paymentMethod.type,
+      payment_method: paymentMethod.type === 'card' ? `${paymentMethod.brand} ****${paymentMethod.last4}` : `${paymentMethod.bank_name} ****${paymentMethod.last4}`,
       payment_method_type: paymentMethod.type,
       status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
-      stripe_invoice_id: paymentIntent.id, // Changed from stripe_payment_intent_id
+      stripe_invoice_id: paymentIntent.id,
       payment_date: new Date().toISOString(),
     };
 
-    // Add type-specific details
-    if (paymentMethod.type === 'card') {
-      paymentData.payment_method = `${paymentMethod.brand} ****${paymentMethod.last4}`;
-    } else if (paymentMethod.type === 'us_bank_account') {
-      paymentData.payment_method = `${paymentMethod.bank_name} ****${paymentMethod.last4}`;
+    // Add ACH-specific details if it's a bank account
+    if (paymentMethod.type === 'us_bank_account') {
       paymentData.ach_bank_name = paymentMethod.bank_name;
       paymentData.ach_last4 = paymentMethod.last4;
     }
