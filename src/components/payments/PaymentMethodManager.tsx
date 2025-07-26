@@ -164,7 +164,7 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         body: {
           contact_id: contactId,
-          payment_type: 'card'
+          payment_type: 'card' // Default to card, could be made configurable
         }
       });
 

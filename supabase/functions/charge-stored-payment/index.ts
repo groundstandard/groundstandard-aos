@@ -91,7 +91,7 @@ serve(async (req) => {
       ? { stripeAccount: contact.academies.stripe_connect_account_id }
       : {};
 
-    // Function to find stored payment methods for a contact
+    // Function to find stored payment methods for a contact (CC and ACH)
     const findStoredPaymentMethods = async (searchContactId: string) => {
       const { data: searchContact } = await supabaseServiceClient
         .from('profiles')
@@ -111,39 +111,58 @@ serve(async (req) => {
       if (customers.data.length === 0) return null;
 
       const customer = customers.data[0];
-      const paymentMethodsOptions = {
+      
+      // Get both card and ACH payment methods
+      const cardMethodsOptions = {
         customer: customer.id,
         type: 'card',
         ...stripeConfig
       };
-      const paymentMethods = await stripe.paymentMethods.list(paymentMethodsOptions);
+      const achMethodsOptions = {
+        customer: customer.id,
+        type: 'us_bank_account',
+        ...stripeConfig
+      };
+      
+      const [cardMethods, achMethods] = await Promise.all([
+        stripe.paymentMethods.list(cardMethodsOptions),
+        stripe.paymentMethods.list(achMethodsOptions)
+      ]);
+      
+      const allPaymentMethods = [...cardMethods.data, ...achMethods.data];
       
       return {
         customer,
-        paymentMethods: paymentMethods.data
+        paymentMethods: allPaymentMethods
       };
     };
 
-    // Try to find payment method for the contact first
-    let paymentData = await findStoredPaymentMethods(contact.id);
+    // Get head of household first, then student payment methods
+    const { data: headOfHousehold } = await supabaseServiceClient
+      .from('profiles')
+      .select('id, email, first_name, last_name')
+      .eq('id', contact.parent_id || contact.id)
+      .single();
+
+    let paymentData = null;
     let billingContact = contact;
 
-    // If no payment method found and contact has a parent, try parent's payment methods
-    if ((!paymentData || paymentData.paymentMethods.length === 0) && contact.parent_id) {
-      logStep("No payment method found for contact, checking parent");
-      
-      const { data: parentContact } = await supabaseServiceClient
-        .from('profiles')
-        .select('id, email, first_name, last_name')
-        .eq('id', contact.parent_id)
-        .single();
+    // Try head of household payment methods first (default behavior)
+    if (headOfHousehold && headOfHousehold.id !== contact.id) {
+      paymentData = await findStoredPaymentMethods(headOfHousehold.id);
+      if (paymentData && paymentData.paymentMethods.length > 0) {
+        billingContact = headOfHousehold;
+        logStep("Using head of household's payment method", { headOfHouseholdId: headOfHousehold.id });
+      }
+    }
 
-      if (parentContact) {
-        paymentData = await findStoredPaymentMethods(parentContact.id);
-        if (paymentData && paymentData.paymentMethods.length > 0) {
-          billingContact = parentContact;
-          logStep("Using parent's payment method", { parentId: parentContact.id });
-        }
+    // If no payment method found from head of household, try student's own methods
+    if (!paymentData || paymentData.paymentMethods.length === 0) {
+      logStep("No payment method found for head of household, checking student");
+      paymentData = await findStoredPaymentMethods(contact.id);
+      if (paymentData && paymentData.paymentMethods.length > 0) {
+        billingContact = contact;
+        logStep("Using student's payment method", { studentId: contact.id });
       }
     }
 
@@ -153,7 +172,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         error: "No stored payment method found",
         requires_payment_setup: true,
-        contact_id: contact.id
+        contact_id: contact.id,
+        head_of_household_id: headOfHousehold?.id,
+        available_contacts: [
+          { id: contact.id, name: `${contact.first_name} ${contact.last_name}`, type: 'student' },
+          ...(headOfHousehold && headOfHousehold.id !== contact.id ? [{ 
+            id: headOfHousehold.id, 
+            name: `${headOfHousehold.first_name} ${headOfHousehold.last_name}`, 
+            type: 'head_of_household' 
+          }] : [])
+        ]
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 402, // Payment Required

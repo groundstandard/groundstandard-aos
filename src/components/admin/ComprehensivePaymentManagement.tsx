@@ -171,6 +171,9 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   const [customSetupFee, setCustomSetupFee] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  const [preferredBillingContact, setPreferredBillingContact] = useState<'head_of_household' | 'student'>('head_of_household');
+  const [availableContacts, setAvailableContacts] = useState<Array<{id: string, name: string, type: string}>>([]);
+  const [selectedContactForPayment, setSelectedContactForPayment] = useState<string>('');
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -503,6 +506,9 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     setIsActive(true);
     setWaiveSetupFee(false);
     setCustomSetupFee("");
+    setPreferredBillingContact('head_of_household');
+    setSelectedContactForPayment('');
+    setAvailableContacts([]);
   };
 
   // Handle membership creation for Setup Recurring
@@ -587,7 +593,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
             amount_cents: finalPrice,
             setup_fee_cents: calculateSetupFee(),
             description: `Membership: ${plan.name}`,
-            membership_subscription_id: membership.id
+            membership_subscription_id: membership.id,
+            preferred_billing_contact: preferredBillingContact
           },
         });
 
@@ -595,6 +602,11 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           // If there's an error, check if it's because no payment method exists
           if (chargeError.message?.includes('No stored payment method found') || 
               (chargeData && chargeData.requires_payment_setup)) {
+            
+            // Show available contacts and prompt to add payment method
+            if (chargeData?.available_contacts) {
+              setAvailableContacts(chargeData.available_contacts);
+            }
             
             // Show payment method setup dialog
             setShowPaymentMethodDialog(true);
@@ -1142,18 +1154,35 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <Label>Payment Type</Label>
-                      <Select value={paymentMethod} onValueChange={(value: 'manual' | 'integrated' | 'scheduled') => setPaymentMethod(value)}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="integrated">Online Payment (Stripe)</SelectItem>
-                          <SelectItem value="manual">Manual Payment (Cash/Check)</SelectItem>
-                          <SelectItem value="scheduled">Schedule Payment</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Payment Type</Label>
+                        <Select value={paymentMethod} onValueChange={(value: 'manual' | 'integrated' | 'scheduled') => setPaymentMethod(value)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="integrated">Integrated (Charge stored CC/ACH)</SelectItem>
+                            <SelectItem value="manual">Manual Payment (Cash/Check)</SelectItem>
+                            <SelectItem value="scheduled">Schedule Payment</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {paymentMethod === 'integrated' && (
+                        <div>
+                          <Label>Billing Contact Preference</Label>
+                          <Select value={preferredBillingContact} onValueChange={(value: 'head_of_household' | 'student') => setPreferredBillingContact(value)}>
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="head_of_household">Head of Household (Default)</SelectItem>
+                              <SelectItem value="student">Student's Own Method</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
 
                     {paymentMethod === 'manual' && (
@@ -1279,25 +1308,54 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
             <DialogHeader>
               <DialogTitle>Add Payment Method</DialogTitle>
               <DialogDescription>
-                {selectedContact && `Add a payment method for ${selectedContact.first_name} ${selectedContact.last_name} to complete the membership setup.`}
+                Choose which contact to add a payment method for:
               </DialogDescription>
             </DialogHeader>
-            {selectedContact && (
-              <PaymentMethodManager
-                contactId={selectedContact.id}
-                onPaymentMethodSelected={() => {
-                  // Close the payment method dialog and retry the membership creation
+            <div className="space-y-4">
+              {availableContacts.length > 0 && (
+                <div>
+                  <Label>Select Contact</Label>
+                  <Select
+                    value={selectedContactForPayment}
+                    onValueChange={setSelectedContactForPayment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose contact for payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableContacts.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.id}>
+                          {contact.name} ({contact.type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {selectedContactForPayment && (
+                <div className="border rounded-lg p-4">
+                  <PaymentMethodManager
+                    contactId={selectedContactForPayment}
+                    showAddButton={true}
+                  />
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowPaymentMethodDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
                   setShowPaymentMethodDialog(false);
-                  toast({
-                    title: "Payment Method Added",
-                    description: "Now retrying membership creation...",
-                  });
+                  setSelectedContactForPayment('');
                   // Retry the membership creation
                   handleCreateMembership();
-                }}
-                showAddButton={true}
-              />
-            )}
+                }}>
+                  Continue with Payment
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
