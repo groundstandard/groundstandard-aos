@@ -236,8 +236,6 @@ export const EnhancedAssignMembershipDialog = ({
           body: { 
             contact_id: contact.id,
             membership_plan_id: selectedPlan,
-            discount_id: selectedDiscount !== "none" ? selectedDiscount : null,
-            billing_contact_id: billingContact,
             metadata: {
               membership_subscription_id: membership.id,
               start_date: startDate
