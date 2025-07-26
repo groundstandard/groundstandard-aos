@@ -128,31 +128,38 @@ serve(async (req) => {
         throw new Error("Scheduled date must be in the future");
       }
 
-      // Create a payment schedule entry instead of processing immediately
-      const { data: scheduleEntry, error: scheduleError } = await supabaseServiceClient
-        .from('payment_schedule')
+      // For scheduled payments, we'll create an invoice instead of payment_schedule
+      // since payment_schedule is specifically for subscription installments
+      const { data: invoiceEntry, error: invoiceError } = await supabaseServiceClient
+        .from('invoices')
         .insert({
-          membership_subscription_id: null, // For custom payments
-          amount_cents: finalAmountCents,
-          scheduled_date: scheduledDateObj.toISOString().split('T')[0],
+          user_id: finalContactId,
+          amount: finalAmountCents,
           status: 'pending',
-          payment_method_id: finalPaymentMethodId,
-          notes: notes || description,
-          student_id: finalContactId
+          due_date: scheduledDateObj.toISOString().split('T')[0],
+          description: description + (notes ? ` - ${notes}` : ''),
+          line_items: [{
+            plan_id: 'custom',
+            plan_type: 'custom_payment',
+            plan_name: 'Custom Payment',
+            amount: finalAmountCents
+          }],
+          notes: notes || description
         })
         .select()
         .single();
 
-      if (scheduleError) {
-        throw new Error(`Failed to schedule payment: ${scheduleError.message}`);
+      if (invoiceError) {
+        logStep("Error creating invoice", { error: invoiceError });
+        throw new Error(`Failed to schedule payment: ${invoiceError.message}`);
       }
 
-      logStep("Payment scheduled successfully", { scheduleId: scheduleEntry.id });
+      logStep("Payment scheduled successfully", { invoiceId: invoiceEntry.id });
 
       return new Response(JSON.stringify({
         success: true,
         scheduled: true,
-        schedule_entry: scheduleEntry
+        invoice_entry: invoiceEntry
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -195,12 +202,12 @@ serve(async (req) => {
     // Record payment in database
     const paymentData: any = {
       student_id: finalContactId,
-      amount: finalAmountCents,
+      amount: finalAmountCents / 100, // Convert cents to dollars for numeric field
       description: description + (notes ? ` - ${notes}` : ''),
       payment_method: paymentMethod.type,
       payment_method_type: paymentMethod.type,
       status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
-      stripe_payment_intent_id: paymentIntent.id,
+      stripe_invoice_id: paymentIntent.id, // Changed from stripe_payment_intent_id
       payment_date: new Date().toISOString(),
     };
 
