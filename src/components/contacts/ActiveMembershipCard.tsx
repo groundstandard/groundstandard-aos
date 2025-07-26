@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake, Trash2, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake, Trash2, MoreHorizontal, RefreshCw, Edit } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
+import { EditFreezeForm } from '@/components/payments/EditFreezeForm';
 import { SubscriptionRenewalDialog } from '@/components/subscription/SubscriptionRenewalDialog';
 
 interface PaymentSchedule {
@@ -81,10 +82,12 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteFreezeDialog, setShowDeleteFreezeDialog] = useState(false);
+  const [showEditFreezeDialog, setShowEditFreezeDialog] = useState(false);
   const [selectedPaymentSchedule, setSelectedPaymentSchedule] = useState<PaymentSchedule | null>(null);
   const [selectedContactName, setSelectedContactName] = useState('');
   const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
   const [freezeToDelete, setFreezeToDelete] = useState<MembershipFreeze | null>(null);
+  const [freezeToEdit, setFreezeToEdit] = useState<MembershipFreeze | null>(null);
   const [showSubscriptionRenewalDialog, setShowSubscriptionRenewalDialog] = useState(false);
   const [selectedMembership, setSelectedMembership] = useState<MembershipSubscription | null>(null);
   const { toast } = useToast();
@@ -360,6 +363,11 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     setShowDeleteFreezeDialog(true);
   };
 
+  const handleEditFreeze = (freeze: MembershipFreeze) => {
+    setFreezeToEdit(freeze);
+    setShowEditFreezeDialog(true);
+  };
+
   const confirmDeleteFreeze = async () => {
     if (!freezeToDelete) return;
 
@@ -387,6 +395,40 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
       toast({
         title: "Error",
         description: "Failed to remove freeze",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateFreeze = async (updatedFreeze: { frozen_amount_cents: number; reason: string; end_date?: string }) => {
+    if (!freezeToEdit) return;
+
+    try {
+      const { error } = await supabase
+        .from('membership_freezes')
+        .update({
+          frozen_amount_cents: updatedFreeze.frozen_amount_cents,
+          reason: updatedFreeze.reason,
+          end_date: updatedFreeze.end_date || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', freezeToEdit.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Freeze Updated",
+        description: "The membership freeze has been successfully updated",
+      });
+
+      setShowEditFreezeDialog(false);
+      setFreezeToEdit(null);
+      fetchActiveMemberships();
+    } catch (error) {
+      console.error('Error updating freeze:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update freeze",
         variant: "destructive",
       });
     }
@@ -615,17 +657,30 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                   </div>
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteFreeze(freeze);
-                                }}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditFreeze(freeze);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteFreeze(freeze);
+                                  }}
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -811,6 +866,25 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           </AlertDialogFooter>
         </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit Freeze Dialog */}
+        <Dialog open={showEditFreezeDialog} onOpenChange={setShowEditFreezeDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Freeze</DialogTitle>
+              <DialogDescription>
+                Update the freeze details for this membership
+              </DialogDescription>
+            </DialogHeader>
+            {freezeToEdit && (
+              <EditFreezeForm
+                freeze={freezeToEdit}
+                onSubmit={handleUpdateFreeze}
+                onCancel={() => setShowEditFreezeDialog(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Subscription Renewal Dialog */}
         {selectedMembership && (
