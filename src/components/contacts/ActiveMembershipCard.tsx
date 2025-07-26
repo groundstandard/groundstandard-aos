@@ -716,19 +716,16 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                           </div>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Renewal Discount:</span>
+                          <span className="text-muted-foreground">
+                            {membership.renewal_new_rate_enabled ? 'Custom Rate:' : 'Renewal Discount:'}
+                          </span>
                           <div className="font-medium">
-                            {membership.renewal_discount_percentage}%
+                            {membership.renewal_new_rate_enabled 
+                              ? formatCurrency(membership.renewal_new_rate_cents || 0)
+                              : `${membership.renewal_discount_percentage}%`
+                            }
                           </div>
                         </div>
-                        {membership.membership_plans?.renewal_new_rate_enabled && (
-                          <div className="col-span-2">
-                            <span className="text-muted-foreground">Renewal Rate:</span>
-                            <div className="font-medium">
-                              {formatCurrency(membership.membership_plans.renewal_new_rate_cents || 0)}
-                            </div>
-                          </div>
-                        )}
                       </div>
                       <Button 
                         variant="outline" 
