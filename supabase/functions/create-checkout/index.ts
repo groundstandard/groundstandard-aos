@@ -61,49 +61,67 @@ serve(async (req) => {
       hasConnectAccount: !!profile?.academies?.stripe_connect_account_id 
     });
 
-    // Parse request body to get plan details
-    const { planId, planType } = await req.json();
-    if (!planId || !planType) {
-      throw new Error("planId and planType are required");
+    // Parse request body to get plan details or custom payment info
+    const requestBody = await req.json();
+    const { planId, planType, amount, description, paymentType } = requestBody;
+    
+    // Check if this is a custom payment or plan-based payment
+    const isCustomPayment = paymentType === 'payment' && amount && !planId;
+    
+    if (!isCustomPayment && (!planId || !planType)) {
+      throw new Error("planId and planType are required for plan-based payments");
     }
-    logStep("Plan details received", { planId, planType });
+    
+    logStep("Request details received", { 
+      planId, 
+      planType, 
+      amount, 
+      description, 
+      paymentType, 
+      isCustomPayment 
+    });
 
-    // Get plan details from database
-    let planData;
-    switch (planType) {
-      case 'membership':
-        const { data: membershipPlan, error: membershipError } = await supabaseClient
-          .from('membership_plans')
-          .select('*')
-          .eq('id', planId)
-          .single();
-        if (membershipError) throw new Error(`Error fetching membership plan: ${membershipError.message}`);
-        planData = membershipPlan;
-        break;
-      case 'private_session':
-        const { data: privatePlan, error: privateError } = await supabaseClient
-          .from('private_sessions')
-          .select('*')
-          .eq('id', planId)
-          .single();
-        if (privateError) throw new Error(`Error fetching private session: ${privateError.message}`);
-        planData = privatePlan;
-        break;
-      case 'drop_in':
-        const { data: dropInPlan, error: dropInError } = await supabaseClient
-          .from('drop_in_options')
-          .select('*')
-          .eq('id', planId)
-          .single();
-        if (dropInError) throw new Error(`Error fetching drop-in option: ${dropInError.message}`);
-        planData = dropInPlan;
-        break;
-      default:
-        throw new Error(`Unknown plan type: ${planType}`);
+    // Get plan details from database (skip for custom payments)
+    let planData = null;
+    
+    if (!isCustomPayment) {
+      switch (planType) {
+        case 'membership':
+          const { data: membershipPlan, error: membershipError } = await supabaseClient
+            .from('membership_plans')
+            .select('*')
+            .eq('id', planId)
+            .single();
+          if (membershipError) throw new Error(`Error fetching membership plan: ${membershipError.message}`);
+          planData = membershipPlan;
+          break;
+        case 'private_session':
+          const { data: privatePlan, error: privateError } = await supabaseClient
+            .from('private_sessions')
+            .select('*')
+            .eq('id', planId)
+            .single();
+          if (privateError) throw new Error(`Error fetching private session: ${privateError.message}`);
+          planData = privatePlan;
+          break;
+        case 'drop_in':
+          const { data: dropInPlan, error: dropInError } = await supabaseClient
+            .from('drop_in_options')
+            .select('*')
+            .eq('id', planId)
+            .single();
+          if (dropInError) throw new Error(`Error fetching drop-in option: ${dropInError.message}`);
+          planData = dropInPlan;
+          break;
+        default:
+          throw new Error(`Unknown plan type: ${planType}`);
+      }
+
+      if (!planData) throw new Error("Plan not found");
+      logStep("Plan data retrieved", { planName: planData.name, planType });
+    } else {
+      logStep("Custom payment - no plan data needed");
     }
-
-    if (!planData) throw new Error("Plan not found");
-    logStep("Plan data retrieved", { planName: planData.name, planType });
 
     // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
@@ -134,27 +152,35 @@ serve(async (req) => {
     let productName;
     let recurring = undefined;
 
-    switch (planType) {
-      case 'membership':
-        unitAmount = planData.base_price_cents;
-        productName = `${planData.name} - Membership Plan`;
-        if (planData.payment_frequency === 'monthly') {
-          recurring = { interval: "month" };
-        } else if (planData.payment_frequency === 'yearly') {
-          recurring = { interval: "year" };
-        }
-        break;
-      case 'private_session':
-        unitAmount = planData.price_per_session_cents || planData.price_per_hour * 100;
-        productName = `${planData.name} - Private Session`;
-        break;
-      case 'drop_in':
-        unitAmount = planData.price_cents;
-        productName = `${planData.name} - Drop-in Class`;
-        break;
+    if (isCustomPayment) {
+      // Handle custom payment
+      unitAmount = parseInt(amount);
+      productName = description || "Custom Payment";
+      // Custom payments are always one-time (no recurring)
+      logStep("Custom payment configured", { unitAmount, productName });
+    } else {
+      // Handle plan-based payment
+      switch (planType) {
+        case 'membership':
+          unitAmount = planData.base_price_cents;
+          productName = `${planData.name} - Membership Plan`;
+          if (planData.payment_frequency === 'monthly') {
+            recurring = { interval: "month" };
+          } else if (planData.payment_frequency === 'yearly') {
+            recurring = { interval: "year" };
+          }
+          break;
+        case 'private_session':
+          unitAmount = planData.price_per_session_cents || planData.price_per_hour * 100;
+          productName = `${planData.name} - Private Session`;
+          break;
+        case 'drop_in':
+          unitAmount = planData.price_cents;
+          productName = `${planData.name} - Drop-in Class`;
+          break;
+      }
+      logStep("Plan-based payment configured", { unitAmount, productName, recurring });
     }
-
-    logStep("Price calculated", { unitAmount, productName, recurring });
 
     // Create line item
     const lineItem: any = {
@@ -162,7 +188,9 @@ serve(async (req) => {
         currency: "usd",
         product_data: { 
           name: productName,
-          description: planData.description || `${planType} plan`
+          description: isCustomPayment 
+            ? (description || "Custom payment") 
+            : (planData.description || `${planType} plan`)
         },
         unit_amount: unitAmount,
       },
@@ -184,8 +212,10 @@ serve(async (req) => {
       cancel_url: `${origin}/subscription?cancelled=true`,
       metadata: {
         user_id: user.id,
-        plan_id: planId,
-        plan_type: planType,
+        plan_id: planId || 'custom',
+        plan_type: planType || 'custom_payment',
+        is_custom_payment: isCustomPayment.toString(),
+        custom_amount: isCustomPayment ? amount : undefined,
       },
     };
 
@@ -206,12 +236,14 @@ serve(async (req) => {
       amount: unitAmount,
       status: 'pending',
       line_items: [{
-        plan_id: planId,
-        plan_type: planType,
+        plan_id: planId || 'custom',
+        plan_type: planType || 'custom_payment',
         plan_name: productName,
         amount: unitAmount
       }],
-      notes: `Checkout session for ${planType}: ${planData.name}`
+      notes: isCustomPayment 
+        ? `Custom payment: ${description || 'Custom amount'}`
+        : `Checkout session for ${planType}: ${planData.name}`
     });
 
     logStep("Order tracking record created");
