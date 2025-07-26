@@ -385,21 +385,23 @@ export const PaymentMethodManager = ({
       </Card>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Payment Method</DialogTitle>
             <DialogDescription>
               Add a new payment method for secure storage and future payments
             </DialogDescription>
           </DialogHeader>
-          <AddPaymentMethodForm
-            contactId={contactId}
-            onSuccess={() => {
-              setShowAddDialog(false);
-              fetchPaymentMethods();
-            }}
-            onCancel={() => setShowAddDialog(false)}
-          />
+          <div className="max-h-[70vh] overflow-y-auto">
+            <AddPaymentMethodForm
+              contactId={contactId}
+              onSuccess={() => {
+                setShowAddDialog(false);
+                fetchPaymentMethods();
+              }}
+              onCancel={() => setShowAddDialog(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
