@@ -361,15 +361,15 @@ export const PaymentProcessing = () => {
         </Card>
       </div>
 
-      {/* Pending Payments Table */}
+      {/* Processing Payments Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Pending Payments
+            Payments Requiring Processing
           </CardTitle>
           <CardDescription>
-            Payments requiring manual processing or attention
+            Pending, processing, scheduled payments and those requiring attention
           </CardDescription>
         </CardHeader>
         <CardContent>
