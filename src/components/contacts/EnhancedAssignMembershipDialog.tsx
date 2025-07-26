@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CreditCard, DollarSign, Calendar, Users, Percent, User, Clock } from "lucide-react";
+import { CreditCard, DollarSign, Calendar, Users, Percent, User, Clock, Star, Building2 } from "lucide-react";
+import { PaymentMethodManager } from "@/components/payments/PaymentMethodManager";
 
 interface Contact {
   id: string;
@@ -45,6 +46,19 @@ interface DiscountType {
   updated_at: string;
 }
 
+interface PaymentMethod {
+  id: string;
+  contact_id: string;
+  stripe_payment_method_id: string;
+  type: string;
+  last4?: string;
+  brand?: string;
+  bank_name?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
 interface EnhancedAssignMembershipDialogProps {
   contact: Contact | null;
   open: boolean;
@@ -61,8 +75,10 @@ export const EnhancedAssignMembershipDialog = ({
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [discountTypes, setDiscountTypes] = useState<DiscountType[]>([]);
   const [familyMembers, setFamilyMembers] = useState<Contact[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string>("");
   const [selectedDiscount, setSelectedDiscount] = useState<string>("none");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const [billingContact, setBillingContact] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [scheduledPaymentDate, setScheduledPaymentDate] = useState<string>("");
@@ -73,12 +89,14 @@ export const EnhancedAssignMembershipDialog = ({
   const [isActive, setIsActive] = useState(true);
   const [waiveSetupFee, setWaiveSetupFee] = useState(false);
   const [customSetupFee, setCustomSetupFee] = useState<string>("");
+  const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
   
   const { toast } = useToast();
 
   useEffect(() => {
     if (open && contact) {
       fetchData();
+      fetchPaymentMethods();
       setBillingContact(contact.id); // Default to the contact themselves
     }
   }, [open, contact]);
@@ -128,6 +146,51 @@ export const EnhancedAssignMembershipDialog = ({
         description: "Failed to load membership data",
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchPaymentMethods = async () => {
+    if (!contact) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('contact_id', contact.id)
+        .eq('is_active', true)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setPaymentMethods(data || []);
+      // Auto-select the default payment method if it exists
+      const defaultMethod = data?.find(method => method.is_default);
+      if (defaultMethod) {
+        setSelectedPaymentMethod(defaultMethod.id);
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+    }
+  };
+
+  const getPaymentMethodDisplay = (method: PaymentMethod) => {
+    if (method.type === 'card') {
+      return `${method.brand || 'Card'} ****${method.last4}`;
+    } else if (method.type === 'us_bank_account') {
+      return `${method.bank_name || 'Bank'} ****${method.last4}`;
+    }
+    return `${method.type} ****${method.last4}`;
+  };
+
+  const getPaymentMethodIcon = (type: string) => {
+    switch (type) {
+      case 'card':
+        return <CreditCard className="h-4 w-4" />;
+      case 'us_bank_account':
+        return <Building2 className="h-4 w-4" />;
+      default:
+        return <CreditCard className="h-4 w-4" />;
     }
   };
 
@@ -247,39 +310,31 @@ export const EnhancedAssignMembershipDialog = ({
           description: `Manual payment recorded and membership activated for ${contact.first_name}`,
         });
       } else if (paymentMethod === 'integrated') {
-        // Try to charge stored payment method directly
-        const { data: chargeData, error: chargeError } = await supabase.functions.invoke('charge-stored-payment', {
+        // Check if payment method is selected
+        if (!selectedPaymentMethod) {
+          toast({
+            title: "Payment Method Required",
+            description: "Please select a payment method to charge",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Use process-direct-payment function with selected payment method
+        const { data: chargeData, error: chargeError } = await supabase.functions.invoke('process-direct-payment', {
           body: { 
-            contact_id: contact.id,
-            amount_cents: finalPrice,
-            setup_fee_cents: calculateSetupFee(),
+            contactId: contact.id,
+            paymentMethodId: selectedPaymentMethod,
+            amountCents: finalPrice + calculateSetupFee(),
             description: `Membership: ${plan.name}`,
-            membership_subscription_id: membership.id
+            scheduleType: 'immediate'
           },
         });
 
         console.log('Charge response:', { chargeData, chargeError });
 
-        // Handle non-2xx responses which come through as errors
         if (chargeError) {
-          // Check if it's a 402 Payment Required error
-          if (chargeError.message?.includes('Edge Function returned a non-2xx status code')) {
-            toast({
-              title: "Payment Method Required",
-              description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
-              variant: "destructive",
-            });
-            return; // Don't close the dialog yet
-          } else if (chargeError.message?.includes('No stored payment method found')) {
-            toast({
-              title: "Payment Method Required",
-              description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
-              variant: "destructive",
-            });
-            return; // Don't close the dialog yet
-          } else {
-            throw chargeError;
-          }
+          throw chargeError;
         }
 
         if (chargeData?.success) {
@@ -287,20 +342,8 @@ export const EnhancedAssignMembershipDialog = ({
             title: "Payment Successful",
             description: `Membership activated for ${contact.first_name}. Payment processed successfully.`,
           });
-        } else if (chargeData?.requires_action) {
-          toast({
-            title: "Payment Authentication Required",
-            description: "This payment requires additional authentication. Please try again or use a different payment method.",
-            variant: "destructive",
-          });
-          return;
-        } else if (chargeData?.requires_payment_setup) {
-          toast({
-            title: "Payment Method Required",
-            description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
-            variant: "destructive",
-          });
-          return;
+        } else {
+          throw new Error(chargeData?.error || 'Payment failed');
         }
       } else if (paymentMethod === 'scheduled') {
         toast({
@@ -333,6 +376,7 @@ export const EnhancedAssignMembershipDialog = ({
   const resetForm = () => {
     setSelectedPlan("");
     setSelectedDiscount("none");
+    setSelectedPaymentMethod("");
     setBillingContact(contact?.id || "");
     setStartDate(new Date().toISOString().split('T')[0]);
     setScheduledPaymentDate("");
@@ -342,6 +386,7 @@ export const EnhancedAssignMembershipDialog = ({
     setIsActive(true);
     setWaiveSetupFee(false);
     setCustomSetupFee("");
+    setShowAddPaymentMethod(false);
   };
 
   const selectedPlanData = membershipPlans.find(plan => plan.id === selectedPlan);
@@ -569,12 +614,62 @@ export const EnhancedAssignMembershipDialog = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="integrated">Charge Stored Payment Method</SelectItem>
+                    <SelectItem value="integrated">Stored Payment Methods</SelectItem>
                     <SelectItem value="manual">Manual Payment (Cash/Check)</SelectItem>
                     <SelectItem value="scheduled">Schedule Payment</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {paymentMethod === 'integrated' && (
+                <div className="space-y-4">
+                  {paymentMethods.length === 0 ? (
+                    <div className="text-center py-4 border rounded-lg">
+                      <p className="text-muted-foreground mb-4">No payment methods saved</p>
+                      <Button 
+                        onClick={() => setShowAddPaymentMethod(true)}
+                        variant="outline"
+                      >
+                        Add Payment Method
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Label htmlFor="payment-method-select">Select Payment Method</Label>
+                      <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder="Choose a payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paymentMethods.map((method) => (
+                            <SelectItem key={method.id} value={method.id}>
+                              <div className="flex items-center gap-2">
+                                {getPaymentMethodIcon(method.type)}
+                                <span>{getPaymentMethodDisplay(method)}</span>
+                                {method.is_default && (
+                                  <Badge variant="secondary" className="ml-2">
+                                    <Star className="h-3 w-3 mr-1" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="mt-2">
+                        <Button 
+                          onClick={() => setShowAddPaymentMethod(true)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Add Another Payment Method
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {paymentMethod === 'manual' && (
                 <div>
@@ -666,16 +761,43 @@ export const EnhancedAssignMembershipDialog = ({
           </Button>
           <Button 
             onClick={handleCreateMembership} 
-            disabled={!selectedPlan || loading}
+            disabled={loading || !selectedPlan || (paymentMethod === 'manual' && !manualPaymentAmount) || (paymentMethod === 'scheduled' && !scheduledPaymentDate) || (paymentMethod === 'integrated' && !selectedPaymentMethod)}
             className="min-w-[180px]"
           >
             {loading ? "Processing..." : 
-             paymentMethod === 'integrated' ? "Proceed to Payment" : 
+             paymentMethod === 'integrated' ? "Charge Payment Method" : 
              paymentMethod === 'manual' ? "Record Manual Payment" :
              paymentMethod === 'scheduled' ? "Schedule Payment" :
              "Create Membership"}
           </Button>
         </div>
+
+        {/* Add Payment Method Dialog */}
+        {showAddPaymentMethod && contact && (
+          <Dialog open={showAddPaymentMethod} onOpenChange={setShowAddPaymentMethod}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Payment Method</DialogTitle>
+                <DialogDescription>
+                  Add a new payment method for {contact.first_name} {contact.last_name}
+                </DialogDescription>
+              </DialogHeader>
+              <PaymentMethodManager 
+                contactId={contact.id}
+                showAddButton={false}
+                onPaymentMethodSelected={() => {
+                  setShowAddPaymentMethod(false);
+                  fetchPaymentMethods();
+                }}
+              />
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setShowAddPaymentMethod(false)}>
+                  Done
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   );
