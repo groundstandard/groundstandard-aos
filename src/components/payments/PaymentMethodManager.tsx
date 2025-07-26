@@ -140,7 +140,12 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
           },
           paymentMethodOrder: ['card'],
           fields: {
-            billingDetails: 'never'
+            billingDetails: {
+              name: 'never',
+              email: 'never',
+              phone: 'never',
+              address: 'never'
+            }
           },
           wallets: {
             applePay: 'never',
@@ -230,9 +235,16 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
           },
           '.ExpressCheckoutContainer': {
             display: 'none !important'
+          },
+          '.LinkAuthenticationContainer': {
+            display: 'none !important'
+          },
+          '.p-LinkAuthenticationContainer': {
+            display: 'none !important'
           }
         }
-      }
+      },
+      loader: 'always'
     }}>
       <AddPaymentMethodContent
         contactId={contactId}
