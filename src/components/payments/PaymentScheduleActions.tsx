@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +47,21 @@ export const PaymentScheduleActions = ({ schedule, onUpdate, onPayNow }: Payment
   const [freezeIndefinite, setFreezeIndefinite] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Predefined freeze reasons
+  const freezeReasons = [
+    'Financial hardship',
+    'Medical/health issues',
+    'Injury recovery',
+    'Temporary relocation',
+    'Family emergency',
+    'Extended travel',
+    'Pregnancy/maternity leave',
+    'Work schedule conflict',
+    'Seasonal break',
+    'Academic break/studies',
+    'Other personal reasons'
+  ];
 
   const handleEditPayment = async () => {
     if (editAmount <= 0) {
@@ -295,12 +310,18 @@ export const PaymentScheduleActions = ({ schedule, onUpdate, onPayNow }: Payment
 
             <div>
               <Label htmlFor="freeze-reason">Reason for Freeze</Label>
-              <Textarea
-                id="freeze-reason"
-                value={freezeReason}
-                onChange={(e) => setFreezeReason(e.target.value)}
-                placeholder="e.g., Financial hardship, temporary leave, injury recovery..."
-              />
+              <Select value={freezeReason} onValueChange={setFreezeReason}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a reason for freeze" />
+                </SelectTrigger>
+                <SelectContent>
+                  {freezeReasons.map((reason) => (
+                    <SelectItem key={reason} value={reason}>
+                      {reason}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -318,6 +339,7 @@ export const PaymentScheduleActions = ({ schedule, onUpdate, onPayNow }: Payment
                     selected={freezeStartDate}
                     onSelect={(date) => date && setFreezeStartDate(date)}
                     initialFocus
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -352,6 +374,7 @@ export const PaymentScheduleActions = ({ schedule, onUpdate, onPayNow }: Payment
                       onSelect={setFreezeEndDate}
                       initialFocus
                       disabled={(date) => date < freezeStartDate}
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
