@@ -44,6 +44,7 @@ import GroupedPaymentHistory from "@/components/contacts/GroupedPaymentHistory";
 import PaymentDetailModal from "@/components/contacts/PaymentDetailModal";
 import AttendanceEditModal from "@/components/contacts/AttendanceEditModal";
 import { StudentPaymentIntegration } from "@/components/payments/StudentPaymentIntegration";
+import { PaymentMethodManager } from "@/components/payments/PaymentMethodManager";
 
 interface Contact {
   id: string;
@@ -919,6 +920,24 @@ const ContactProfile = () => {
                   >
                     Custom Amount
                   </Button>
+                </CardContent>
+              </Card>
+
+              {/* Payment Methods */}
+              <Card className="card-minimal">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payment Methods
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contact && (
+                    <PaymentMethodManager 
+                      contactId={contact.id}
+                      showAddButton={true}
+                    />
+                  )}
                 </CardContent>
               </Card>
 
