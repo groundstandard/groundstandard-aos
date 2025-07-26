@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { CreditCard, Building2, Plus, Trash2, Star } from 'lucide-react';
 
 // Initialize Stripe
-const stripePromise = loadStripe('pk_test_51OhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1g');
+const stripePromise = loadStripe('pk_test_51GfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1gCM4sNzxRz1dxoaVMfKfzOhYKWGfOr7w8D1g');
 
 interface PaymentMethod {
   id: string;
@@ -32,46 +32,16 @@ interface PaymentMethodManagerProps {
   showAddButton?: boolean;
 }
 
-const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: { 
+const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret }: { 
   contactId: string; 
   onSuccess: () => void; 
   onCancel: () => void; 
+  clientSecret: string;
 }) => {
   const [loading, setLoading] = useState(false);
-  const [paymentType, setPaymentType] = useState<'card' | 'ach'>('card');
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-
-  useEffect(() => {
-    setupPaymentMethod();
-  }, [paymentType]);
-
-  const setupPaymentMethod = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.functions.invoke('setup-payment-method', {
-        body: {
-          contact_id: contactId,
-          payment_type: paymentType
-        }
-      });
-
-      if (error) throw error;
-
-      setClientSecret(data.client_secret);
-    } catch (error) {
-      console.error('Error setting up payment method:', error);
-      toast({
-        title: "Error",
-        description: "Failed to setup payment method",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,49 +94,80 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="text-sm font-medium">Payment Type</label>
-        <Select value={paymentType} onValueChange={(value: 'card' | 'ach') => setPaymentType(value)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="card">Credit/Debit Card</SelectItem>
-            <SelectItem value="ach">Bank Account (ACH)</SelectItem>
-          </SelectContent>
-        </Select>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-3 border rounded-md">
+        <PaymentElement options={{
+          layout: 'tabs'
+        }} />
       </div>
 
-      {clientSecret && (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {paymentType === 'card' && (
-            <div className="p-3 border rounded-md">
-              <CardElement options={{
-                style: {
-                  base: {
-                    fontSize: '16px',
-                    color: '#424770',
-                    '::placeholder': {
-                      color: '#aab7c4',
-                    },
-                  },
-                },
-              }} />
-            </div>
-          )}
+      <div className="flex gap-2 justify-end">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading || !stripe}>
+          {loading ? "Processing..." : "Add Payment Method"}
+        </Button>
+      </div>
+    </form>
+  );
+};
 
-          <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading || !stripe}>
-              {loading ? "Processing..." : "Add Payment Method"}
-            </Button>
-          </div>
-        </form>
-      )}
-    </div>
+const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: { 
+  contactId: string; 
+  onSuccess: () => void; 
+  onCancel: () => void; 
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setupPaymentMethod();
+  }, []);
+
+  const setupPaymentMethod = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.functions.invoke('setup-payment-method', {
+        body: {
+          contact_id: contactId,
+          payment_type: 'card'
+        }
+      });
+
+      if (error) throw error;
+
+      setClientSecret(data.client_secret);
+    } catch (error) {
+      console.error('Error setting up payment method:', error);
+      toast({
+        title: "Error",
+        description: "Failed to setup payment method",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-4">Setting up payment form...</div>;
+  }
+
+  if (!clientSecret) {
+    return <div className="text-center py-4">Unable to setup payment form</div>;
+  }
+
+  return (
+    <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <AddPaymentMethodContent
+        contactId={contactId}
+        onSuccess={onSuccess}
+        onCancel={onCancel}
+        clientSecret={clientSecret}
+      />
+    </Elements>
   );
 };
 
@@ -391,16 +392,14 @@ export const PaymentMethodManager = ({
               Add a new payment method for secure storage and future payments
             </DialogDescription>
           </DialogHeader>
-          <Elements stripe={stripePromise}>
-            <AddPaymentMethodForm
-              contactId={contactId}
-              onSuccess={() => {
-                setShowAddDialog(false);
-                fetchPaymentMethods();
-              }}
-              onCancel={() => setShowAddDialog(false)}
-            />
-          </Elements>
+          <AddPaymentMethodForm
+            contactId={contactId}
+            onSuccess={() => {
+              setShowAddDialog(false);
+              fetchPaymentMethods();
+            }}
+            onCancel={() => setShowAddDialog(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
