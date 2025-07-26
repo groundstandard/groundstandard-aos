@@ -258,10 +258,19 @@ export const EnhancedAssignMembershipDialog = ({
           },
         });
 
+        console.log('Charge response:', { chargeData, chargeError });
+
+        // Handle non-2xx responses which come through as errors
         if (chargeError) {
-          // If there's an error, check if it's because no payment method exists
-          if (chargeError.message?.includes('No stored payment method found') || 
-              (chargeData && chargeData.requires_payment_setup)) {
+          // Check if it's a 402 Payment Required error
+          if (chargeError.message?.includes('Edge Function returned a non-2xx status code')) {
+            toast({
+              title: "Payment Method Required",
+              description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
+              variant: "destructive",
+            });
+            return; // Don't close the dialog yet
+          } else if (chargeError.message?.includes('No stored payment method found')) {
             toast({
               title: "Payment Method Required",
               description: `Please add a payment method for ${contact.first_name} in the Billing tab to complete the membership setup.`,
