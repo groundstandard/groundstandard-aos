@@ -175,22 +175,24 @@ export const PaymentScheduleActions = ({ schedule, onUpdate, onPayNow }: Payment
 
     try {
       setLoading(true);
-      const { error } = await supabase
-        .from('membership_freezes')
-        .insert({
+      
+      // Use the extended freeze creation function
+      const { data, error } = await supabase.functions.invoke('create-membership-freeze-extended', {
+        body: {
           membership_subscription_id: schedule.membership_subscription_id,
           start_date: format(freezeStartDate, 'yyyy-MM-dd'),
           end_date: freezeIndefinite ? null : (freezeEndDate ? format(freezeEndDate, 'yyyy-MM-dd') : null),
           frozen_amount_cents: Math.round(freezeAmount * 100),
           reason: freezeReason,
           created_by: (await supabase.auth.getUser()).data.user?.id,
-        });
+        }
+      });
 
       if (error) throw error;
 
       toast({
         title: "Freeze Created",
-        description: "Membership freeze has been applied successfully",
+        description: data.message || "Membership freeze has been applied successfully",
       });
       setFreezeDialogOpen(false);
       onUpdate();

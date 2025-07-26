@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake, Trash2, MoreHorizontal } from 'lucide-react';
+import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake, Trash2, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
@@ -44,6 +44,8 @@ interface MembershipSubscription {
     billing_cycle: string;
     is_unlimited: boolean;
     classes_per_week: number;
+    renewal_new_rate_enabled?: boolean;
+    renewal_new_rate_cents?: number;
   };
 }
 
@@ -685,6 +687,43 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                         No payment schedule available for this membership.
                       </div>
                     )}
+
+                    {/* Renewals Section */}
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <RefreshCw className="h-4 w-4" />
+                        Renewal Settings
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Auto Renewal:</span>
+                          <div className="font-medium">
+                            {membership.auto_renewal ? 'Enabled' : 'Disabled'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Renewal Discount:</span>
+                          <div className="font-medium">
+                            {membership.renewal_discount_percentage}%
+                          </div>
+                        </div>
+                        {membership.membership_plans?.renewal_new_rate_enabled && (
+                          <div className="col-span-2">
+                            <span className="text-muted-foreground">Renewal Rate:</span>
+                            <div className="font-medium">
+                              {formatCurrency(membership.membership_plans.renewal_new_rate_cents || 0)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {/* TODO: Open renewal settings dialog */}}
+                      >
+                        Customize Renewal Terms
+                      </Button>
+                    </div>
                   </div>
                 </CollapsibleContent>
               </div>
