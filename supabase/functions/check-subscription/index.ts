@@ -45,8 +45,35 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get user's academy information
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select(`
+        academy_id,
+        academies:academy_id(
+          stripe_connect_account_id,
+          stripe_charges_enabled
+        )
+      `)
+      .eq('id', user.id)
+      .single();
+
+    logStep("Profile and academy data fetched", { 
+      academyId: profile?.academy_id,
+      hasConnectAccount: !!profile?.academies?.stripe_connect_account_id 
+    });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    // Use Connect account if available, otherwise main account
+    const stripeConfig = profile?.academies?.stripe_connect_account_id 
+      ? { stripeAccount: profile.academies.stripe_connect_account_id }
+      : {};
+    
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    }, stripeConfig);
     
     if (customers.data.length === 0) {
       logStep("No customer found, updating unsubscribed state");
@@ -72,7 +99,7 @@ serve(async (req) => {
       customer: customerId,
       status: "active",
       limit: 1,
-    });
+    }, stripeConfig);
     const hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = null;
     let subscriptionEnd = null;
@@ -86,7 +113,7 @@ serve(async (req) => {
       
       // Determine subscription tier from price
       const priceId = subscription.items.data[0].price.id;
-      const price = await stripe.prices.retrieve(priceId);
+      const price = await stripe.prices.retrieve(priceId, stripeConfig);
       const amount = price.unit_amount || 0;
       
       if (amount <= 8000) {
@@ -109,6 +136,7 @@ serve(async (req) => {
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd,
       stripe_subscription_id: stripeSubscriptionId,
+      stripe_account_id: profile?.academies?.stripe_connect_account_id || null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
 

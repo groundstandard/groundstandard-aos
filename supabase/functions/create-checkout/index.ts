@@ -43,6 +43,24 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get user's academy information
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select(`
+        academy_id,
+        academies:academy_id(
+          stripe_connect_account_id,
+          stripe_charges_enabled
+        )
+      `)
+      .eq('id', user.id)
+      .single();
+
+    logStep("Profile and academy data fetched", { 
+      academyId: profile?.academy_id,
+      hasConnectAccount: !!profile?.academies?.stripe_connect_account_id 
+    });
+
     // Parse request body to get plan details
     const { planId, planType } = await req.json();
     if (!planId || !planType) {
@@ -90,8 +108,16 @@ serve(async (req) => {
     // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
+    // Use Connect account if available, otherwise main account
+    const stripeConfig = profile?.academies?.stripe_connect_account_id 
+      ? { stripeAccount: profile.academies.stripe_connect_account_id }
+      : {};
+
     // Check if customer exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ 
+      email: user.email, 
+      limit: 1 
+    }, stripeConfig);
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -163,7 +189,7 @@ serve(async (req) => {
       },
     };
 
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    const session = await stripe.checkout.sessions.create(sessionConfig, stripeConfig);
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     // Store checkout session info in database using service role

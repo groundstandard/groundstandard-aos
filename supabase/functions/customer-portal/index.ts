@@ -42,14 +42,37 @@ serve(async (req) => {
     
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get user's academy information
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select(`
+        academy_id,
+        academies:academy_id(
+          stripe_connect_account_id,
+          stripe_charges_enabled
+        )
+      `)
+      .eq('id', user.id)
+      .single();
+
+    logStep("Profile and academy data fetched", { 
+      academyId: profile?.academy_id,
+      hasConnectAccount: !!profile?.academies?.stripe_connect_account_id 
+    });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
+    // Use Connect account if available, otherwise main account
+    const stripeConfig = profile?.academies?.stripe_connect_account_id 
+      ? { stripeAccount: profile.academies.stripe_connect_account_id }
+      : {};
     
     // Find or create Stripe customer
     let customerId;
     const customers = await stripe.customers.list({ 
       email: user.email, 
       limit: 1 
-    });
+    }, stripeConfig);
     
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -62,7 +85,7 @@ serve(async (req) => {
           user_id: user.id,
           created_by: 'customer-portal-function'
         }
-      });
+      }, stripeConfig);
       customerId = customer.id;
       logStep("Created new Stripe customer", { customerId });
     }
@@ -73,7 +96,7 @@ serve(async (req) => {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/payments`,
-    });
+    }, stripeConfig);
 
     logStep("Customer portal session created", { 
       sessionId: portalSession.id, 

@@ -45,10 +45,19 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Get contact details
+    // Get contact details with academy information
     const { data: contact, error: contactError } = await supabaseServiceClient
       .from('profiles')
-      .select('email, first_name, last_name')
+      .select(`
+        email, 
+        first_name, 
+        last_name,
+        academy_id,
+        academies:academy_id(
+          stripe_connect_account_id,
+          stripe_charges_enabled
+        )
+      `)
       .eq('id', contact_id)
       .single();
 
@@ -56,11 +65,22 @@ serve(async (req) => {
       throw new Error("Contact not found");
     }
 
-    logStep("Contact found", { contactEmail: contact.email });
+    logStep("Contact found", { 
+      contactEmail: contact.email,
+      hasConnectAccount: !!contact?.academies?.stripe_connect_account_id 
+    });
+
+    // Use Connect account if available, otherwise main account
+    const stripeConfig = contact?.academies?.stripe_connect_account_id 
+      ? { stripeAccount: contact.academies.stripe_connect_account_id }
+      : {};
 
     // Find or create Stripe customer
     let customer;
-    const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
+    const customers = await stripe.customers.list({ 
+      email: contact.email, 
+      limit: 1 
+    }, stripeConfig);
     
     if (customers.data.length > 0) {
       customer = customers.data[0];
@@ -72,7 +92,7 @@ serve(async (req) => {
         metadata: {
           contact_id: contact_id
         }
-      });
+      }, stripeConfig);
       logStep("New customer created", { customerId: customer.id });
     }
 
@@ -85,7 +105,7 @@ serve(async (req) => {
         contact_id: contact_id,
         payment_type: payment_type
       }
-    });
+    }, stripeConfig);
 
     logStep("SetupIntent created", { 
       setupIntentId: setupIntent.id, 
