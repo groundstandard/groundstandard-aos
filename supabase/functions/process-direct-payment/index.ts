@@ -188,14 +188,24 @@ serve(async (req) => {
     }
 
     // Process immediate payment
-    // Find Stripe customer
+    // Find or create Stripe customer
     const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
+    let customer;
+    
     if (customers.data.length === 0) {
-      throw new Error("Stripe customer not found");
+      logStep("Creating new Stripe customer", { email: contact.email });
+      customer = await stripe.customers.create({
+        email: contact.email,
+        name: `${contact.first_name} ${contact.last_name}`.trim(),
+        metadata: {
+          contact_id: finalContactId
+        }
+      });
+      logStep("Stripe customer created", { customerId: customer.id });
+    } else {
+      customer = customers.data[0];
+      logStep("Customer found", { customerId: customer.id });
     }
-
-    const customer = customers.data[0];
-    logStep("Customer found", { customerId: customer.id });
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
