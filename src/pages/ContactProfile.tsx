@@ -808,13 +808,8 @@ const ContactProfile = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-4">
-              {/* Temporarily commented out to debug calendar issue */}
-              {/* <ActiveMembershipCard contactId={contact?.id} />
-              <ClassPacksCard contactId={contact?.id} /> */}
-              
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Components temporarily removed for debugging</p>
-              </div>
+              <ActiveMembershipCard contactId={contact?.id} />
+              <ClassPacksCard contactId={contact?.id} />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Recent Payments */}
