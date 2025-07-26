@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock } from 'lucide-react';
+import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
@@ -19,6 +19,9 @@ interface PaymentSchedule {
   total_installments: number;
   stripe_invoice_id?: string;
   payment_method_id?: string;
+  is_frozen?: boolean;
+  freeze_reason?: string;
+  original_amount_cents?: number;
 }
 
 interface MembershipSubscription {
@@ -124,13 +127,48 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
 
       if (error) throw error;
 
-      // Group by membership subscription ID
+      // Fetch active freezes for these subscriptions
+      const { data: freezeData, error: freezeError } = await supabase
+        .from('membership_freezes')
+        .select('*')
+        .in('membership_subscription_id', membershipIds)
+        .eq('status', 'active');
+
+      if (freezeError) throw freezeError;
+
+      // Apply freezes to payment schedule and group by membership subscription ID
       const grouped = (data || []).reduce((acc, schedule) => {
         const membershipId = schedule.membership_subscription_id;
         if (!acc[membershipId]) {
           acc[membershipId] = [];
         }
-        acc[membershipId].push(schedule);
+
+        const paymentDate = new Date(schedule.scheduled_date);
+        
+        // Check if this payment falls within any active freeze period
+        const activeFreeze = (freezeData || []).find(freeze => {
+          if (freeze.membership_subscription_id !== membershipId) return false;
+          
+          const freezeStart = new Date(freeze.start_date);
+          const freezeEnd = freeze.end_date ? new Date(freeze.end_date) : null;
+          
+          return paymentDate >= freezeStart && 
+                 (freezeEnd === null || paymentDate <= freezeEnd);
+        });
+
+        // If payment is in a freeze period, update the amount and add freeze info
+        const processedSchedule = activeFreeze ? {
+          ...schedule,
+          amount_cents: activeFreeze.frozen_amount_cents,
+          is_frozen: true,
+          freeze_reason: activeFreeze.reason,
+          original_amount_cents: schedule.amount_cents
+        } : { 
+          ...schedule, 
+          is_frozen: false 
+        };
+
+        acc[membershipId].push(processedSchedule);
         return acc;
       }, {} as Record<string, PaymentSchedule[]>);
 
@@ -421,19 +459,37 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                             >
                               <div className="flex items-center gap-3">
                                 <div className="text-sm">
-                                  <div className="font-medium">
+                                  <div className="font-medium flex items-center gap-2">
                                     Payment {schedule.installment_number} of {schedule.total_installments}
+                                    {schedule.is_frozen && (
+                                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
+                                        <Snowflake className="h-3 w-3 mr-1" />
+                                        Frozen
+                                      </Badge>
+                                    )}
                                   </div>
                                   <div className="text-muted-foreground">
                                     Due: {new Date(schedule.scheduled_date).toLocaleDateString()}
                                   </div>
+                                  {schedule.is_frozen && schedule.freeze_reason && (
+                                    <div className="text-xs text-blue-600">
+                                      Reason: {schedule.freeze_reason}
+                                    </div>
+                                  )}
                                 </div>
                                 <Badge variant="outline" className={getPaymentStatusColor(schedule.status)}>
                                   {schedule.status === 'past_due' && isPastDue(schedule.scheduled_date, schedule.status) ? 'Past Due' : schedule.status}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">{formatCurrency(schedule.amount_cents)}</span>
+                                <div className="text-right">
+                                  <div className="font-medium">{formatCurrency(schedule.amount_cents)}</div>
+                                  {schedule.is_frozen && schedule.original_amount_cents && (
+                                    <div className="text-xs text-muted-foreground line-through">
+                                      {formatCurrency(schedule.original_amount_cents)}
+                                    </div>
+                                  )}
+                                </div>
                                 {schedule.status === 'paid' && (
                                   <CheckCircle className="h-4 w-4 text-green-600" />
                                 )}
