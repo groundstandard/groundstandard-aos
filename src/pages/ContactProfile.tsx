@@ -220,18 +220,10 @@ const ContactProfile = () => {
 
       setFamilyMembers(familyData || []);
 
-      // Fetch comprehensive payment history with related data
+      // Fetch payment history
       const { data: paymentData } = await supabase
         .from('payments')
-        .select(`
-          *,
-          billing_cycles (
-            id,
-            cycle_start_date,
-            cycle_end_date,
-            status
-          )
-        `)
+        .select('*')
         .eq('student_id', contactId)
         .order('payment_date', { ascending: false });
 
