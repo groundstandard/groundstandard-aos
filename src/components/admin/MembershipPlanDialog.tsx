@@ -293,7 +293,7 @@ export const MembershipPlanDialog = ({
                             const value = parseFloat(e.target.value) || 0;
                             field.onChange(Math.round(value * 100));
                           }}
-                          value={field.value ? (field.value / 100).toFixed(2) : ""}
+                          value={field.value ? (field.value / 100).toString() : ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -614,7 +614,7 @@ export const MembershipPlanDialog = ({
                                   const value = parseFloat(e.target.value) || 0;
                                   field.onChange(Math.round(value * 100));
                                 }}
-                                value={field.value ? (field.value / 100).toFixed(2) : ""}
+                                value={field.value ? (field.value / 100).toString() : ""}
                               />
                             </FormControl>
                             <div className="text-sm text-muted-foreground">
