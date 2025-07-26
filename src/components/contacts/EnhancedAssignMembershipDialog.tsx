@@ -173,8 +173,7 @@ export const EnhancedAssignMembershipDialog = ({
       const membershipData = {
         profile_id: contact.id,
         membership_plan_id: selectedPlan,
-        status: paymentMethod === 'manual' && manualPaymentAmount ? 'active' : 
-                isActive ? 'pending_payment' : 'draft',
+        status: paymentMethod === 'manual' && manualPaymentAmount ? 'active' : 'active',
         start_date: startDate,
         billing_amount_cents: finalPrice,
         notes: notes,
