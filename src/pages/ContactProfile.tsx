@@ -1355,18 +1355,6 @@ const ContactProfile = () => {
                       />
                     </PopoverContent>
                   </Popover>
-                  
-                  {/* Show available days info */}
-                  {markAttendanceData.class_id && classSchedules.length > 0 && (
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      Available days: {classSchedules.map((schedule, index) => (
-                        <span key={index}>
-                          {getDayName(schedule.day_of_week)} ({formatTime(schedule.start_time)} - {formatTime(schedule.end_time)})
-                          {index < classSchedules.length - 1 ? ', ' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
 
