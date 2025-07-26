@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -13,9 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-
-// You'll need to add your Stripe publishable key here
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_...");
+import { stripePromise, getStripeElementsOptions } from "@/lib/stripe";
 
 const ACHSetupContent = ({ clientSecret }: { clientSecret: string }) => {
   const { toast } = useToast();
@@ -159,15 +156,7 @@ export const EnhancedACHSetupForm = () => {
   }
 
   return (
-    <Elements 
-      stripe={stripePromise}
-      options={{
-        clientSecret: clientSecret,
-        appearance: {
-          theme: 'stripe',
-        },
-      }}
-    >
+    <Elements stripe={stripePromise} options={getStripeElementsOptions(clientSecret)}>
       <ACHSetupContent clientSecret={clientSecret} />
     </Elements>
   );

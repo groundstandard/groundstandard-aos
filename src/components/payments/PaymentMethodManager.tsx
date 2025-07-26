@@ -7,12 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { CreditCard, Building2, Plus, Trash2, Star } from 'lucide-react';
-
-// Initialize Stripe with your publishable key
-const stripePromise = loadStripe('pk_test_51RmQDHGfOr7w8D1gouEtCOJY4fQjvKHdOW39g02UUJtG58oRVYEwZ5hpQjkAgoCqIy9P24s5LZPVLZFwo45b16HO00n9YR6UYo');
+import { stripePromise, getStripeElementsOptions, getPaymentElementOptions } from '@/lib/stripe';
 
 interface PaymentMethod {
   id: string;
@@ -133,29 +130,7 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
       </div>
       
       <div className="p-3 border rounded-md">
-        <PaymentElement options={{
-          layout: {
-            type: 'accordion',
-            defaultCollapsed: false,
-          },
-          paymentMethodOrder: ['card'],
-          fields: {
-            billingDetails: {
-              name: 'never',
-              email: 'never',
-              phone: 'never',
-              address: 'never'
-            }
-          },
-          wallets: {
-            applePay: 'never',
-            googlePay: 'never'
-          },
-          terms: {
-            card: 'never'
-          }
-        }} 
-        />
+        <PaymentElement options={getPaymentElementOptions()} />
       </div>
 
       <div className="flex gap-2 justify-end">
@@ -217,35 +192,7 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
   }
 
   return (
-    <Elements stripe={stripePromise} options={{ 
-      clientSecret,
-      appearance: {
-        variables: {
-          colorBackground: '#ffffff',
-        },
-        rules: {
-          '.LinkContainer': {
-            display: 'none !important'
-          },
-          '.PickerItemContainer--selected .PickerItem--Link': {
-            display: 'none !important'
-          },
-          '.TabContainer .Tab--Link': {
-            display: 'none !important'
-          },
-          '.ExpressCheckoutContainer': {
-            display: 'none !important'
-          },
-          '.LinkAuthenticationContainer': {
-            display: 'none !important'
-          },
-          '.p-LinkAuthenticationContainer': {
-            display: 'none !important'
-          }
-        }
-      },
-      loader: 'always'
-    }}>
+    <Elements stripe={stripePromise} options={getStripeElementsOptions(clientSecret)}>
       <AddPaymentMethodContent
         contactId={contactId}
         onSuccess={onSuccess}
