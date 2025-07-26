@@ -41,19 +41,32 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id });
 
     const { 
+      contactId,
       contact_id, 
+      paymentMethodId,
       payment_method_id, 
+      amountCents,
       amount_cents, 
       description, 
-      payment_schedule_id 
+      payment_schedule_id,
+      scheduleType,
+      scheduledDate,
+      notes
     } = await req.json();
 
+    // Support both parameter formats for backwards compatibility
+    const finalContactId = contactId || contact_id;
+    const finalPaymentMethodId = paymentMethodId || payment_method_id;
+    const finalAmountCents = amountCents || amount_cents;
+
     logStep("Request data", { 
-      contact_id, 
-      payment_method_id, 
-      amount_cents, 
+      finalContactId, 
+      finalPaymentMethodId, 
+      finalAmountCents, 
       description, 
-      payment_schedule_id 
+      scheduleType,
+      scheduledDate,
+      notes
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
@@ -62,8 +75,8 @@ serve(async (req) => {
     const { data: paymentMethod, error: pmError } = await supabaseServiceClient
       .from('payment_methods')
       .select('stripe_payment_method_id, type, last4, brand, bank_name')
-      .eq('id', payment_method_id)
-      .eq('contact_id', contact_id)
+      .eq('stripe_payment_method_id', finalPaymentMethodId)
+      .eq('contact_id', finalContactId)
       .eq('is_active', true)
       .single();
 
@@ -80,13 +93,52 @@ serve(async (req) => {
     const { data: contact, error: contactError } = await supabaseServiceClient
       .from('profiles')
       .select('email')
-      .eq('id', contact_id)
+      .eq('id', finalContactId)
       .single();
 
     if (contactError || !contact) {
       throw new Error("Contact not found");
     }
 
+    // Handle scheduled payments
+    if (scheduleType === 'future' && scheduledDate) {
+      const scheduledDateObj = new Date(scheduledDate);
+      if (scheduledDateObj <= new Date()) {
+        throw new Error("Scheduled date must be in the future");
+      }
+
+      // Create a payment schedule entry instead of processing immediately
+      const { data: scheduleEntry, error: scheduleError } = await supabaseServiceClient
+        .from('payment_schedule')
+        .insert({
+          membership_subscription_id: null, // For custom payments
+          amount_cents: finalAmountCents,
+          scheduled_date: scheduledDateObj.toISOString().split('T')[0],
+          status: 'pending',
+          payment_method_id: finalPaymentMethodId,
+          notes: notes || description,
+          student_id: finalContactId
+        })
+        .select()
+        .single();
+
+      if (scheduleError) {
+        throw new Error(`Failed to schedule payment: ${scheduleError.message}`);
+      }
+
+      logStep("Payment scheduled successfully", { scheduleId: scheduleEntry.id });
+
+      return new Response(JSON.stringify({
+        success: true,
+        scheduled: true,
+        schedule_entry: scheduleEntry
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Process immediate payment
     // Find Stripe customer
     const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
     if (customers.data.length === 0) {
@@ -98,18 +150,19 @@ serve(async (req) => {
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount_cents,
+      amount: finalAmountCents,
       currency: 'usd',
       customer: customer.id,
       payment_method: paymentMethod.stripe_payment_method_id,
       confirmation_method: 'automatic',
       confirm: true,
-      return_url: `${req.headers.get("origin")}/contacts/${contact_id}`,
+      return_url: `${req.headers.get("origin")}/contacts/${finalContactId}`,
       description: description,
       metadata: {
-        contact_id: contact_id,
+        contact_id: finalContactId,
         payment_schedule_id: payment_schedule_id || '',
-        processed_by: user.id
+        processed_by: user.id,
+        notes: notes || ''
       }
     });
 
@@ -120,9 +173,9 @@ serve(async (req) => {
 
     // Record payment in database
     const paymentData = {
-      student_id: contact_id,
-      amount: amount_cents,
-      description: description,
+      student_id: finalContactId,
+      amount: finalAmountCents,
+      description: description + (notes ? ` - ${notes}` : ''),
       payment_method: paymentMethod.type,
       payment_method_type: paymentMethod.type,
       status: paymentIntent.status === 'succeeded' ? 'completed' : 'pending',
@@ -157,7 +210,7 @@ serve(async (req) => {
         .update({ 
           status: 'paid',
           stripe_invoice_id: paymentIntent.id,
-          payment_method_id: payment_method_id
+          payment_method_id: finalPaymentMethodId
         })
         .eq('id', payment_schedule_id);
 

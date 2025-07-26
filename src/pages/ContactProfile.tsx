@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/ui/BackButton";
+import { EmbeddedPaymentModal } from "@/components/payments/EmbeddedPaymentModal";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { 
@@ -174,6 +175,7 @@ const ContactProfile = () => {
     priority: "normal",
     is_private: false
   });
+  const [showEmbeddedPaymentModal, setShowEmbeddedPaymentModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -916,7 +918,7 @@ const ContactProfile = () => {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => handleCreatePayment('', 2500, 'Custom Payment')}
+                    onClick={() => setShowEmbeddedPaymentModal(true)}
                   >
                     Custom Amount
                   </Button>
@@ -1580,6 +1582,23 @@ const ContactProfile = () => {
             if (contact?.id) {
               fetchContactData(contact.id);
             }
+          }}
+        />
+
+        {/* Embedded Payment Modal */}
+        <EmbeddedPaymentModal
+          open={showEmbeddedPaymentModal}
+          onOpenChange={setShowEmbeddedPaymentModal}
+          contactId={id || ''}
+          onSuccess={() => {
+            // Refresh payment data
+            if (contact?.id) {
+              fetchContactData(contact.id);
+            }
+            toast({
+              title: "Success",
+              description: "Payment processed successfully",
+            });
           }}
         />
       </div>
