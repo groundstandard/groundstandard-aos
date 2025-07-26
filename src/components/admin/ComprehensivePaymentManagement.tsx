@@ -168,6 +168,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   const [isActive, setIsActive] = useState(true);
   const [waiveSetupFee, setWaiveSetupFee] = useState(false);
   const [customSetupFee, setCustomSetupFee] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -500,6 +501,131 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     setIsActive(true);
     setWaiveSetupFee(false);
     setCustomSetupFee("");
+  };
+
+  // Handle membership creation for Setup Recurring
+  const handleCreateMembership = async () => {
+    if (!selectedContact || !scheduleForm.membership_plan_id) return;
+
+    try {
+      setLoading(true);
+      
+      const plan = membershipPlans?.find(p => p.id === scheduleForm.membership_plan_id);
+      if (!plan) throw new Error("Selected plan not found");
+
+      const finalPrice = calculateDiscountedPrice();
+      
+      // Create membership subscription record
+      const selectedDiscountData = discountTypes.find(discount => discount.id === selectedDiscount && selectedDiscount !== "none");
+      
+      const membershipData = {
+        profile_id: selectedContact.id,
+        membership_plan_id: scheduleForm.membership_plan_id,
+        status: paymentMethod === 'manual' && manualPaymentAmount ? 'active' : 'active',
+        start_date: startDate,
+        billing_amount_cents: finalPrice,
+        notes: notes,
+        next_billing_date: paymentMethod === 'scheduled' ? scheduledPaymentDate : null,
+        discount_percentage: selectedDiscountData && selectedDiscountData.discount_type === 'percentage' ? selectedDiscountData.discount_value : null,
+      };
+
+      const { data: membership, error: membershipError } = await supabase
+        .from('membership_subscriptions')
+        .insert([membershipData])
+        .select()
+        .single();
+
+      if (membershipError) throw membershipError;
+
+      // Apply discount if selected (and not "none")
+      if (selectedDiscount && selectedDiscount !== "none") {
+        await supabase
+          .from('contact_discounts')
+          .insert([{
+            contact_id: selectedContact.id,
+            discount_type_id: selectedDiscount,
+            status: 'active',
+            assigned_by: (await supabase.auth.getUser()).data.user?.id,
+            notes: `Applied to membership: ${plan.name}`
+          }]);
+      }
+
+      // Handle different payment methods
+      if (paymentMethod === 'manual' && manualPaymentAmount) {
+        // Record manual payment - using billing_cycles table instead
+        await supabase
+          .from('billing_cycles')
+          .insert([{
+            membership_subscription_id: membership.id,
+            cycle_start_date: startDate,
+            cycle_end_date: new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().split('T')[0],
+            amount_cents: parseFloat(manualPaymentAmount) * 100,
+            total_amount_cents: parseFloat(manualPaymentAmount) * 100,
+            due_date: startDate,
+            paid_date: new Date().toISOString().split('T')[0],
+            status: 'paid',
+            payment_method: 'cash'
+          }]);
+
+        // Update membership to active
+        await supabase
+          .from('membership_subscriptions')
+          .update({ status: 'active' })
+          .eq('id', membership.id);
+
+        toast({
+          title: "Membership Created",
+          description: `Manual payment recorded and membership activated for ${selectedContact.first_name}`,
+        });
+      } else if (paymentMethod === 'integrated') {
+        // Create Stripe checkout session
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-membership-checkout', {
+          body: { 
+            contact_id: selectedContact.id,
+            membership_plan_id: scheduleForm.membership_plan_id,
+            metadata: {
+              membership_subscription_id: membership.id,
+              start_date: startDate
+            }
+          },
+        });
+
+        if (checkoutError) throw checkoutError;
+
+        if (checkoutData?.url) {
+          window.open(checkoutData.url, '_blank');
+          toast({
+            title: "Payment Processing",
+            description: `Redirecting to payment for ${selectedContact.first_name}'s membership...`,
+          });
+        }
+      } else if (paymentMethod === 'scheduled') {
+        toast({
+          title: "Membership Scheduled",
+          description: `Membership created with payment scheduled for ${scheduledPaymentDate}`,
+        });
+      } else {
+        toast({
+          title: "Membership Draft Created",
+          description: `Draft membership saved for ${selectedContact.first_name}. Activate when ready.`,
+        });
+      }
+
+      setShowScheduleDialog(false);
+      setSelectedContact(null);
+      setScheduleForm({ contact_id: '', membership_plan_id: '' });
+      resetEnhancedForm();
+      
+    } catch (error) {
+      console.error('Error creating membership:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create membership",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Generate financial report mutation
@@ -1102,10 +1228,12 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                 Cancel
               </Button>
               <Button 
-                disabled={!scheduleForm.contact_id || !scheduleForm.membership_plan_id}
+                onClick={handleCreateMembership}
+                disabled={!scheduleForm.contact_id || !scheduleForm.membership_plan_id || loading}
                 className="min-w-[180px]"
               >
-                {paymentMethod === 'integrated' ? "Proceed to Payment" : 
+                {loading ? "Processing..." : 
+                 paymentMethod === 'integrated' ? "Proceed to Payment" : 
                  paymentMethod === 'manual' ? "Record Manual Payment" :
                  paymentMethod === 'scheduled' ? "Schedule Payment" :
                  "Create Membership"}
