@@ -252,16 +252,16 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-md h-[90vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
             Payment Details
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[70vh] px-1">
-          <div className="space-y-4 pr-3">
+        <ScrollArea className="flex-1 h-0">
+          <div className="space-y-4 p-6 pt-4">
           {/* Payment Status */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Status</span>
@@ -506,7 +506,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
         {/* Footer with Actions */}
         {canRefund && !showRefundForm && !showEditForm && (
-          <DialogFooter className="border-t pt-4">
+          <DialogFooter className="flex-shrink-0 border-t p-6 pt-4">
             <div className="flex gap-2 w-full">
               <Button
                 variant="outline"
@@ -534,7 +534,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
 
         {/* Scheduled Payment Actions */}
         {canCancelOrEdit && !showRefundForm && !showEditForm && (
-          <DialogFooter className="border-t pt-4">
+          <DialogFooter className="flex-shrink-0 border-t p-6 pt-4">
             <div className="flex gap-2 w-full">
               <Button
                 variant="outline"
