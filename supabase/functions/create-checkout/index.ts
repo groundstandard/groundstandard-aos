@@ -132,10 +132,12 @@ serve(async (req) => {
       : {};
 
     // Check if customer exists
-    const customers = await stripe.customers.list({ 
+    const customerListParams = { 
       email: user.email, 
-      limit: 1 
-    }, stripeConfig);
+      limit: 1,
+      ...stripeConfig
+    };
+    const customers = await stripe.customers.list(customerListParams);
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
@@ -219,7 +221,10 @@ serve(async (req) => {
       },
     };
 
-    const session = await stripe.checkout.sessions.create(sessionConfig, stripeConfig);
+    const session = await stripe.checkout.sessions.create({
+      ...sessionConfig,
+      ...stripeConfig
+    });
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
     // Store checkout session info in database using service role
