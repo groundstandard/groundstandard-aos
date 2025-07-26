@@ -92,8 +92,8 @@ export const SubscriptionRenewalDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Customize Renewal Terms</DialogTitle>
           <DialogDescription>
             Customize the renewal settings for this specific membership subscription.
@@ -101,98 +101,100 @@ export const SubscriptionRenewalDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="text-sm text-muted-foreground">
-            Configure how this specific membership subscription handles renewals when the current term expires.
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label htmlFor="renewal-enabled">Enable Renewals</Label>
-              <div className="text-sm text-muted-foreground">
-                Allow this subscription to be renewed automatically or manually
-              </div>
+        <div className="flex-1 overflow-y-auto px-1">
+          <div className="space-y-6 py-4">
+            <div className="text-sm text-muted-foreground">
+              Configure how this specific membership subscription handles renewals when the current term expires.
             </div>
-            <Switch
-              id="renewal-enabled"
-              checked={renewalEnabled}
-              onCheckedChange={setRenewalEnabled}
-            />
-          </div>
 
-          {renewalEnabled && (
-            <>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="auto-renewal">Auto-Renewal</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Automatically renew this subscription when it expires
-                  </div>
-                </div>
-                <Switch
-                  id="auto-renewal"
-                  checked={autoRenewal}
-                  onCheckedChange={setAutoRenewal}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="discount-percentage">Renewal Discount (%)</Label>
-                <Input
-                  id="discount-percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={discountPercentage}
-                  onChange={(e) => setDiscountPercentage(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  disabled={renewalNewRateEnabled}
-                />
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="renewal-enabled">Enable Renewals</Label>
                 <div className="text-sm text-muted-foreground">
-                  Discount percentage applied to renewal payments (0-100%)
+                  Allow this subscription to be renewed automatically or manually
                 </div>
               </div>
+              <Switch
+                id="renewal-enabled"
+                checked={renewalEnabled}
+                onCheckedChange={setRenewalEnabled}
+              />
+            </div>
 
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="renewal-new-rate">Custom Renewal Rate</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Use a different price for renewals instead of discount
+            {renewalEnabled && (
+              <>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="auto-renewal">Auto-Renewal</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Automatically renew this subscription when it expires
+                    </div>
                   </div>
+                  <Switch
+                    id="auto-renewal"
+                    checked={autoRenewal}
+                    onCheckedChange={setAutoRenewal}
+                  />
                 </div>
-                <Switch
-                  id="renewal-new-rate"
-                  checked={renewalNewRateEnabled}
-                  onCheckedChange={setRenewalNewRateEnabled}
-                />
-              </div>
 
-              {renewalNewRateEnabled && (
                 <div className="space-y-2">
-                  <Label htmlFor="renewal-price">Renewal Price ($)</Label>
+                  <Label htmlFor="discount-percentage">Renewal Discount (%)</Label>
                   <Input
-                    id="renewal-price"
+                    id="discount-percentage"
                     type="number"
-                    step="0.01"
                     min="0"
-                    placeholder="79.99"
-                    value={renewalNewRateCents ? (renewalNewRateCents / 100).toString() : ""}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
-                      setRenewalNewRateCents(Math.round(value * 100));
-                    }}
+                    max="100"
+                    step="0.01"
+                    value={discountPercentage}
+                    onChange={(e) => setDiscountPercentage(parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                    disabled={renewalNewRateEnabled}
                   />
                   <div className="text-sm text-muted-foreground">
-                    Fixed price for renewal periods (overrides discount)
+                    Discount percentage applied to renewal payments (0-100%)
                   </div>
                 </div>
-              )}
-            </>
-          )}
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="renewal-new-rate">Custom Renewal Rate</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Use a different price for renewals instead of discount
+                    </div>
+                  </div>
+                  <Switch
+                    id="renewal-new-rate"
+                    checked={renewalNewRateEnabled}
+                    onCheckedChange={setRenewalNewRateEnabled}
+                  />
+                </div>
+
+                {renewalNewRateEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="renewal-price">Renewal Price ($)</Label>
+                    <Input
+                      id="renewal-price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="79.99"
+                      value={renewalNewRateCents ? (renewalNewRateCents / 100).toString() : ""}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setRenewalNewRateCents(Math.round(value * 100));
+                      }}
+                    />
+                    <div className="text-sm text-muted-foreground">
+                      Fixed price for renewal periods (overrides discount)
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2 flex-shrink-0 pt-4 border-t">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
