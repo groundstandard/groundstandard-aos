@@ -77,35 +77,41 @@ serve(async (req) => {
 
     // Find or create Stripe customer
     let customer;
-    const customers = await stripe.customers.list({ 
+    const customerListOptions = { 
       email: contact.email, 
-      limit: 1 
-    }, stripeConfig);
+      limit: 1,
+      ...stripeConfig
+    };
+    const customers = await stripe.customers.list(customerListOptions);
     
     if (customers.data.length > 0) {
       customer = customers.data[0];
       logStep("Existing customer found", { customerId: customer.id });
     } else {
-      customer = await stripe.customers.create({
+      const createOptions = {
         email: contact.email,
         name: `${contact.first_name} ${contact.last_name}`.trim(),
         metadata: {
           contact_id: contact_id
-        }
-      }, stripeConfig);
+        },
+        ...stripeConfig
+      };
+      customer = await stripe.customers.create(createOptions);
       logStep("New customer created", { customerId: customer.id });
     }
 
     // Create SetupIntent for the payment method
-    const setupIntent = await stripe.setupIntents.create({
+    const setupIntentOptions = {
       customer: customer.id,
       payment_method_types: payment_type === 'ach' ? ['us_bank_account'] : ['card'],
       usage: 'off_session',
       metadata: {
         contact_id: contact_id,
         payment_type: payment_type
-      }
-    }, stripeConfig);
+      },
+      ...stripeConfig
+    };
+    const setupIntent = await stripe.setupIntents.create(setupIntentOptions);
 
     logStep("SetupIntent created", { 
       setupIntentId: setupIntent.id, 

@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PaymentMethodManager } from '@/components/payments/PaymentMethodManager';
 import { 
   DollarSign,
   CreditCard,
@@ -169,6 +170,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   const [waiveSetupFee, setWaiveSetupFee] = useState(false);
   const [customSetupFee, setCustomSetupFee] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
 
   // Fetch payment analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
@@ -578,26 +580,55 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           description: `Manual payment recorded and membership activated for ${selectedContact.first_name}`,
         });
       } else if (paymentMethod === 'integrated') {
-        // Create Stripe checkout session
-        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke('create-membership-checkout', {
+        // Try to charge stored payment method directly
+        const { data: chargeData, error: chargeError } = await supabase.functions.invoke('charge-stored-payment', {
           body: { 
             contact_id: selectedContact.id,
-            membership_plan_id: scheduleForm.membership_plan_id,
-            metadata: {
-              membership_subscription_id: membership.id,
-              start_date: startDate
-            }
+            amount_cents: finalPrice,
+            setup_fee_cents: calculateSetupFee(),
+            description: `Membership: ${plan.name}`,
+            membership_subscription_id: membership.id
           },
         });
 
-        if (checkoutError) throw checkoutError;
+        if (chargeError) {
+          // If there's an error, check if it's because no payment method exists
+          if (chargeError.message?.includes('No stored payment method found') || 
+              (chargeData && chargeData.requires_payment_setup)) {
+            
+            // Show payment method setup dialog
+            setShowPaymentMethodDialog(true);
+            
+            toast({
+              title: "Payment Method Required",
+              description: `Please add a payment method for ${selectedContact.first_name} to complete the membership setup.`,
+              variant: "destructive",
+            });
+            
+            return; // Don't close the dialog yet
+          } else {
+            throw chargeError;
+          }
+        }
 
-        if (checkoutData?.url) {
-          window.open(checkoutData.url, '_blank');
+        if (chargeData?.success) {
           toast({
-            title: "Payment Processing",
-            description: `Redirecting to payment for ${selectedContact.first_name}'s membership...`,
+            title: "Payment Successful",
+            description: `Membership activated for ${selectedContact.first_name}. Charged ${chargeData.payment_method_last4 ? `****${chargeData.payment_method_last4}` : 'stored payment method'}.`,
           });
+          
+          // Update membership to active
+          await supabase
+            .from('membership_subscriptions')
+            .update({ status: 'active' })
+            .eq('id', membership.id);
+        } else if (chargeData?.requires_action) {
+          toast({
+            title: "Payment Authentication Required",
+            description: "This payment requires additional authentication. Please use a different payment method.",
+            variant: "destructive",
+          });
+          return; // Don't close the dialog
         }
       } else if (paymentMethod === 'scheduled') {
         toast({
@@ -1239,6 +1270,34 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                  "Create Membership"}
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Method Setup Dialog */}
+        <Dialog open={showPaymentMethodDialog} onOpenChange={setShowPaymentMethodDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add Payment Method</DialogTitle>
+              <DialogDescription>
+                {selectedContact && `Add a payment method for ${selectedContact.first_name} ${selectedContact.last_name} to complete the membership setup.`}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedContact && (
+              <PaymentMethodManager
+                contactId={selectedContact.id}
+                onPaymentMethodSelected={() => {
+                  // Close the payment method dialog and retry the membership creation
+                  setShowPaymentMethodDialog(false);
+                  toast({
+                    title: "Payment Method Added",
+                    description: "Now retrying membership creation...",
+                  });
+                  // Retry the membership creation
+                  handleCreateMembership();
+                }}
+                showAddButton={true}
+              />
+            )}
           </DialogContent>
         </Dialog>
 
