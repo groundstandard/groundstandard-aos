@@ -66,7 +66,7 @@ serve(async (req) => {
     const { planId, planType, amount, description, paymentType } = requestBody;
     
     // Check if this is a custom payment or plan-based payment
-    const isCustomPayment = paymentType === 'payment' && amount && !planId;
+    const isCustomPayment = paymentType === 'payment' && amount && (!planId || planId === '');
     
     if (!isCustomPayment && (!planId || !planType)) {
       throw new Error("planId and planType are required for plan-based payments");
