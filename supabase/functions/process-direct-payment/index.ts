@@ -25,7 +25,32 @@ serve(async (req) => {
 
     // Get auth token from request
     const authHeader = req.headers.get("Authorization");
+    logStep("Auth header received", { hasHeader: !!authHeader, header: authHeader ? authHeader.substring(0, 20) + "..." : null });
+    
     if (!authHeader) throw new Error("No authorization header provided");
+
+    // Extract the token
+    const token = authHeader.replace("Bearer ", "");
+    logStep("Token extracted", { tokenLength: token.length, tokenStart: token.substring(0, 20) + "..." });
+
+    // Try to decode the JWT to see what's in it (for debugging)
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const payload = JSON.parse(jsonPayload);
+      logStep("JWT payload decoded", { 
+        sub: payload.sub, 
+        aud: payload.aud, 
+        iss: payload.iss,
+        exp: payload.exp,
+        iat: payload.iat 
+      });
+    } catch (e) {
+      logStep("Failed to decode JWT", { error: e.message });
+    }
 
     // Create Supabase client for user operations using anon key
     const supabaseClient = createClient(
@@ -41,7 +66,15 @@ serve(async (req) => {
     );
 
     // Get the authenticated user (staff member)
+    logStep("Attempting to get user with supabase client");
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    logStep("Supabase auth.getUser result", { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      userEmail: user?.email,
+      error: userError?.message 
+    });
+    
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     if (!user?.id) throw new Error("User not authenticated");
 
