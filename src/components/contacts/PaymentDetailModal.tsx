@@ -253,15 +253,15 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-5 w-5" />
             Payment Details
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[60vh]">
-          <div className="space-y-4 pr-4">
+        <ScrollArea className="flex-1 max-h-[70vh] px-1">
+          <div className="space-y-4 pr-3">
           {/* Payment Status */}
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Status</span>
