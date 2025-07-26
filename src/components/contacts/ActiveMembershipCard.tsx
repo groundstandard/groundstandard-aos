@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -78,6 +82,8 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [selectedContactName, setSelectedContactName] = useState('');
   const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
   const [freezeToDelete, setFreezeToDelete] = useState<MembershipFreeze | null>(null);
+  const [membershipToRenew, setMembershipToRenew] = useState<MembershipSubscription | null>(null);
+  const [showRenewalDialog, setShowRenewalDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -381,6 +387,11 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
         variant: "destructive",
       });
     }
+  };
+
+  const handleCustomizeRenewal = (membership: MembershipSubscription) => {
+    setMembershipToRenew(membership);
+    setShowRenewalDialog(true);
   };
 
   if (loading) {
@@ -719,7 +730,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => {/* TODO: Open renewal settings dialog */}}
+                        onClick={() => handleCustomizeRenewal(membership)}
                       >
                         Customize Renewal Terms
                       </Button>
@@ -799,7 +810,79 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialog>
+
+        {/* Renewal Settings Dialog */}
+        <Dialog open={showRenewalDialog} onOpenChange={setShowRenewalDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Customize Renewal Terms</DialogTitle>
+              <DialogDescription>
+                Configure renewal settings for {membershipToRenew?.membership_plans?.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Auto Renewal</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={membershipToRenew?.auto_renewal || false}
+                    onCheckedChange={(checked) => {
+                      if (membershipToRenew) {
+                        // Update auto renewal setting
+                        supabase
+                          .from('membership_subscriptions')
+                          .update({ auto_renewal: checked })
+                          .eq('id', membershipToRenew.id)
+                          .then(() => {
+                            toast({
+                              title: "Auto Renewal Updated",
+                              description: `Auto renewal ${checked ? 'enabled' : 'disabled'}`,
+                            });
+                            fetchActiveMemberships();
+                          });
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {membershipToRenew?.auto_renewal ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Renewal Discount (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  defaultValue={membershipToRenew?.renewal_discount_percentage || 0}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    if (membershipToRenew && value >= 0 && value <= 100) {
+                      supabase
+                        .from('membership_subscriptions')
+                        .update({ renewal_discount_percentage: value })
+                        .eq('id', membershipToRenew.id)
+                        .then(() => {
+                          toast({
+                            title: "Renewal Discount Updated",
+                            description: `Renewal discount set to ${value}%`,
+                          });
+                          fetchActiveMemberships();
+                        });
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowRenewalDialog(false)}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
