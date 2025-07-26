@@ -31,6 +31,8 @@ interface PaymentSchedule {
   freeze_reason?: string;
   original_amount_cents?: number;
   payment_type?: string;
+  setup_fee_cents?: number;
+  monthly_amount_cents?: number;
 }
 
 interface MembershipSubscription {
@@ -743,14 +745,20 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                   {schedule.status === 'past_due' && isPastDue(schedule.scheduled_date, schedule.status) ? 'Past Due' : schedule.status}
                                 </Badge>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="text-right">
-                                  <div className="font-medium">{formatCurrency(schedule.amount_cents)}</div>
-                                  {schedule.is_frozen && schedule.original_amount_cents && (
-                                    <div className="text-xs text-muted-foreground line-through">
-                                      {formatCurrency(schedule.original_amount_cents)}
-                                    </div>
-                                  )}
+                               <div className="flex items-center gap-2">
+                                 <div className="text-right">
+                                   <div className="font-medium">{formatCurrency(schedule.amount_cents)}</div>
+                                   {/* Show breakdown for first payment with setup fee */}
+                                   {schedule.installment_number === 1 && schedule.setup_fee_cents > 0 && schedule.monthly_amount_cents > 0 && (
+                                     <div className="text-xs text-muted-foreground">
+                                       Monthly: {formatCurrency(schedule.monthly_amount_cents)} + Setup: {formatCurrency(schedule.setup_fee_cents)}
+                                     </div>
+                                   )}
+                                   {schedule.is_frozen && schedule.original_amount_cents && (
+                                     <div className="text-xs text-muted-foreground line-through">
+                                       {formatCurrency(schedule.original_amount_cents)}
+                                     </div>
+                                   )}
                                 </div>
                                 {schedule.status === 'paid' && (
                                   <CheckCircle className="h-4 w-4 text-green-600" />
