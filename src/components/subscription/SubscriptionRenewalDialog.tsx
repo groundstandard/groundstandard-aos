@@ -55,15 +55,6 @@ export const SubscriptionRenewalDialog = ({
         updated_at: new Date().toISOString()
       };
 
-      // Add custom renewal rate fields if they exist in the table
-      if (renewalEnabled && renewalNewRateEnabled) {
-        updateData.renewal_new_rate_enabled = true;
-        updateData.renewal_new_rate_cents = renewalNewRateCents;
-      } else {
-        updateData.renewal_new_rate_enabled = false;
-        updateData.renewal_new_rate_cents = null;
-      }
-
       const { error } = await supabase
         .from('membership_subscriptions')
         .update(updateData)
