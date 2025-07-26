@@ -188,23 +188,39 @@ serve(async (req) => {
     }
 
     // Process immediate payment
-    // Find or create Stripe customer
-    const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
-    let customer;
+    // Get the payment method from Stripe to find its customer
+    logStep("Retrieving payment method from Stripe", { paymentMethodId: paymentMethod.stripe_payment_method_id });
+    const stripePaymentMethod = await stripe.paymentMethods.retrieve(paymentMethod.stripe_payment_method_id);
     
-    if (customers.data.length === 0) {
-      logStep("Creating new Stripe customer", { email: contact.email });
-      customer = await stripe.customers.create({
-        email: contact.email,
-        name: `${contact.first_name} ${contact.last_name}`.trim(),
-        metadata: {
-          contact_id: finalContactId
-        }
-      });
-      logStep("Stripe customer created", { customerId: customer.id });
+    let customer;
+    if (stripePaymentMethod.customer) {
+      // Use the customer that owns this payment method
+      logStep("Using customer from payment method", { customerId: stripePaymentMethod.customer });
+      customer = await stripe.customers.retrieve(stripePaymentMethod.customer as string);
     } else {
-      customer = customers.data[0];
-      logStep("Customer found", { customerId: customer.id });
+      // Payment method has no customer, so find or create one for the contact
+      const customers = await stripe.customers.list({ email: contact.email, limit: 1 });
+      
+      if (customers.data.length === 0) {
+        logStep("Creating new Stripe customer", { email: contact.email });
+        customer = await stripe.customers.create({
+          email: contact.email,
+          name: `${contact.first_name} ${contact.last_name}`.trim(),
+          metadata: {
+            contact_id: finalContactId
+          }
+        });
+        logStep("Stripe customer created", { customerId: customer.id });
+      } else {
+        customer = customers.data[0];
+        logStep("Customer found", { customerId: customer.id });
+      }
+      
+      // Attach the payment method to this customer
+      await stripe.paymentMethods.attach(paymentMethod.stripe_payment_method_id, {
+        customer: customer.id,
+      });
+      logStep("Payment method attached to customer");
     }
 
     // Create payment intent
