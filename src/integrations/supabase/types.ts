@@ -32,6 +32,10 @@ export type Database = {
           secondary_color: string | null
           slug: string | null
           state: string | null
+          stripe_charges_enabled: boolean | null
+          stripe_connect_account_id: string | null
+          stripe_onboarding_completed: boolean | null
+          stripe_payouts_enabled: boolean | null
           timezone: string | null
           updated_at: string
           website_url: string | null
@@ -54,6 +58,10 @@ export type Database = {
           secondary_color?: string | null
           slug?: string | null
           state?: string | null
+          stripe_charges_enabled?: boolean | null
+          stripe_connect_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
           website_url?: string | null
@@ -76,6 +84,10 @@ export type Database = {
           secondary_color?: string | null
           slug?: string | null
           state?: string | null
+          stripe_charges_enabled?: boolean | null
+          stripe_connect_account_id?: string | null
+          stripe_onboarding_completed?: boolean | null
+          stripe_payouts_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
           website_url?: string | null
@@ -4026,6 +4038,7 @@ export type Database = {
       }
       stripe_connected_accounts: {
         Row: {
+          academy_id: string | null
           account_status: string | null
           charges_enabled: boolean | null
           created_at: string
@@ -4038,6 +4051,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          academy_id?: string | null
           account_status?: string | null
           charges_enabled?: boolean | null
           created_at?: string
@@ -4050,6 +4064,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          academy_id?: string | null
           account_status?: string | null
           charges_enabled?: boolean | null
           created_at?: string
@@ -4061,7 +4076,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stripe_connected_accounts_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_belt_history: {
         Row: {
