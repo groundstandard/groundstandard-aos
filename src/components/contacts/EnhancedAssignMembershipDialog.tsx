@@ -168,18 +168,18 @@ export const EnhancedAssignMembershipDialog = ({
       const finalPrice = calculateDiscountedPrice();
       
       // Create membership subscription record
+      const selectedDiscountData = discountTypes.find(discount => discount.id === selectedDiscount && selectedDiscount !== "none");
+      
       const membershipData = {
         profile_id: contact.id,
         membership_plan_id: selectedPlan,
-        billing_contact_id: billingContact,
         status: paymentMethod === 'manual' && manualPaymentAmount ? 'active' : 
                 isActive ? 'pending_payment' : 'draft',
         start_date: startDate,
-        billing_frequency: plan.billing_cycle,
-        price_cents: finalPrice,
-        setup_fee_cents: plan.setup_fee_cents,
+        billing_amount_cents: finalPrice,
         notes: notes,
-        scheduled_payment_date: paymentMethod === 'scheduled' ? scheduledPaymentDate : null,
+        next_billing_date: paymentMethod === 'scheduled' ? scheduledPaymentDate : null,
+        discount_percentage: selectedDiscountData && selectedDiscountData.discount_type === 'percentage' ? selectedDiscountData.discount_value : null,
       };
 
       const { data: membership, error: membershipError } = await supabase
