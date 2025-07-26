@@ -36,6 +36,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   base_price_cents: z.number().min(0, "Price must be positive"),
+  signup_fee_cents: z.number().min(0, "Signup fee must be positive"),
   cycle_length_months: z.number().min(1, "Cycle length must be at least 1 month"),
   payment_frequency: z.string().min(1, "Payment frequency is required"),
   age_group: z.string().optional(),
@@ -58,6 +59,7 @@ interface MembershipPlan {
   name: string;
   description: string;
   base_price_cents: number;
+  signup_fee_cents?: number;
   cycle_length_months?: number;
   payment_frequency?: string;
   age_group: string;
@@ -99,6 +101,7 @@ export const MembershipPlanDialog = ({
       name: "",
       description: "",
       base_price_cents: 0,
+      signup_fee_cents: 0,
       cycle_length_months: 1,
       payment_frequency: "monthly",
       age_group: "all",
@@ -122,6 +125,7 @@ export const MembershipPlanDialog = ({
         name: plan.name,
         description: plan.description || "",
         base_price_cents: plan.base_price_cents,
+        signup_fee_cents: plan.signup_fee_cents || 0,
         cycle_length_months: plan.cycle_length_months || 1,
         payment_frequency: plan.payment_frequency || "monthly",
         age_group: plan.age_group,
@@ -142,6 +146,7 @@ export const MembershipPlanDialog = ({
         name: "",
         description: "",
         base_price_cents: 0,
+        signup_fee_cents: 0,
         cycle_length_months: 1,
         payment_frequency: "monthly",
         age_group: "all",
@@ -176,6 +181,7 @@ export const MembershipPlanDialog = ({
         name: values.name,
         description: values.description || "",
         base_price_cents: values.base_price_cents,
+        signup_fee_cents: values.signup_fee_cents,
         cycle_length_months: values.cycle_length_months,
         payment_frequency: values.payment_frequency,
         age_group: values.age_group || "all",
@@ -285,30 +291,57 @@ export const MembershipPlanDialog = ({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="base_price_cents"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price ($)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="99.99"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0;
-                            field.onChange(Math.round(value * 100));
-                          }}
-                          value={field.value ? (field.value / 100).toString() : ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="base_price_cents"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Price ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="99.99"
+                            {...field}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0;
+                              field.onChange(Math.round(value * 100));
+                            }}
+                            value={field.value ? (field.value / 100).toString() : ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="signup_fee_cents"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Signup Fee ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            {...field}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value) || 0;
+                              field.onChange(Math.round(value * 100));
+                            }}
+                            value={field.value ? (field.value / 100).toString() : ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
