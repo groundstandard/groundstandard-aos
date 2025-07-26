@@ -320,11 +320,22 @@ export const EnhancedAssignMembershipDialog = ({
           return;
         }
 
-        // Use process-direct-payment function with selected payment method
+        // Get the selected payment method details to get the Stripe payment method ID
+        const selectedMethod = paymentMethods.find(pm => pm.id === selectedPaymentMethod);
+        if (!selectedMethod) {
+          toast({
+            title: "Payment Method Error",
+            description: "Selected payment method not found",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Use process-direct-payment function with Stripe payment method ID
         const { data: chargeData, error: chargeError } = await supabase.functions.invoke('process-direct-payment', {
           body: { 
             contactId: contact.id,
-            paymentMethodId: selectedPaymentMethod,
+            paymentMethodId: selectedMethod.stripe_payment_method_id, // Use Stripe PM ID, not database ID
             amountCents: finalPrice + calculateSetupFee(),
             description: `Membership: ${plan.name}`,
             scheduleType: 'immediate'
