@@ -135,7 +135,19 @@ export const EmbeddedPaymentModal = ({
         },
       });
 
-      if (error) throw error;
+      // Check for function-level errors first
+      if (error) {
+        throw new Error(error.message || 'Edge function error');
+      }
+
+      // Check for application-level errors in the response
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data?.success) {
+        throw new Error('Payment processing failed');
+      }
 
       toast({
         title: "Success",
@@ -155,9 +167,21 @@ export const EmbeddedPaymentModal = ({
       
     } catch (error: any) {
       console.error('Error processing payment:', error);
+      
+      // Extract error message from different error types
+      let errorMessage = "Failed to process payment";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "Failed to process payment",
+        title: "Payment Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
