@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake } from 'lucide-react';
+import { Calendar, Crown, Repeat, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, CreditCard, DollarSign, Clock, Snowflake, Trash2, MoreHorizontal } from 'lucide-react';
 import { AssignMembershipDialog } from './AssignMembershipDialog';
 import { DirectPaymentDialog } from '@/components/payments/DirectPaymentDialog';
 import { PaymentScheduleActions } from '@/components/payments/PaymentScheduleActions';
@@ -56,8 +58,10 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const [loading, setLoading] = useState(true);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedPaymentSchedule, setSelectedPaymentSchedule] = useState<PaymentSchedule | null>(null);
   const [selectedContactName, setSelectedContactName] = useState('');
+  const [membershipToDelete, setMembershipToDelete] = useState<MembershipSubscription | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -276,6 +280,44 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     setShowPaymentDialog(true);
   };
 
+  const handleDeleteMembership = (membership: MembershipSubscription) => {
+    setMembershipToDelete(membership);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteMembership = async () => {
+    if (!membershipToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('membership_subscriptions')
+        .update({ 
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', membershipToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Membership Cancelled",
+        description: "The membership has been successfully cancelled",
+      });
+
+      setShowDeleteDialog(false);
+      setMembershipToDelete(null);
+      fetchActiveMemberships();
+    } catch (error) {
+      console.error('Error cancelling membership:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel membership",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card className="card-minimal">
@@ -388,6 +430,29 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                             Past Due
                           </Badge>
                         )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMembership(membership);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Cancel Membership
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         {isExpanded ? (
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
@@ -546,6 +611,27 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           }}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Membership</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel the membership "{membershipToDelete?.membership_plans?.name}"? 
+              This action will mark the membership as cancelled and stop future billing. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteMembership}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Membership
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </CardContent>
     </Card>
   );
