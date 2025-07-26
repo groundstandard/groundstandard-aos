@@ -65,14 +65,14 @@ export const PaymentProcessing = () => {
     notes: ''
   });
 
-  // Fetch pending payments
+  // Fetch pending payments (including scheduled payments)
   const { data: pendingPayments, isLoading } = useQuery({
     queryKey: ['pending-payments'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
         .select('*')
-        .in('status', ['pending', 'processing', 'requires_action'])
+        .in('status', ['pending', 'processing', 'requires_action', 'scheduled'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -243,6 +243,7 @@ export const PaymentProcessing = () => {
       pending: 'bg-yellow-100 text-yellow-800',
       processing: 'bg-blue-100 text-blue-800',
       requires_action: 'bg-orange-100 text-orange-800',
+      scheduled: 'bg-purple-100 text-purple-800',
       completed: 'bg-green-100 text-green-800',
       failed: 'bg-red-100 text-red-800'
     };
