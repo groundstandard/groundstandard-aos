@@ -114,6 +114,10 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
           layout: 'tabs',
           fields: {
             billingDetails: 'never'
+          },
+          wallets: {
+            applePay: 'never',
+            googlePay: 'never'
           }
         }} />
       </div>
