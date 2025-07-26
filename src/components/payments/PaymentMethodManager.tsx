@@ -111,7 +111,10 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
       
       <div className="p-3 border rounded-md">
         <PaymentElement options={{
-          layout: 'tabs'
+          layout: 'tabs',
+          fields: {
+            billingDetails: 'never'
+          }
         }} />
       </div>
 
