@@ -4426,6 +4426,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_payment_schedule: {
+        Args: { subscription_uuid: string }
+        Returns: undefined
+      }
       get_academy_usage: {
         Args: { academy_uuid: string }
         Returns: Json
