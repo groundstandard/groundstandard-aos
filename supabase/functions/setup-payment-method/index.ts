@@ -76,11 +76,16 @@ serve(async (req) => {
       logStep("New customer created", { customerId: customer.id });
     }
 
-    // Create SetupIntent for the payment method
+    // Create SetupIntent for the payment method with Link disabled
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
       payment_method_types: payment_type === 'ach' ? ['us_bank_account'] : ['card'],
       usage: 'off_session',
+      payment_method_options: {
+        card: {
+          setup_future_usage: 'off_session'
+        }
+      },
       metadata: {
         contact_id: contact_id,
         payment_type: payment_type

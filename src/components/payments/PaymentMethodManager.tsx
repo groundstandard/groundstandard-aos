@@ -111,13 +111,19 @@ const AddPaymentMethodContent = ({ contactId, onSuccess, onCancel, clientSecret 
       
       <div className="p-3 border rounded-md">
         <PaymentElement options={{
-          layout: 'tabs',
+          layout: {
+            type: 'tabs',
+            defaultCollapsed: false,
+          },
           fields: {
             billingDetails: 'never'
           },
           wallets: {
             applePay: 'never',
             googlePay: 'never'
+          },
+          terms: {
+            card: 'never'
           }
         }} 
         />
