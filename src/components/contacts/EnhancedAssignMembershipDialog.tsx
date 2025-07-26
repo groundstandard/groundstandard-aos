@@ -62,7 +62,7 @@ export const EnhancedAssignMembershipDialog = ({
   const [discountTypes, setDiscountTypes] = useState<DiscountType[]>([]);
   const [familyMembers, setFamilyMembers] = useState<Contact[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string>("");
-  const [selectedDiscount, setSelectedDiscount] = useState<string>("");
+  const [selectedDiscount, setSelectedDiscount] = useState<string>("none");
   const [billingContact, setBillingContact] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [scheduledPaymentDate, setScheduledPaymentDate] = useState<string>("");
@@ -105,10 +105,16 @@ export const EnhancedAssignMembershipDialog = ({
 
       // Fetch family members (including parents and children)
       if (contact) {
+        // Build family query dynamically to avoid null UUID issues
+        let familyQuery = `id.eq.${contact.id},parent_id.eq.${contact.id}`;
+        if (contact.parent_id) {
+          familyQuery += `,id.eq.${contact.parent_id}`;
+        }
+        
         const { data: family, error: familyError } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, email, parent_id, membership_status')
-          .or(`id.eq.${contact.id},parent_id.eq.${contact.id},id.eq.${contact.parent_id || 'null'}`);
+          .or(familyQuery);
 
         if (familyError) throw familyError;
         setFamilyMembers(family || []);
@@ -132,7 +138,7 @@ export const EnhancedAssignMembershipDialog = ({
 
   const calculateDiscountedPrice = () => {
     const plan = membershipPlans.find(p => p.id === selectedPlan);
-    const discount = discountTypes.find(d => d.id === selectedDiscount);
+    const discount = discountTypes.find(d => d.id === selectedDiscount && selectedDiscount !== "none");
     
     if (!plan) return 0;
 
@@ -184,8 +190,8 @@ export const EnhancedAssignMembershipDialog = ({
 
       if (membershipError) throw membershipError;
 
-      // Apply discount if selected
-      if (selectedDiscount) {
+      // Apply discount if selected (and not "none")
+      if (selectedDiscount && selectedDiscount !== "none") {
         await supabase
           .from('contact_discounts')
           .insert([{
@@ -230,7 +236,7 @@ export const EnhancedAssignMembershipDialog = ({
           body: { 
             contact_id: contact.id,
             membership_plan_id: selectedPlan,
-            discount_id: selectedDiscount || null,
+            discount_id: selectedDiscount !== "none" ? selectedDiscount : null,
             billing_contact_id: billingContact,
             metadata: {
               membership_subscription_id: membership.id,
@@ -278,7 +284,7 @@ export const EnhancedAssignMembershipDialog = ({
 
   const resetForm = () => {
     setSelectedPlan("");
-    setSelectedDiscount("");
+    setSelectedDiscount("none");
     setBillingContact(contact?.id || "");
     setStartDate(new Date().toISOString().split('T')[0]);
     setScheduledPaymentDate("");
@@ -289,7 +295,7 @@ export const EnhancedAssignMembershipDialog = ({
   };
 
   const selectedPlanData = membershipPlans.find(plan => plan.id === selectedPlan);
-  const selectedDiscountData = discountTypes.find(discount => discount.id === selectedDiscount);
+  const selectedDiscountData = discountTypes.find(discount => discount.id === selectedDiscount && selectedDiscount !== "none");
   const billingContactData = familyMembers.find(member => member.id === billingContact);
 
   return (
@@ -400,7 +406,7 @@ export const EnhancedAssignMembershipDialog = ({
                     <SelectValue placeholder="Select a discount (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No discount</SelectItem>
+                    <SelectItem value="none">No discount</SelectItem>
                     {discountTypes.map((discount) => (
                       <SelectItem key={discount.id} value={discount.id}>
                         <div className="flex justify-between items-center w-full">
