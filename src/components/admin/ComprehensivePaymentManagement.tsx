@@ -494,6 +494,14 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                onClick={() => navigate?.('/payment-log')}
+                variant="outline"
+                size="sm"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Payment Log
+              </Button>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="justify-start text-left font-normal">

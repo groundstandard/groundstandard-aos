@@ -25,6 +25,7 @@ import Chat from "./pages/Chat";
 import Reports from "./pages/Reports";
 import BeltTesting from "./pages/BeltTesting";
 import Payments from "./pages/Payments";
+import PaymentLog from "./pages/PaymentLog";
 import Events from "./pages/Events";
 import Subscription from "./pages/Subscription";
 import Contacts from "./pages/Contacts";
@@ -73,6 +74,7 @@ const AppRoutes = () => {
         <Route path="/reports" element={user ? <AcademyGatekeeper><Reports /></AcademyGatekeeper> : <Auth />} />
         <Route path="/belt-testing" element={user ? <AcademyGatekeeper><BeltTesting /></AcademyGatekeeper> : <Auth />} />
         <Route path="/payments" element={user ? <AcademyGatekeeper><Payments /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/payment-log" element={user ? <AcademyGatekeeper><PaymentLog /></AcademyGatekeeper> : <Auth />} />
         <Route path="/payment-test-dashboard" element={user ? <AcademyGatekeeper><PaymentTestDashboard /></AcademyGatekeeper> : <Auth />} />
         <Route path="/subscription" element={user ? <AcademyGatekeeper><SubscriptionPage /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts" element={user ? <AcademyGatekeeper><Contacts /></AcademyGatekeeper> : <Auth />} />
