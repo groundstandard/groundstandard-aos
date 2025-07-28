@@ -227,7 +227,9 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           payment_method: billingCycle.payment_method,
           is_frozen: !!activeFreeze,
           freeze_reason: activeFreeze?.reason,
-          original_amount_cents: activeFreeze ? billingCycle.total_amount_cents : undefined
+          original_amount_cents: activeFreeze ? billingCycle.total_amount_cents : undefined,
+          setup_fee_cents: (billingCycle as any).setup_fee_cents || 0,
+          monthly_amount_cents: (billingCycle as any).monthly_amount_cents || 0
         };
 
         acc[membershipId].push(processedSchedule);
@@ -754,7 +756,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                               </div>
                                <div className="flex items-center gap-2">
                                  <div className="text-right">
-                                   <div className="font-medium">{formatCurrency(schedule.amount_cents)}</div>
+                                   <div className="font-medium">{formatCurrency(schedule.total_amount_cents)}</div>
                                     {/* Show breakdown for setup fee if applicable */}
                                     {schedule.setup_fee_cents && schedule.setup_fee_cents > 0 && schedule.monthly_amount_cents && schedule.monthly_amount_cents > 0 && (
                                       <div className="text-xs text-muted-foreground">

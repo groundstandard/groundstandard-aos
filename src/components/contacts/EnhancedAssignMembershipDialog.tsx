@@ -313,7 +313,10 @@ export const EnhancedAssignMembershipDialog = ({
             due_date: cycleStartDate.toISOString().split('T')[0],
             paid_date: null,
             status: 'pending',
-            payment_method: 'cash'
+            payment_method: 'cash',
+            // Add breakdown fields for display
+            setup_fee_cents: isFirstPayment ? setupFee : 0,
+            monthly_amount_cents: monthlyAmount
           });
         }
         
@@ -384,7 +387,10 @@ export const EnhancedAssignMembershipDialog = ({
               due_date: startDate,
               paid_date: startDate,
               status: 'paid',
-              payment_method: 'card'
+              payment_method: 'card',
+              // Add breakdown fields for display
+              setup_fee_cents: setupFee,
+              monthly_amount_cents: finalPrice
             }]);
         } else {
           // Multi-month plan - charge first payment, schedule the rest
@@ -426,7 +432,10 @@ export const EnhancedAssignMembershipDialog = ({
               due_date: cycleStartDate.toISOString().split('T')[0],
               paid_date: isFirstPayment ? startDate : null,
               status: isFirstPayment ? 'paid' : 'pending',
-              payment_method: 'card'
+              payment_method: 'card',
+              // Add breakdown fields for display
+              setup_fee_cents: isFirstPayment ? setupFee : 0,
+              monthly_amount_cents: monthlyAmount
             });
           }
           
