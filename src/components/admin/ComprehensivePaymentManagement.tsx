@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +44,14 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     { value: "reports", label: "Reports", icon: FileText },
     { value: "log", label: "Log", icon: Eye }
   ];
+
+  // Handle navigation when log tab is selected
+  useEffect(() => {
+    if (activeTab === 'log') {
+      navigate?.('/payment-log');
+      setActiveTab('overview'); // Reset to overview after navigation
+    }
+  }, [activeTab, navigate]);
 
   const getCurrentTabLabel = () => {
     const currentTab = tabOptions.find(option => option.value === activeTab);
@@ -369,22 +377,6 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </Card>
         )}
 
-        {activeTab === "log" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Log</CardTitle>
-              <CardDescription>View detailed payment transaction history</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Button onClick={() => navigate?.('/payment-log')} className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  View Payment Log
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
