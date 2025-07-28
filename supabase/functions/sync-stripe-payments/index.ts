@@ -117,11 +117,11 @@ serve(async (req) => {
           continue;
         }
 
-        // Check if payment already exists by stripe_payment_intent_id OR stripe_invoice_id
+        // Check if payment already exists by stripe_payment_intent_id
         const { data: existingPayments } = await supabaseClient
           .from("payments")
           .select("id, stripe_payment_intent_id, stripe_invoice_id")
-          .or(`stripe_payment_intent_id.eq.${paymentIntent.id},stripe_invoice_id.eq.${paymentIntent.invoice || 'null'}`);
+          .eq('stripe_payment_intent_id', paymentIntent.id);
 
         if (existingPayments && existingPayments.length > 0) {
           skippedDuplicates++;

@@ -3708,6 +3708,7 @@ export type Database = {
           id: string
           installment_number: number | null
           installment_plan_id: string | null
+          metadata: Json | null
           next_retry_date: string | null
           payment_date: string
           payment_method: string
@@ -3715,6 +3716,7 @@ export type Database = {
           retry_count: number | null
           status: string
           stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
           student_id: string
           subtotal_amount: number | null
           tax_amount: number | null
@@ -3732,6 +3734,7 @@ export type Database = {
           id?: string
           installment_number?: number | null
           installment_plan_id?: string | null
+          metadata?: Json | null
           next_retry_date?: string | null
           payment_date?: string
           payment_method: string
@@ -3739,6 +3742,7 @@ export type Database = {
           retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           student_id: string
           subtotal_amount?: number | null
           tax_amount?: number | null
@@ -3756,6 +3760,7 @@ export type Database = {
           id?: string
           installment_number?: number | null
           installment_plan_id?: string | null
+          metadata?: Json | null
           next_retry_date?: string | null
           payment_date?: string
           payment_method?: string
@@ -3763,6 +3768,7 @@ export type Database = {
           retry_count?: number | null
           status?: string
           stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
           student_id?: string
           subtotal_amount?: number | null
           tax_amount?: number | null
