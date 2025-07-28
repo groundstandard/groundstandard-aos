@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import { RefundManagement } from '@/components/payments/RefundManagement';
 import { PaymentAnalytics } from '@/components/payments/PaymentAnalytics';
 import { PaymentProcessing } from '@/components/payments/PaymentProcessing';
 import { cn } from '@/lib/utils';
+import { PaymentLogContent } from '@/components/payments/PaymentLogContent';
 
 interface ComprehensivePaymentManagementProps {
   navigate?: (path: string) => void;
@@ -45,13 +46,6 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     { value: "log", label: "Log", icon: Eye }
   ];
 
-  // Handle navigation when log tab is selected
-  useEffect(() => {
-    if (activeTab === 'log') {
-      navigate?.('/payment-log');
-      setActiveTab('overview'); // Reset to overview after navigation
-    }
-  }, [activeTab, navigate]);
 
   const getCurrentTabLabel = () => {
     const currentTab = tabOptions.find(option => option.value === activeTab);
@@ -377,6 +371,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </Card>
         )}
 
+        {activeTab === "log" && <PaymentLogContent />}
       </div>
     </div>
   );
