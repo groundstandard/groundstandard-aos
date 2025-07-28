@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Package, AlertTriangle, CheckCircle, Repeat } from 'lucide-react';
+import { ClassPackPurchaseDialog } from './ClassPackPurchaseDialog';
 
 interface ClassPack {
   id: string;
@@ -17,6 +18,7 @@ interface ClassPack {
   auto_renewal: boolean;
   renewal_discount_percentage: number;
   membership_plans: {
+    id: string;
     name: string;
     description: string;
     base_price_cents: number;
@@ -32,6 +34,7 @@ interface ClassPacksCardProps {
 export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
   const [classPacks, setClassPacks] = useState<ClassPack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
         .select(`
           *,
           membership_plans (
+            id,
             name,
             description,
             base_price_cents,
@@ -95,6 +99,10 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handlePurchaseComplete = () => {
+    fetchClassPacks(); // Refresh the class packs list
   };
 
   const formatCurrency = (cents: number) => {
@@ -158,11 +166,22 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
         <CardContent>
           <div className="text-center py-6">
             <p className="text-muted-foreground mb-4">No class packs found</p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowPurchaseDialog(true)}
+            >
               Purchase Class Pack
             </Button>
           </div>
         </CardContent>
+        
+        <ClassPackPurchaseDialog
+          open={showPurchaseDialog}
+          onOpenChange={setShowPurchaseDialog}
+          contactId={contactId || ''}
+          onPurchaseComplete={handlePurchaseComplete}
+        />
       </Card>
     );
   }
@@ -273,7 +292,7 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
                       variant="outline" 
                       size="sm" 
                       className="mt-2 w-full"
-                      onClick={() => handleRenewClassPack(pack.id, pack.membership_plans.name)}
+                      onClick={() => handleRenewClassPack(pack.id, pack.membership_plans.id)}
                     >
                       Renew Class Pack
                     </Button>
@@ -289,7 +308,25 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
             </div>
           );
         })}
+        
+        <div className="pt-4 border-t">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => setShowPurchaseDialog(true)}
+          >
+            Purchase Another Class Pack
+          </Button>
+        </div>
       </CardContent>
+
+      <ClassPackPurchaseDialog
+        open={showPurchaseDialog}
+        onOpenChange={setShowPurchaseDialog}
+        contactId={contactId || ''}
+        onPurchaseComplete={handlePurchaseComplete}
+      />
     </Card>
   );
 };
