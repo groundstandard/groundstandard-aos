@@ -20,13 +20,15 @@ import { SubscriptionRenewalDialog } from '@/components/subscription/Subscriptio
 
 interface PaymentSchedule {
   id: string;
-  scheduled_date: string;
+  cycle_start_date: string;
+  cycle_end_date: string;
   amount_cents: number;
+  total_amount_cents: number;
   status: string;
-  installment_number: number;
-  total_installments: number;
+  due_date: string;
+  paid_date?: string;
   stripe_invoice_id?: string;
-  payment_method_id?: string;
+  payment_method?: string;
   is_frozen?: boolean;
   freeze_reason?: string;
   original_amount_cents?: number;
@@ -163,10 +165,10 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
   const fetchPaymentSchedules = async (membershipIds: string[]) => {
     try {
       const { data, error } = await supabase
-        .from('payment_schedule')
+        .from('billing_cycles')
         .select('*')
         .in('membership_subscription_id', membershipIds)
-        .order('scheduled_date');
+        .order('cycle_start_date');
 
       if (error) throw error;
 
@@ -191,14 +193,14 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
 
       setMembershipFreezes(freezesByMembership);
 
-      // Apply freezes to payment schedule and group by membership subscription ID
-      const grouped = (data || []).reduce((acc, schedule) => {
-        const membershipId = schedule.membership_subscription_id;
+      // Convert billing cycles to PaymentSchedule format and apply freezes
+      const grouped = (data || []).reduce((acc, billingCycle) => {
+        const membershipId = billingCycle.membership_subscription_id;
         if (!acc[membershipId]) {
           acc[membershipId] = [];
         }
 
-        const paymentDate = new Date(schedule.scheduled_date);
+        const paymentDate = new Date(billingCycle.due_date);
         
         // Check if this payment falls within any active freeze period
         const activeFreeze = (freezeData || []).find(freeze => {
@@ -211,16 +213,21 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                  (freezeEnd === null || paymentDate <= freezeEnd);
         });
 
-        // If payment is in a freeze period, update the amount and add freeze info
-        const processedSchedule = activeFreeze ? {
-          ...schedule,
-          amount_cents: activeFreeze.frozen_amount_cents,
-          is_frozen: true,
-          freeze_reason: activeFreeze.reason,
-          original_amount_cents: schedule.amount_cents
-        } : { 
-          ...schedule, 
-          is_frozen: false 
+        // Convert billing cycle to PaymentSchedule format
+        const processedSchedule: PaymentSchedule = {
+          id: billingCycle.id,
+          cycle_start_date: billingCycle.cycle_start_date,
+          cycle_end_date: billingCycle.cycle_end_date,
+          amount_cents: activeFreeze ? activeFreeze.frozen_amount_cents : billingCycle.total_amount_cents,
+          total_amount_cents: billingCycle.total_amount_cents,
+          status: billingCycle.status,
+          due_date: billingCycle.due_date,
+          paid_date: billingCycle.paid_date,
+          stripe_invoice_id: billingCycle.stripe_invoice_id,
+          payment_method: billingCycle.payment_method,
+          is_frozen: !!activeFreeze,
+          freeze_reason: activeFreeze?.reason,
+          original_amount_cents: activeFreeze ? billingCycle.total_amount_cents : undefined
         };
 
         acc[membershipId].push(processedSchedule);
@@ -229,7 +236,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
 
       setPaymentSchedules(grouped);
     } catch (error) {
-      console.error('Error fetching payment schedules:', error);
+      console.error('Error fetching billing cycles:', error);
     }
   };
 
@@ -320,13 +327,13 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
     }
   };
 
-  const isPastDue = (scheduledDate: string, status: string) => {
+  const isPastDue = (dueDate: string, status: string) => {
     const today = new Date();
-    const paymentDate = new Date(scheduledDate);
+    const paymentDate = new Date(dueDate);
     return paymentDate < today && status === 'pending';
   };
 
-  const handleMakePayment = (schedule: PaymentSchedule) => {
+  const handleMakePayment = (schedule: any) => {
     setSelectedPaymentSchedule(schedule);
     setShowPaymentDialog(true);
   };
@@ -550,12 +557,12 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {schedules.some(s => isPastDue(s.scheduled_date, s.status)) && (
-                          <Badge variant="destructive" className="text-xs">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Past Due
-                          </Badge>
-                        )}
+                         {schedules.some(s => isPastDue(s.due_date, s.status)) && (
+                           <Badge variant="destructive" className="text-xs">
+                             <AlertTriangle className="h-3 w-3 mr-1" />
+                             Past Due
+                           </Badge>
+                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button 
@@ -704,7 +711,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                             <div
                               key={schedule.id}
                               className={`flex items-center justify-between p-3 rounded-lg border ${
-                                isPastDue(schedule.scheduled_date, schedule.status) ? 'border-red-200 bg-red-50' : 'bg-card'
+                                isPastDue(schedule.due_date, schedule.status) ? 'border-red-200 bg-red-50' : 'bg-card'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -722,9 +729,9 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                            Freeze Compensation
                                          </Badge>
                                        </>
-                                     ) : (
-                                       `Payment ${schedule.installment_number} of ${schedule.total_installments}`
-                                     )}
+                      ) : (
+                        `Monthly Payment Cycle`
+                      )}
                                      {schedule.is_frozen && (
                                        <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
                                          <Snowflake className="h-3 w-3 mr-1" />
@@ -732,9 +739,9 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                        </Badge>
                                      )}
                                    </div>
-                                  <div className="text-muted-foreground">
-                                    Due: {new Date(schedule.scheduled_date).toLocaleDateString()}
-                                  </div>
+                                   <div className="text-muted-foreground">
+                                     Due: {new Date(schedule.due_date).toLocaleDateString()}
+                                   </div>
                                   {schedule.is_frozen && schedule.freeze_reason && (
                                     <div className="text-xs text-blue-600">
                                       Reason: {schedule.freeze_reason}
@@ -742,18 +749,18 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                   )}
                                 </div>
                                 <Badge variant="outline" className={getPaymentStatusColor(schedule.status)}>
-                                  {schedule.status === 'past_due' && isPastDue(schedule.scheduled_date, schedule.status) ? 'Past Due' : schedule.status}
+                                  {schedule.status === 'past_due' && isPastDue(schedule.due_date, schedule.status) ? 'Past Due' : schedule.status}
                                 </Badge>
                               </div>
                                <div className="flex items-center gap-2">
                                  <div className="text-right">
                                    <div className="font-medium">{formatCurrency(schedule.amount_cents)}</div>
-                                   {/* Show breakdown for first payment with setup fee */}
-                                   {schedule.installment_number === 1 && schedule.setup_fee_cents > 0 && schedule.monthly_amount_cents > 0 && (
-                                     <div className="text-xs text-muted-foreground">
-                                       Monthly: {formatCurrency(schedule.monthly_amount_cents)} + Setup: {formatCurrency(schedule.setup_fee_cents)}
-                                     </div>
-                                   )}
+                                    {/* Show breakdown for setup fee if applicable */}
+                                    {schedule.setup_fee_cents && schedule.setup_fee_cents > 0 && schedule.monthly_amount_cents && schedule.monthly_amount_cents > 0 && (
+                                      <div className="text-xs text-muted-foreground">
+                                        Monthly: {formatCurrency(schedule.monthly_amount_cents)} + Setup: {formatCurrency(schedule.setup_fee_cents)}
+                                      </div>
+                                    )}
                                    {schedule.is_frozen && schedule.original_amount_cents && (
                                      <div className="text-xs text-muted-foreground line-through">
                                        {formatCurrency(schedule.original_amount_cents)}
@@ -763,14 +770,17 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
                                 {schedule.status === 'paid' && (
                                   <CheckCircle className="h-4 w-4 text-green-600" />
                                 )}
-                                <PaymentScheduleActions 
-                                  schedule={{
-                                    ...schedule,
-                                    membership_subscription_id: membership.id
-                                  }}
-                                  onUpdate={fetchActiveMemberships}
-                                  onPayNow={handleMakePayment}
-                                />
+                                 <PaymentScheduleActions 
+                                   schedule={{
+                                     ...schedule,
+                                     scheduled_date: schedule.due_date,
+                                     installment_number: 1,
+                                     total_installments: 1,
+                                     membership_subscription_id: membership.id
+                                   }}
+                                   onUpdate={fetchActiveMemberships}
+                                   onPayNow={handleMakePayment}
+                                 />
                               </div>
                             </div>
                           ))}
@@ -840,7 +850,7 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           prefilledDescription={
             selectedPaymentSchedule.payment_type === 'signup_fee' ? 'Signup Fee' :
             selectedPaymentSchedule.payment_type === 'freeze_compensation' ? 'Freeze Compensation' :
-            `Payment ${selectedPaymentSchedule.installment_number} of ${selectedPaymentSchedule.total_installments}`
+            'Monthly Payment Cycle'
           }
           onSuccess={() => {
             fetchActiveMemberships();
