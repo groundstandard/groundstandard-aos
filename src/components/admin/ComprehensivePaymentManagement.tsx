@@ -98,7 +98,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
       {/* Quick Actions */}
       <div className={cn(
         "grid gap-2",
-        isMobile ? "grid-cols-2" : "grid-cols-3 md:grid-cols-6"
+        isMobile ? "grid-cols-2" : "grid-cols-6"
       )}>
         <Card className="cursor-pointer hover:shadow-md transition-shadow">
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
@@ -118,7 +118,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               </h3>
             </div>
             {!isMobile && (
-              <p className="text-xs text-muted-foreground">Generate payment links</p>
+              <p className="text-xs text-muted-foreground">Generate payment links for contacts</p>
             )}
           </CardContent>
         </Card>
@@ -165,6 +165,75 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
             </div>
             {!isMobile && (
               <p className="text-xs text-muted-foreground">Send payment reminders</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <CalendarIcon className={cn(
+                "text-red-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Late Fees" : "Calculate Late Fees"}
+              </h3>
+            </div>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Process overdue payments</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <RotateCcw className={cn(
+                "text-green-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Refunds" : "Refunds & Credits"}
+              </h3>
+            </div>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <FileText className={cn(
+                "text-purple-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Tax" : "Tax Management"}
+              </h3>
+            </div>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
             )}
           </CardContent>
         </Card>
