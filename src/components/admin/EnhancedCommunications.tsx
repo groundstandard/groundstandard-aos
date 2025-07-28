@@ -128,9 +128,9 @@ export const EnhancedCommunications = () => {
         name: seq.name,
         trigger: seq.trigger_type,
         status: seq.is_active ? 'active' : 'paused',
-        emails_sent: Math.floor(Math.random() * 200), // TODO: Implement real tracking
-        open_rate: Math.floor(Math.random() * 40) + 60, // TODO: Implement real tracking
-        click_rate: Math.floor(Math.random() * 20) + 10 // TODO: Implement real tracking
+        emails_sent: 0, // Placeholder - implement real tracking
+        open_rate: 0, // Placeholder - implement real tracking
+        click_rate: 0 // Placeholder - implement real tracking
       }));
 
       setSequences(formattedSequences);

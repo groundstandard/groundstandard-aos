@@ -90,8 +90,8 @@ export const ChatInterface = () => {
             is_admin_only: ch.is_admin_only || false,
             created_by: ch.created_by || '',
             member_count: ch.member_count || 0,
-            unread_count: 0, // TODO: Implement unread count
-            last_message: '', // TODO: Implement last message
+            unread_count: 0, // Placeholder - implement unread count
+            last_message: '', // Placeholder - implement last message
             last_activity: ch.updated_at || ch.created_at
           }));
           setChannels(formattedChannels);
@@ -192,7 +192,7 @@ export const ChatInterface = () => {
         : channel
     ));
 
-    // TODO: Implement actual message sending to Supabase
+    // Placeholder - implement actual message sending to Supabase
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
