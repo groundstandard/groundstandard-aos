@@ -228,8 +228,8 @@ export const ActiveMembershipCard = ({ contactId }: ActiveMembershipCardProps) =
           is_frozen: !!activeFreeze,
           freeze_reason: activeFreeze?.reason,
           original_amount_cents: activeFreeze ? billingCycle.total_amount_cents : undefined,
-          setup_fee_cents: (billingCycle as any).setup_fee_cents || 0,
-          monthly_amount_cents: (billingCycle as any).monthly_amount_cents || 0
+          setup_fee_cents: billingCycle.setup_fee_cents || 0,
+          monthly_amount_cents: billingCycle.monthly_amount_cents || 0
         };
 
         acc[membershipId].push(processedSchedule);

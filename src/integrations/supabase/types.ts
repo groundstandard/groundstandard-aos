@@ -865,10 +865,12 @@ export type Database = {
           failure_reason: string | null
           id: string
           membership_subscription_id: string
+          monthly_amount_cents: number | null
           next_retry_date: string | null
           paid_date: string | null
           payment_method: string | null
           retry_count: number | null
+          setup_fee_cents: number | null
           status: string
           stripe_invoice_id: string | null
           tax_amount_cents: number | null
@@ -885,10 +887,12 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           membership_subscription_id: string
+          monthly_amount_cents?: number | null
           next_retry_date?: string | null
           paid_date?: string | null
           payment_method?: string | null
           retry_count?: number | null
+          setup_fee_cents?: number | null
           status?: string
           stripe_invoice_id?: string | null
           tax_amount_cents?: number | null
@@ -905,10 +909,12 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           membership_subscription_id?: string
+          monthly_amount_cents?: number | null
           next_retry_date?: string | null
           paid_date?: string | null
           payment_method?: string | null
           retry_count?: number | null
+          setup_fee_cents?: number | null
           status?: string
           stripe_invoice_id?: string | null
           tax_amount_cents?: number | null
