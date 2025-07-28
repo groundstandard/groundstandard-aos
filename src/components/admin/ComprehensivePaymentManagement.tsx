@@ -66,37 +66,6 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-6 w-6" />
-                Comprehensive Payment Management
-              </CardTitle>
-              <CardDescription>
-                Advanced payment processing, analytics, and automation
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={() => navigate?.('/payment-log')}
-                variant="outline"
-                size="sm"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Payment Log
-              </Button>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Quick Actions */}
       <div className={cn(
         "grid gap-2",
