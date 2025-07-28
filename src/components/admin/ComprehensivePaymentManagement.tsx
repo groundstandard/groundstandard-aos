@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -122,6 +123,7 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   const { profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   
   const [dateRange, setDateRange] = useState<DateRange>({
     from: startOfMonth(new Date()),
@@ -129,6 +131,21 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   });
   
   const [activeTab, setActiveTab] = useState('overview');
+  
+  const tabOptions = [
+    { value: "overview", label: "Overview", icon: TrendingUp },
+    { value: "processing", label: "Processing", icon: CreditCard },
+    { value: "analytics", label: "Analytics", icon: BarChart3 },
+    { value: "schedules", label: "Schedules", icon: Clock },
+    { value: "reminders", label: "Reminders", icon: Bell },
+    { value: "refunds", label: "Refunds", icon: RotateCcw },
+    { value: "reports", label: "Reports", icon: FileText }
+  ];
+
+  const getCurrentTabLabel = () => {
+    const currentTab = tabOptions.find(option => option.value === activeTab);
+    return currentTab ? currentTab.label : "Overview";
+  };
   const [showPaymentLinkDialog, setShowPaymentLinkDialog] = useState(false);
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -834,17 +851,33 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
 
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className={cn(
+        "grid gap-2",
+        isMobile ? "grid-cols-2" : "grid-cols-3 md:grid-cols-6"
+      )}>
         {/* Create Payment Link */}
         <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3 mb-1">
-                  <LinkIcon className="h-6 w-6 text-blue-600" />
-                  <h3 className="font-semibold text-sm">Create Payment Link</h3>
+              <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+                <div className={cn(
+                  "flex items-center mb-1",
+                  isMobile ? "flex-col gap-1 text-center" : "gap-2"
+                )}>
+                  <LinkIcon className={cn(
+                    "text-blue-600",
+                    isMobile ? "h-4 w-4" : "h-5 w-5"
+                  )} />
+                  <h3 className={cn(
+                    "font-semibold",
+                    isMobile ? "text-xs leading-tight" : "text-sm"
+                  )}>
+                    {isMobile ? "Payment Link" : "Create Payment Link"}
+                  </h3>
                 </div>
-                <p className="text-xs text-muted-foreground">Generate payment links for contacts</p>
+                {!isMobile && (
+                  <p className="text-xs text-muted-foreground">Generate payment links for contacts</p>
+                )}
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -968,12 +1001,25 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3 mb-1">
-                  <Clock className="h-6 w-6 text-green-600" />
-                  <h3 className="font-semibold text-sm">Setup Recurring</h3>
+              <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+                <div className={cn(
+                  "flex items-center mb-1",
+                  isMobile ? "flex-col gap-1 text-center" : "gap-2"
+                )}>
+                  <Clock className={cn(
+                    "text-green-600",
+                    isMobile ? "h-4 w-4" : "h-5 w-5"
+                  )} />
+                  <h3 className={cn(
+                    "font-semibold",
+                    isMobile ? "text-xs leading-tight" : "text-sm"
+                  )}>
+                    {isMobile ? "Recurring" : "Setup Recurring"}
+                  </h3>
                 </div>
-                <p className="text-xs text-muted-foreground">Create payment schedules</p>
+                {!isMobile && (
+                  <p className="text-xs text-muted-foreground">Create payment schedules</p>
+                )}
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -1403,12 +1449,25 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         <Dialog open={showReminderDialog} onOpenChange={setShowReminderDialog}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-3 mb-1">
-                  <Bell className="h-6 w-6 text-orange-600" />
-                  <h3 className="font-semibold text-sm">Send Reminder</h3>
+              <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+                <div className={cn(
+                  "flex items-center mb-1",
+                  isMobile ? "flex-col gap-1 text-center" : "gap-2"
+                )}>
+                  <Bell className={cn(
+                    "text-orange-600",
+                    isMobile ? "h-4 w-4" : "h-5 w-5"
+                  )} />
+                  <h3 className={cn(
+                    "font-semibold",
+                    isMobile ? "text-xs leading-tight" : "text-sm"
+                  )}>
+                    {isMobile ? "Reminder" : "Send Reminder"}
+                  </h3>
                 </div>
-                <p className="text-xs text-muted-foreground">Send payment reminders</p>
+                {!isMobile && (
+                  <p className="text-xs text-muted-foreground">Send payment reminders</p>
+                )}
               </CardContent>
             </Card>
           </DialogTrigger>
@@ -1485,12 +1544,25 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => calculateLateFeesMutation.mutate()}
         >
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3 mb-1">
-              <Calculator className="h-6 w-6 text-red-600" />
-              <h3 className="font-semibold text-sm">Calculate Late Fees</h3>
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <Calculator className={cn(
+                "text-red-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Late Fees" : "Calculate Late Fees"}
+              </h3>
             </div>
-            <p className="text-xs text-muted-foreground">Process overdue payments</p>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Process overdue payments</p>
+            )}
           </CardContent>
         </Card>
 
@@ -1499,12 +1571,25 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('refunds')}
         >
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3 mb-1">
-              <RotateCcw className="h-6 w-6 text-green-600" />
-              <h3 className="font-semibold text-sm">Refunds & Credits</h3>
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <RotateCcw className={cn(
+                "text-green-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Refunds" : "Refunds & Credits"}
+              </h3>
             </div>
-            <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Process refunds and manage credits</p>
+            )}
           </CardContent>
         </Card>
 
@@ -1513,29 +1598,80 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setActiveTab('taxes')}
         >
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3 mb-1">
-              <Calculator className="h-6 w-6 text-purple-600" />
-              <h3 className="font-semibold text-sm">Tax Management</h3>
+          <CardContent className={cn("p-2", isMobile && "p-1.5")}>
+            <div className={cn(
+              "flex items-center mb-1",
+              isMobile ? "flex-col gap-1 text-center" : "gap-2"
+            )}>
+              <Calculator className={cn(
+                "text-purple-600",
+                isMobile ? "h-4 w-4" : "h-5 w-5"
+              )} />
+              <h3 className={cn(
+                "font-semibold",
+                isMobile ? "text-xs leading-tight" : "text-sm"
+              )}>
+                {isMobile ? "Tax Mgmt" : "Tax Management"}
+              </h3>
             </div>
-            <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground">Configure tax rates and compliance</p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content Tabs */}
+      {/* Main Content Navigation */}
+      {isMobile ? (
+        <div className="mb-6">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full h-12 bg-background/90 backdrop-blur border-border/50">
+              <SelectValue>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const currentOption = tabOptions.find(option => option.value === activeTab);
+                    const IconComponent = currentOption?.icon || TrendingUp;
+                    return (
+                      <>
+                        <IconComponent className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{getCurrentTabLabel()}</span>
+                      </>
+                    );
+                  })()}
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="w-full bg-background/95 backdrop-blur border-border/50">
+              {tabOptions.map((option) => {
+                const IconComponent = option.icon;
+                return (
+                  <SelectItem key={option.value} value={option.value} className="cursor-pointer hover:bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="h-4 w-4 text-primary" />
+                      <span>{option.label}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="schedules">Schedules</TabsTrigger>
-          <TabsTrigger value="reminders">Reminders</TabsTrigger>
-          <TabsTrigger value="refunds">Refunds</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="processing">Processing</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="schedules">Schedules</TabsTrigger>
+            <TabsTrigger value="reminders">Reminders</TabsTrigger>
+            <TabsTrigger value="refunds">Refunds</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
-        <TabsContent value="overview" className="space-y-4">
+      {/* Content Area */}
+      <div className="space-y-4">{activeTab === "overview" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
