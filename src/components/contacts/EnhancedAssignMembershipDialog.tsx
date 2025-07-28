@@ -33,6 +33,7 @@ interface MembershipPlan {
   trial_days: number;
   setup_fee_cents: number;
   signup_fee_cents: number;
+  cycle_length_months?: number;
 }
 
 interface DiscountType {
@@ -285,20 +286,40 @@ export const EnhancedAssignMembershipDialog = ({
 
       // Handle different payment methods
       if (paymentMethod === 'manual' && manualPaymentAmount) {
-        // Record manual payment as PENDING - must be manually verified
-        await supabase
-          .from('billing_cycles')
-          .insert([{
+        // Create proper installment structure for multi-month plans
+        const setupFee = calculateSetupFee();
+        const cycleLength = plan.cycle_length_months || 1;
+        const monthlyAmount = Math.round(finalPrice / cycleLength);
+        
+        // Create billing cycles for each month
+        const billingCycles = [];
+        for (let i = 0; i < cycleLength; i++) {
+          const cycleStartDate = new Date(startDate);
+          cycleStartDate.setMonth(cycleStartDate.getMonth() + i);
+          
+          const cycleEndDate = new Date(cycleStartDate);
+          cycleEndDate.setMonth(cycleEndDate.getMonth() + 1);
+          
+          // First payment includes setup fee
+          const isFirstPayment = i === 0;
+          const paymentAmount = isFirstPayment ? monthlyAmount + setupFee : monthlyAmount;
+          
+          billingCycles.push({
             membership_subscription_id: membership.id,
-            cycle_start_date: startDate,
-            cycle_end_date: new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().split('T')[0],
-            amount_cents: finalPrice * 100, // Use actual plan price, not manual payment amount
-            total_amount_cents: finalPrice * 100, // Use actual plan price, not manual payment amount
-            due_date: startDate,
+            cycle_start_date: cycleStartDate.toISOString().split('T')[0],
+            cycle_end_date: cycleEndDate.toISOString().split('T')[0],
+            amount_cents: monthlyAmount, // Base amount without setup fee
+            total_amount_cents: paymentAmount, // Total amount including setup fee for first payment
+            due_date: cycleStartDate.toISOString().split('T')[0],
             paid_date: null,
             status: 'pending',
             payment_method: 'cash'
-          }]);
+          });
+        }
+        
+        await supabase
+          .from('billing_cycles')
+          .insert(billingCycles);
 
         // Update membership to active
         await supabase
@@ -332,31 +353,92 @@ export const EnhancedAssignMembershipDialog = ({
           return;
         }
 
-        // Use process-direct-payment function with Stripe payment method ID
-        const { data: chargeData, error: chargeError } = await supabase.functions.invoke('process-direct-payment', {
-          body: { 
-            contactId: contact.id,
-            paymentMethodId: selectedMethod.stripe_payment_method_id, // Use Stripe PM ID, not database ID
-            amountCents: finalPrice + calculateSetupFee(),
-            description: `Membership: ${plan.name}`,
-            scheduleType: 'immediate'
-          },
-        });
-
-        console.log('Charge response:', { chargeData, chargeError });
-
-        if (chargeError) {
-          throw chargeError;
-        }
-
-        if (chargeData?.success) {
-          toast({
-            title: "Payment Successful",
-            description: `Membership activated for ${contact.first_name}. Payment processed successfully.`,
+        // Create proper installment structure for multi-month plans
+        const setupFee = calculateSetupFee();
+        const cycleLength = plan.cycle_length_months || 1;
+        
+        if (cycleLength === 1) {
+          // Single payment
+          const { data: chargeData, error: chargeError } = await supabase.functions.invoke('process-direct-payment', {
+            body: { 
+              contactId: contact.id,
+              paymentMethodId: selectedMethod.stripe_payment_method_id,
+              amountCents: finalPrice + setupFee,
+              description: `Membership: ${plan.name}`,
+              scheduleType: 'immediate'
+            },
           });
+
+          if (chargeError) throw chargeError;
+          if (!chargeData?.success) throw new Error(chargeData?.error || 'Payment failed');
+
+          // Create single billing cycle as paid
+          await supabase
+            .from('billing_cycles')
+            .insert([{
+              membership_subscription_id: membership.id,
+              cycle_start_date: startDate,
+              cycle_end_date: new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().split('T')[0],
+              amount_cents: finalPrice,
+              total_amount_cents: finalPrice + setupFee,
+              due_date: startDate,
+              paid_date: startDate,
+              status: 'paid',
+              payment_method: 'card'
+            }]);
         } else {
-          throw new Error(chargeData?.error || 'Payment failed');
+          // Multi-month plan - charge first payment, schedule the rest
+          const monthlyAmount = Math.round(finalPrice / cycleLength);
+          const firstPaymentAmount = monthlyAmount + setupFee;
+          
+          // Charge first payment
+          const { data: chargeData, error: chargeError } = await supabase.functions.invoke('process-direct-payment', {
+            body: { 
+              contactId: contact.id,
+              paymentMethodId: selectedMethod.stripe_payment_method_id,
+              amountCents: firstPaymentAmount,
+              description: `Membership: ${plan.name} (Month 1 of ${cycleLength})`,
+              scheduleType: 'immediate'
+            },
+          });
+
+          if (chargeError) throw chargeError;
+          if (!chargeData?.success) throw new Error(chargeData?.error || 'Payment failed');
+
+          // Create billing cycles for all months
+          const billingCycles = [];
+          for (let i = 0; i < cycleLength; i++) {
+            const cycleStartDate = new Date(startDate);
+            cycleStartDate.setMonth(cycleStartDate.getMonth() + i);
+            
+            const cycleEndDate = new Date(cycleStartDate);
+            cycleEndDate.setMonth(cycleEndDate.getMonth() + 1);
+            
+            const isFirstPayment = i === 0;
+            const paymentAmount = isFirstPayment ? monthlyAmount + setupFee : monthlyAmount;
+            
+            billingCycles.push({
+              membership_subscription_id: membership.id,
+              cycle_start_date: cycleStartDate.toISOString().split('T')[0],
+              cycle_end_date: cycleEndDate.toISOString().split('T')[0],
+              amount_cents: monthlyAmount,
+              total_amount_cents: paymentAmount,
+              due_date: cycleStartDate.toISOString().split('T')[0],
+              paid_date: isFirstPayment ? startDate : null,
+              status: isFirstPayment ? 'paid' : 'pending',
+              payment_method: 'card'
+            });
+          }
+          
+          await supabase
+            .from('billing_cycles')
+            .insert(billingCycles);
         }
+
+        toast({
+          title: "Payment Successful",
+          description: `Membership activated for ${contact.first_name}. Payment processed successfully.`,
+        });
       } else if (paymentMethod === 'scheduled') {
         toast({
           title: "Membership Scheduled",
