@@ -292,8 +292,8 @@ export const EnhancedAssignMembershipDialog = ({
             membership_subscription_id: membership.id,
             cycle_start_date: startDate,
             cycle_end_date: new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().split('T')[0],
-            amount_cents: parseFloat(manualPaymentAmount) * 100,
-            total_amount_cents: parseFloat(manualPaymentAmount) * 100,
+            amount_cents: finalPrice * 100, // Use actual plan price, not manual payment amount
+            total_amount_cents: finalPrice * 100, // Use actual plan price, not manual payment amount
             due_date: startDate,
             paid_date: null,
             status: 'pending',
