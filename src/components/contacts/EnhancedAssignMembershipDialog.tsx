@@ -289,7 +289,7 @@ export const EnhancedAssignMembershipDialog = ({
         // Create proper installment structure for multi-month plans
         const setupFee = calculateSetupFee();
         const cycleLength = plan.cycle_length_months || 1;
-        const monthlyAmount = Math.round(finalPrice / cycleLength);
+        const monthlyAmount = finalPrice; // Monthly rate, not divided by cycle length
         
         // Create billing cycles for each month
         const billingCycles = [];
@@ -388,7 +388,7 @@ export const EnhancedAssignMembershipDialog = ({
             }]);
         } else {
           // Multi-month plan - charge first payment, schedule the rest
-          const monthlyAmount = Math.round(finalPrice / cycleLength);
+          const monthlyAmount = finalPrice; // Monthly rate, not divided by cycle length
           const firstPaymentAmount = monthlyAmount + setupFee;
           
           // Charge first payment
