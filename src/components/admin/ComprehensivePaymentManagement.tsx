@@ -22,8 +22,13 @@ import {
 import { RefundManagement } from '@/components/payments/RefundManagement';
 import { PaymentAnalytics } from '@/components/payments/PaymentAnalytics';
 import { PaymentProcessing } from '@/components/payments/PaymentProcessing';
+import { TaxManagement } from '@/components/payments/TaxManagement';
 import { cn } from '@/lib/utils';
 import { PaymentLogContent } from '@/components/payments/PaymentLogContent';
+import { CreatePaymentLinkDialog } from '@/components/payments/CreatePaymentLinkDialog';
+import { SetupRecurringDialog } from '@/components/payments/SetupRecurringDialog';
+import { SendReminderDialog } from '@/components/payments/SendReminderDialog';
+import { CalculateLateFeeDialog } from '@/components/payments/CalculateLateFeeDialog';
 
 interface ComprehensivePaymentManagementProps {
   navigate?: (path: string) => void;
@@ -34,6 +39,13 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
   const isMobile = useIsMobile();
   
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Dialog states
+  const [showPaymentLinkDialog, setShowPaymentLinkDialog] = useState(false);
+  const [showRecurringDialog, setShowRecurringDialog] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const [showLateFeeDialog, setShowLateFeeDialog] = useState(false);
+  const [showTaxDialog, setShowTaxDialog] = useState(false);
   
   const tabOptions = [
     { value: "overview", label: "Overview", icon: TrendingUp },
@@ -71,7 +83,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
         "grid gap-2",
         isMobile ? "grid-cols-2" : "grid-cols-6"
       )}>
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowPaymentLinkDialog(true)}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -94,7 +109,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowRecurringDialog(true)}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -117,7 +135,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowReminderDialog(true)}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -140,7 +161,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowLateFeeDialog(true)}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -163,7 +187,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setActiveTab('refunds')}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -186,7 +213,10 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card 
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => setShowTaxDialog(true)}
+        >
           <CardContent className={cn("p-2", isMobile && "p-1.5")}>
             <div className={cn(
               "flex items-center mb-1",
@@ -342,6 +372,39 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
 
         {activeTab === "log" && <PaymentLogContent />}
       </div>
+
+      {/* Dialogs */}
+      <CreatePaymentLinkDialog 
+        open={showPaymentLinkDialog} 
+        onOpenChange={setShowPaymentLinkDialog} 
+      />
+      <SetupRecurringDialog 
+        open={showRecurringDialog} 
+        onOpenChange={setShowRecurringDialog} 
+      />
+      <SendReminderDialog 
+        open={showReminderDialog} 
+        onOpenChange={setShowReminderDialog} 
+      />
+      <CalculateLateFeeDialog 
+        open={showLateFeeDialog} 
+        onOpenChange={setShowLateFeeDialog} 
+      />
+      {showTaxDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Tax Management</h2>
+              <Button variant="ghost" onClick={() => setShowTaxDialog(false)}>
+                ×
+              </Button>
+            </div>
+            <div className="p-4">
+              <TaxManagement />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
