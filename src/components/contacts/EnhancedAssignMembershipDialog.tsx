@@ -285,7 +285,7 @@ export const EnhancedAssignMembershipDialog = ({
       }
 
       // Handle different payment methods
-      if (paymentMethod === 'manual' && manualPaymentAmount) {
+      if (paymentMethod === 'manual') {
         // Create proper installment structure for multi-month plans
         const setupFee = calculateSetupFee();
         const cycleLength = plan.cycle_length_months || 1;
@@ -776,16 +776,10 @@ export const EnhancedAssignMembershipDialog = ({
               )}
 
               {paymentMethod === 'manual' && (
-                <div>
-                  <Label htmlFor="manual-amount">Payment Amount</Label>
-                  <Input
-                    id="manual-amount"
-                    type="number"
-                    placeholder="0.00"
-                    value={manualPaymentAmount}
-                    onChange={(e) => setManualPaymentAmount(e.target.value)}
-                    className="mt-2"
-                  />
+                <div className="text-center py-4 border rounded-lg bg-muted/30">
+                  <p className="text-muted-foreground">
+                    Manual payment selected. The membership will be created and marked as active.
+                  </p>
                 </div>
               )}
 
@@ -865,7 +859,7 @@ export const EnhancedAssignMembershipDialog = ({
           </Button>
           <Button 
             onClick={handleCreateMembership} 
-            disabled={loading || !selectedPlan || (paymentMethod === 'manual' && !manualPaymentAmount) || (paymentMethod === 'scheduled' && !scheduledPaymentDate) || (paymentMethod === 'integrated' && !selectedPaymentMethod)}
+            disabled={loading || !selectedPlan || (paymentMethod === 'scheduled' && !scheduledPaymentDate) || (paymentMethod === 'integrated' && !selectedPaymentMethod)}
             className="min-w-[180px]"
           >
             {loading ? "Processing..." : 
