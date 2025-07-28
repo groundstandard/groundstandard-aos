@@ -5,6 +5,7 @@ import { BackButton } from "@/components/ui/BackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AttendanceReports } from "@/components/reports/AttendanceReports";
 import { StudentReports } from "@/components/reports/StudentReports";
 import { ClassReports } from "@/components/reports/ClassReports";
@@ -17,6 +18,20 @@ const Reports = () => {
   const { profile } = useAuth();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
+
+  const reportOptions = [
+    { value: "overview", label: "Overview", icon: TrendingUp },
+    { value: "advanced", label: "Advanced", icon: BarChart3 },
+    { value: "attendance", label: "Attendance", icon: Calendar },
+    { value: "students", label: "Students", icon: Users },
+    { value: "classes", label: "Classes", icon: BarChart3 },
+    { value: "revenue", label: "Revenue", icon: DollarSign }
+  ];
+
+  const getCurrentReportLabel = () => {
+    const currentReport = reportOptions.find(option => option.value === activeTab);
+    return currentReport ? currentReport.label : "Overview";
+  };
 
   // Only allow admin and owner access
   if (profile?.role !== 'admin' && profile?.role !== 'owner') {
@@ -52,37 +67,44 @@ const Reports = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          {isMobile ? (
-            <ScrollArea className="w-full whitespace-nowrap">
-              <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-background/50 backdrop-blur p-1 text-muted-foreground min-w-max">
-                <TabsTrigger value="overview" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <TrendingUp className="h-4 w-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="advanced" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <BarChart3 className="h-4 w-4" />
-                  Advanced
-                </TabsTrigger>
-                <TabsTrigger value="attendance" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <Calendar className="h-4 w-4" />
-                  Attendance
-                </TabsTrigger>
-                <TabsTrigger value="students" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <Users className="h-4 w-4" />
-                  Students
-                </TabsTrigger>
-                <TabsTrigger value="classes" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <BarChart3 className="h-4 w-4" />
-                  Classes
-                </TabsTrigger>
-                <TabsTrigger value="revenue" className="flex items-center gap-2 px-3 py-1.5 text-sm min-w-max">
-                  <DollarSign className="h-4 w-4" />
-                  Revenue
-                </TabsTrigger>
-              </TabsList>
-            </ScrollArea>
-          ) : (
+        {/* Mobile Navigation */}
+        {isMobile ? (
+          <div className="mb-6">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full h-12 bg-background/90 backdrop-blur border-border/50">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const currentOption = reportOptions.find(option => option.value === activeTab);
+                      const IconComponent = currentOption?.icon || TrendingUp;
+                      return (
+                        <>
+                          <IconComponent className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{getCurrentReportLabel()}</span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="w-full bg-background/95 backdrop-blur border-border/50">
+                {reportOptions.map((option) => {
+                  const IconComponent = option.icon;
+                  return (
+                    <SelectItem key={option.value} value={option.value} className="cursor-pointer hover:bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="h-4 w-4 text-primary" />
+                        <span>{option.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          /* Desktop Navigation */
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-6 bg-background/50 backdrop-blur">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
@@ -109,32 +131,18 @@ const Reports = () => {
                 Revenue
               </TabsTrigger>
             </TabsList>
-          )}
+          </Tabs>
+        )}
 
-          <TabsContent value="overview" className="space-y-6">
-            <OverviewReports />
-          </TabsContent>
-
-          <TabsContent value="advanced" className="space-y-6">
-            <AdvancedReports />
-          </TabsContent>
-
-          <TabsContent value="attendance" className="space-y-6">
-            <AttendanceReports />
-          </TabsContent>
-
-          <TabsContent value="students" className="space-y-6">
-            <StudentReports />
-          </TabsContent>
-
-          <TabsContent value="classes" className="space-y-6">
-            <ClassReports />
-          </TabsContent>
-
-          <TabsContent value="revenue" className="space-y-6">
-            <RevenueReports />
-          </TabsContent>
-        </Tabs>
+        {/* Content Area */}
+        <div className="space-y-6">
+          {activeTab === "overview" && <OverviewReports />}
+          {activeTab === "advanced" && <AdvancedReports />}
+          {activeTab === "attendance" && <AttendanceReports />}
+          {activeTab === "students" && <StudentReports />}
+          {activeTab === "classes" && <ClassReports />}
+          {activeTab === "revenue" && <RevenueReports />}
+        </div>
       </div>
     </div>
   );
