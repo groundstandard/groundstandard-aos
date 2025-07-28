@@ -180,78 +180,157 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Navigation Tabs */}
+          {/* Navigation Tabs - Mobile Responsive */}
           <div className="space-y-6 mb-8">
-            <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => setSelectedTab('overview')}
-              >
-                <TrendingUp className="h-4 w-4" />
-                Overview
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'contacts' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => {
-                  setSelectedTab('contacts');
-                  navigate('/contacts');
-                }}
-              >
-                <Users className="h-4 w-4" />
-                Contacts
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => {
-                  setSelectedTab('payments');
-                  navigate('/payments');
-                }}
-              >
-                <DollarSign className="h-4 w-4" />
-                Payments
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => {
-                  setSelectedTab('attendance');
-                  navigate('/attendance');
-                }}
-              >
-                <CheckCircle className="h-4 w-4" />
-                Attendance
-              </Button>
-              <Button 
-                variant="ghost" 
-                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'reporting' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-                onClick={() => {
-                  setSelectedTab('reporting');
-                  navigate('/reports');
-                }}
-              >
-                <BarChart3 className="h-4 w-4" />
-                Reporting
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
-                onClick={() => navigate('/automations')}
-              >
-                <Activity className="h-4 w-4" />
-                Automations
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
-                onClick={() => navigate('/profile')}
-              >
-                <User className="h-4 w-4" />
-                Profile
-              </Button>
-            </div>
+            {isMobile ? (
+              // Mobile: Dropdown navigation
+              <div className="border-b border-border pb-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        {selectedTab === 'overview' && 'Overview'}
+                        {selectedTab === 'contacts' && 'Contacts'}
+                        {selectedTab === 'payments' && 'Payments'}
+                        {selectedTab === 'attendance' && 'Attendance'}
+                        {selectedTab === 'reporting' && 'Reporting'}
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full bg-background">
+                    <DropdownMenuItem 
+                      onClick={() => setSelectedTab('overview')}
+                      className={selectedTab === 'overview' ? 'bg-muted' : ''}
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Overview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setSelectedTab('contacts');
+                        navigate('/contacts');
+                      }}
+                      className={selectedTab === 'contacts' ? 'bg-muted' : ''}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Contacts
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setSelectedTab('payments');
+                        navigate('/payments');
+                      }}
+                      className={selectedTab === 'payments' ? 'bg-muted' : ''}
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Payments
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setSelectedTab('attendance');
+                        navigate('/attendance');
+                      }}
+                      className={selectedTab === 'attendance' ? 'bg-muted' : ''}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setSelectedTab('reporting');
+                        navigate('/reports');
+                      }}
+                      className={selectedTab === 'reporting' ? 'bg-muted' : ''}
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Reporting
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/automations')}>
+                      <Activity className="h-4 w-4 mr-2" />
+                      Automations
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              // Desktop/Tablet: Horizontal tab navigation
+              <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                  onClick={() => setSelectedTab('overview')}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Overview
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'contacts' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                  onClick={() => {
+                    setSelectedTab('contacts');
+                    navigate('/contacts');
+                  }}
+                >
+                  <Users className="h-4 w-4" />
+                  Contacts
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                  onClick={() => {
+                    setSelectedTab('payments');
+                    navigate('/payments');
+                  }}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Payments
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                  onClick={() => {
+                    setSelectedTab('attendance');
+                    navigate('/attendance');
+                  }}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Attendance
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'reporting' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                  onClick={() => {
+                    setSelectedTab('reporting');
+                    navigate('/reports');
+                  }}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Reporting
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
+                  onClick={() => navigate('/automations')}
+                >
+                  <Activity className="h-4 w-4" />
+                  Automations
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="flex items-center gap-2 whitespace-nowrap hover:text-primary pb-2"
+                  onClick={() => navigate('/profile')}
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Button>
+              </div>
+            )}
 
             {/* Secondary Navigation Ribbons */}
             {selectedTab === 'payments' && (
