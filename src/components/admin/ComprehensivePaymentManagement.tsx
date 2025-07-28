@@ -41,7 +41,8 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
     { value: "schedules", label: "Schedules", icon: Clock },
     { value: "reminders", label: "Reminders", icon: Bell },
     { value: "refunds", label: "Refunds", icon: RotateCcw },
-    { value: "reports", label: "Reports", icon: FileText }
+    { value: "reports", label: "Reports", icon: FileText },
+    { value: "log", label: "Log", icon: Eye }
   ];
 
   const getCurrentTabLabel = () => {
@@ -293,6 +294,23 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
                     <FileText className="h-6 w-6 mx-auto mb-1" />
                     <div>Revenue Report</div>
                   </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "log" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Log</CardTitle>
+              <CardDescription>View detailed payment transaction history</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Button onClick={() => navigate?.('/payment-log')} className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  View Payment Log
                 </Button>
               </div>
             </CardContent>
