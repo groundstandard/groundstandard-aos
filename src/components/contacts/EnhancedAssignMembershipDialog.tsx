@@ -285,7 +285,7 @@ export const EnhancedAssignMembershipDialog = ({
 
       // Handle different payment methods
       if (paymentMethod === 'manual' && manualPaymentAmount) {
-        // Record manual payment - using billing_cycles table instead
+        // Record manual payment as PENDING - must be manually verified
         await supabase
           .from('billing_cycles')
           .insert([{
@@ -295,8 +295,8 @@ export const EnhancedAssignMembershipDialog = ({
             amount_cents: parseFloat(manualPaymentAmount) * 100,
             total_amount_cents: parseFloat(manualPaymentAmount) * 100,
             due_date: startDate,
-            paid_date: new Date().toISOString().split('T')[0],
-            status: 'paid',
+            paid_date: null,
+            status: 'pending',
             payment_method: 'cash'
           }]);
 
