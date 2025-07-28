@@ -29,9 +29,10 @@ interface ClassPack {
 
 interface ClassPacksCardProps {
   contactId?: string;
+  onPurchaseComplete?: () => void;
 }
 
-export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
+export const ClassPacksCard = ({ contactId, onPurchaseComplete }: ClassPacksCardProps) => {
   const [classPacks, setClassPacks] = useState<ClassPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
@@ -103,6 +104,7 @@ export const ClassPacksCard = ({ contactId }: ClassPacksCardProps) => {
 
   const handlePurchaseComplete = () => {
     fetchClassPacks(); // Refresh the class packs list
+    onPurchaseComplete?.(); // Refresh parent component data (payments, etc.)
   };
 
   const formatCurrency = (cents: number) => {

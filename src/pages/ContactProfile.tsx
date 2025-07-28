@@ -809,7 +809,15 @@ const ContactProfile = () => {
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-4">
               <ActiveMembershipCard contactId={contact?.id} />
-              <ClassPacksCard contactId={contact?.id} />
+              <ClassPacksCard 
+                contactId={contact?.id} 
+                onPurchaseComplete={() => {
+                  // Refresh all contact data including payments after class pack purchase
+                  if (contact?.id) {
+                    fetchContactData(contact.id);
+                  }
+                }}
+              />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Recent Payments */}
