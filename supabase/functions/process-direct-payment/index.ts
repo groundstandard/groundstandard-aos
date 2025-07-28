@@ -296,7 +296,8 @@ serve(async (req) => {
       payment: savedPayment,
       stripe_status: paymentIntent.status,
       requires_action: paymentIntent.status === 'requires_action',
-      client_secret: paymentIntent.client_secret
+      client_secret: paymentIntent.client_secret,
+      stripe_customer_id: customer.id
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

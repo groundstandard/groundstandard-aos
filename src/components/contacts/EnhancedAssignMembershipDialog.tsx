@@ -374,6 +374,14 @@ export const EnhancedAssignMembershipDialog = ({
 
           if (chargeError) throw chargeError;
           if (!chargeData?.success) throw new Error(chargeData?.error || 'Payment failed');
+          
+          // Update profile with Stripe customer ID if returned
+          if (chargeData?.stripe_customer_id) {
+            await supabase
+              .from('profiles')
+              .update({ stripe_customer_id: chargeData.stripe_customer_id })
+              .eq('id', contact.id);
+          }
 
           // Create single billing cycle as paid
           await supabase
@@ -410,6 +418,14 @@ export const EnhancedAssignMembershipDialog = ({
 
           if (chargeError) throw chargeError;
           if (!chargeData?.success) throw new Error(chargeData?.error || 'Payment failed');
+          
+          // Update profile with Stripe customer ID if returned
+          if (chargeData?.stripe_customer_id) {
+            await supabase
+              .from('profiles')
+              .update({ stripe_customer_id: chargeData.stripe_customer_id })
+              .eq('id', contact.id);
+          }
 
           // Create billing cycles for all months
           const billingCycles = [];

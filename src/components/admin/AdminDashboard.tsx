@@ -32,6 +32,7 @@ import {
   User,
   Zap
 } from "lucide-react";
+import { PaymentSyncButton } from "./PaymentSyncButton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const AdminDashboard = () => {
@@ -436,7 +437,10 @@ export const AdminDashboard = () => {
 
 
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stripe Payment Sync */}
+        <PaymentSyncButton />
+        
         {/* System Health */}
         <Card>
           <CardHeader>
