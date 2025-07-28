@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useResponsive } from "@/hooks/use-responsive";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import PaymentDetailModal from "@/components/contacts/PaymentDetailModal";
 import AttendanceEditModal from "@/components/contacts/AttendanceEditModal";
 import { StudentPaymentIntegration } from "@/components/payments/StudentPaymentIntegration";
 import { PaymentMethodManager } from "@/components/payments/PaymentMethodManager";
+import TouchOptimized from "@/components/mobile/TouchOptimized";
 
 interface Contact {
   id: string;
@@ -131,6 +133,7 @@ const ContactProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
   const { toast } = useToast();
   
   const [contact, setContact] = useState<Contact | null>(null);
@@ -702,8 +705,8 @@ const ContactProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <TouchOptimized className={`container mx-auto ${isMobile ? 'px-2 py-2' : 'px-4 py-6'}`}>
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <BackButton />
@@ -809,17 +812,19 @@ const ContactProfile = () => {
           <TabsContent value="overview" className="space-y-4">
             <div className="space-y-4">
               <ActiveMembershipCard contactId={contact?.id} />
-              <ClassPacksCard 
-                contactId={contact?.id} 
-                onPurchaseComplete={() => {
-                  // Refresh all contact data including payments after class pack purchase
-                  if (contact?.id) {
-                    fetchContactData(contact.id);
-                  }
-                }}
-              />
+              {!isMobile && (
+                <ClassPacksCard 
+                  contactId={contact?.id} 
+                  onPurchaseComplete={() => {
+                    // Refresh all contact data including payments after class pack purchase
+                    if (contact?.id) {
+                      fetchContactData(contact.id);
+                    }
+                  }}
+                />
+              )}
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
                 {/* Recent Payments */}
                 <Card className="card-minimal">
                   <CardHeader>
@@ -1628,7 +1633,7 @@ const ContactProfile = () => {
             });
           }}
         />
-      </div>
+      </TouchOptimized>
     </div>
   );
 };

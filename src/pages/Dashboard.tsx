@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useResponsive } from "@/hooks/use-responsive";
+import TouchOptimized from "@/components/mobile/TouchOptimized";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +40,7 @@ const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useEffectiveRole();
   const { academy, currentAcademyId } = useAcademy();
-  const isMobile = useIsMobile();
+  const { isMobile, isTablet } = useResponsive();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
@@ -119,10 +120,10 @@ const Dashboard = () => {
   // Show Admin Dashboard for admin users
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-subtle">
+      <TouchOptimized className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header - Admin Dashboard Title with Academy Switcher */}
-          <div className="flex justify-between items-center mb-3">
+          <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'} mb-3`}>
             {/* Left side - Academy Switcher and Title */}
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Show academy switcher for all admin/owner roles */}
@@ -296,37 +297,55 @@ const Dashboard = () => {
           {/* Only show overview content when overview tab is selected */}
           {selectedTab === 'overview' && (
             <>
-              {/* Quick Stats Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+              {/* Quick Stats Overview - Responsive Grid */}
+              <div className={`grid gap-3 mb-6 ${
+                isMobile 
+                  ? 'grid-cols-2' 
+                  : isTablet 
+                    ? 'grid-cols-3' 
+                    : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+              }`}>
                 {quickStats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <Card key={index} className="hover:shadow-lg transition-shadow h-32 flex flex-col relative">
-                      <CardHeader className="pb-2 px-4 pt-4 min-h-[44px] pr-12">
-                        <CardTitle className="text-sm font-medium text-muted-foreground leading-tight">
-                          {stat.title}
-                        </CardTitle>
-                        <IconComponent className={`h-5 w-5 ${stat.color} absolute top-4 right-4`} />
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col justify-end px-4 pb-4 pt-0">
-                        <div className="text-2xl font-bold text-black mb-1">{stat.value}</div>
-                        <div className="h-[20px] flex items-end">
-                          <p className={`text-xs leading-none ${
-                            stat.trend === 'up' ? 'text-green-600' : 
-                            stat.trend === 'down' ? 'text-red-600' : 
-                            'text-muted-foreground'
+                    <TouchOptimized key={index}>
+                      <Card className={`hover:shadow-lg transition-shadow flex flex-col relative ${
+                        isMobile ? 'h-28' : 'h-32'
+                      }`}>
+                        <CardHeader className={`pb-2 px-3 pt-3 min-h-[36px] ${isMobile ? 'pr-10' : 'pr-12'}`}>
+                          <CardTitle className={`font-medium text-muted-foreground leading-tight ${
+                            isMobile ? 'text-xs' : 'text-sm'
                           }`}>
-                            {stat.change} from last month
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
+                            {stat.title}
+                          </CardTitle>
+                          <IconComponent className={`${stat.color} absolute top-3 right-3 ${
+                            isMobile ? 'h-4 w-4' : 'h-5 w-5'
+                          }`} />
+                        </CardHeader>
+                        <CardContent className={`flex-1 flex flex-col justify-end px-3 pb-3 pt-0`}>
+                          <div className={`font-bold text-black mb-1 ${
+                            isMobile ? 'text-xl' : 'text-2xl'
+                          }`}>{stat.value}</div>
+                          <div className="h-[16px] flex items-end">
+                            <p className={`leading-none ${
+                              stat.trend === 'up' ? 'text-green-600' : 
+                              stat.trend === 'down' ? 'text-red-600' : 
+                              'text-muted-foreground'
+                            } ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                              {stat.change}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TouchOptimized>
                   );
                 })}
               </div>
-
-              {/* Performance Overview - 3 Separate Cards */}
-              <div className="grid gap-6 mb-6 md:grid-cols-3">
+              
+              {/* Performance Overview - Responsive Cards */}
+              <div className={`grid gap-4 mb-6 ${
+                isMobile ? 'grid-cols-1' : 'md:grid-cols-3'
+              }`}>
                 {/* Student Retention Card */}
                 <Card>
                   <CardHeader>
@@ -453,7 +472,7 @@ const Dashboard = () => {
             <ViewToggle />
           </div>
         </div>
-      </div>
+      </TouchOptimized>
     );
   }
 
