@@ -122,13 +122,8 @@ const Dashboard = () => {
     return (
       <TouchOptimized className="min-h-screen bg-gradient-subtle">
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
-          {/* Main Header - Admin Dashboard Title with Academy Switcher */}
-          <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'} mb-3`}>
-            {/* Left side - Title only */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
-            </div>
-
+          {/* Main Header - Check-In and Chat buttons only */}
+          <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-end items-center'} mb-3`}>
             {/* Right side - Check-In, Chat and Settings buttons */}
             {/* Desktop/Tablet Layout */}
             <div className="hidden sm:flex items-center gap-2">
@@ -175,85 +170,10 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Navigation Tabs - Mobile Responsive */}
+          {/* Navigation Tabs - Now positioned where graph icon was */}
           <div className="space-y-6 mb-8">
-            {isMobile ? (
-              // Mobile: Dropdown navigation
-              <div className="border-b border-border pb-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        {selectedTab === 'overview' && 'Overview'}
-                        {selectedTab === 'contacts' && 'Contacts'}
-                        {selectedTab === 'payments' && 'Payments'}
-                        {selectedTab === 'attendance' && 'Attendance'}
-                        {selectedTab === 'reporting' && 'Reporting'}
-                      </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-full bg-background">
-                    <DropdownMenuItem 
-                      onClick={() => setSelectedTab('overview')}
-                      className={selectedTab === 'overview' ? 'bg-muted' : ''}
-                    >
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Overview
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('contacts');
-                        navigate('/contacts');
-                      }}
-                      className={selectedTab === 'contacts' ? 'bg-muted' : ''}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Contacts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('payments');
-                        navigate('/payments');
-                      }}
-                      className={selectedTab === 'payments' ? 'bg-muted' : ''}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Payments
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('attendance');
-                        navigate('/attendance');
-                      }}
-                      className={selectedTab === 'attendance' ? 'bg-muted' : ''}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Attendance
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('reporting');
-                        navigate('/reports');
-                      }}
-                      className={selectedTab === 'reporting' ? 'bg-muted' : ''}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Reporting
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/automations')}>
-                      <Activity className="h-4 w-4 mr-2" />
-                      Automations
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
+            {/* Desktop/Tablet: Horizontal tab navigation first, then mobile dropdown */}
+            {!isMobile ? (
               // Desktop/Tablet: Horizontal tab navigation
               <div className="flex items-center gap-4 border-b border-border pb-4 overflow-x-auto">
                 <Button 
@@ -325,8 +245,84 @@ const Dashboard = () => {
                   Profile
                 </Button>
               </div>
-            )}
-
+            ) :
+              (
+                // Mobile: Dropdown navigation
+                <div className="border-b border-border pb-4">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4" />
+                          {selectedTab === 'overview' && 'Overview'}
+                          {selectedTab === 'contacts' && 'Contacts'}
+                          {selectedTab === 'payments' && 'Payments'}
+                          {selectedTab === 'attendance' && 'Attendance'}
+                          {selectedTab === 'reporting' && 'Reporting'}
+                        </div>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full bg-background">
+                      <DropdownMenuItem 
+                        onClick={() => setSelectedTab('overview')}
+                        className={selectedTab === 'overview' ? 'bg-muted' : ''}
+                      >
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Overview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedTab('contacts');
+                          navigate('/contacts');
+                        }}
+                        className={selectedTab === 'contacts' ? 'bg-muted' : ''}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Contacts
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedTab('payments');
+                          navigate('/payments');
+                        }}
+                        className={selectedTab === 'payments' ? 'bg-muted' : ''}
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Payments
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedTab('attendance');
+                          navigate('/attendance');
+                        }}
+                        className={selectedTab === 'attendance' ? 'bg-muted' : ''}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Attendance
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setSelectedTab('reporting');
+                          navigate('/reports');
+                        }}
+                        className={selectedTab === 'reporting' ? 'bg-muted' : ''}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Reporting
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/automations')}>
+                        <Activity className="h-4 w-4 mr-2" />
+                        Automations
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/profile')}>
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             {/* Secondary Navigation Ribbons */}
             {selectedTab === 'payments' && (
               <div className="flex items-center gap-4 border-b border-border pb-4 mt-4 overflow-x-auto">
@@ -365,7 +361,6 @@ const Dashboard = () => {
                 </Button>
               </div>
             )}
-
           </div>
 
           {/* Only show overview content when overview tab is selected */}
