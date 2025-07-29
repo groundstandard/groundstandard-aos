@@ -124,110 +124,8 @@ const Dashboard = () => {
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header with Navigation and Action Buttons */}
           <div className="space-y-6 mb-8">
-            {/* Glass Dock Style Navigation for Desktop */}
-            {!isMobile && !isTablet ? (
-              <div className="flex justify-center mb-8">
-                <div className="flex items-center gap-1 p-2 bg-background/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105 ${
-                      selectedTab === 'overview' ? 'bg-white/20 shadow-md' : ''
-                    }`}
-                    onClick={() => setSelectedTab('overview')}
-                  >
-                    <TrendingUp className="h-5 w-5" />
-                    <span className="text-xs font-medium">Overview</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => {
-                      setSelectedTab('contacts');
-                      navigate('/contacts');
-                    }}
-                  >
-                    <Users className="h-5 w-5" />
-                    <span className="text-xs font-medium">Contacts</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => {
-                      setSelectedTab('payments');
-                      navigate('/payments');
-                    }}
-                  >
-                    <DollarSign className="h-5 w-5" />
-                    <span className="text-xs font-medium">Payments</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => {
-                      setSelectedTab('attendance');
-                      navigate('/attendance');
-                    }}
-                  >
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="text-xs font-medium">Attendance</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => {
-                      setSelectedTab('reporting');
-                      navigate('/reports');
-                    }}
-                  >
-                    <BarChart3 className="h-5 w-5" />
-                    <span className="text-xs font-medium">Reporting</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => navigate('/automations')}
-                  >
-                    <Activity className="h-5 w-5" />
-                    <span className="text-xs font-medium">Automations</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-                    onClick={() => navigate('/profile')}
-                  >
-                    <User className="h-5 w-5" />
-                    <span className="text-xs font-medium">Profile</span>
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 ml-6">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2 bg-background/20 backdrop-blur-xl border-white/20 hover:bg-white/10"
-                    onClick={() => navigate('/checkin')}
-                  >
-                    <Clock className="h-4 w-4" />
-                    Check-In
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2 bg-background/20 backdrop-blur-xl border-white/20 hover:bg-white/10"
-                    onClick={() => navigate('/chat')}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat
-                  </Button>
-                </div>
-              </div>
-            ) : isTablet ? (
+            {/* Tablet/Mobile Navigation */}
+            {!isMobile && isTablet ? (
               // Tablet: Dropdown navigation
               <div className="flex items-center justify-between border-b border-border pb-4">
                 <DropdownMenu>
@@ -634,7 +532,90 @@ const Dashboard = () => {
             </>
           )}
         
-
+          {/* macOS-style Glass Dock at Bottom */}
+          {!isMobile && !isTablet && (
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+              <div className="flex items-center gap-1 p-2 bg-background/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105 ${
+                    selectedTab === 'overview' ? 'bg-white/20 shadow-md' : ''
+                  }`}
+                  onClick={() => setSelectedTab('overview')}
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="text-xs font-medium">Overview</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => {
+                    setSelectedTab('contacts');
+                    navigate('/contacts');
+                  }}
+                >
+                  <Users className="h-5 w-5" />
+                  <span className="text-xs font-medium">Contacts</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => {
+                    setSelectedTab('payments');
+                    navigate('/payments');
+                  }}
+                >
+                  <DollarSign className="h-5 w-5" />
+                  <span className="text-xs font-medium">Payments</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => {
+                    setSelectedTab('attendance');
+                    navigate('/attendance');
+                  }}
+                >
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="text-xs font-medium">Attendance</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => {
+                    setSelectedTab('reporting');
+                    navigate('/reports');
+                  }}
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  <span className="text-xs font-medium">Reporting</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => navigate('/automations')}
+                >
+                  <Activity className="h-5 w-5" />
+                  <span className="text-xs font-medium">Automations</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                  onClick={() => navigate('/profile')}
+                >
+                  <User className="h-5 w-5" />
+                  <span className="text-xs font-medium">Profile</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </TouchOptimized>
     );
