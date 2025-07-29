@@ -124,14 +124,9 @@ const Dashboard = () => {
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header - Admin Dashboard Title with Academy Switcher */}
           <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'} mb-3`}>
-            {/* Left side - Academy Switcher and Title */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              {/* Show academy switcher for all admin/owner roles */}
-              <MultiAcademySwitcher />
-              <div className="flex items-center gap-2 sm:gap-3">
-                <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
-                <h1 className="text-lg sm:text-xl md:text-4xl font-bold text-foreground whitespace-nowrap">AgencyDashboard</h1>
-              </div>
+            {/* Left side - Title only */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <BarChart3 className="h-5 w-5 sm:h-6 md:h-8 text-primary" />
             </div>
 
             {/* Right side - Check-In, Chat and Settings buttons */}

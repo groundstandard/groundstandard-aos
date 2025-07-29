@@ -17,7 +17,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
-  const navLinks = [
+  const navLinks = user ? [] : [
     { href: "#features", label: "Features" },
     { href: "#pricing", label: "Pricing" },
     { href: "#about", label: "About" }
