@@ -121,13 +121,6 @@ const Navigation = () => {
                   {!isMobile && (
                     <>
                       <MultiAcademySwitcher />
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => navigate('/dashboard')}
-                      >
-                        Dashboard
-                      </Button>
                     </>
                   )}
                   {isMobile && <MobileMenu />}
