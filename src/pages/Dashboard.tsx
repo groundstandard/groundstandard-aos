@@ -634,10 +634,6 @@ const Dashboard = () => {
           )}
         
 
-          {/* View Toggle at bottom center */}
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10">
-            <ViewToggle />
-          </div>
         </div>
       </TouchOptimized>
     );
@@ -907,10 +903,6 @@ const Dashboard = () => {
           <ClassReservationsSidebar onReservationChange={refreshData} />
         </div>
 
-        {/* View Toggle at bottom center */}
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-10">
-          <ViewToggle />
-        </div>
       </div>
     </div>
   );
