@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import { Shield, Menu } from "lucide-react";
+import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Activity, User } from "lucide-react";
 import { useState } from "react";
 import {
   Sheet,
@@ -89,85 +89,158 @@ const Navigation = () => {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Shield className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
-              <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>DojoMaster</span>
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Shield className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
+                <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>DojoMaster</span>
+              </div>
+              {user && <ViewToggle />}
             </div>
-            {user && <ViewToggle />}
-          </div>
-          
-          {!isMobile && (
-            <div className="hidden md:flex items-center space-x-8">
-              {navLinks.map((link) => (
-                <a 
-                  key={link.href}
-                  href={link.href} 
-                  className="text-muted-foreground hover:text-foreground transition-smooth"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          )}
-          
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {user ? (
-              <>
-                {!isMobile && (
-                  <>
-                    <MultiAcademySwitcher />
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      onClick={() => navigate('/dashboard')}
-                    >
-                      Dashboard
-                    </Button>
-                  </>
-                )}
-                {isMobile && <MobileMenu />}
-              </>
-            ) : (
-              <>
-                {!isMobile ? (
-                  <>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate('/auth')}
-                    >
-                      Sign In
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      onClick={() => navigate('/auth')}
-                    >
-                      Get Started
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate('/auth')}
-                    >
-                      Sign In
-                    </Button>
-                    <MobileMenu />
-                  </>
-                )}
-              </>
+            
+            {!isMobile && (
+              <div className="hidden md:flex items-center space-x-8">
+                {navLinks.map((link) => (
+                  <a 
+                    key={link.href}
+                    href={link.href} 
+                    className="text-muted-foreground hover:text-foreground transition-smooth"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
             )}
+            
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {user ? (
+                <>
+                  {!isMobile && (
+                    <>
+                      <MultiAcademySwitcher />
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => navigate('/dashboard')}
+                      >
+                        Dashboard
+                      </Button>
+                    </>
+                  )}
+                  {isMobile && <MobileMenu />}
+                </>
+              ) : (
+                <>
+                  {!isMobile ? (
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate('/auth')}
+                      >
+                        Sign In
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => navigate('/auth')}
+                      >
+                        Get Started
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate('/auth')}
+                      >
+                        Sign In
+                      </Button>
+                      <MobileMenu />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* macOS-style Glass Dock at Bottom - Global Navigation */}
+      {user && !isMobile && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="flex items-center gap-1 p-2 bg-background/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/dashboard')}
+            >
+              <TrendingUp className="h-5 w-5" />
+              <span className="text-xs font-medium">Overview</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/contacts')}
+            >
+              <Users className="h-5 w-5" />
+              <span className="text-xs font-medium">Contacts</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/payments')}
+            >
+              <DollarSign className="h-5 w-5" />
+              <span className="text-xs font-medium">Payments</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/attendance')}
+            >
+              <CheckCircle className="h-5 w-5" />
+              <span className="text-xs font-medium">Attendance</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/reports')}
+            >
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-xs font-medium">Reporting</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/automations')}
+            >
+              <Activity className="h-5 w-5" />
+              <span className="text-xs font-medium">Automations</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="h-5 w-5" />
+              <span className="text-xs font-medium">Profile</span>
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
