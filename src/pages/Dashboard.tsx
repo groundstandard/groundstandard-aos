@@ -124,84 +124,8 @@ const Dashboard = () => {
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header with Navigation and Action Buttons */}
           <div className="space-y-6 mb-8">
-            {/* Tablet/Mobile Navigation */}
-            {!isMobile && isTablet ? (
-              // Tablet: Dropdown navigation
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="justify-between min-w-[180px]">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        {selectedTab === 'overview' && 'Overview'}
-                        {selectedTab === 'contacts' && 'Contacts'}
-                        {selectedTab === 'payments' && 'Payments'}
-                        {selectedTab === 'attendance' && 'Attendance'}
-                        {selectedTab === 'reporting' && 'Reporting'}
-                      </div>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-[200px] bg-background z-50">
-                    <DropdownMenuItem 
-                      onClick={() => setSelectedTab('overview')}
-                      className={selectedTab === 'overview' ? 'bg-muted' : ''}
-                    >
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Overview
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('contacts');
-                        navigate('/contacts');
-                      }}
-                      className={selectedTab === 'contacts' ? 'bg-muted' : ''}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Contacts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('payments');
-                        navigate('/payments');
-                      }}
-                      className={selectedTab === 'payments' ? 'bg-muted' : ''}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Payments
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('attendance');
-                        navigate('/attendance');
-                      }}
-                      className={selectedTab === 'attendance' ? 'bg-muted' : ''}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Attendance
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setSelectedTab('reporting');
-                        navigate('/reports');
-                      }}
-                      className={selectedTab === 'reporting' ? 'bg-muted' : ''}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Reporting
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/automations')}>
-                      <Activity className="h-4 w-4 mr-2" />
-                      Automations
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
+            {/* Mobile Navigation Only */}
+            {isMobile && (
               // Mobile: Full dropdown with stacked buttons
               <div className="space-y-4">
                 <div className="border-b border-border pb-4">
