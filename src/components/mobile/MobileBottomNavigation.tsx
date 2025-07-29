@@ -16,8 +16,17 @@ import {
   Settings,
   Award,
   FileText,
-  Activity
+  Activity,
+  MoreHorizontal
 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 
 // ABOUTME: Mobile-first bottom navigation component that provides touch-friendly navigation for all main app sections. Features swipe gestures, vibration feedback, and role-based menu items.
 
@@ -36,6 +45,7 @@ const MobileBottomNavigation = () => {
   const { user } = useAuth();
   const { isAdmin, isOwner, effectiveRole } = useEffectiveRole();
   const [activeTab, setActiveTab] = useState('');
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false);
 
   // Define navigation items based on user role
   const getNavItems = (): NavItem[] => {
@@ -50,8 +60,8 @@ const MobileBottomNavigation = () => {
       { id: 'dashboard', label: 'Home', icon: Home, path: '/dashboard' },
       { id: 'contacts', label: 'Contacts', icon: Users, path: '/contacts' },
       { id: 'payments', label: 'Payments', icon: CreditCard, path: '/payments' },
-      { id: 'reports', label: 'Reports', icon: BarChart3, path: '/reports' },
-      { id: 'more', label: 'More', icon: Settings, path: '/admin' }
+      { id: 'attendance', label: 'Attendance', icon: CheckCircle, path: '/attendance' },
+      { id: 'more', label: 'More', icon: MoreHorizontal, path: '#more' }
     ];
 
     const instructorItems: NavItem[] = [
@@ -90,8 +100,20 @@ const MobileBottomNavigation = () => {
       navigator.vibrate(50);
     }
     
+    // Handle special "More" button
+    if (item.id === 'more') {
+      setMoreSheetOpen(true);
+      return;
+    }
+    
     setActiveTab(item.id);
     navigate(item.path);
+  };
+
+  // Handle more menu item selection
+  const handleMoreItemPress = (path: string) => {
+    setMoreSheetOpen(false);
+    navigate(path);
   };
 
   // Don't show on auth pages or when user is not logged in
@@ -148,6 +170,41 @@ const MobileBottomNavigation = () => {
           })}
         </div>
       </div>
+
+      {/* More Menu Sheet */}
+      <Sheet open={moreSheetOpen} onOpenChange={setMoreSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-lg">
+          <SheetHeader className="pb-4">
+            <SheetTitle>More Options</SheetTitle>
+          </SheetHeader>
+          <div className="grid gap-2">
+            <Button
+              variant="ghost"
+              className="justify-start h-12"
+              onClick={() => handleMoreItemPress('/reports')}
+            >
+              <BarChart3 className="h-5 w-5 mr-3" />
+              Reporting
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start h-12"
+              onClick={() => handleMoreItemPress('/automations')}
+            >
+              <Activity className="h-5 w-5 mr-3" />
+              Automations
+            </Button>
+            <Button
+              variant="ghost"
+              className="justify-start h-12"
+              onClick={() => handleMoreItemPress('/profile')}
+            >
+              <User className="h-5 w-5 mr-3" />
+              Profile
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Bottom padding to prevent content from being hidden behind navigation */}
       <div className="h-16 md:hidden" aria-hidden="true" />
