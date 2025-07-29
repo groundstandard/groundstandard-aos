@@ -124,92 +124,93 @@ const Dashboard = () => {
         <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
           {/* Main Header with Navigation and Action Buttons */}
           <div className="space-y-6 mb-8">
-            {/* Single row layout for desktop/tablet with tabs and buttons */}
+            {/* Glass Dock Style Navigation for Desktop */}
             {!isMobile && !isTablet ? (
-              // Desktop: All on one row
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div className="flex items-center gap-2 overflow-x-auto">
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center gap-1 p-2 bg-background/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg">
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className={`flex items-center gap-1.5 whitespace-nowrap text-sm ${selectedTab === 'overview' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105 ${
+                      selectedTab === 'overview' ? 'bg-white/20 shadow-md' : ''
+                    }`}
                     onClick={() => setSelectedTab('overview')}
                   >
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    Overview
+                    <TrendingUp className="h-5 w-5" />
+                    <span className="text-xs font-medium">Overview</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className={`flex items-center gap-1.5 whitespace-nowrap text-sm ${selectedTab === 'contacts' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => {
                       setSelectedTab('contacts');
                       navigate('/contacts');
                     }}
                   >
-                    <Users className="h-3.5 w-3.5" />
-                    Contacts
+                    <Users className="h-5 w-5" />
+                    <span className="text-xs font-medium">Contacts</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className={`flex items-center gap-1.5 whitespace-nowrap text-sm ${selectedTab === 'payments' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => {
                       setSelectedTab('payments');
                       navigate('/payments');
                     }}
                   >
-                    <DollarSign className="h-3.5 w-3.5" />
-                    Payments
+                    <DollarSign className="h-5 w-5" />
+                    <span className="text-xs font-medium">Payments</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className={`flex items-center gap-1.5 whitespace-nowrap text-sm ${selectedTab === 'attendance' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => {
                       setSelectedTab('attendance');
                       navigate('/attendance');
                     }}
                   >
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    Attendance
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="text-xs font-medium">Attendance</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className={`flex items-center gap-1.5 whitespace-nowrap text-sm ${selectedTab === 'reporting' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => {
                       setSelectedTab('reporting');
                       navigate('/reports');
                     }}
                   >
-                    <BarChart3 className="h-3.5 w-3.5" />
-                    Reporting
+                    <BarChart3 className="h-5 w-5" />
+                    <span className="text-xs font-medium">Reporting</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="flex items-center gap-1.5 whitespace-nowrap text-sm hover:text-primary pb-2"
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => navigate('/automations')}
                   >
-                    <Activity className="h-3.5 w-3.5" />
-                    Automations
+                    <Activity className="h-5 w-5" />
+                    <span className="text-xs font-medium">Automations</span>
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="flex items-center gap-1.5 whitespace-nowrap text-sm hover:text-primary pb-2"
+                    className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
                     onClick={() => navigate('/profile')}
                   >
-                    <User className="h-3.5 w-3.5" />
-                    Profile
+                    <User className="h-5 w-5" />
+                    <span className="text-xs font-medium">Profile</span>
                   </Button>
                 </div>
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-6">
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-background/20 backdrop-blur-xl border-white/20 hover:bg-white/10"
                     onClick={() => navigate('/checkin')}
                   >
                     <Clock className="h-4 w-4" />
@@ -218,7 +219,7 @@ const Dashboard = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-background/20 backdrop-blur-xl border-white/20 hover:bg-white/10"
                     onClick={() => navigate('/chat')}
                   >
                     <MessageCircle className="h-4 w-4" />
