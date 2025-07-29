@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, ArrowUpDown, Users, UserCheck } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContactFiltersProps {
   searchTerm: string;
@@ -33,6 +34,8 @@ export const ContactFilters = ({
   onShowFamiliesOnlyChange,
   contacts
 }: ContactFiltersProps) => {
+  const isMobile = useIsMobile();
+  
   const getRoleCount = (role: string) => {
     if (role === "all") return contacts.length;
     return contacts.filter(c => c.role === role).length;
@@ -44,26 +47,27 @@ export const ContactFilters = ({
 
   return (
     <div className="space-y-4">
-      {/* Single Unified Filter Interface - Search and Controls Only */}
+      {/* Mobile-Responsive Filter Interface */}
       <Card>
-        <CardContent className="p-4">
-          {/* Search and Controls Row */}
-          <div className="flex items-center gap-3">
-            {/* Search - Compact */}
+        <CardContent className="p-3 sm:p-4">
+          {/* Mobile: Stack elements vertically, Desktop: Side by side */}
+          <div className={isMobile ? "space-y-3" : "flex items-center gap-3"}>
+            {/* Search - Always takes full width on mobile */}
             <div className="flex-1 relative min-w-0">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-10 h-9"
+                className="pl-10 h-10"
               />
             </div>
 
-            {/* Sort Options and Family Toggle */}
-            <div className="flex gap-2 items-center flex-shrink-0">
+            {/* Controls Row - Responsive */}
+            <div className={isMobile ? "flex gap-2 overflow-x-auto pb-1" : "flex gap-2 items-center flex-shrink-0"}>
+              {/* Sort Select - Responsive width */}
               <Select value={sortBy} onValueChange={onSortChange}>
-                <SelectTrigger className="w-32 h-9">
+                <SelectTrigger className={isMobile ? "w-32 h-10 flex-shrink-0" : "w-32 h-10"}>
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,21 +80,23 @@ export const ContactFilters = ({
                 </SelectContent>
               </Select>
 
+              {/* Sort Order Button */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 h-9"
+                className="px-3 h-10 flex-shrink-0"
+                title={sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
               >
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
 
-              {/* Family Toggle - Now inline and compact */}
+              {/* Family Toggle - Responsive */}
               <Button
                 variant={showFamiliesOnly ? "default" : "outline"}
                 size="sm"
                 onClick={() => onShowFamiliesOnlyChange(!showFamiliesOnly)}
-                className="flex items-center gap-1 px-3 whitespace-nowrap h-9"
+                className="flex items-center gap-1 px-3 whitespace-nowrap h-10 flex-shrink-0"
               >
                 <Users className="h-3 w-3" />
                 <span className="hidden sm:inline">Families Only</span>

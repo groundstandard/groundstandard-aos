@@ -19,6 +19,7 @@ import { BulkActionsToolbar } from "@/components/contacts/BulkActionsToolbar";
 import { AddChildDialog } from "@/components/contacts/AddChildDialog";
 import { FamilyHierarchy } from "@/components/contacts/FamilyHierarchy";
 import { EnhancedContactForm } from "@/components/contacts/EnhancedContactForm";
+import { useIsMobile } from "@/hooks/use-mobile";
 // import { AssignMembershipDialog } from "@/components/contacts/AssignMembershipDialog";
 import { 
   Search, 
@@ -73,6 +74,7 @@ const Contacts = () => {
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -489,58 +491,67 @@ const Contacts = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        {/* Mobile-First Header */}
+        <div className="space-y-4 mb-6">
+          {/* Top Row - Back button and title */}
+          <div className="flex items-center gap-3">
             <BackButton />
-            <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                <Users className="h-8 w-8 text-primary" />
-                Contact Management
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                <span className="truncate">Contact Management</span>
               </h1>
               <p className="text-muted-foreground mt-1">
                 Manage academy members and their family relationships
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-
-            {/* View Mode Toggle */}
-            <div className="flex border rounded-lg">
+          {/* Actions Row - Responsive */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* View Mode Toggle - Mobile friendly */}
+            <div className="flex border rounded-lg flex-shrink-0">
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="rounded-r-none"
+                className="flex-1 sm:flex-initial rounded-r-none px-2 sm:px-3"
               >
                 <Table className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only sm:ml-1">List</span>
               </Button>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="rounded-none"
+                className="flex-1 sm:flex-initial rounded-none px-2 sm:px-3"
               >
                 <LayoutGrid className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only sm:ml-1">Grid</span>
               </Button>
               <Button
                 variant={viewMode === 'family' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('family')}
-                className="rounded-l-none"
+                className="flex-1 sm:flex-initial rounded-l-none px-2 sm:px-3"
               >
                 <Users className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only sm:ml-1">Family</span>
               </Button>
             </div>
             
+            {/* Add Contact Button - Full width on mobile */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button onClick={() => { resetForm(); setShowAddDialog(true); }}>
+                <Button 
+                  onClick={() => { resetForm(); setShowAddDialog(true); }}
+                  className="w-full sm:w-auto"
+                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Contact
+                  <span>Add Contact</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
                 <DialogHeader>
                   <DialogTitle>Add New Contact</DialogTitle>
                   <DialogDescription>
@@ -553,11 +564,11 @@ const Contacts = () => {
                   contacts={contacts}
                   mode="add"
                 />
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)} className="order-2 sm:order-1">
                     Cancel
                   </Button>
-                  <Button onClick={handleAddContact}>
+                  <Button onClick={handleAddContact} className="order-1 sm:order-2">
                     Add Contact
                   </Button>
                 </div>
@@ -566,23 +577,24 @@ const Contacts = () => {
           </div>
         </div>
 
-        {/* Enhanced Filters */}
-        <ContactFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filterRole={filterRole}
-          onFilterRoleChange={setFilterRole}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          sortOrder={sortOrder}
-          onSortOrderChange={setSortOrder}
-          showFamiliesOnly={showFamiliesOnly}
-          onShowFamiliesOnlyChange={setShowFamiliesOnly}
-          contacts={organizeContacts.allFiltered}
-        />
+        {/* Content - Mobile optimized */}
+        <div className="mb-4 sm:mb-6">
+          <ContactFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            filterRole={filterRole}
+            onFilterRoleChange={setFilterRole}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            sortOrder={sortOrder}
+            onSortOrderChange={setSortOrder}
+            showFamiliesOnly={showFamiliesOnly}
+            onShowFamiliesOnlyChange={setShowFamiliesOnly}
+            contacts={contacts}
+          />
+        </div>
 
-        {/* Contacts Display */}
-        <div className="mt-6">
+        <div className="space-y-4 sm:space-y-6">
           {viewMode === 'family' ? (
             // Family Hierarchy View
             <div className="space-y-6">
@@ -656,25 +668,27 @@ const Contacts = () => {
               )}
             </div>
           ) : viewMode === 'list' ? (
-            // Table View
-            <ContactsTable
-              contacts={organizeContacts.allFiltered}
-              onView={handleViewContact}
-              onEdit={handleEditContactClick}
-              onAddChild={handleAddChild}
-              onViewFamily={handleViewFamily}
-              onContactClick={handleContactClick}
-              selectedContactIds={selectedContactIds}
-              onSelectionChange={setSelectedContactIds}
-              filterRole={filterRole}
-              onFilterRoleChange={setFilterRole}
-              allContacts={contacts}
-              searchTerm={searchTerm}
-              showFamiliesOnly={showFamiliesOnly}
-            />
+            // List View - Mobile responsive
+            <div className={isMobile ? "overflow-hidden" : ""}>
+              <ContactsTable
+                contacts={organizeContacts.allFiltered}
+                onView={handleViewContact}
+                onEdit={handleEditContactClick}
+                onAddChild={handleAddChild}
+                onViewFamily={handleViewFamily}
+                onContactClick={handleContactClick}
+                selectedContactIds={selectedContactIds}
+                onSelectionChange={setSelectedContactIds}
+                filterRole={filterRole}
+                onFilterRoleChange={setFilterRole}
+                allContacts={contacts}
+                searchTerm={searchTerm}
+                showFamiliesOnly={showFamiliesOnly}
+              />
+            </div>
           ) : (
-            // Grid View
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            // Grid View - Mobile responsive
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {organizeContacts.allFiltered.map((contact) => {
                 const children = contacts.filter(child => child.parent_id === contact.id);
                 return (
@@ -695,9 +709,9 @@ const Contacts = () => {
         </div>
 
 
-        {/* Dialogs */}
+        {/* Dialogs - Mobile responsive */}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
             <DialogHeader>
               <DialogTitle>Contact Details</DialogTitle>
               <DialogDescription>
@@ -706,7 +720,7 @@ const Contacts = () => {
             </DialogHeader>
             {selectedContact && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Name</Label>
                     <p className="text-lg font-semibold">{selectedContact.first_name} {selectedContact.last_name}</p>
@@ -719,10 +733,10 @@ const Contacts = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                    <p className="flex items-center gap-2">
+                    <p className="flex items-center gap-2 break-all">
                       <Mail className="h-4 w-4" />
                       {selectedContact.email}
                     </p>
@@ -738,7 +752,7 @@ const Contacts = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {selectedContact.belt_level && (
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">Belt Level</Label>
@@ -763,7 +777,7 @@ const Contacts = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">Joined</Label>
                     <p className="flex items-center gap-2">
@@ -790,7 +804,7 @@ const Contacts = () => {
         </Dialog>
 
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
             <DialogHeader>
               <DialogTitle>Edit Contact</DialogTitle>
               <DialogDescription>
@@ -803,11 +817,11 @@ const Contacts = () => {
               contacts={contacts}
               mode="edit"
             />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)} className="order-2 sm:order-1">
                 Cancel
               </Button>
-              <Button onClick={handleEditContact}>
+              <Button onClick={handleEditContact} className="order-1 sm:order-2">
                 Update Contact
               </Button>
             </div>

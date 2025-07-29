@@ -18,6 +18,7 @@ import {
   UserPlus, 
   Users 
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Contact {
   id: string;
@@ -85,6 +86,7 @@ export const ContactsTable = ({
   searchTerm = "",
   showFamiliesOnly = false
 }: ContactsTableProps) => {
+  const isMobile = useIsMobile();
   const [columns, setColumns] = useState<Column[]>(DEFAULT_COLUMNS);
   const [sortBy, setSortBy] = useState<string>('full_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -217,68 +219,88 @@ export const ContactsTable = ({
 
   return (
     <div className="border rounded-lg bg-card">
-      {/* Table Header with Role Filters and Column Management */}
-      <div className="space-y-3 p-4 border-b">
-        {/* Top Row: Role Filter Buttons */}
+      {/* Mobile-Responsive Table Header */}
+      <div className="space-y-3 p-3 sm:p-4 border-b">
+        {/* Role Filter Buttons - Mobile Responsive */}
         {onFilterRoleChange && allContacts.length > 0 && (
-          <div className="flex flex-wrap gap-2 items-center justify-between">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={filterRole === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("all")}
-              >
-                All ({getRoleCount("all")})
-              </Button>
-              <Button
-                variant={filterRole === "member" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("member")}
-              >
-                Members ({getRoleCount("member")})
-              </Button>
-              <Button
-                variant={filterRole === "visitor" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("visitor")}
-              >
-                Visitors ({getRoleCount("visitor")})
-              </Button>
-              <Button
-                variant={filterRole === "alumni" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("alumni")}
-              >
-                Alumni ({getRoleCount("alumni")})
-              </Button>
-              <Button
-                variant={filterRole === "staff" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("staff")}
-              >
-                Staff ({getRoleCount("staff")})
-              </Button>
-              <Button
-                variant={filterRole === "instructor" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("instructor")}
-              >
-                Instructors ({getRoleCount("instructor")})
-              </Button>
-              <Button
-                variant={filterRole === "admin" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterRoleChange("admin")}
-              >
-                Admins ({getRoleCount("admin")})
-              </Button>
+          <div className="space-y-2">
+            {/* Mobile: Horizontal scroll for role buttons */}
+            <div className={isMobile ? "overflow-x-auto pb-2" : "flex flex-wrap gap-2 items-center justify-between"}>
+              <div className={isMobile ? "flex gap-2 min-w-max" : "flex flex-wrap gap-2"}>
+                <Button
+                  variant={filterRole === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("all")}
+                  className="flex-shrink-0"
+                >
+                  All ({getRoleCount("all")})
+                </Button>
+                <Button
+                  variant={filterRole === "member" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("member")}
+                  className="flex-shrink-0"
+                >
+                  Members ({getRoleCount("member")})
+                </Button>
+                <Button
+                  variant={filterRole === "visitor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("visitor")}
+                  className="flex-shrink-0"
+                >
+                  Visitors ({getRoleCount("visitor")})
+                </Button>
+                <Button
+                  variant={filterRole === "alumni" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("alumni")}
+                  className="flex-shrink-0"
+                >
+                  Alumni ({getRoleCount("alumni")})
+                </Button>
+                <Button
+                  variant={filterRole === "staff" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("staff")}
+                  className="flex-shrink-0"
+                >
+                  Staff ({getRoleCount("staff")})
+                </Button>
+                <Button
+                  variant={filterRole === "instructor" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("instructor")}
+                  className="flex-shrink-0"
+                >
+                  Instructors ({getRoleCount("instructor")})
+                </Button>
+                <Button
+                  variant={filterRole === "admin" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onFilterRoleChange("admin")}
+                  className="flex-shrink-0"
+                >
+                  Admins ({getRoleCount("admin")})
+                </Button>
+              </div>
+              
+              {/* Family Contacts Badge - Move below on mobile */}
+              {!isMobile && (
+                <Badge variant="secondary" className="flex items-center gap-1 ml-auto">
+                  <Users className="h-3 w-3" />
+                  {getFamilyCount()} Family Members
+                </Badge>
+              )}
             </div>
             
-            {/* Family Contacts Badge */}
-            <Badge variant="secondary" className="flex items-center gap-1 ml-auto">
-              <Users className="h-3 w-3" />
-              {getFamilyCount()} Family Members
-            </Badge>
+            {/* Mobile: Family count moved below buttons */}
+            {isMobile && (
+              <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                <Users className="h-3 w-3" />
+                {getFamilyCount()} Family Members
+              </Badge>
+            )}
           </div>
         )}
 
@@ -319,9 +341,10 @@ export const ContactsTable = ({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table - Mobile Responsive */}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-full"
+               style={{ minWidth: isMobile ? '700px' : 'auto' }}>
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="p-3 text-left w-12">
