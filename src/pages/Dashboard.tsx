@@ -200,26 +200,6 @@ const Dashboard = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => navigate('/checkin')}
-                  >
-                    <Clock className="h-4 w-4" />
-                    Check-In
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => navigate('/chat')}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat
-                  </Button>
-                </div>
               </div>
             ) : (
               // Mobile: Full dropdown with stacked buttons
@@ -298,26 +278,6 @@ const Dashboard = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2 justify-center"
-                    onClick={() => navigate('/checkin')}
-                  >
-                    <Clock className="h-4 w-4" />
-                    Check-In
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex items-center gap-2 justify-center"
-                    onClick={() => navigate('/chat')}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Chat
-                  </Button>
-                </div>
               </div>
             )}
             {/* Secondary Navigation Ribbons */}
@@ -351,10 +311,6 @@ const Dashboard = () => {
                 <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/belt-testing')}>
                   <Star className="h-4 w-4" />
                   Promotions
-                </Button>
-                <Button variant="ghost" className="flex items-center gap-2 hover:text-primary whitespace-nowrap" onClick={() => navigate('/checkin')}>
-                  <Clock className="h-4 w-4" />
-                  Check-In
                 </Button>
               </div>
             )}
@@ -544,15 +500,6 @@ const Dashboard = () => {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             {/* Students don't get academy switcher */}
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/chat')}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chat
-            </Button>
           </div>
           
           <div className="absolute left-1/2 transform -translate-x-1/2 text-center">

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Activity, User } from "lucide-react";
+import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Activity, User, Clock, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import {
   Sheet,
@@ -120,6 +120,24 @@ const Navigation = () => {
                 <>
                   {!isMobile && (
                     <>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => navigate('/checkin')}
+                      >
+                        <Clock className="h-4 w-4" />
+                        Check-In
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => navigate('/chat')}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Chat
+                      </Button>
                       <MultiAcademySwitcher />
                     </>
                   )}
