@@ -488,217 +488,148 @@ export const AttendanceManagement = () => {
 
   return (
     <div className="space-y-6">
-
-      {/* Action Controls */}
-      <Card>
-        <CardContent className="pt-6">
-          {/* Single row with filters and actions */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange.from && dateRange.to 
-                      ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd, yyyy")}`
-                      : "Select date range"
-                    }
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    defaultMonth={dateRange.from}
-                    selected={dateRange}
-                    onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        setDateRange({ from: range.from, to: range.to });
-                      }
-                    }}
-                    numberOfMonths={2}
+      {/* Hidden Mark Attendance Dialog Trigger */}
+      <Dialog open={showMarkDialog} onOpenChange={setShowMarkDialog}>
+        <DialogTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            data-testid="mark-attendance-trigger"
+            className="hidden"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Mark Attendance
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark Attendance</DialogTitle>
+            <DialogDescription>
+              Record attendance for a student in a class session
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="student">Student</Label>
+                <div className="relative student-search-container">
+                  <Input
+                    placeholder="Search students by name, email, or phone..."
+                    value={studentSearchValue}
+                    onChange={(e) => setStudentSearchValue(e.target.value)}
+                    onFocus={() => setStudentSearchOpen(true)}
+                    className="w-full"
                   />
-                </PopoverContent>
-              </Popover>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-64"
-                />
-              </div>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="absent">Absent</SelectItem>
-                  <SelectItem value="late">Late</SelectItem>
-                  <SelectItem value="excused">Excused</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => exportData('attendance')}
-                disabled={exportLoading}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {exportLoading ? 'Exporting...' : 'Export Data'}
-              </Button>
-              <Dialog open={showMarkDialog} onOpenChange={setShowMarkDialog}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    data-testid="mark-attendance-trigger"
-                    className="hidden"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Mark Attendance
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Mark Attendance</DialogTitle>
-                    <DialogDescription>
-                      Record attendance for a student in a class session
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="student">Student</Label>
-                        <div className="relative student-search-container">
-                          <Input
-                            placeholder="Search students by name, email, or phone..."
-                            value={studentSearchValue}
-                            onChange={(e) => setStudentSearchValue(e.target.value)}
-                            onFocus={() => setStudentSearchOpen(true)}
-                            className="w-full"
-                          />
-                          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  
+                  {studentSearchOpen && studentSearchValue && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {studentsLoading ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">Loading students...</div>
+                      ) : (
+                        <>
+                          {students && Array.isArray(students) && students
+                            .filter((student) => 
+                              `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                              student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                              (student.phone && student.phone.includes(studentSearchValue))
+                            )
+                            .slice(0, 10) // Limit to 10 results
+                            .map((student) => (
+                              <div
+                                key={student.id}
+                                className="p-3 hover:bg-accent cursor-pointer border-b border-border last:border-b-0"
+                                onClick={() => {
+                                  setNewAttendance({ ...newAttendance, student_id: student.id });
+                                  setStudentSearchValue(`${student.first_name} ${student.last_name}`);
+                                  setStudentSearchOpen(false);
+                                }}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-sm">
+                                    {student.first_name} {student.last_name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {student.email} • {student.role} 
+                                    {student.belt_level && ` • ${student.belt_level}`}
+                                    {student.phone && ` • ${student.phone}`}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                           
-                          {studentSearchOpen && studentSearchValue && (
-                            <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-                              {studentsLoading ? (
-                                <div className="p-4 text-center text-sm text-muted-foreground">Loading students...</div>
-                              ) : (
-                                <>
-                                  {students && Array.isArray(students) && students
-                                    .filter((student) => 
-                                      `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                      student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                      (student.phone && student.phone.includes(studentSearchValue))
-                                    )
-                                    .slice(0, 10) // Limit to 10 results
-                                    .map((student) => (
-                                      <div
-                                        key={student.id}
-                                        className="p-3 hover:bg-accent cursor-pointer border-b border-border last:border-b-0"
-                                        onClick={() => {
-                                          setNewAttendance({ ...newAttendance, student_id: student.id });
-                                          setStudentSearchValue(`${student.first_name} ${student.last_name}`);
-                                          setStudentSearchOpen(false);
-                                        }}
-                                      >
-                                        <div className="flex flex-col">
-                                          <span className="font-medium text-sm">
-                                            {student.first_name} {student.last_name}
-                                          </span>
-                                          <span className="text-xs text-muted-foreground">
-                                            {student.email} • {student.role} 
-                                            {student.belt_level && ` • ${student.belt_level}`}
-                                            {student.phone && ` • ${student.phone}`}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  
-                                  {students && Array.isArray(students) && students
-                                    .filter((student) => 
-                                      `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                      student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
-                                      (student.phone && student.phone.includes(studentSearchValue))
-                                    ).length === 0 && (
-                                    <div className="p-4 text-center text-sm text-muted-foreground">
-                                      No students found matching "{studentSearchValue}"
-                                    </div>
-                                  )}
-                                </>
-                              )}
+                          {students && Array.isArray(students) && students
+                            .filter((student) => 
+                              `${student.first_name} ${student.last_name}`.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                              student.email.toLowerCase().includes(studentSearchValue.toLowerCase()) ||
+                              (student.phone && student.phone.includes(studentSearchValue))
+                            ).length === 0 && (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              No students found matching "{studentSearchValue}"
                             </div>
                           )}
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="class">Class</Label>
-                        <Select value={newAttendance.class_id} onValueChange={(value) => setNewAttendance({ ...newAttendance, class_id: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select class" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {classes.map((cls) => (
-                              <SelectItem key={cls.id} value={cls.id}>
-                                {cls.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        </>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="date">Date</Label>
-                        <Input
-                          id="date"
-                          type="date"
-                          value={newAttendance.date}
-                          onChange={(e) => setNewAttendance({ ...newAttendance, date: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="status">Status</Label>
-                        <Select value={newAttendance.status} onValueChange={(value: any) => setNewAttendance({ ...newAttendance, status: value })}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="present">Present</SelectItem>
-                            <SelectItem value="absent">Absent</SelectItem>
-                            <SelectItem value="late">Late</SelectItem>
-                            <SelectItem value="excused">Excused</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notes (Optional)</Label>
-                      <Textarea
-                        id="notes"
-                        value={newAttendance.notes}
-                        onChange={(e) => setNewAttendance({ ...newAttendance, notes: e.target.value })}
-                        placeholder="Additional notes about attendance..."
-                      />
-                    </div>
-                    <Button onClick={handleMarkAttendance} className="w-full">
-                      Mark Attendance
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="class">Class</Label>
+                <Select value={newAttendance.class_id} onValueChange={(value) => setNewAttendance({ ...newAttendance, class_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((cls) => (
+                      <SelectItem key={cls.id} value={cls.id}>
+                        {cls.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newAttendance.date}
+                  onChange={(e) => setNewAttendance({ ...newAttendance, date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select value={newAttendance.status} onValueChange={(value: any) => setNewAttendance({ ...newAttendance, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="excused">Excused</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={newAttendance.notes}
+                onChange={(e) => setNewAttendance({ ...newAttendance, notes: e.target.value })}
+                placeholder="Additional notes about attendance..."
+              />
+            </div>
+            <Button onClick={handleMarkAttendance} className="w-full">
+              Mark Attendance
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
       {/* Detailed Analytics Tabs */}
       <Tabs defaultValue="overview" className="w-full">
