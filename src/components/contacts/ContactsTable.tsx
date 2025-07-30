@@ -217,6 +217,133 @@ export const ContactsTable = ({
     return allContacts.filter(c => c.parent_id || allContacts.some(child => child.parent_id === c.id)).length;
   };
 
+  // Mobile Card View Component
+  const MobileContactCard = ({ contact }: { contact: Contact }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+      <div className="border-b bg-card">
+        {/* Main Row - Always Visible */}
+        <div className="flex items-center gap-3 p-4">
+          <Checkbox
+            checked={selectedContactIds.includes(contact.id)}
+            onCheckedChange={() => toggleSelectContact(contact.id)}
+          />
+          
+          {/* Contact Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-sm truncate">
+                  {`${contact.first_name} ${contact.last_name}`}
+                </h3>
+                <p className="text-xs text-muted-foreground truncate">
+                  {contact.email}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs ${roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}`}
+                >
+                  {contact.role}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onView(contact)}
+              className="h-8 w-8 p-0"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="h-8 w-8 p-0"
+            >
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Expanded Details */}
+        {isExpanded && (
+          <div className="px-4 pb-4 space-y-3 bg-muted/20">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Phone:</span>
+                <p className="font-medium">{contact.phone || '-'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Belt Level:</span>
+                <p className="font-medium">{contact.belt_level || '-'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Status:</span>
+                <Badge 
+                  variant="secondary"
+                  className={`text-xs ${statusColors[contact.membership_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}`}
+                >
+                  {contact.membership_status}
+                </Badge>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Joined:</span>
+                <p className="font-medium">{new Date(contact.created_at).toLocaleDateString()}</p>
+              </div>
+              {contact.emergency_contact && (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Emergency Contact:</span>
+                  <p className="font-medium">{contact.emergency_contact}</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(contact)}
+                className="flex-1"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAddChild(contact)}
+                className="flex-1"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Add Child
+              </Button>
+              {hasChildren(contact) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onViewFamily(contact)}
+                  className="flex-1"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Family
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="border rounded-lg bg-card">
       {/* Mobile-Responsive Table Header */}
@@ -316,146 +443,155 @@ export const ContactsTable = ({
             </span>
           </div>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {columns.map(column => (
-                <DropdownMenuItem
-                  key={column.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleColumn(column.id);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Checkbox checked={column.visible} />
-                  {column.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {columns.map(column => (
+                  <DropdownMenuItem
+                    key={column.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleColumn(column.id);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Checkbox checked={column.visible} />
+                    {column.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
-      {/* Table - Mobile Responsive */}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-full"
-               style={{ minWidth: isMobile ? '700px' : 'auto' }}>
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="p-3 text-left w-12">
-                <Checkbox
-                  checked={selectedContactIds.length === contacts.length && contacts.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </th>
-              {visibleColumns.map(column => (
-                <th 
-                  key={column.id} 
-                  className={`p-3 text-left text-sm font-medium ${column.width || ''}`}
-                >
-                  {column.sortable ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort(column.id)}
-                      className="h-auto p-0 font-medium hover:bg-transparent"
-                    >
-                      {column.label}
-                      {sortBy === column.id && (
-                        sortOrder === 'asc' ? 
-                          <ChevronUp className="ml-1 h-3 w-3" /> : 
-                          <ChevronDown className="ml-1 h-3 w-3" />
-                      )}
-                    </Button>
-                  ) : (
-                    column.label
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedContacts.map(contact => (
-              <tr 
-                key={contact.id} 
-                className="border-b hover:bg-muted/30 transition-colors"
-              >
-                <td className="p-3">
+      {/* Mobile Card View or Desktop Table */}
+      {isMobile ? (
+        <div className="divide-y">
+          {sortedContacts.map(contact => (
+            <MobileContactCard key={contact.id} contact={contact} />
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-full">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="p-3 text-left w-12">
                   <Checkbox
-                    checked={selectedContactIds.includes(contact.id)}
-                    onCheckedChange={() => toggleSelectContact(contact.id)}
+                    checked={selectedContactIds.length === contacts.length && contacts.length > 0}
+                    onCheckedChange={toggleSelectAll}
                   />
-                </td>
+                </th>
                 {visibleColumns.map(column => (
-                  <td key={column.id} className="p-3 text-sm">
-                    {column.id === 'role' ? (
-                      <Badge 
-                        variant="secondary" 
-                        className={roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}
+                  <th 
+                    key={column.id} 
+                    className={`p-3 text-left text-sm font-medium ${column.width || ''}`}
+                  >
+                    {column.sortable ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSort(column.id)}
+                        className="h-auto p-0 font-medium hover:bg-transparent"
                       >
-                        {contact.role}
-                      </Badge>
-                    ) : column.id === 'membership_status' ? (
-                      <Badge 
-                        variant="secondary"
-                        className={statusColors[contact.membership_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}
-                      >
-                        {contact.membership_status}
-                      </Badge>
-                    ) : column.id === 'actions' ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onView(contact)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEdit(contact)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onAddChild(contact)}>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Add Child
-                          </DropdownMenuItem>
-                          {hasChildren(contact) && (
-                            <DropdownMenuItem onClick={() => onViewFamily(contact)}>
-                              <Users className="mr-2 h-4 w-4" />
-                              View Family
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : column.id === 'full_name' && onContactClick ? (
-                      <button 
-                        onClick={() => onContactClick(contact)}
-                        className="text-left hover:text-primary hover:underline font-medium transition-colors"
-                        title={formatCellValue(contact, column.id)}
-                      >
-                        {formatCellValue(contact, column.id)}
-                      </button>
+                        {column.label}
+                        {sortBy === column.id && (
+                          sortOrder === 'asc' ? 
+                            <ChevronUp className="ml-1 h-3 w-3" /> : 
+                            <ChevronDown className="ml-1 h-3 w-3" />
+                        )}
+                      </Button>
                     ) : (
-                      <span className="truncate block max-w-full" title={formatCellValue(contact, column.id)}>
-                        {formatCellValue(contact, column.id)}
-                      </span>
+                      column.label
                     )}
-                  </td>
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {sortedContacts.map(contact => (
+                <tr 
+                  key={contact.id} 
+                  className="border-b hover:bg-muted/30 transition-colors"
+                >
+                  <td className="p-3">
+                    <Checkbox
+                      checked={selectedContactIds.includes(contact.id)}
+                      onCheckedChange={() => toggleSelectContact(contact.id)}
+                    />
+                  </td>
+                  {visibleColumns.map(column => (
+                    <td key={column.id} className="p-3 text-sm">
+                      {column.id === 'role' ? (
+                        <Badge 
+                          variant="secondary" 
+                          className={roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}
+                        >
+                          {contact.role}
+                        </Badge>
+                      ) : column.id === 'membership_status' ? (
+                        <Badge 
+                          variant="secondary"
+                          className={statusColors[contact.membership_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}
+                        >
+                          {contact.membership_status}
+                        </Badge>
+                      ) : column.id === 'actions' ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onView(contact)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onEdit(contact)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onAddChild(contact)}>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Add Child
+                            </DropdownMenuItem>
+                            {hasChildren(contact) && (
+                              <DropdownMenuItem onClick={() => onViewFamily(contact)}>
+                                <Users className="mr-2 h-4 w-4" />
+                                View Family
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : column.id === 'full_name' && onContactClick ? (
+                        <button 
+                          onClick={() => onContactClick(contact)}
+                          className="text-left hover:text-primary hover:underline font-medium transition-colors"
+                          title={formatCellValue(contact, column.id)}
+                        >
+                          {formatCellValue(contact, column.id)}
+                        </button>
+                      ) : (
+                        <span className="truncate block max-w-full" title={formatCellValue(contact, column.id)}>
+                          {formatCellValue(contact, column.id)}
+                        </span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {sortedContacts.length === 0 && (
         <div className="p-8 text-center">
