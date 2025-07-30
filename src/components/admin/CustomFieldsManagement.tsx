@@ -82,7 +82,7 @@ export const CustomFieldsManagement = () => {
     default_value: '',
     placeholder_text: '',
     help_text: '',
-    page_id: '',
+    page_id: 'no_page',
     is_active: true,
     show_in_table: false
   });
@@ -183,7 +183,8 @@ export const CustomFieldsManagement = () => {
       academy_id: currentAcademy.id,
       name: fieldForm.name.toLowerCase().replace(/\s+/g, '_'),
       sort_order: editingField ? editingField.sort_order : fields.length,
-      options: fieldForm.options.length > 0 ? fieldForm.options : []
+      options: fieldForm.options.length > 0 ? fieldForm.options : [],
+      page_id: fieldForm.page_id === 'no_page' ? null : fieldForm.page_id
     };
 
     let result;
@@ -220,7 +221,7 @@ export const CustomFieldsManagement = () => {
         default_value: '',
         placeholder_text: '',
         help_text: '',
-        page_id: '',
+        page_id: 'no_page',
         is_active: true,
         show_in_table: false
       });
@@ -297,7 +298,7 @@ export const CustomFieldsManagement = () => {
       default_value: field.default_value || '',
       placeholder_text: field.placeholder_text || '',
       help_text: field.help_text || '',
-      page_id: field.page_id || '',
+      page_id: field.page_id || 'no_page',
       is_active: field.is_active,
       show_in_table: field.show_in_table
     });
@@ -325,7 +326,7 @@ export const CustomFieldsManagement = () => {
     }));
   };
 
-  const filteredFields = selectedPage ? fields.filter(f => f.page_id === selectedPage) : fields;
+  const filteredFields = selectedPage && selectedPage !== 'all_fields' ? fields.filter(f => f.page_id === selectedPage) : fields;
 
   if (loading) {
     return <div className="p-6">Loading...</div>;
@@ -420,7 +421,7 @@ export const CustomFieldsManagement = () => {
                   default_value: '',
                   placeholder_text: '',
                   help_text: '',
-                  page_id: '',
+                  page_id: 'no_page',
                   is_active: true,
                   show_in_table: false
                 });
@@ -485,7 +486,7 @@ export const CustomFieldsManagement = () => {
                         <SelectValue placeholder="Select page (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No page</SelectItem>
+                        <SelectItem value="no_page">No page</SelectItem>
                         {pages.map(page => (
                           <SelectItem key={page.id} value={page.id}>
                             {page.display_name}
@@ -645,7 +646,7 @@ export const CustomFieldsManagement = () => {
                 <SelectValue placeholder="Filter by page" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All fields</SelectItem>
+                <SelectItem value="all_fields">All fields</SelectItem>
                 {pages.map(page => (
                   <SelectItem key={page.id} value={page.id}>
                     {page.display_name}
