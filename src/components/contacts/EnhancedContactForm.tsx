@@ -9,6 +9,7 @@ import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CustomFieldsInContactForm } from "@/components/contacts/CustomFieldsInContactForm";
 
 interface Contact {
   id: string;
@@ -36,6 +37,7 @@ interface ContactFormData {
   membership_status: string;
   relationship_type: string;
   linked_contact_id?: string;
+  custom_fields?: Record<string, string>;
 }
 
 interface EnhancedContactFormProps {
@@ -43,19 +45,22 @@ interface EnhancedContactFormProps {
   setFormData: (data: ContactFormData) => void;
   contacts?: Contact[];
   mode?: 'add' | 'edit';
+  contactId?: string;
 }
 
 export const EnhancedContactForm = ({ 
   formData, 
   setFormData, 
   contacts = [], 
-  mode = 'add' 
+  mode = 'add',
+  contactId
 }: EnhancedContactFormProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("individual");
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
 
   // Search existing contacts for family linking
   const searchContacts = async (query: string) => {
@@ -113,6 +118,14 @@ export const EnhancedContactForm = ({
       ...formData,
       linked_contact_id: undefined,
       relationship_type: "none"
+    });
+  };
+
+  const handleCustomFieldsChange = (fieldValues: Record<string, string>) => {
+    setCustomFieldValues(fieldValues);
+    setFormData({
+      ...formData,
+      custom_fields: fieldValues
     });
   };
 
@@ -464,6 +477,15 @@ export const EnhancedContactForm = ({
           )}
         </div>
       </TabsContent>
+
+      {/* Custom Fields Section */}
+      <div className="mt-6">
+        <CustomFieldsInContactForm
+          contactId={contactId}
+          onFieldsChange={handleCustomFieldsChange}
+          fieldValues={customFieldValues}
+        />
+      </div>
     </Tabs>
   );
 };

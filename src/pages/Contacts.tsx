@@ -68,6 +68,7 @@ interface ContactFormData {
   membership_status: string;
   relationship_type: string;
   linked_contact_id?: string;
+  custom_fields?: Record<string, string>;
 }
 
 const Contacts = () => {
@@ -315,6 +316,22 @@ const Contacts = () => {
 
       const newContact = data[0];
 
+      // Save custom fields if any
+      if (formData.custom_fields && Object.keys(formData.custom_fields).length > 0) {
+        const customFieldPromises = Object.entries(formData.custom_fields).map(([fieldName, value]) => 
+          supabase
+            .from('custom_field_values')
+            .upsert({
+              contact_id: newContact.id,
+              field_name: fieldName,
+              field_value: value,
+              academy_id: userProfile.academy_id
+            })
+        );
+        
+        await Promise.all(customFieldPromises);
+      }
+
       // Handle family relationship if a parent contact was selected
       if (formData.linked_contact_id && formData.relationship_type !== 'none') {
         const relationshipData = {
@@ -378,6 +395,17 @@ const Contacts = () => {
         return;
       }
 
+      // Get current user's academy_id
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('academy_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError || !userProfile?.academy_id) {
+        throw new Error('Could not determine your academy');
+      }
+
       console.log('Updating contact with session:', session.user.email);
       console.log('Form data:', formData);
       
@@ -404,6 +432,22 @@ const Contacts = () => {
       if (error) throw error;
       if (!data || data.length === 0) {
         throw new Error('No rows updated - check if you have permission to modify this contact');
+      }
+
+      // Save custom fields if any
+      if (formData.custom_fields && Object.keys(formData.custom_fields).length > 0) {
+        const customFieldPromises = Object.entries(formData.custom_fields).map(([fieldName, value]) => 
+          supabase
+            .from('custom_field_values')
+            .upsert({
+              contact_id: selectedContact.id,
+              field_name: fieldName,
+              field_value: value,
+              academy_id: userProfile.academy_id
+            })
+        );
+        
+        await Promise.all(customFieldPromises);
       }
 
       const updatedContact = data[0];
@@ -850,6 +894,7 @@ const Contacts = () => {
               setFormData={setFormData} 
               contacts={contacts}
               mode="edit"
+              contactId={selectedContact?.id}
             />
             <div className="flex flex-col sm:flex-row justify-end gap-2">
               <Button variant="outline" onClick={() => setShowEditDialog(false)} className="order-2 sm:order-1">
