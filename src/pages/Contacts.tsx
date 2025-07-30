@@ -507,15 +507,15 @@ const Contacts = () => {
               </p>
             </div>
           </div>
-          {/* Actions Row - Responsive */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* View Mode Toggle - Mobile friendly */}
+          {/* Single Row Controls - All actions in one row */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-4">
+            {/* Left side: View Mode Toggle */}
             <div className="flex border rounded-lg flex-shrink-0">
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="flex-1 sm:flex-initial rounded-r-none px-2 sm:px-3"
+                className="flex-1 lg:flex-initial rounded-r-none px-2 sm:px-3"
               >
                 <Table className="h-4 w-4" />
                 <span className="sr-only sm:not-sr-only sm:ml-1">List</span>
@@ -524,7 +524,7 @@ const Contacts = () => {
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="flex-1 sm:flex-initial rounded-none px-2 sm:px-3"
+                className="flex-1 lg:flex-initial rounded-none px-2 sm:px-3"
               >
                 <LayoutGrid className="h-4 w-4" />
                 <span className="sr-only sm:not-sr-only sm:ml-1">Grid</span>
@@ -533,19 +533,19 @@ const Contacts = () => {
                 variant={viewMode === 'family' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('family')}
-                className="flex-1 sm:flex-initial rounded-l-none px-2 sm:px-3"
+                className="flex-1 lg:flex-initial rounded-l-none px-2 sm:px-3"
               >
                 <Users className="h-4 w-4" />
                 <span className="sr-only sm:not-sr-only sm:ml-1">Family</span>
               </Button>
             </div>
             
-            {/* Add Contact Button - Full width on mobile */}
+            {/* Add Contact Button */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button 
                   onClick={() => { resetForm(); setShowAddDialog(true); }}
-                  className="w-full sm:w-auto"
+                  className="flex-shrink-0"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   <span>Add Contact</span>
@@ -574,24 +574,58 @@ const Contacts = () => {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
-        </div>
 
-        {/* Content - Mobile optimized */}
-        <div className="mb-4 sm:mb-6">
-          <ContactFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            filterRole={filterRole}
-            onFilterRoleChange={setFilterRole}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            sortOrder={sortOrder}
-            onSortOrderChange={setSortOrder}
-            showFamiliesOnly={showFamiliesOnly}
-            onShowFamiliesOnlyChange={setShowFamiliesOnly}
-            contacts={contacts}
-          />
+            {/* Right side: Search and Filters - Inline */}
+            <div className="flex flex-1 items-center gap-3 min-w-0">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Sort Dropdown */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-32 sm:w-40">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="role">Role</SelectItem>
+                  <SelectItem value="created_at">Date Added</SelectItem>
+                  <SelectItem value="belt_level">Belt Level</SelectItem>
+                  <SelectItem value="membership_status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Sort Order Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="flex-shrink-0"
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </Button>
+
+              {/* Families Only Toggle */}
+              <Button
+                variant={showFamiliesOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowFamiliesOnly(!showFamiliesOnly)}
+                className="flex-shrink-0"
+              >
+                <Users className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Families Only</span>
+                <span className="sm:hidden">Families</span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-4 sm:space-y-6">
