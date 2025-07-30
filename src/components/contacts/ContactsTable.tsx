@@ -233,18 +233,18 @@ export const ContactsTable = ({
           {/* Contact Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-sm truncate">
-                  {`${contact.first_name} ${contact.last_name}`}
-                </h3>
-                <p className="text-xs text-muted-foreground truncate">
-                  {contact.email}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="min-w-0">
+                  <h3 className="font-medium text-sm truncate">
+                    {`${contact.first_name} ${contact.last_name}`}
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {contact.email}
+                  </p>
+                </div>
                 <Badge 
                   variant="secondary" 
-                  className={`text-xs ${roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}`}
+                  className={`text-xs flex-shrink-0 ${roleColors[contact.role as keyof typeof roleColors] || "bg-gray-100 text-gray-800"}`}
                 >
                   {contact.role}
                 </Badge>
