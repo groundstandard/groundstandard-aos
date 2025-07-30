@@ -33,7 +33,8 @@ import {
   Award,
   Activity,
   Bell,
-  User
+  User,
+  FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -419,6 +420,10 @@ const Admin = () => {
             <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/automations')}>
               <Settings className="h-4 w-4" />
               Automations
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 hover:text-primary" onClick={() => navigate('/admin/custom-fields')}>
+              <FileText className="h-4 w-4" />
+              Custom Fields
             </Button>
           </div>
         </div>
