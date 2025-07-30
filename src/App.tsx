@@ -32,6 +32,8 @@ import Contacts from "./pages/Contacts";
 import ContactTable from "./pages/ContactTable";
 import ContactProfile from "./pages/ContactProfile";
 import Automations from "./pages/Automations";
+import CustomFields from "./pages/CustomFields";
+import Configurations from "./pages/Configurations";
 import PerformanceTargets from "./pages/PerformanceTargets";
 import Settings from "./pages/Settings";
 import AcademySetup from "./pages/AcademySetup";
@@ -81,7 +83,9 @@ const AppRoutes = () => {
         <Route path="/contacts" element={user ? <AcademyGatekeeper><Contacts /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts/table" element={user ? <AcademyGatekeeper><ContactTable /></AcademyGatekeeper> : <Auth />} />
         <Route path="/contacts/:id" element={user ? <AcademyGatekeeper><ContactProfile /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/configurations" element={user ? <AcademyGatekeeper><Configurations /></AcademyGatekeeper> : <Auth />} />
         <Route path="/automations" element={user ? <AcademyGatekeeper><Automations /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/custom-fields" element={user ? <AcademyGatekeeper><CustomFields /></AcademyGatekeeper> : <Auth />} />
         <Route path="/admin/performance-targets" element={user ? <AcademyGatekeeper><PerformanceTargets /></AcademyGatekeeper> : <Auth />} />
         <Route path="/settings" element={user ? <AcademyGatekeeper><Settings /></AcademyGatekeeper> : <Auth />} />
         <Route path="/academy-setup" element={user ? <AcademySetup /> : <Auth />} />

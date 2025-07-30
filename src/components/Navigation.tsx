@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
-import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Activity, User, Clock, MessageCircle } from "lucide-react";
+import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Settings, User, Clock, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import {
   Sheet,
@@ -234,10 +234,10 @@ const Navigation = () => {
               variant="ghost" 
               size="sm"
               className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
-              onClick={() => navigate('/automations')}
+              onClick={() => navigate('/configurations')}
             >
-              <Activity className="h-5 w-5" />
-              <span className="text-xs font-medium">Automations</span>
+              <Settings className="h-5 w-5" />
+              <span className="text-xs font-medium">Configurations</span>
             </Button>
             <Button 
               variant="ghost" 
