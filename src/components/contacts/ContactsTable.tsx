@@ -348,85 +348,115 @@ export const ContactsTable = ({
     <div className="border rounded-lg bg-card">
       {/* Mobile-Responsive Table Header */}
       <div className="space-y-3 p-3 sm:p-4 border-b">
-        {/* Role Filter Buttons - Mobile Responsive */}
+        {/* Role Filter - Mobile Dropdown / Desktop Buttons */}
         {onFilterRoleChange && allContacts.length > 0 && (
           <div className="space-y-2">
-            {/* Mobile: Horizontal scroll for role buttons */}
-            <div className={isMobile ? "overflow-x-auto pb-2" : "flex flex-wrap gap-2 items-center justify-between"}>
-              <div className={isMobile ? "flex gap-2 min-w-max" : "flex flex-wrap gap-2"}>
-                <Button
-                  variant={filterRole === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("all")}
-                  className="flex-shrink-0"
-                >
-                  All ({getRoleCount("all")})
-                </Button>
-                <Button
-                  variant={filterRole === "member" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("member")}
-                  className="flex-shrink-0"
-                >
-                  Members ({getRoleCount("member")})
-                </Button>
-                <Button
-                  variant={filterRole === "visitor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("visitor")}
-                  className="flex-shrink-0"
-                >
-                  Visitors ({getRoleCount("visitor")})
-                </Button>
-                <Button
-                  variant={filterRole === "alumni" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("alumni")}
-                  className="flex-shrink-0"
-                >
-                  Alumni ({getRoleCount("alumni")})
-                </Button>
-                <Button
-                  variant={filterRole === "staff" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("staff")}
-                  className="flex-shrink-0"
-                >
-                  Staff ({getRoleCount("staff")})
-                </Button>
-                <Button
-                  variant={filterRole === "instructor" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("instructor")}
-                  className="flex-shrink-0"
-                >
-                  Instructors ({getRoleCount("instructor")})
-                </Button>
-                <Button
-                  variant={filterRole === "admin" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onFilterRoleChange("admin")}
-                  className="flex-shrink-0"
-                >
-                  Admins ({getRoleCount("admin")})
-                </Button>
+            {isMobile ? (
+              /* Mobile: Dropdown for role selection */
+              <div className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="justify-between min-w-[140px]">
+                      {filterRole === "all" && `All (${getRoleCount("all")})`}
+                      {filterRole === "member" && `Members (${getRoleCount("member")})`}
+                      {filterRole === "visitor" && `Visitors (${getRoleCount("visitor")})`}
+                      {filterRole === "alumni" && `Alumni (${getRoleCount("alumni")})`}
+                      {filterRole === "staff" && `Staff (${getRoleCount("staff")})`}
+                      {filterRole === "instructor" && `Instructors (${getRoleCount("instructor")})`}
+                      {filterRole === "admin" && `Admins (${getRoleCount("admin")})`}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56 bg-background border">
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("all")}>
+                      All ({getRoleCount("all")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("member")}>
+                      Members ({getRoleCount("member")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("visitor")}>
+                      Visitors ({getRoleCount("visitor")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("alumni")}>
+                      Alumni ({getRoleCount("alumni")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("staff")}>
+                      Staff ({getRoleCount("staff")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("instructor")}>
+                      Instructors ({getRoleCount("instructor")})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onFilterRoleChange("admin")}>
+                      Admins ({getRoleCount("admin")})
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {getFamilyCount()} Family
+                </Badge>
               </div>
-              
-              {/* Family Contacts Badge - Move below on mobile */}
-              {!isMobile && (
+            ) : (
+              /* Desktop: Button layout */
+              <div className="flex flex-wrap gap-2 items-center justify-between">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={filterRole === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("all")}
+                  >
+                    All ({getRoleCount("all")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "member" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("member")}
+                  >
+                    Members ({getRoleCount("member")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "visitor" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("visitor")}
+                  >
+                    Visitors ({getRoleCount("visitor")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "alumni" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("alumni")}
+                  >
+                    Alumni ({getRoleCount("alumni")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "staff" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("staff")}
+                  >
+                    Staff ({getRoleCount("staff")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "instructor" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("instructor")}
+                  >
+                    Instructors ({getRoleCount("instructor")})
+                  </Button>
+                  <Button
+                    variant={filterRole === "admin" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onFilterRoleChange("admin")}
+                  >
+                    Admins ({getRoleCount("admin")})
+                  </Button>
+                </div>
+                
                 <Badge variant="secondary" className="flex items-center gap-1 ml-auto">
                   <Users className="h-3 w-3" />
                   {getFamilyCount()} Family Members
                 </Badge>
-              )}
-            </div>
-            
-            {/* Mobile: Family count moved below buttons */}
-            {isMobile && (
-              <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-                <Users className="h-3 w-3" />
-                {getFamilyCount()} Family Members
-              </Badge>
+              </div>
             )}
           </div>
         )}
