@@ -27,74 +27,83 @@ const Attendance = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-3 sm:py-6 lg:py-8">
+        <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
           <BackButton />
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
-              <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+              <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-primary flex-shrink-0" />
               <span className="break-words">Attendance Management</span>
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            <p className="text-muted-foreground mt-1 text-xs sm:text-sm lg:text-base leading-relaxed">
               Track and manage student attendance for all classes and sessions
             </p>
           </div>
         </div>
 
         {/* Attendance Navigation Ribbon */}
-        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 border-b border-border pb-3 sm:pb-4 mb-4 sm:mb-6 overflow-x-auto scrollbar-hide">
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            size="sm"
+            className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => navigate('/membership-management')}
           >
-            <Crown className="h-4 w-4" />
-            Memberships
+            <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Memberships</span>
+            <span className="sm:hidden">Members</span>
           </Button>
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            size="sm"
+            className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => navigate('/class-management')}
           >
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Classes
           </Button>
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            size="sm"
+            className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => navigate('/events')}
           >
-            <CalendarDays className="h-4 w-4" />
+            <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Events
           </Button>
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            size="sm"
+            className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => navigate('/belt-testing')}
           >
-            <Star className="h-4 w-4" />
-            Promotions
+            <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Promotions</span>
+            <span className="sm:hidden">Belts</span>
           </Button>
           <Button 
             variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap"
+            size="sm"
+            className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
             onClick={() => navigate('/checkin')}
           >
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             Check-In
           </Button>
           {isAdmin && (
             <Button 
               variant="default" 
-              className="flex items-center gap-2 whitespace-nowrap"
+              size="sm"
+              className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
               onClick={() => {
                 // Trigger the mark attendance dialog from the AttendanceManagement component
                 const markButton = document.querySelector('[data-testid="mark-attendance-trigger"]') as HTMLButtonElement;
                 markButton?.click();
               }}
             >
-              <Plus className="h-4 w-4" />
-              Mark Attendance
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Mark Attendance</span>
+              <span className="sm:hidden">Mark</span>
             </Button>
           )}
         </div>
