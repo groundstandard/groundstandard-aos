@@ -7,7 +7,7 @@ import { AttendanceManagement } from "@/components/admin/AttendanceManagement";
 import { QuickAttendanceDashboard } from "@/components/attendance/QuickAttendanceDashboard";
 import { StudentAttendanceHistory } from "@/components/attendance/StudentAttendanceHistory";
 import { Navigate, useNavigate } from "react-router-dom";
-import { CheckCircle, Calendar, CalendarDays, Star, Clock, Crown } from "lucide-react";
+import { CheckCircle, Calendar, CalendarDays, Star, Clock, Crown, Plus } from "lucide-react";
 const Attendance = () => {
   const { user, loading, profile } = useAuth();
   const { isAdmin } = useEffectiveRole();
@@ -83,6 +83,20 @@ const Attendance = () => {
             <Clock className="h-4 w-4" />
             Check-In
           </Button>
+          {isAdmin && (
+            <Button 
+              variant="default" 
+              className="flex items-center gap-2 whitespace-nowrap"
+              onClick={() => {
+                // Trigger the mark attendance dialog from the AttendanceManagement component
+                const markButton = document.querySelector('[data-testid="mark-attendance-trigger"]') as HTMLButtonElement;
+                markButton?.click();
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Mark Attendance
+            </Button>
+          )}
         </div>
         
         {isAdmin ? (

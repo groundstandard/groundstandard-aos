@@ -556,7 +556,12 @@ export const AttendanceManagement = () => {
               </Button>
               <Dialog open={showMarkDialog} onOpenChange={setShowMarkDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    data-testid="mark-attendance-trigger"
+                    className="hidden"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Mark Attendance
                   </Button>
