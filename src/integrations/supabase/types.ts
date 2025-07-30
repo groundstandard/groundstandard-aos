@@ -1976,6 +1976,228 @@ export type Database = {
           },
         ]
       }
+      custom_field_definitions: {
+        Row: {
+          academy_id: string | null
+          created_at: string
+          created_by: string | null
+          default_value: string | null
+          display_name: string
+          field_type: string
+          help_text: string | null
+          id: string
+          is_active: boolean
+          is_required: boolean
+          name: string
+          options: Json | null
+          page_id: string | null
+          placeholder_text: string | null
+          show_in_table: boolean
+          sort_order: number
+          updated_at: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          academy_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_value?: string | null
+          display_name: string
+          field_type: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name: string
+          options?: Json | null
+          page_id?: string | null
+          placeholder_text?: string | null
+          show_in_table?: boolean
+          sort_order?: number
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          academy_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_value?: string | null
+          display_name?: string
+          field_type?: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          name?: string
+          options?: Json | null
+          page_id?: string | null
+          placeholder_text?: string | null
+          show_in_table?: boolean
+          sort_order?: number
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_definitions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_field_definitions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_field_definitions_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_pages: {
+        Row: {
+          academy_id: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          academy_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_pages_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_values: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          field_id: string | null
+          id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_values_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_field_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      default_field_extensions: {
+        Row: {
+          academy_id: string | null
+          created_at: string
+          created_by: string | null
+          field_name: string
+          id: string
+          is_active: boolean
+          option_label: string
+          option_value: string
+          sort_order: number
+        }
+        Insert: {
+          academy_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          field_name: string
+          id?: string
+          is_active?: boolean
+          option_label: string
+          option_value: string
+          sort_order?: number
+        }
+        Update: {
+          academy_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          field_name?: string
+          id?: string
+          is_active?: boolean
+          option_label?: string
+          option_value?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "default_field_extensions_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "default_field_extensions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_message_channels: {
         Row: {
           created_at: string | null
