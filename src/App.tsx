@@ -45,6 +45,7 @@ import MembershipManagement from "./pages/MembershipManagement";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PaymentTestDashboard from "./pages/PaymentTestDashboard";
 import StudentAttendanceHistoryPage from "./pages/StudentAttendanceHistory";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
@@ -65,6 +66,7 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Index />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Auth />} />
         <Route path="/classes" element={user ? <AcademyGatekeeper><Classes /></AcademyGatekeeper> : <Auth />} />
         <Route path="/attendance" element={user ? <AcademyGatekeeper><Attendance /></AcademyGatekeeper> : <Auth />} />

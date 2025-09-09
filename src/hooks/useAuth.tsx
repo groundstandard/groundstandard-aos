@@ -71,6 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         console.log('Auth state change:', event, session?.user?.email);
         
+        // Handle password recovery
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected, user can now reset password');
+        }
+        
         setUser(session?.user ?? null);
         if (session?.user) {
           // Defer Supabase calls with setTimeout to prevent deadlocks
