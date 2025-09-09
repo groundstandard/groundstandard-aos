@@ -8,12 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 
 export const AuthForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'student' | 'staff'>('student');
   const [roleLoading, setRoleLoading] = useState(true);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -130,38 +132,6 @@ export const AuthForm = () => {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!formData.email) {
-      toast({
-        variant: "destructive",
-        title: "Email Required",
-        description: "Please enter your email address first"
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Reset Email Sent",
-        description: "Check your email for password reset instructions"
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Reset Failed",
-        description: error.message
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,7 +273,7 @@ export const AuthForm = () => {
                     type="button" 
                     variant="link" 
                     className="text-sm p-0 h-auto"
-                    onClick={handleForgotPassword}
+                    onClick={() => setForgotPasswordOpen(true)}
                     disabled={loading}
                   >
                     Forgot password?
@@ -385,6 +355,11 @@ export const AuthForm = () => {
           </Tabs>
         </CardContent>
       </Card>
+      
+      <ForgotPasswordModal 
+        open={forgotPasswordOpen} 
+        onOpenChange={setForgotPasswordOpen} 
+      />
     </div>
   );
 };

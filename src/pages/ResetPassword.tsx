@@ -65,11 +65,11 @@ export const ResetPassword = () => {
 
       toast({
         title: "Password Updated",
-        description: "Your password has been successfully updated"
+        description: "Your password has been successfully updated. Please sign in with your new password."
       });
       
-      // Redirect to dashboard after successful password reset
-      navigate("/dashboard");
+      // Redirect to login page after successful password reset
+      navigate("/auth");
     } catch (error: any) {
       toast({
         variant: "destructive",
