@@ -52,6 +52,7 @@ import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
 import { useRoleTesting } from "@/contexts/RoleTestingContext";
 import AcademyGatekeeper from "@/components/academy/AcademyGatekeeper";
 import ResponsiveLayout from "@/components/mobile/ResponsiveLayout";
+import { AuthFlowHandler } from "@/components/auth/AuthFlowHandler";
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -63,6 +64,7 @@ const AppRoutes = () => {
 
   return (
     <ResponsiveLayout>
+      <AuthFlowHandler />
       <Routes>
         <Route path="/" element={user ? <AcademyGatekeeper><Dashboard /></AcademyGatekeeper> : <Index />} />
         <Route path="/auth" element={<Auth />} />
