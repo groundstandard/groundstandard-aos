@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from '@supabase/supabase-js';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -17,45 +18,21 @@ export const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const establishSessionFromStoredTokens = async () => {
-      // Try current session first
-      let { data: { session } } = await supabase.auth.getSession();
+    const checkRecoveryTokens = () => {
+      const accessToken = sessionStorage.getItem('sb-recovery-access-token');
+      const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
 
-      // If no session, try to restore from tokens saved by AuthFlowHandler
-      if (!session) {
-        const accessToken = sessionStorage.getItem('sb-recovery-access-token');
-        const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
-
-        if (accessToken && refreshToken) {
-          try {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-            if (error) {
-              console.warn('Failed to set session from stored tokens', error);
-            } else {
-              session = data.session;
-              console.log('Session established from stored tokens');
-            }
-          } finally {
-            sessionStorage.removeItem('sb-recovery-access-token');
-            sessionStorage.removeItem('sb-recovery-refresh-token');
-          }
-        }
-      }
-
-      if (!session) {
+      if (!accessToken || !refreshToken) {
         toast({
           variant: "destructive",
-          title: "Invalid Reset Link",
+          title: "Invalid Reset Link", 
           description: "Please use the link from your email or request a new password reset",
         });
         navigate("/auth");
       }
     };
 
-    establishSessionFromStoredTokens();
+    checkRecoveryTokens();
   }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -81,18 +58,60 @@ export const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
+      // Get stored tokens
+      const accessToken = sessionStorage.getItem('sb-recovery-access-token');
+      const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+
+      if (!accessToken || !refreshToken) {
+        throw new Error('Recovery tokens not found');
+      }
+
+      // Create a temporary client that doesn't persist sessions
+      const tempClient = createClient(
+        "https://yhriiykdnpuutzexjdee.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocmlpeWtkbnB1dXR6ZXhqZGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODEwNjAsImV4cCI6MjA2ODQ1NzA2MH0.Xtwogx9B2N8ODzbojiJJPFUpqN9j5GUtFFZHBbv2H9E",
+        {
+          auth: {
+            storage: {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            },
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+          }
+        }
+      );
+
+      // Set session temporarily
+      const { error: sessionError } = await tempClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (sessionError) throw sessionError;
+
+      // Update password
+      const { error } = await tempClient.auth.updateUser({
         password: password
       });
 
       if (error) throw error;
+
+      // Clean up tokens
+      sessionStorage.removeItem('sb-recovery-access-token');
+      sessionStorage.removeItem('sb-recovery-refresh-token');
+
+      // Sign out from temp client (doesn't affect main client)
+      await tempClient.auth.signOut();
 
       toast({
         title: "Password Updated",
         description: "Your password has been successfully updated. Please sign in with your new password."
       });
       
-      // Redirect to login page after successful password reset
+      // Redirect to login page
       navigate("/auth");
     } catch (error: any) {
       toast({

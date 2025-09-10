@@ -28,6 +28,9 @@ export const AuthFlowHandler = () => {
           }
         }
 
+        // Clear the URL hash to prevent auto-login
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
         console.log('Password recovery detected, navigating to reset password page');
         navigate('/reset-password');
       }
