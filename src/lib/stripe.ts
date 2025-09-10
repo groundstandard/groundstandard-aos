@@ -1,10 +1,12 @@
 import { loadStripe } from '@stripe/stripe-js';
+import { config, validateConfig } from '@/lib/config';
 
-// Centralized Stripe configuration to avoid multiple instances and key conflicts
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51RmQDHGfOr7w8D1gouEtCOJY4fQjvKHdOW39g02UUJtG58oRVYEwZ5hpQjkAgoCqIy9P24s5LZPVLZFwo45b16HO00n9YR6UYo';
+// Validate configuration before initializing Stripe
+validateConfig();
 
+// Centralized Stripe configuration using environment variables
 // Single instance of Stripe to prevent conflicts
-export const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+export const stripePromise = loadStripe(config.stripe.publishableKey);
 
 // Common Stripe Elements configuration to ensure consistency
 export const getStripeElementsOptions = (clientSecret: string) => ({

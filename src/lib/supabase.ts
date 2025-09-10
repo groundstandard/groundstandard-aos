@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { config } from '@/lib/config';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// DEPRECATED: This file is deprecated in favor of src/integrations/supabase/client.ts
+// Keeping for backward compatibility but using centralized configuration
+const supabaseUrl = config.supabase.url;
+const supabaseAnonKey = config.supabase.anonKey;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase environment variables not found. Make sure Supabase is properly connected.');

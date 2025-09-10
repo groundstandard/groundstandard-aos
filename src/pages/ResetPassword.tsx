@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createClient } from '@supabase/supabase-js';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { config } from "@/lib/config";
 
 export const ResetPassword = () => {
   const navigate = useNavigate();
@@ -67,9 +68,10 @@ export const ResetPassword = () => {
       }
 
       // Create a temporary client that doesn't persist sessions
+      // Uses environment configuration for security
       const tempClient = createClient(
-        "https://yhriiykdnpuutzexjdee.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocmlpeWtkbnB1dXR6ZXhqZGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4ODEwNjAsImV4cCI6MjA2ODQ1NzA2MH0.Xtwogx9B2N8ODzbojiJJPFUpqN9j5GUtFFZHBbv2H9E",
+        config.supabase.url,
+        config.supabase.anonKey,
         {
           auth: {
             storage: {

@@ -13,6 +13,26 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Enhanced webhook signature validation
+const validateWebhookSignature = (body: string, signature: string | null, webhookSecret: string | null): any => {
+  if (!webhookSecret) {
+    logStep("WARNING: STRIPE_WEBHOOK_SECRET not configured - webhook validation disabled in development mode");
+    // In development/test mode without webhook secret, parse body directly
+    try {
+      return JSON.parse(body);
+    } catch (err) {
+      throw new Error('Invalid webhook payload format');
+    }
+  }
+
+  if (!signature) {
+    throw new Error('Missing Stripe signature header');
+  }
+
+  // This will be set when we have the Stripe instance
+  return null; // Will be processed later with proper Stripe validation
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -25,44 +45,60 @@ serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!webhookSecret) {
-      logStep("WARNING: STRIPE_WEBHOOK_SECRET not set - webhook signature verification disabled");
-    }
-
+    
     logStep("Environment variables checked", { 
       hasStripeKey: !!stripeKey,
-      hasWebhookSecret: !!webhookSecret 
+      hasWebhookSecret: !!webhookSecret,
+      isProduction: stripeKey.startsWith('sk_live_')
     });
 
+    // Initialize Stripe
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
-
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
     const body = await req.text();
     const signature = req.headers.get('stripe-signature');
 
     let event;
     
-    if (webhookSecret && signature) {
+    // Enhanced webhook signature validation
+    if (webhookSecret) {
+      if (!signature) {
+        logStep("Missing Stripe signature in production mode");
+        return new Response(JSON.stringify({ error: 'Webhook signature required' }), { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified", { eventType: event.type });
+        logStep("Webhook signature verified successfully", { 
+          eventType: event.type, 
+          eventId: event.id,
+          created: event.created 
+        });
       } catch (err) {
-        logStep("Webhook signature verification failed", { error: err.message });
-        return new Response(JSON.stringify({ error: 'Webhook signature verification failed' }), { 
+        logStep("Webhook signature verification failed", { 
+          error: err.message,
+          signature: signature?.substring(0, 20) + '...' // Log partial signature for debugging
+        });
+        return new Response(JSON.stringify({ error: 'Invalid webhook signature' }), { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
     } else {
-      // If no webhook secret or signature, parse the body directly (for testing)
+      // Development/test mode without webhook secret
+      logStep("Processing webhook without signature verification (development mode)");
       try {
         event = JSON.parse(body);
-        logStep("Webhook processed without signature verification", { eventType: event.type });
+        logStep("Webhook parsed successfully", { eventType: event.type });
       } catch (err) {
         logStep("Failed to parse webhook body", { error: err.message });
         return new Response(JSON.stringify({ error: 'Invalid webhook payload' }), { 
@@ -70,6 +106,15 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+    }
+
+    // Validate event structure
+    if (!event.type || !event.data || !event.id) {
+      logStep("Invalid event structure", { event });
+      return new Response(JSON.stringify({ error: 'Invalid event structure' }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Handle the event
