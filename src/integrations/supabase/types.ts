@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -4742,7 +4742,7 @@ export type Database = {
         Returns: undefined
       }
       can_contact_enroll_in_class: {
-        Args: { contact_uuid: string; class_uuid: string }
+        Args: { class_uuid: string; contact_uuid: string }
         Returns: Json
       }
       check_absent_members: {
@@ -4750,7 +4750,7 @@ export type Database = {
         Returns: undefined
       }
       check_in_with_pin: {
-        Args: { pin_code: string; class_id_param?: string }
+        Args: { class_id_param?: string; pin_code: string }
         Returns: Json
       }
       check_subscription_access: {
@@ -4796,21 +4796,21 @@ export type Database = {
       get_class_enrolled_students: {
         Args: { class_uuid: string }
         Returns: {
-          student_id: string
+          belt_level: string
+          email: string
+          enrollment_status: string
           first_name: string
           last_name: string
-          email: string
-          belt_level: string
-          enrollment_status: string
+          student_id: string
         }[]
       }
       get_contact_class_access: {
         Args: { contact_uuid: string }
         Returns: {
-          class_id: string
-          class_name: string
           access_type: string
           additional_fee_cents: number
+          class_id: string
+          class_name: string
           max_sessions_per_period: number
           period_type: string
         }[]
@@ -4823,11 +4823,11 @@ export type Database = {
         Args: { contact_uuid: string }
         Returns: {
           contact_id: string
-          first_name: string
-          last_name: string
           email: string
-          relationship_type: string
+          first_name: string
           is_emergency_contact: boolean
+          last_name: string
+          relationship_type: string
         }[]
       }
       get_instructor_classes_today: {
@@ -4835,10 +4835,10 @@ export type Database = {
         Returns: {
           class_id: string
           class_name: string
-          start_time: string
+          day_of_week: number
           end_time: string
           max_students: number
-          day_of_week: number
+          start_time: string
         }[]
       }
       get_or_create_dm_channel: {
@@ -4849,19 +4849,19 @@ export type Database = {
         Args: { target_user_id?: string }
         Returns: {
           academy_id: string
-          role: string
           academy_name: string
           city: string
+          role: string
           state: string
         }[]
       }
       get_user_academies_by_role: {
-        Args: { target_user_id?: string; role_filter?: string }
+        Args: { role_filter?: string; target_user_id?: string }
         Returns: {
           academy_id: string
-          role: string
           academy_name: string
           city: string
+          role: string
           state: string
         }[]
       }
@@ -4890,11 +4890,11 @@ export type Database = {
         Returns: boolean
       }
       update_payment_analytics: {
-        Args: { start_date: string; end_date: string }
+        Args: { end_date: string; start_date: string }
         Returns: undefined
       }
       update_user_role: {
-        Args: { target_user_id: string; new_role: string }
+        Args: { new_role: string; target_user_id: string }
         Returns: boolean
       }
       user_has_academy_access: {
@@ -4903,9 +4903,9 @@ export type Database = {
       }
       verify_location_check_in: {
         Args: {
+          academy_location_id: string
           user_latitude: number
           user_longitude: number
-          academy_location_id: string
         }
         Returns: boolean
       }
