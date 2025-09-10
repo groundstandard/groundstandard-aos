@@ -117,6 +117,31 @@ serve(async (req) => {
       });
     }
 
+    // Check for idempotency using stripe_events table
+    const { data: existingEvent } = await supabaseClient
+      .from('stripe_events')
+      .select('id')
+      .eq('id', event.id)
+      .single();
+
+    if (existingEvent) {
+      logStep('Event already processed', { eventId: event.id });
+      return new Response(JSON.stringify({ received: true, message: 'Event already processed' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Insert event for idempotency (this prevents duplicate processing)
+    await supabaseClient
+      .from('stripe_events')
+      .insert({
+        id: event.id,
+        type: event.type
+      });
+
+    logStep('Event recorded for idempotency', { eventId: event.id, eventType: event.type });
+
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
@@ -147,6 +172,14 @@ serve(async (req) => {
       default:
         logStep("Unhandled event type", { eventType: event.type });
     }
+
+    // Mark event as processed
+    await supabaseClient
+      .from('stripe_events')
+      .update({ processed_at: new Date().toISOString() })
+      .eq('id', event.id);
+
+    logStep('Event processed successfully', { eventId: event.id });
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
