@@ -45,6 +45,8 @@ import MembershipManagement from "./pages/MembershipManagement";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PaymentTestDashboard from "./pages/PaymentTestDashboard";
 import StudentAttendanceHistoryPage from "./pages/StudentAttendanceHistory";
+import BusinessSettings from "./pages/BusinessSettings";
+import StudentBilling from "./pages/StudentBilling";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -98,6 +100,8 @@ const AppRoutes = () => {
         <Route path="/team" element={user ? <AcademyGatekeeper><TeamManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/membership-management" element={user ? <AcademyGatekeeper><MembershipManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/class-management" element={user ? <AcademyGatekeeper><ClassManagementPage /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/business-settings" element={user ? <AcademyGatekeeper><BusinessSettings /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/billing" element={user ? <AcademyGatekeeper><StudentBilling /></AcademyGatekeeper> : <Auth />} />
         <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
