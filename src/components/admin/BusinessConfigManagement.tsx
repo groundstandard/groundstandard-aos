@@ -66,9 +66,17 @@ export function BusinessConfigManagement() {
 
       if (error) throw error;
 
-      setConfigs(prev => prev.map(config => 
-        config.key === key ? { ...config, value } : config
-      ));
+      // Update configs array or add new config if it doesn't exist
+      setConfigs(prev => {
+        const existingIndex = prev.findIndex(config => config.key === key);
+        if (existingIndex >= 0) {
+          return prev.map(config => 
+            config.key === key ? { ...config, value } : config
+          );
+        } else {
+          return [...prev, { id: crypto.randomUUID(), key, value }];
+        }
+      });
 
       toast({
         title: 'Success',
@@ -88,7 +96,41 @@ export function BusinessConfigManagement() {
 
   const getConfigValue = (key: string, defaultValue: any = {}) => {
     const config = configs.find(c => c.key === key);
-    return config?.value || defaultValue;
+    return config?.value || getDefaultValue(key);
+  };
+
+  const getDefaultValue = (key: string) => {
+    const defaults = {
+      pricing_strategy: {
+        model: 'flat',
+        currency: 'USD',
+        tax_inclusive: false,
+        payment_terms: 'immediate'
+      },
+      membership_model: {
+        trial_days: 7,
+        trial_enabled: true,
+        auto_renewal: true,
+        family_discounts: false
+      },
+      tax_settings: {
+        enabled: false,
+        rate: 0.0875,
+        inclusive: false
+      },
+      belt_curriculum: {
+        system: 'brazilian_jiu_jitsu',
+        testing_enabled: true,
+        stripe_requirements: false
+      },
+      class_schedule: {
+        booking_window_hours: 24,
+        cancellation_window_hours: 4,
+        max_reservations_per_student: 3,
+        waitlist_enabled: true
+      }
+    };
+    return defaults[key as keyof typeof defaults] || {};
   };
 
   if (loading) {
@@ -222,9 +264,9 @@ function PricingConfig({ value, onUpdate, saving }: { value: any, onUpdate: (val
     <div className="grid grid-cols-2 gap-4">
       <div>
         <Label htmlFor="pricing-model">Pricing Model</Label>
-        <Select value={value.model} onValueChange={(model) => onUpdate({ ...value, model })}>
+        <Select value={value?.model || 'flat'} onValueChange={(model) => onUpdate({ ...value, model })}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select pricing model" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="flat">Flat Rate</SelectItem>
@@ -235,9 +277,9 @@ function PricingConfig({ value, onUpdate, saving }: { value: any, onUpdate: (val
       </div>
       <div>
         <Label htmlFor="currency">Currency</Label>
-        <Select value={value.currency} onValueChange={(currency) => onUpdate({ ...value, currency })}>
+        <Select value={value?.currency || 'USD'} onValueChange={(currency) => onUpdate({ ...value, currency })}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select currency" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="USD">USD</SelectItem>
@@ -248,16 +290,16 @@ function PricingConfig({ value, onUpdate, saving }: { value: any, onUpdate: (val
       </div>
       <div className="flex items-center space-x-2">
         <Switch 
-          checked={value.tax_inclusive} 
+          checked={value?.tax_inclusive || false} 
           onCheckedChange={(tax_inclusive) => onUpdate({ ...value, tax_inclusive })}
         />
         <Label>Tax Inclusive Pricing</Label>
       </div>
       <div>
         <Label htmlFor="payment-terms">Payment Terms</Label>
-        <Select value={value.payment_terms} onValueChange={(payment_terms) => onUpdate({ ...value, payment_terms })}>
+        <Select value={value?.payment_terms || 'immediate'} onValueChange={(payment_terms) => onUpdate({ ...value, payment_terms })}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select payment terms" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="immediate">Immediate</SelectItem>
@@ -278,13 +320,13 @@ function MembershipConfig({ value, onUpdate, saving }: { value: any, onUpdate: (
           <Label htmlFor="trial-days">Trial Days</Label>
           <Input 
             type="number" 
-            value={value.trial_days} 
-            onChange={(e) => onUpdate({ ...value, trial_days: parseInt(e.target.value) })}
+            value={value?.trial_days || 7} 
+            onChange={(e) => onUpdate({ ...value, trial_days: parseInt(e.target.value) || 7 })}
           />
         </div>
         <div className="flex items-center space-x-2">
           <Switch 
-            checked={value.trial_enabled} 
+            checked={value?.trial_enabled || false} 
             onCheckedChange={(trial_enabled) => onUpdate({ ...value, trial_enabled })}
           />
           <Label>Enable Trial Period</Label>
@@ -293,14 +335,14 @@ function MembershipConfig({ value, onUpdate, saving }: { value: any, onUpdate: (
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center space-x-2">
           <Switch 
-            checked={value.auto_renewal} 
+            checked={value?.auto_renewal || false} 
             onCheckedChange={(auto_renewal) => onUpdate({ ...value, auto_renewal })}
           />
           <Label>Auto Renewal</Label>
         </div>
         <div className="flex items-center space-x-2">
           <Switch 
-            checked={value.family_discounts} 
+            checked={value?.family_discounts || false} 
             onCheckedChange={(family_discounts) => onUpdate({ ...value, family_discounts })}
           />
           <Label>Family Discounts</Label>
@@ -315,7 +357,7 @@ function TaxConfig({ value, onUpdate, saving }: { value: any, onUpdate: (value: 
     <div className="grid grid-cols-2 gap-4">
       <div className="flex items-center space-x-2">
         <Switch 
-          checked={value.enabled} 
+          checked={value?.enabled || false} 
           onCheckedChange={(enabled) => onUpdate({ ...value, enabled })}
         />
         <Label>Enable Tax Collection</Label>
@@ -325,13 +367,13 @@ function TaxConfig({ value, onUpdate, saving }: { value: any, onUpdate: (value: 
         <Input 
           type="number" 
           step="0.01"
-          value={(value.rate * 100).toFixed(2)} 
-          onChange={(e) => onUpdate({ ...value, rate: parseFloat(e.target.value) / 100 })}
+          value={((value?.rate || 0) * 100).toFixed(2)} 
+          onChange={(e) => onUpdate({ ...value, rate: parseFloat(e.target.value) / 100 || 0 })}
         />
       </div>
       <div className="flex items-center space-x-2">
         <Switch 
-          checked={value.inclusive} 
+          checked={value?.inclusive || false} 
           onCheckedChange={(inclusive) => onUpdate({ ...value, inclusive })}
         />
         <Label>Tax Inclusive</Label>
@@ -345,9 +387,9 @@ function BeltConfig({ value, onUpdate, saving }: { value: any, onUpdate: (value:
     <div className="space-y-4">
       <div>
         <Label htmlFor="belt-system">Belt System</Label>
-        <Select value={value.system} onValueChange={(system) => onUpdate({ ...value, system })}>
+        <Select value={value?.system || 'brazilian_jiu_jitsu'} onValueChange={(system) => onUpdate({ ...value, system })}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select belt system" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="brazilian_jiu_jitsu">Brazilian Jiu-Jitsu</SelectItem>
@@ -360,14 +402,14 @@ function BeltConfig({ value, onUpdate, saving }: { value: any, onUpdate: (value:
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center space-x-2">
           <Switch 
-            checked={value.testing_enabled} 
+            checked={value?.testing_enabled || false} 
             onCheckedChange={(testing_enabled) => onUpdate({ ...value, testing_enabled })}
           />
           <Label>Enable Belt Testing</Label>
         </div>
         <div className="flex items-center space-x-2">
           <Switch 
-            checked={value.stripe_requirements} 
+            checked={value?.stripe_requirements || false} 
             onCheckedChange={(stripe_requirements) => onUpdate({ ...value, stripe_requirements })}
           />
           <Label>Stripe Requirement System</Label>
@@ -384,29 +426,29 @@ function ScheduleConfig({ value, onUpdate, saving }: { value: any, onUpdate: (va
         <Label htmlFor="booking-window">Booking Window (hours)</Label>
         <Input 
           type="number" 
-          value={value.booking_window_hours} 
-          onChange={(e) => onUpdate({ ...value, booking_window_hours: parseInt(e.target.value) })}
+          value={value?.booking_window_hours || 24} 
+          onChange={(e) => onUpdate({ ...value, booking_window_hours: parseInt(e.target.value) || 24 })}
         />
       </div>
       <div>
         <Label htmlFor="cancellation-window">Cancellation Window (hours)</Label>
         <Input 
           type="number" 
-          value={value.cancellation_window_hours} 
-          onChange={(e) => onUpdate({ ...value, cancellation_window_hours: parseInt(e.target.value) })}
+          value={value?.cancellation_window_hours || 4} 
+          onChange={(e) => onUpdate({ ...value, cancellation_window_hours: parseInt(e.target.value) || 4 })}
         />
       </div>
       <div>
         <Label htmlFor="max-reservations">Max Reservations per Student</Label>
         <Input 
           type="number" 
-          value={value.max_reservations_per_student} 
-          onChange={(e) => onUpdate({ ...value, max_reservations_per_student: parseInt(e.target.value) })}
+          value={value?.max_reservations_per_student || 3} 
+          onChange={(e) => onUpdate({ ...value, max_reservations_per_student: parseInt(e.target.value) || 3 })}
         />
       </div>
       <div className="flex items-center space-x-2">
         <Switch 
-          checked={value.waitlist_enabled} 
+          checked={value?.waitlist_enabled || false} 
           onCheckedChange={(waitlist_enabled) => onUpdate({ ...value, waitlist_enabled })}
         />
         <Label>Enable Waitlist</Label>
