@@ -4099,6 +4099,41 @@ export type Database = {
           },
         ]
       }
+      prices: {
+        Row: {
+          academy_id: string
+          created_at: string
+          id: string
+          name: string
+          stripe_price_id: string
+          updated_at: string
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string
+          id?: string
+          name: string
+          stripe_price_id: string
+          updated_at?: string
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          stripe_price_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prices_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       private_sessions: {
         Row: {
           created_at: string | null

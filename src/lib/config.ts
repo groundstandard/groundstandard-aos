@@ -30,7 +30,7 @@ export const config: AppConfig = {
     projectId: getRequiredEnvVar('VITE_SUPABASE_PROJECT_ID'),
   },
   stripe: {
-    publishableKey: getRequiredEnvVar('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_51RmQDHGfOr7w8D1gouEtCOJY4fQjvKHdOW39g02UUJtG58oRVYEwZ5hpQjkAgoCqIy9P24s5LZPVLZFwo45b16HO00n9YR6UYo'),
+    publishableKey: getRequiredEnvVar('VITE_STRIPE_PUBLISHABLE_KEY'),
   }
 };
 

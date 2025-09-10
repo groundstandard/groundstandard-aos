@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAcademy } from '@/hooks/useAcademy';
 import { Loader2, Settings, DollarSign, GraduationCap, Calendar, Shield } from 'lucide-react';
+import { PriceMappingsManagement } from './PriceMappingsManagement';
 
 interface BusinessConfig {
   id: string;
@@ -152,10 +153,14 @@ export function BusinessConfigManagement() {
       </div>
 
       <Tabs defaultValue="pricing" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="pricing" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             Pricing
+          </TabsTrigger>
+          <TabsTrigger value="prices" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Prices
           </TabsTrigger>
           <TabsTrigger value="membership" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -189,6 +194,10 @@ export function BusinessConfigManagement() {
               />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="prices">
+          <PriceMappingsManagement />
         </TabsContent>
 
         <TabsContent value="membership">
