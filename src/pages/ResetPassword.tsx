@@ -17,21 +17,45 @@ export const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we have a session (user clicked the email link)
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+    const establishSessionFromStoredTokens = async () => {
+      // Try current session first
+      let { data: { session } } = await supabase.auth.getSession();
+
+      // If no session, try to restore from tokens saved by AuthFlowHandler
+      if (!session) {
+        const accessToken = sessionStorage.getItem('sb-recovery-access-token');
+        const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+
+        if (accessToken && refreshToken) {
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.warn('Failed to set session from stored tokens', error);
+            } else {
+              session = data.session;
+              console.log('Session established from stored tokens');
+            }
+          } finally {
+            sessionStorage.removeItem('sb-recovery-access-token');
+            sessionStorage.removeItem('sb-recovery-refresh-token');
+          }
+        }
+      }
+
       if (!session) {
         toast({
           variant: "destructive",
           title: "Invalid Reset Link",
-          description: "Please use the link from your email or request a new password reset"
+          description: "Please use the link from your email or request a new password reset",
         });
         navigate("/auth");
       }
     };
 
-    checkSession();
+    establishSessionFromStoredTokens();
   }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
