@@ -98,8 +98,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
       {showLogin ? (
         <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
