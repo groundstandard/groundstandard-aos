@@ -321,7 +321,7 @@ export type Database = {
         Row: {
           from_academy_id: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           switched_at: string | null
           to_academy_id: string | null
           user_agent: string | null
@@ -330,7 +330,7 @@ export type Database = {
         Insert: {
           from_academy_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           switched_at?: string | null
           to_academy_id?: string | null
           user_agent?: string | null
@@ -339,7 +339,7 @@ export type Database = {
         Update: {
           from_academy_id?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           switched_at?: string | null
           to_academy_id?: string | null
           user_agent?: string | null
@@ -617,7 +617,7 @@ export type Database = {
           change_summary: string | null
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           module_name: string | null
           new_values: Json | null
           old_values: Json | null
@@ -632,7 +632,7 @@ export type Database = {
           change_summary?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           module_name?: string | null
           new_values?: Json | null
           old_values?: Json | null
@@ -647,7 +647,7 @@ export type Database = {
           change_summary?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           module_name?: string | null
           new_values?: Json | null
           old_values?: Json | null
@@ -4423,7 +4423,7 @@ export type Database = {
           action: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           record_id: string | null
           table_name: string
           user_agent: string | null
@@ -4433,7 +4433,7 @@ export type Database = {
           action: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name: string
           user_agent?: string | null
@@ -4443,7 +4443,7 @@ export type Database = {
           action?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           record_id?: string | null
           table_name?: string
           user_agent?: string | null
@@ -4861,18 +4861,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculate_late_fees: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      calculate_late_fees: { Args: never; Returns: undefined }
       can_contact_enroll_in_class: {
         Args: { class_uuid: string; contact_uuid: string }
         Returns: Json
       }
-      check_absent_members: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      check_absent_members: { Args: never; Returns: undefined }
       check_in_with_pin: {
         Args: { class_id_param?: string; pin_code: string }
         Returns: Json
@@ -4897,26 +4891,14 @@ export type Database = {
         Args: { subscription_uuid: string }
         Returns: string
       }
-      generate_check_in_pin: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_invitation_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_invoice_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_check_in_pin: { Args: never; Returns: string }
+      generate_invitation_code: { Args: never; Returns: string }
+      generate_invoice_number: { Args: never; Returns: string }
       generate_payment_schedule: {
         Args: { subscription_uuid: string }
         Returns: undefined
       }
-      get_academy_usage: {
-        Args: { academy_uuid: string }
-        Returns: Json
-      }
+      get_academy_usage: { Args: { academy_uuid: string }; Returns: Json }
       get_class_enrolled_students: {
         Args: { class_uuid: string }
         Returns: {
@@ -4939,10 +4921,7 @@ export type Database = {
           period_type: string
         }[]
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_role: { Args: never; Returns: string }
       get_family_members: {
         Args: { contact_uuid: string }
         Returns: {
@@ -4993,26 +4972,14 @@ export type Database = {
         Args: { target_academy_id: string; target_user_id?: string }
         Returns: string
       }
-      join_academy: {
-        Args: { academy_uuid: string }
-        Returns: boolean
-      }
-      join_academy_with_code: {
-        Args: { code: string }
-        Returns: Json
-      }
-      process_expired_class_packs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      join_academy: { Args: { academy_uuid: string }; Returns: boolean }
+      join_academy_with_code: { Args: { code: string }; Returns: Json }
+      process_expired_class_packs: { Args: never; Returns: undefined }
       switch_user_academy: {
         Args: { target_academy_id: string }
         Returns: Json
       }
-      test_profile_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      test_profile_access: { Args: never; Returns: boolean }
       update_payment_analytics: {
         Args: { end_date: string; start_date: string }
         Returns: undefined
