@@ -20,6 +20,8 @@ const Navigation = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
+  const canManageTeam = profile?.role === 'admin' || profile?.role === 'owner';
+
   const navLinks = user ? [] : [
     { href: "#features", label: "Features" },
     { href: "#pricing", label: "Pricing" },
@@ -47,17 +49,32 @@ const Navigation = () => {
           ))}
           <div className="border-t pt-4 space-y-2">
             {user ? (
-              <Button 
-                variant="default" 
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  navigate('/dashboard');
-                  setIsOpen(false);
-                }}
-              >
-                Dashboard
-              </Button>
+              <>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    navigate('/dashboard');
+                    setIsOpen(false);
+                  }}
+                >
+                  Dashboard
+                </Button>
+                {canManageTeam && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      navigate('/team');
+                      setIsOpen(false);
+                    }}
+                  >
+                    Team Management
+                  </Button>
+                )}
+              </>
             ) : (
               <>
                 <Button 
@@ -250,6 +267,17 @@ const Navigation = () => {
               <Settings className="h-5 w-5" />
               <span className="text-xs font-medium">Configurations</span>
             </Button>
+            {canManageTeam && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 hover:scale-105"
+                onClick={() => navigate('/team')}
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-xs font-medium">Team</span>
+              </Button>
+            )}
             <Button 
               variant="ghost" 
               size="sm"
