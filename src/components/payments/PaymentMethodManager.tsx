@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { CreditCard, Building2, Plus, Trash2, Star } from 'lucide-react';
+import { isStripeConfigured } from '@/lib/config';
 import { stripePromise, getStripeElementsOptions, getPaymentElementOptions } from '@/lib/stripe';
 
 interface PaymentMethod {
@@ -153,6 +154,10 @@ const AddPaymentMethodForm = ({ contactId, onSuccess, onCancel }: {
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
+
+  if (!isStripeConfigured()) {
+    return <div className="text-center py-4">Payments are not configured</div>;
+  }
 
   useEffect(() => {
     setupPaymentMethod();

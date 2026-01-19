@@ -4,9 +4,11 @@ import { config, validateConfig } from '@/lib/config';
 // Validate configuration before initializing Stripe
 validateConfig();
 
+const stripePublishableKey = config.stripe.publishableKey?.trim() || null;
+
 // Centralized Stripe configuration using environment variables
 // Single instance of Stripe to prevent conflicts
-export const stripePromise = loadStripe(config.stripe.publishableKey);
+export const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : Promise.resolve(null);
 
 // Common Stripe Elements configuration to ensure consistency
 export const getStripeElementsOptions = (clientSecret: string) => ({

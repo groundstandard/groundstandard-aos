@@ -131,23 +131,23 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <AcademyProvider>
-            <SubscriptionProvider>
-              <MembershipSubscriptionProvider>
-                <ViewProvider>
-                <RoleTestingProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <AppRoutes />
-                  </BrowserRouter>
-                </RoleTestingProvider>
-              </ViewProvider>
-              </MembershipSubscriptionProvider>
-            </SubscriptionProvider>
-          </AcademyProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <AcademyProvider>
+              <SubscriptionProvider>
+                <MembershipSubscriptionProvider>
+                  <ViewProvider>
+                  <RoleTestingProvider>
+                    <Toaster />
+                    <Sonner />
+                      <AppRoutes />
+                  </RoleTestingProvider>
+                </ViewProvider>
+                </MembershipSubscriptionProvider>
+              </SubscriptionProvider>
+            </AcademyProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );

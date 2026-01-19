@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { config } from '@/lib/config';
+import { isStripeConfigured } from '@/lib/config';
+import { stripePromise } from '@/lib/stripe';
 import { Loader2, CreditCard } from 'lucide-react';
-
-const stripePromise = loadStripe(config.stripe.publishableKey);
 
 interface SubscribePanelProps {
   priceId: string;
@@ -22,6 +20,18 @@ export function SubscribePanel({ priceId, planName, amount, onSuccess }: Subscri
   const [subscriptionId, setSubscriptionId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  if (!isStripeConfigured()) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center">
+            <p className="text-muted-foreground">Payments are not configured.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   useEffect(() => {
     createSubscription();

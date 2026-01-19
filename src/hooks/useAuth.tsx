@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userAcademies, setUserAcademies] = useState<AcademyMembership[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Get initial session
@@ -91,15 +92,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     try {
       console.log('Fetching profile for user:', userId);
-      const { data, error } = await supabase
+      const profileQuery = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Profile request timed out')), 15000);
+      });
+
+      const { data, error } = await Promise.race([profileQuery, timeoutPromise]);
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
-        setLoading(false);
+        console.error('Error fetching profile:', {
+          message: (error as any).message,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: (error as any).code,
+          status: (error as any).status,
+        });
+
+        const status = (error as any).status;
+        if (status >= 500) {
+          try {
+            await supabase.auth.signOut();
+          } finally {
+            setUser(null);
+            setProfile(null);
+            setUserAcademies([]);
+            navigate('/auth');
+          }
+        }
+
         return;
       } else if (data) {
         console.log('Profile fetched successfully:', data);

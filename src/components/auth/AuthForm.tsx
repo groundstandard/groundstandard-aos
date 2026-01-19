@@ -108,7 +108,8 @@ export const AuthForm = () => {
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
-            role: 'owner' // Staff users start as academy owners
+            role: 'owner', // Staff users start as academy owners
+            membership_status: 'inactive'
           }
         }
       });
@@ -122,6 +123,12 @@ export const AuthForm = () => {
       
       // Don't auto-navigate after signup - user needs to verify email first
     } catch (error: any) {
+      console.error('Sign up failed:', {
+        message: error?.message,
+        status: error?.status,
+        code: error?.code,
+        name: error?.name,
+      });
       toast({
         variant: "destructive",
         title: "Sign Up Failed",

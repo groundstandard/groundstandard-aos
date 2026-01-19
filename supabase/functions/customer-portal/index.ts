@@ -1,21 +1,42 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
+// @ts-ignore - Deno URL imports are resolved by the Supabase Edge runtime
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore - Deno URL imports are resolved by the Supabase Edge runtime
 import Stripe from "https://esm.sh/stripe@14.21.0";
+// @ts-ignore - Deno URL imports are resolved by the Supabase Edge runtime
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CUSTOMER-PORTAL] ${step}${detailsStr}`);
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    const requestHeaders = req.headers.get('Access-Control-Request-Headers');
+    const requestMethod = req.headers.get('Access-Control-Request-Method');
+
+    return new Response(null, {
+      headers: {
+        ...corsHeaders,
+        ...(requestHeaders ? { 'Access-Control-Allow-Headers': requestHeaders } : null),
+        ...(requestMethod ? { 'Access-Control-Allow-Methods': `OPTIONS, ${requestMethod}` } : null),
+      },
+      status: 204,
+    });
   }
 
   try {
