@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { Shield, Menu, TrendingUp, Users, DollarSign, CheckCircle, BarChart3, Settings, User, Clock, MessageCircle } from "lucide-react";
 import { useState } from "react";
+
 import {
   Sheet,
   SheetContent,
@@ -13,7 +15,7 @@ import MultiAcademySwitcher from "@/components/academy/MultiAcademySwitcher";
 import { ViewToggle } from "@/components/ui/ViewToggle";
 
 const Navigation = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -98,7 +100,16 @@ const Navigation = () => {
                 <Shield className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
                 <span className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>DojoMaster</span>
               </div>
-              {user && <ViewToggle />}
+              {user && (
+                <div className="flex items-center gap-2">
+                  <ViewToggle />
+                  {profile?.role && (
+                    <Badge variant="outline" className="hidden sm:inline-flex">
+                      Role: {profile.role}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
             
             {!isMobile && (

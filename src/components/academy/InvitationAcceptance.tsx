@@ -113,11 +113,26 @@ const InvitationAcceptance = () => {
         .from('profiles')
         .update({
           academy_id: invitation.academy.id,
+          last_academy_id: invitation.academy.id,
           role: invitation.role
         })
         .eq('id', user.id);
 
       if (profileError) throw profileError;
+
+      // Ensure academy_memberships is created/updated (used by get_user_academies)
+      const { error: membershipError } = await supabase
+        .from('academy_memberships')
+        .upsert({
+          user_id: user.id,
+          academy_id: invitation.academy.id,
+          role: invitation.role,
+          is_active: true,
+        }, {
+          onConflict: 'user_id,academy_id'
+        });
+
+      if (membershipError) throw membershipError;
 
       // Mark invitation as accepted
       const { error: inviteError } = await (supabase as any)
