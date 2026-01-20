@@ -211,19 +211,37 @@ export const AdvancedCheckInSystem = () => {
 
   // Get user's location
   useEffect(() => {
-    if (settings?.enable_location_tracking && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.warn('Location access denied:', error);
+    const maybeFetchLocation = async () => {
+      if (!settings?.enable_location_tracking) return;
+      if (!navigator.geolocation) return;
+
+      // Avoid auto-prompting: only auto-fetch if permission is already granted
+      try {
+        const canQueryPermissions = typeof navigator.permissions?.query === 'function';
+        if (canQueryPermissions) {
+          const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+          if (status.state !== 'granted') return;
+        } else {
+          return;
         }
-      );
-    }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setCurrentLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          () => {
+            // Swallow errors here to avoid noisy console logs on load
+          }
+        );
+      } catch {
+        // If permissions query fails, don't auto-request location.
+      }
+    };
+
+    void maybeFetchLocation();
   }, [settings?.enable_location_tracking]);
 
   const handlePinCheckIn = () => {

@@ -27,15 +27,16 @@ export const useLocationCheckIn = () => {
   const [reservations, setReservations] = useState<ClassReservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationRequested, setLocationRequested] = useState(false);
   const { profile } = useAuth();
 
   useEffect(() => {
-    getCurrentLocation();
     fetchAcademyLocations();
     fetchUserReservations();
   }, [profile?.id]);
 
   const getCurrentLocation = () => {
+    setLocationRequested(true);
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by this browser");
       return;
@@ -129,6 +130,7 @@ export const useLocationCheckIn = () => {
     reservations,
     loading,
     locationError,
+    locationRequested,
     availableLocations,
     availableReservations,
     canCheckIn,

@@ -33,16 +33,17 @@ export const LocationCheckIn = () => {
   const [reservations, setReservations] = useState<ClassReservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationRequested, setLocationRequested] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
 
   useEffect(() => {
-    getCurrentLocation();
     fetchAcademyLocations();
     fetchUserReservations();
   }, []);
 
   const getCurrentLocation = () => {
+    setLocationRequested(true);
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by this browser");
       return;
@@ -219,10 +220,24 @@ export const LocationCheckIn = () => {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Getting your location...</span>
-          </div>
+          {locationRequested ? (
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Getting your location...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Location is required for location-based check-in.
+                </AlertDescription>
+              </Alert>
+              <Button onClick={getCurrentLocation}>
+                Enable Location
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
