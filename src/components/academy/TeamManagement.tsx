@@ -58,7 +58,7 @@ const TeamManagement = () => {
     { value: 'student', label: 'Student', icon: User, description: 'Basic student access' },
   ];
 
-  const canInvite = profile?.role === 'owner' || profile?.role === 'admin';
+  const canInvite = profile?.role === 'owner' || profile?.role === 'admin' || profile?.role === 'staff';
 
   useEffect(() => {
     fetchTeamData();
@@ -116,16 +116,59 @@ const TeamManagement = () => {
 
     setIsInviting(true);
     try {
-      const { error } = await supabase.functions.invoke('send-academy-invitation', {
-        body: {
-          email: inviteForm.email,
-          role: inviteForm.role,
-          academyName: academy.name,
-          inviterName: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || profile?.email || 'Academy Admin'
-        }
+      const inviterName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || profile?.email || 'Academy Admin';
+
+      const { data: invitationCode, error: createError } = await (supabase as any).rpc('create_academy_invitation', {
+        academy_uuid: academy.id,
+        invitee_email: inviteForm.email,
+        invitee_role: inviteForm.role,
+      } as any);
+
+      if (createError) throw createError;
+
+      const { data: invitationRow, error: invitationFetchError } = await (supabase as any)
+        .from('academy_invitations')
+        .select('token, expires_at')
+        .eq('academy_id', academy.id)
+        .eq('email', inviteForm.email)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (invitationFetchError) throw invitationFetchError;
+      if (!invitationRow?.token) {
+        throw new Error('Invitation created but token was not found');
+      }
+
+      const appOrigin = (import.meta as any).env?.VITE_PUBLIC_APP_URL || window.location.origin;
+      const inviteLink = `${appOrigin}/accept-invitation?token=${invitationRow.token}`;
+
+      const webhookUrl = 'https://groundstandard.app.n8n.cloud/webhook/email-sender';
+      const webhookPayload = {
+        type: 'academy_invitation',
+        email: inviteForm.email,
+        role: inviteForm.role,
+        academyName: academy.name,
+        inviterName,
+        inviteLink,
+        invitationToken: invitationRow.token,
+        invitationCode,
+        academyId: academy.id,
+        inviterId: profile?.id,
+        expiresAt: invitationRow.expires_at,
+      };
+
+      const webhookResp = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload),
       });
 
-      if (error) throw error;
+      const webhookText = await webhookResp.text();
+      if (!webhookResp.ok) {
+        throw new Error(`Webhook failed (${webhookResp.status}): ${webhookText}`);
+      }
 
       toast({
         title: "Invitation sent!",
@@ -140,7 +183,7 @@ const TeamManagement = () => {
       console.error('Error sending invitation:', error);
       toast({
         title: "Error",
-        description: "Failed to send invitation",
+        description: error instanceof Error ? error.message : "Failed to send invitation",
         variant: "destructive",
       });
     } finally {

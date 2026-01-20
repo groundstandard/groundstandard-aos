@@ -57,38 +57,19 @@ const InvitationAcceptance = () => {
 
   const fetchInvitation = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('academy_invitations')
-        .select(`
-          id,
-          email,
-          role,
-          status,
-          expires_at,
-          academy:academies(id, name, description),
-          inviter:profiles(first_name, last_name, email)
-        `)
-        .eq('token', token)
-        .single();
+      const { data, error } = await (supabase as any).rpc('get_invitation_by_token', {
+        invite_token: token,
+      } as any);
 
       if (error) throw error;
 
-      if (!data) {
-        setError('Invitation not found');
+      const result = data as any;
+      if (!result?.success) {
+        setError(result?.error || 'Failed to load invitation');
         return;
       }
 
-      if (data.status !== 'pending') {
-        setError('This invitation has already been used or cancelled');
-        return;
-      }
-
-      if (new Date(data.expires_at) < new Date()) {
-        setError('This invitation has expired');
-        return;
-      }
-
-      setInvitation(data as InvitationData);
+      setInvitation(result.invitation as InvitationData);
 
     } catch (error) {
       console.error('Error fetching invitation:', error);
@@ -108,39 +89,16 @@ const InvitationAcceptance = () => {
         throw new Error('This invitation was sent to a different email address');
       }
 
-      // Update user's profile to join the academy
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          academy_id: invitation.academy.id,
-          last_academy_id: invitation.academy.id,
-          role: invitation.role
-        })
-        .eq('id', user.id);
+      const { data, error } = await (supabase as any).rpc('accept_invitation_token', {
+        invite_token: token,
+      } as any);
 
-      if (profileError) throw profileError;
+      if (error) throw error;
 
-      // Ensure academy_memberships is created/updated (used by get_user_academies)
-      const { error: membershipError } = await supabase
-        .from('academy_memberships')
-        .upsert({
-          user_id: user.id,
-          academy_id: invitation.academy.id,
-          role: invitation.role,
-          is_active: true,
-        }, {
-          onConflict: 'user_id,academy_id'
-        });
-
-      if (membershipError) throw membershipError;
-
-      // Mark invitation as accepted
-      const { error: inviteError } = await (supabase as any)
-        .from('academy_invitations')
-        .update({ status: 'accepted' })
-        .eq('id', invitation.id);
-
-      if (inviteError) throw inviteError;
+      const result = data as any;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to accept invitation');
+      }
 
       toast({
         title: "Welcome to the team!",

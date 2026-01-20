@@ -10,7 +10,10 @@ export const AuthFlowHandler = () => {
     const parseHashParams = (hash: string) => new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
 
     const clearUrl = () => {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      url.searchParams.delete('type');
+      window.history.replaceState({}, document.title, `${url.pathname}${url.search}`);
     };
 
     const handleEmailConfirmation = async () => {
@@ -28,7 +31,8 @@ export const AuthFlowHandler = () => {
           console.error('AuthFlowHandler: exchangeCodeForSession threw', e);
         } finally {
           clearUrl();
-          navigate('/');
+          // Do not redirect away from the current route.
+          // This preserves flows like /accept-invitation?token=... after invite/set-password.
         }
         return;
       }
