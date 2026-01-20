@@ -14,6 +14,7 @@ DECLARE
   invitation_record RECORD;
   academy_name text;
   current_email text;
+  username_part text;
 BEGIN
   IF code IS NULL OR length(trim(code)) = 0 THEN
     RETURN jsonb_build_object('success', false, 'error', 'Missing invitation code');
@@ -57,10 +58,14 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Academy not found');
   END IF;
 
+  username_part := split_part(current_email, '@', 1);
+
   -- Create or update profile
   INSERT INTO public.profiles (
     id,
     email,
+    first_name,
+    last_name,
     role,
     academy_id,
     last_academy_id,
@@ -68,6 +73,8 @@ BEGIN
   ) VALUES (
     auth.uid(),
     current_email,
+    COALESCE(NULLIF(username_part, ''), 'Student'),
+    'Student',
     invitation_record.role,
     invitation_record.academy_id,
     invitation_record.academy_id,
@@ -75,17 +82,24 @@ BEGIN
   )
   ON CONFLICT (id) DO UPDATE
   SET email = EXCLUDED.email,
+      first_name = COALESCE(public.profiles.first_name, EXCLUDED.first_name),
+      last_name = COALESCE(public.profiles.last_name, EXCLUDED.last_name),
       role = EXCLUDED.role,
       academy_id = EXCLUDED.academy_id,
       last_academy_id = EXCLUDED.last_academy_id,
       updated_at = now();
 
   -- Ensure membership exists
-  INSERT INTO public.academy_memberships (user_id, academy_id, role, is_active)
-  VALUES (auth.uid(), invitation_record.academy_id, invitation_record.role, true)
-  ON CONFLICT (user_id, academy_id) DO UPDATE
-    SET role = EXCLUDED.role,
-        is_active = true;
+  UPDATE public.academy_memberships
+  SET role = invitation_record.role,
+      is_active = true
+  WHERE user_id = auth.uid()
+    AND academy_id = invitation_record.academy_id;
+
+  IF NOT FOUND THEN
+    INSERT INTO public.academy_memberships (user_id, academy_id, role, is_active)
+    VALUES (auth.uid(), invitation_record.academy_id, invitation_record.role, true);
+  END IF;
 
   -- Mark invitation as accepted
   UPDATE public.academy_invitations

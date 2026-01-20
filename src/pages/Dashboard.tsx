@@ -6,7 +6,7 @@ import { ViewToggle } from "@/components/ui/ViewToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import * as SelectComponents from "@/components/ui/select";
 
@@ -433,6 +433,9 @@ const Dashboard = () => {
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Location-Based Check-In</DialogTitle>
+                <DialogDescription>
+                  Check in to classes using your current location. Make sure location services are enabled.
+                </DialogDescription>
               </DialogHeader>
               <LocationCheckIn />
             </DialogContent>
