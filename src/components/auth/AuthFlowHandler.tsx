@@ -45,6 +45,20 @@ export const AuthFlowHandler = () => {
       const type = hashParams.get('type');
 
       if (accessToken && refreshToken && type !== 'recovery') {
+        if (type === 'invite') {
+          try {
+            sessionStorage.setItem('sb-invite-access-token', accessToken);
+            sessionStorage.setItem('sb-invite-refresh-token', refreshToken);
+            sessionStorage.setItem('sb-invite-redirect-path', `${window.location.pathname}${window.location.search}`);
+          } catch (e) {
+            console.warn('Could not store invite tokens', e);
+          } finally {
+            clearUrl();
+            navigate('/reset-password');
+          }
+          return;
+        }
+
         try {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,

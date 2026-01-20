@@ -19,21 +19,26 @@ export const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkRecoveryTokens = () => {
-      const accessToken = sessionStorage.getItem('sb-recovery-access-token');
-      const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+    const checkTokens = () => {
+      const recoveryAccessToken = sessionStorage.getItem('sb-recovery-access-token');
+      const recoveryRefreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+      const inviteAccessToken = sessionStorage.getItem('sb-invite-access-token');
+      const inviteRefreshToken = sessionStorage.getItem('sb-invite-refresh-token');
 
-      if (!accessToken || !refreshToken) {
+      const hasRecoveryTokens = !!(recoveryAccessToken && recoveryRefreshToken);
+      const hasInviteTokens = !!(inviteAccessToken && inviteRefreshToken);
+
+      if (!hasRecoveryTokens && !hasInviteTokens) {
         toast({
           variant: "destructive",
-          title: "Invalid Reset Link", 
+          title: "Invalid Reset Link",
           description: "Please use the link from your email or request a new password reset",
         });
         navigate("/auth");
       }
     };
 
-    checkRecoveryTokens();
+    checkTokens();
   }, [navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -59,12 +64,17 @@ export const ResetPassword = () => {
 
     setLoading(true);
     try {
-      // Get stored tokens
-      const accessToken = sessionStorage.getItem('sb-recovery-access-token');
-      const refreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+      const recoveryAccessToken = sessionStorage.getItem('sb-recovery-access-token');
+      const recoveryRefreshToken = sessionStorage.getItem('sb-recovery-refresh-token');
+      const inviteAccessToken = sessionStorage.getItem('sb-invite-access-token');
+      const inviteRefreshToken = sessionStorage.getItem('sb-invite-refresh-token');
+      const inviteRedirectPath = sessionStorage.getItem('sb-invite-redirect-path');
+
+      const accessToken = recoveryAccessToken || inviteAccessToken;
+      const refreshToken = recoveryRefreshToken || inviteRefreshToken;
 
       if (!accessToken || !refreshToken) {
-        throw new Error('Recovery tokens not found');
+        throw new Error('Reset tokens not found');
       }
 
       // Create a temporary client that doesn't persist sessions
@@ -101,9 +111,33 @@ export const ResetPassword = () => {
 
       if (error) throw error;
 
+      if (inviteAccessToken && inviteRefreshToken && inviteRedirectPath) {
+        try {
+          const url = new URL(inviteRedirectPath, window.location.origin);
+          const inviteToken = url.searchParams.get('token');
+
+          if (inviteToken) {
+            const { data: acceptData, error: acceptError } = await (tempClient as any).rpc('accept_invitation_token', {
+              invite_token: inviteToken,
+            } as any);
+
+            if (acceptError) throw acceptError;
+            const result = acceptData as any;
+            if (!result?.success) {
+              throw new Error(result?.error || 'Failed to accept invitation');
+            }
+          }
+        } catch (e) {
+          console.error('Invite accept after reset failed', e);
+        }
+      }
+
       // Clean up tokens
       sessionStorage.removeItem('sb-recovery-access-token');
       sessionStorage.removeItem('sb-recovery-refresh-token');
+      sessionStorage.removeItem('sb-invite-access-token');
+      sessionStorage.removeItem('sb-invite-refresh-token');
+      sessionStorage.removeItem('sb-invite-redirect-path');
 
       // Sign out from temp client (doesn't affect main client)
       await tempClient.auth.signOut();
