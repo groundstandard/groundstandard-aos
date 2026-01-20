@@ -62,7 +62,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Check if we're in student mode (force student selector) - only if user logged in as student
     const loginRole = localStorage.getItem('loginRole');
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
-    const forceStudentMode = loginRole === 'student' && studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
+    const forceStudentMode = loginRole === 'student' && studentAcademies.length > 1 && !localStorage.getItem('student_academy_selected');
     
     console.log('useAcademy: Student mode check', { loginRole, studentAcademiesCount: studentAcademies.length, studentAcademySelected: localStorage.getItem('student_academy_selected'), forceStudentMode });
     
@@ -211,7 +211,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Don't refresh academy if we're in student mode - only if user logged in as student
     const loginRole = localStorage.getItem('loginRole');
     const studentAcademies = userAcademies.filter(academy => academy.role === 'student');
-    const forceStudentMode = loginRole === 'student' && studentAcademies.length > 0 && !localStorage.getItem('student_academy_selected');
+    const forceStudentMode = loginRole === 'student' && studentAcademies.length > 1 && !localStorage.getItem('student_academy_selected');
     
     if (forceStudentMode) {
       console.log('useAcademy: useEffect - Student mode active, skipping refresh');
