@@ -43,9 +43,17 @@ export const SubscriptionProvider = ({ children }: { children: React.ReactNode }
 
     try {
       setLoading(true);
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        setSubscriptionInfo({ subscribed: false });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('sync-subscription-status', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       
