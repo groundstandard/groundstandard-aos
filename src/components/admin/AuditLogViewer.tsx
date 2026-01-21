@@ -209,6 +209,42 @@ export const AuditLogViewer = () => {
     );
   };
 
+  const maskId = (id: string | null) => {
+    if (!id) return 'N/A';
+    const trimmed = String(id);
+    if (trimmed.length <= 12) return trimmed;
+    return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
+  };
+
+  const formatChangeValue = (value: any) => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (value instanceof Date) return value.toISOString();
+    if (Array.isArray(value)) return value.length === 0 ? '—' : `List (${value.length})`;
+    if (typeof value === 'object') return 'Updated';
+    return String(value);
+  };
+
+  const getFieldChanges = (oldValues: any, newValues: any) => {
+    const oldObj = oldValues && typeof oldValues === 'object' ? oldValues : {};
+    const newObj = newValues && typeof newValues === 'object' ? newValues : {};
+    const keys = Array.from(new Set([...Object.keys(oldObj), ...Object.keys(newObj)])).sort();
+
+    const changes = keys
+      .map((key) => {
+        const oldVal = (oldObj as any)[key];
+        const newVal = (newObj as any)[key];
+        const oldStr = formatChangeValue(oldVal);
+        const newStr = formatChangeValue(newVal);
+        const isSame = oldStr === newStr;
+        return { key, oldStr, newStr, isSame };
+      })
+      .filter((c) => !c.isSame);
+
+    return changes;
+  };
+
   const exportLogs = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Timestamp,User,Action,Table,Record ID,Details\n" +
@@ -421,7 +457,7 @@ export const AuditLogViewer = () => {
                     <TableCell>{getActionBadge(log.action)}</TableCell>
                     <TableCell>{getTableBadge(log.table_name)}</TableCell>
                     <TableCell className="font-mono text-sm">
-                      {log.record_id ? log.record_id.slice(0, 8) + '...' : 'N/A'}
+                      {maskId(log.record_id)}
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <div className="truncate text-sm">
@@ -492,27 +528,54 @@ export const AuditLogViewer = () => {
                 </div>
                 <div>
                   <Label>Record ID</Label>
-                  <p className="text-sm font-mono">{selectedLog.record_id || 'N/A'}</p>
+                  <p className="text-sm">{maskId(selectedLog.record_id)}</p>
                 </div>
               </div>
-              
-              {selectedLog.old_values && (
-                <div>
-                  <Label>Previous Values</Label>
-                  <pre className="text-xs bg-muted p-3 rounded border overflow-auto max-h-32">
-                    {JSON.stringify(selectedLog.old_values, null, 2)}
-                  </pre>
-                </div>
-              )}
-              
-              {selectedLog.new_values && (
-                <div>
-                  <Label>New Values</Label>
-                  <pre className="text-xs bg-muted p-3 rounded border overflow-auto max-h-32">
-                    {JSON.stringify(selectedLog.new_values, null, 2)}
-                  </pre>
-                </div>
-              )}
+
+              <div>
+                <Label>Changes</Label>
+                {(() => {
+                  const changes = getFieldChanges(selectedLog.old_values, selectedLog.new_values);
+                  if (changes.length === 0) {
+                    return (
+                      <div className="text-sm text-muted-foreground mt-2">
+                        No field-level changes recorded.
+                      </div>
+                    );
+                  }
+
+                  const shown = changes.slice(0, 12);
+                  const hiddenCount = changes.length - shown.length;
+
+                  return (
+                    <div className="mt-2 rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Field</TableHead>
+                            <TableHead>Before</TableHead>
+                            <TableHead>After</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {shown.map((c) => (
+                            <TableRow key={c.key}>
+                              <TableCell className="font-medium">{c.key}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{c.oldStr}</TableCell>
+                              <TableCell className="text-sm">{c.newStr}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {hiddenCount > 0 && (
+                        <div className="px-3 py-2 text-xs text-muted-foreground border-t">
+                          +{hiddenCount} more change(s) not shown
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

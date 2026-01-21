@@ -49,6 +49,7 @@ import BusinessSettings from "./pages/BusinessSettings";
 import StudentBilling from "./pages/StudentBilling";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Communications from "./pages/Communications";
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
 import { useRoleTesting } from "@/contexts/RoleTestingContext";
@@ -101,6 +102,7 @@ const AppRoutes = () => {
         <Route path="/membership-management" element={user ? <AcademyGatekeeper><MembershipManagement /></AcademyGatekeeper> : <Auth />} />
         <Route path="/class-management" element={user ? <AcademyGatekeeper><ClassManagementPage /></AcademyGatekeeper> : <Auth />} />
         <Route path="/business-settings" element={user ? <AcademyGatekeeper><BusinessSettings /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/communications" element={user ? <AcademyGatekeeper><Communications /></AcademyGatekeeper> : <Auth />} />
         <Route path="/billing" element={user ? <AcademyGatekeeper><StudentBilling /></AcademyGatekeeper> : <Auth />} />
         <Route path="/events" element={user ? <AcademyGatekeeper><Events /></AcademyGatekeeper> : <Auth />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

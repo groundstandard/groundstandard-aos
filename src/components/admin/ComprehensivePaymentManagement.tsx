@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PaymentMethodManager } from '@/components/payments/PaymentMethodManager';
+
 import { 
   DollarSign,
   CreditCard,
@@ -37,6 +40,55 @@ interface ComprehensivePaymentManagementProps {
 export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymentManagementProps) => {
   const { profile } = useAuth();
   const isMobile = useIsMobile();
+
+  const { data: subscriptionSchedules = [], isLoading: schedulesLoading } = useQuery({
+    queryKey: ['membership-subscriptions-schedules'],
+    queryFn: async () => {
+      let data: any[] = [];
+      try {
+        const { data: rows, error } = await (supabase as any)
+          .from('membership_subscriptions')
+          .select('id, profile_id, membership_plan_id, status, start_date, next_billing_date, billing_amount_cents, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        data = (rows || []).map((r: any) => ({
+          ...r,
+          contact_id: r.profile_id,
+        }));
+      } catch (_e) {
+        const { data: rows, error } = await (supabase as any)
+          .from('membership_subscriptions')
+          .select('id, contact_id, membership_plan_id, status, start_date, next_billing_date, billing_amount_cents, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        data = rows || [];
+      }
+
+      const contactIds = Array.from(new Set((data || []).map((r: any) => r.contact_id).filter(Boolean)));
+      const planIds = Array.from(new Set((data || []).map((r: any) => r.membership_plan_id).filter(Boolean)));
+
+      const [{ data: contacts }, { data: plans }] = await Promise.all([
+        contactIds.length
+          ? supabase.from('profiles').select('id, first_name, last_name, email').in('id', contactIds)
+          : Promise.resolve({ data: [] as any[] }),
+        planIds.length
+          ? supabase.from('membership_plans').select('id, name').in('id', planIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const contactById = new Map((contacts || []).map((c: any) => [c.id, c]));
+      const planById = new Map((plans || []).map((p: any) => [p.id, p]));
+
+      return (data || []).map((r: any) => ({
+        ...r,
+        contact: contactById.get(r.contact_id) || null,
+        plan: planById.get(r.membership_plan_id) || null,
+      }));
+    },
+    enabled: profile?.role === 'admin' || profile?.role === 'owner',
+  });
   
   const [activeTab, setActiveTab] = useState('overview');
   
@@ -330,9 +382,39 @@ export const ComprehensivePaymentManagement = ({ navigate }: ComprehensivePaymen
               <CardDescription>Manage recurring payment schedules</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                No payment schedules configured
-              </div>
+              {schedulesLoading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading schedules...</div>
+              ) : subscriptionSchedules.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No payment schedules configured</div>
+              ) : (
+                <div className="space-y-3">
+                  {subscriptionSchedules.map((s: any) => (
+                    <div key={s.id} className="border rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {s.contact
+                              ? `${s.contact.first_name || ''} ${s.contact.last_name || ''}`.trim() || s.contact.email
+                              : s.contact_id}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Plan: {s.plan?.name || s.membership_plan_id}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Next Due: {s.next_billing_date || '—'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">
+                            ${((s.billing_amount_cents || 0) / 100).toFixed(2)}
+                          </div>
+                          <div className="text-xs text-muted-foreground capitalize">{s.status}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

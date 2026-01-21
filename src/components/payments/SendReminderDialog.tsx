@@ -39,25 +39,48 @@ export const SendReminderDialog = ({ open, onOpenChange }: SendReminderDialogPro
   const { data: overduePayments, isLoading } = useQuery({
     queryKey: ['overdue-payments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payments')
-        .select(`
-          id,
-          student_id,
-          amount,
-          description,
-          payment_date,
-          profiles!payments_student_id_fkey (first_name, last_name, email)
-        `)
-        .eq('status', 'pending')
-        .lt('payment_date', new Date().toISOString())
-        .order('payment_date', { ascending: true });
+      let data: any[] = [];
+      {
+        const { data: rows, error } = await (supabase as any)
+          .from('payments')
+          .select('id, student_id, amount, description, payment_date')
+          .eq('status', 'pending')
+          .lt('payment_date', new Date().toISOString())
+          .order('payment_date', { ascending: true });
 
-      if (error) throw error;
-      return (data as any[])?.map(item => ({
+        if (!error) {
+          data = rows || [];
+        } else {
+          const { data: rows2, error: error2 } = await (supabase as any)
+            .from('payments')
+            .select('id, user_id, amount, description, payment_date')
+            .eq('status', 'pending')
+            .lt('payment_date', new Date().toISOString())
+            .order('payment_date', { ascending: true });
+
+          if (error2) throw error2;
+          data = (rows2 || []).map((r: any) => ({
+            ...r,
+            student_id: r.user_id,
+          }));
+        }
+      }
+
+      const studentIds = Array.from(new Set((data || []).map((p: any) => p.student_id).filter(Boolean)));
+      const { data: profilesData, error: profilesError } = studentIds.length
+        ? await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email')
+            .in('id', studentIds)
+        : { data: [], error: null };
+
+      if (profilesError) throw profilesError;
+      const profileById = new Map((profilesData || []).map((p: any) => [p.id, p]));
+
+      return ((data as any[]) || []).map((item: any) => ({
         ...item,
-        profiles: item.profiles?.[0] || item.profiles
-      })) as OverduePayment[] || [];
+        profiles: profileById.get(item.student_id) || null,
+      })) as OverduePayment[];
     },
     enabled: open
   });

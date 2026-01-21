@@ -96,7 +96,8 @@ export const AdminDashboard = () => {
       const { data: beltTestsData } = await supabase
         .from('belt_tests')
         .select('id')
-        .eq('status', 'passed')
+        .eq('status', 'completed')
+        .eq('result', 'passed')
         .gte('test_date', quarterStart.toISOString().split('T')[0]);
       
       // Fetch recent activities

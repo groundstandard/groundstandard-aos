@@ -1,11 +1,13 @@
 import { BackButton } from '@/components/ui/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, Zap, FileText } from 'lucide-react';
+import { Settings, Zap, FileText, MessageSquare } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
 export default function Configurations() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const configSections = [
     {
@@ -24,6 +26,26 @@ export default function Configurations() {
       color: 'text-green-500',
       bgColor: 'bg-green-50 dark:bg-green-900/20',
     },
+    ...(profile?.role === 'admin' || profile?.role === 'owner'
+      ? [
+          {
+            title: 'Business Settings',
+            description: "Configure your academy's business rules, pricing, and operational settings",
+            icon: Settings,
+            path: '/business-settings',
+            color: 'text-purple-500',
+            bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+          },
+          {
+            title: 'Communications',
+            description: 'Send announcements and messages, manage templates, and review delivery history',
+            icon: MessageSquare,
+            path: '/communications',
+            color: 'text-indigo-500',
+            bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+          },
+        ]
+      : []),
   ];
 
   return (

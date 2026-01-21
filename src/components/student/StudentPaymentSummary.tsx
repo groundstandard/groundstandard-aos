@@ -74,14 +74,28 @@ export const StudentPaymentSummary = () => {
       })) || [];
 
       // Fetch next billing date from active subscription
-      const { data: subscription } = await supabase
-        .from('membership_subscriptions')
-        .select('next_billing_date')
-        .eq('profile_id', profile?.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      let subscription: any = null;
+      try {
+        const { data } = await (supabase as any)
+          .from('membership_subscriptions')
+          .select('next_billing_date')
+          .eq('profile_id', profile?.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        subscription = data;
+      } catch (_e) {
+        const { data } = await (supabase as any)
+          .from('membership_subscriptions')
+          .select('next_billing_date')
+          .eq('contact_id', profile?.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        subscription = data;
+      }
 
       setSummary({
         totalPaid,

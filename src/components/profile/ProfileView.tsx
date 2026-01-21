@@ -13,6 +13,7 @@ import { useAcademy } from '@/hooks/useAcademy';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { SettingsContent } from '@/pages/Settings';
 
 interface ProfileViewProps {
   section?: 'personal' | 'subscription' | 'academy' | 'account';
@@ -436,54 +437,7 @@ export const ProfileView = ({ section = 'personal' }: ProfileViewProps) => {
 
   const renderAccountSection = () => (
     <div className="space-y-6">
-      {/* Account Information */}
-      <Card className="card-minimal shadow-soft">
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Email Address</Label>
-              <div className="mt-1 p-2 bg-muted/30 rounded-md text-muted-foreground">
-                {profile.email}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Contact admin to change email address
-              </p>
-            </div>
-            <div>
-              <Label>Member Since</Label>
-              <div className="mt-1 p-2">
-                {new Date(profile.created_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Actions */}
-      <Card className="card-minimal shadow-soft">
-        <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-start">
-            <Button
-              variant="destructive"
-              onClick={signOut}
-              className="gap-2"
-            >
-              <User className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <SettingsContent embedded />
     </div>
   );
 

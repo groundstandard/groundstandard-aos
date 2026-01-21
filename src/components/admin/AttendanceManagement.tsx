@@ -313,7 +313,7 @@ export const AttendanceManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, phone, belt_level, role')
+        .select('id, first_name, last_name, email, phone, belt_level, role, membership_status')
         .in('role', ['student', 'member'])
         .eq('membership_status', 'active')
         .order('first_name');

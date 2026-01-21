@@ -57,13 +57,15 @@ export function BusinessConfigManagement() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data: savedConfig, error } = await supabase
         .from('business_config')
         .upsert({
           academy_id: academy.id,
           key,
           value,
-        });
+        }, { onConflict: 'academy_id,key' })
+        .select('id, key, value')
+        .single();
 
       if (error) throw error;
 
@@ -72,10 +74,10 @@ export function BusinessConfigManagement() {
         const existingIndex = prev.findIndex(config => config.key === key);
         if (existingIndex >= 0) {
           return prev.map(config => 
-            config.key === key ? { ...config, value } : config
+            config.key === key ? { ...config, id: savedConfig?.id || config.id, value: savedConfig?.value ?? value } : config
           );
         } else {
-          return [...prev, { id: crypto.randomUUID(), key, value }];
+          return [...prev, { id: savedConfig?.id || crypto.randomUUID(), key: savedConfig?.key || key, value: savedConfig?.value ?? value }];
         }
       });
 

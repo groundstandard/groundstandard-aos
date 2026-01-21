@@ -842,12 +842,13 @@ export const ClassManagement = () => {
                             size="sm"
                           onClick={() => {
                             setEditingClass(classItem);
+                            const unlimitedStudents = (classItem as any).max_students == null;
                             setFormData({
                               name: classItem.name,
                               description: classItem.description || '',
                               instructor_id: classItem.instructor_id || '',
-                              max_students: classItem.max_students,
-                              unlimited_students: false,
+                              max_students: unlimitedStudents ? 20 : classItem.max_students,
+                              unlimited_students: unlimitedStudents,
                               duration_minutes: classItem.duration_minutes,
                               skill_level: classItem.skill_level || 'all',
                               age_group: classItem.age_group || 'all',
@@ -911,12 +912,13 @@ export const ClassManagement = () => {
                           size="sm"
                           onClick={() => {
                             setEditingClass(classItem);
+                            const unlimitedStudents = (classItem as any).max_students == null;
                             setFormData({
                               name: classItem.name,
                               description: classItem.description || '',
                               instructor_id: classItem.instructor_id || '',
-                              max_students: classItem.max_students,
-                              unlimited_students: false,
+                              max_students: unlimitedStudents ? 20 : classItem.max_students,
+                              unlimited_students: unlimitedStudents,
                               duration_minutes: classItem.duration_minutes,
                               skill_level: classItem.skill_level || 'all',
                               age_group: classItem.age_group || 'all',

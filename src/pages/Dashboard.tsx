@@ -26,7 +26,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MultiAcademySwitcher from "@/components/academy/MultiAcademySwitcher";
 import { useAcademy } from "@/hooks/useAcademy";
 import { useStudentDashboard } from "@/hooks/useStudentDashboard";
@@ -35,6 +35,8 @@ import { StudentPaymentSummary } from "@/components/student/StudentPaymentSummar
 import { ClassReservationsSidebar } from "@/components/classes/ClassReservationsSidebar";
 import { LocationCheckIn } from "@/components/checkin/LocationCheckIn";
 import { useLocationCheckIn } from "@/hooks/useLocationCheckIn";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -47,22 +49,90 @@ const Dashboard = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
   const { stats: studentStats, loading: studentLoading, refreshData } = useStudentDashboard();
   const { canCheckIn, availableReservations, locationError } = useLocationCheckIn();
+  const [adminBeltTests, setAdminBeltTests] = useState<number | null>(null);
+
+  const { data: announcements = [], isLoading: announcementsLoading } = useQuery({
+    queryKey: ['student-announcements', currentAcademyId, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('communication_logs')
+        .select(`
+          id,
+          subject,
+          content,
+          sent_at,
+          metadata,
+          sender:profiles!communication_logs_sent_by_fkey(first_name, last_name, role)
+        `)
+        .eq('message_type', 'announcement')
+        .or('metadata->>target_audience.eq.all,metadata->>target_audience.eq.students')
+        .order('sent_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !isAdmin && !!user && !!currentAcademyId,
+  });
 
   if (!user || !profile) {
     return <div>Loading...</div>;
   }
 
+  const fetchAdminBeltTests = async () => {
+    if (!isAdmin || !currentAcademyId) return;
+
+    try {
+      setAdminBeltTests(null);
+
+      const { data: students, error: studentsError } = await supabase
+        .from('academy_memberships')
+        .select('user_id')
+        .eq('academy_id', currentAcademyId)
+        .eq('is_active', true)
+        .eq('role', 'student');
+
+      if (studentsError) throw studentsError;
+
+      const studentIds = (students || []).map(s => (s as any).user_id).filter(Boolean);
+
+      if (studentIds.length === 0) {
+        setAdminBeltTests(0);
+        return;
+      }
+
+      const now = new Date();
+      const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+
+      const { data: beltTests, error: beltTestsError } = await supabase
+        .from('belt_tests')
+        .select('id, status, result, test_date')
+        .in('student_id', studentIds)
+        .gte('test_date', quarterStart.toISOString().split('T')[0]);
+
+      if (beltTestsError) throw beltTestsError;
+
+      const passedThisQuarter = (beltTests || []).filter(t => t.status === 'completed' && t.result === 'passed').length;
+      setAdminBeltTests(passedThisQuarter);
+    } catch (e) {
+      console.error('Dashboard: failed to fetch belt test stats', e);
+      setAdminBeltTests(0);
+    }
+  };
+
   const handleRefreshStats = async () => {
     setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => {
-      setRefreshing(false);
-      toast({
-        title: "Success",
-        description: "Dashboard statistics refreshed",
-      });
-    }, 1000);
+    await fetchAdminBeltTests();
+    setRefreshing(false);
+    toast({
+      title: "Success",
+      description: "Dashboard statistics refreshed",
+    });
   };
+
+  useEffect(() => {
+    fetchAdminBeltTests();
+  }, [isAdmin, currentAcademyId]);
 
   const quickStats = [
     {
@@ -99,7 +169,7 @@ const Dashboard = () => {
     },
     {
       title: "Belt Tests",
-      value: "0", // Will be replaced with academy-specific data
+      value: isAdmin ? (adminBeltTests === null ? "..." : adminBeltTests.toString()) : "0", // Will be replaced with academy-specific data
       change: "No data",
       trend: "neutral",
       icon: Award,
@@ -592,6 +662,57 @@ const Dashboard = () => {
 
         {/* Class Reservations */}
         <div className="mt-6">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Announcements
+              </CardTitle>
+              <CardDescription>Latest announcements from your academy</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {announcementsLoading ? (
+                <div className="text-sm text-muted-foreground">Loading announcements...</div>
+              ) : announcements.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No announcements yet.</div>
+              ) : (
+                <div className="space-y-3">
+                  {announcements.map((a) => (
+                    <div key={a.id} className="border rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px]">Administration</Badge>
+                            <div className="font-medium text-sm truncate">
+                              {a.subject || 'Announcement'}
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            From{' '}
+                            {(() => {
+                              const sender = (a as any).sender;
+                              const first = sender?.first_name;
+                              const last = sender?.last_name;
+                              const role = sender?.role;
+                              const name = [first, last].filter(Boolean).join(' ');
+                              const title = role === 'owner' || role === 'admin' ? 'Principal' : 'Staff';
+                              return name ? `${title} ${name}` : title;
+                            })()}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                          {a.sent_at ? format(new Date(a.sent_at), 'MMM d, h:mm a') : ''}
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words mt-2">
+                        {a.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           <ClassReservationsSidebar onReservationChange={refreshData} />
         </div>
 

@@ -74,7 +74,7 @@ export const CalendarClassView = () => {
         .select(`
           *,
           class_schedules(*),
-          instructor:profiles!instructor_id(first_name, last_name)
+          instructor:profiles!classes_instructor_id_fkey(first_name, last_name)
         `)
         .eq('is_active', true)
         .or(`start_date.is.null,start_date.lte.${format(new Date(), 'yyyy-MM-dd')}`);

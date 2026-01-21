@@ -24,9 +24,17 @@ serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+      ?? Deno.env.get("SUPABASE_ANON_KEY")
+      ?? "";
+
+    if (!supabaseUrl) throw new Error("SUPABASE_URL is not set");
+    if (!supabaseKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY is not set");
+
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      supabaseUrl,
+      supabaseKey,
       { auth: { persistSession: false } }
     );
 
@@ -56,6 +64,10 @@ serve(async (req) => {
 
     if (!amount || !description) {
       throw new Error("Amount and description are required");
+    }
+
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Amount must be a positive number (in cents)");
     }
 
     logStep("Creating payment link", { amount, description });
@@ -117,8 +129,10 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
+      url: paymentLink.url,
       payment_link: paymentLink.url,
-      payment_link_id: paymentLink.id 
+      payment_link_id: paymentLink.id,
+      stripe_payment_link_id: paymentLink.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

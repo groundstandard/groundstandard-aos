@@ -43,10 +43,14 @@ export const CreatePaymentLinkDialog = ({ open, onOpenChange }: CreatePaymentLin
         }
       });
       if (error) throw error;
+      if ((data as any)?.error) {
+        throw new Error((data as any).error);
+      }
       return data;
     },
     onSuccess: (data) => {
-      setGeneratedLink(data.url);
+      const url = (data as any)?.payment_link || (data as any)?.url;
+      setGeneratedLink(url || null);
       toast({
         title: 'Payment Link Created',
         description: 'Payment link has been generated successfully.'

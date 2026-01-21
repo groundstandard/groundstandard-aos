@@ -16,13 +16,15 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
 
-const Settings = () => {
+export const SettingsContent = ({ embedded = false }: { embedded?: boolean }) => {
   const { user, profile, signOut } = useAuth();
   const { academy, updateAcademy } = useAcademy();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isUploading, setIsUploading] = useState(false);
   const [selectedTab, setSelectedTab] = useState('settings');
   const [academyFormData, setAcademyFormData] = useState({
@@ -167,40 +169,43 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
-        <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <BackButton />
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
-              <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              <span className="break-words">Settings</span>
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-              Manage your account settings and preferences
-            </p>
-          </div>
-        </div>
+    <div className={embedded ? "space-y-6" : "min-h-screen bg-gradient-subtle"}>
+      <div className={embedded ? undefined : "container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl"}>
+        {!embedded && (
+          <>
+            <div className="flex items-start gap-2 sm:gap-4 mb-6 sm:mb-8">
+              <BackButton />
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+                  <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                  <span className="break-words">Settings</span>
+                </h1>
+                <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+                  Manage your account settings and preferences
+                </p>
+              </div>
+            </div>
 
-        {/* Settings Navigation Ribbon */}
-        <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
-          <Button 
-            variant="ghost" 
-            className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'settings' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
-            onClick={() => setSelectedTab('settings')}
-          >
-            <SettingsIcon className="h-4 w-4" />
-            Profile Settings
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
-            onClick={() => navigate('/automations')}
-          >
-            <Activity className="h-4 w-4" />
-            Automations
-          </Button>
-        </div>
+            <div className="flex items-center gap-4 border-b border-border pb-4 mb-6 overflow-x-auto">
+              <Button 
+                variant="ghost" 
+                className={`flex items-center gap-2 whitespace-nowrap ${selectedTab === 'settings' ? 'text-primary border-b-2 border-primary' : 'hover:text-primary'} pb-2`}
+                onClick={() => setSelectedTab('settings')}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                Profile Settings
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 hover:text-primary whitespace-nowrap" 
+                onClick={() => navigate('/automations')}
+              >
+                <Activity className="h-4 w-4" />
+                Automations
+              </Button>
+            </div>
+          </>
+        )}
 
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
@@ -366,6 +371,19 @@ const Settings = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {(profile?.role === 'admin' || profile?.role === 'owner') ? (
+              <AuditLogViewer />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center">Access Restricted</CardTitle>
+                  <CardDescription className="text-center">
+                    Audit logs are only available to administrators.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="academy" className="space-y-6">
@@ -595,6 +613,10 @@ const Settings = () => {
       </div>
     </div>
   );
+};
+
+const Settings = () => {
+  return <SettingsContent />;
 };
 
 export default Settings;

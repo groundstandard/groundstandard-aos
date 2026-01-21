@@ -43,24 +43,45 @@ export const CalculateLateFeeDialog = ({ open, onOpenChange }: CalculateLateFeeD
     queryFn: async () => {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 7); // 7 days grace period
-      
-      const { data, error } = await supabase
-        .from('payments')
-        .select(`
-          id,
-          student_id,
-          amount,
-          description,
-          payment_date,
-          status,
-          profiles!payments_student_id_fkey (first_name, last_name, email)
-        `)
-        .eq('status', 'pending')
-        .lt('payment_date', cutoffDate.toISOString())
-        .order('payment_date', { ascending: true });
 
-      if (error) throw error;
-      
+      let data: any[] = [];
+      {
+        const { data: rows, error } = await (supabase as any)
+          .from('payments')
+          .select('id, student_id, amount, description, payment_date, status')
+          .eq('status', 'pending')
+          .lt('payment_date', cutoffDate.toISOString())
+          .order('payment_date', { ascending: true });
+
+        if (!error) {
+          data = rows || [];
+        } else {
+          const { data: rows2, error: error2 } = await (supabase as any)
+            .from('payments')
+            .select('id, user_id, amount, description, payment_date, status')
+            .eq('status', 'pending')
+            .lt('payment_date', cutoffDate.toISOString())
+            .order('payment_date', { ascending: true });
+
+          if (error2) throw error2;
+          data = (rows2 || []).map((r: any) => ({
+            ...r,
+            student_id: r.user_id,
+          }));
+        }
+      }
+
+      const studentIds = Array.from(new Set(((data as any[]) || []).map(p => p.student_id).filter(Boolean)));
+      const { data: profilesData, error: profilesError } = studentIds.length
+        ? await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email')
+            .in('id', studentIds)
+        : { data: [], error: null };
+
+      if (profilesError) throw profilesError;
+      const profileById = new Map((profilesData || []).map((p: any) => [p.id, p]));
+
       // Filter out payments that already have late fees
       const paymentsWithoutLateFees = [];
       for (const payment of (data as any[]) || []) {
@@ -73,7 +94,7 @@ export const CalculateLateFeeDialog = ({ open, onOpenChange }: CalculateLateFeeD
         if (!lateFeeError && (!existingLateFees || existingLateFees.length === 0)) {
           paymentsWithoutLateFees.push({
             ...payment,
-            profiles: payment.profiles?.[0] || payment.profiles
+            profiles: profileById.get(payment.student_id) || null
           });
         }
       }

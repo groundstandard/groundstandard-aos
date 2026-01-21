@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { useAcademy } from "@/hooks/useAcademy";
 import {
   MessageSquare,
   Plus,
@@ -55,8 +56,44 @@ interface CommunicationLog {
 export const CommunicationCenter = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentAcademyId } = useAcademy();
   const [activeTab, setActiveTab] = useState("compose");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
+  const [selectedLog, setSelectedLog] = useState<CommunicationLog | null>(null);
+  const [isViewLogOpen, setIsViewLogOpen] = useState(false);
+  const [isNewTemplateDialogOpen, setIsNewTemplateDialogOpen] = useState(false);
+  const [newTemplateForm, setNewTemplateForm] = useState({
+    name: '',
+    message_type: 'email' as CommunicationTemplate['message_type'],
+    subject: '',
+    content: '',
+  });
+
+  const deleteLogMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      const { error } = await supabase
+        .from('communication_logs')
+        .delete()
+        .eq('id', logId);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      toast({ title: 'Message deleted' });
+      queryClient.invalidateQueries({ queryKey: ['communication-logs'] });
+      setIsViewLogOpen(false);
+      setSelectedLog(null);
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to delete message',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const [messageForm, setMessageForm] = useState({
     message_type: 'email' as CommunicationTemplate['message_type'],
     subject: '',
@@ -79,8 +116,31 @@ export const CommunicationCenter = () => {
     }
   });
 
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from('message_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      toast({ title: 'Template deleted' });
+      queryClient.invalidateQueries({ queryKey: ['message-templates'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to delete template',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Fetch communication logs from database
-  const { data: communicationLogs = [], isLoading: logsLoading } = useQuery({
+  const { data: communicationLogs = [], isLoading: logsLoading } = useQuery<CommunicationLog[]>({
     queryKey: ['communication-logs'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -89,12 +149,17 @@ export const CommunicationCenter = () => {
         .order('sent_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as unknown as CommunicationLog[];
     }
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: typeof messageForm) => {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      const senderId = authData.user?.id;
+      if (!senderId) throw new Error('Not authenticated');
+
       // Get recipient count based on target audience
       let recipientCount = 0;
       
@@ -123,27 +188,19 @@ export const CommunicationCenter = () => {
         recipientCount = count || 0;
       }
 
-      // For communication logs, we need a contact_id, so we'll use the first admin user
-      const { data: adminUser } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1)
-        .single();
-
-      if (!adminUser) throw new Error('No admin user found');
-
       // Log the communication to database
       const { data, error } = await supabase
         .from('communication_logs')
         .insert([{
-          contact_id: adminUser.id, // Using admin as sender
+          contact_id: senderId,
           message_type: messageData.message_type,
           subject: messageData.subject || null,
           content: messageData.content,
           status: 'sent',
           sent_at: new Date().toISOString(),
+          sent_by: senderId,
           metadata: {
+            academy_id: currentAcademyId,
             target_audience: messageData.target_audience,
             custom_recipients: messageData.custom_recipients,
             recipients_count: recipientCount
@@ -205,6 +262,13 @@ export const CommunicationCenter = () => {
     onSuccess: () => {
       toast({ title: "Template created successfully!" });
       queryClient.invalidateQueries({ queryKey: ['message-templates'] });
+      setIsNewTemplateDialogOpen(false);
+      setNewTemplateForm({
+        name: '',
+        message_type: 'email',
+        subject: '',
+        content: '',
+      });
     },
     onError: (error) => {
       toast({ 
@@ -454,10 +518,99 @@ export const CommunicationCenter = () => {
                   <CardTitle>Message Templates</CardTitle>
                   <CardDescription>Pre-saved message templates for quick sending</CardDescription>
                 </div>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Template
-                </Button>
+                <Dialog open={isNewTemplateDialogOpen} onOpenChange={setIsNewTemplateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Template
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>New Template</DialogTitle>
+                      <DialogDescription>Create a reusable message template.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="template-name">Template Name</Label>
+                        <Input
+                          id="template-name"
+                          value={newTemplateForm.name}
+                          onChange={(e) => setNewTemplateForm(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="e.g. Welcome Message"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="template-type">Message Type</Label>
+                        <Select
+                          value={newTemplateForm.message_type}
+                          onValueChange={(value: CommunicationTemplate['message_type']) =>
+                            setNewTemplateForm(prev => ({ ...prev, message_type: value }))
+                          }
+                        >
+                          <SelectTrigger id="template-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="email">Email</SelectItem>
+                            <SelectItem value="sms">SMS</SelectItem>
+                            <SelectItem value="notification">Push Notification</SelectItem>
+                            <SelectItem value="announcement">Announcement</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {(newTemplateForm.message_type === 'email' || newTemplateForm.message_type === 'announcement') && (
+                        <div className="space-y-2">
+                          <Label htmlFor="template-subject">Subject</Label>
+                          <Input
+                            id="template-subject"
+                            value={newTemplateForm.subject}
+                            onChange={(e) => setNewTemplateForm(prev => ({ ...prev, subject: e.target.value }))}
+                            placeholder="Enter subject"
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <Label htmlFor="template-content">Content</Label>
+                        <Textarea
+                          id="template-content"
+                          value={newTemplateForm.content}
+                          onChange={(e) => setNewTemplateForm(prev => ({ ...prev, content: e.target.value }))}
+                          rows={6}
+                          placeholder="Enter template content..."
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsNewTemplateDialogOpen(false)}
+                          type="button"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            createTemplateMutation.mutate({
+                              name: newTemplateForm.name,
+                              message_type: newTemplateForm.message_type,
+                              subject: newTemplateForm.subject,
+                              content: newTemplateForm.content,
+                            })
+                          }
+                          disabled={!newTemplateForm.name || !newTemplateForm.content || createTemplateMutation.isPending}
+                          type="button"
+                        >
+                          {createTemplateMutation.isPending ? 'Creating...' : 'Create Template'}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardHeader>
             <CardContent>
@@ -496,6 +649,18 @@ export const CommunicationCenter = () => {
                           </Button>
                           <Button size="sm" variant="outline">
                             <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const ok = window.confirm(`Delete template "${template.name}"?`);
+                              if (!ok) return;
+                              deleteTemplateMutation.mutate(template.id);
+                            }}
+                            disabled={deleteTemplateMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
@@ -559,11 +724,45 @@ export const CommunicationCenter = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedLog(log as unknown as CommunicationLog);
+                              setIsViewLogOpen(true);
+                            }}
+                          >
                             <Eye className="h-3 w-3" />
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const typedLog = log as unknown as CommunicationLog;
+                              const md = (log.metadata as any) || {};
+                              sendMessageMutation.mutate({
+                                message_type: typedLog.message_type,
+                                subject: typedLog.subject || '',
+                                content: typedLog.content,
+                                target_audience: (md.target_audience || 'all') as any,
+                                custom_recipients: (md.custom_recipients || []) as any,
+                              });
+                            }}
+                            disabled={sendMessageMutation.isPending}
+                          >
                             Resend
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const ok = window.confirm('Delete this message log?');
+                              if (!ok) return;
+                              deleteLogMutation.mutate(log.id);
+                            }}
+                            disabled={deleteLogMutation.isPending}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
                       </TableCell>
@@ -591,6 +790,67 @@ export const CommunicationCenter = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isViewLogOpen} onOpenChange={setIsViewLogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Message Details</DialogTitle>
+            <DialogDescription>
+              {selectedLog
+                ? `${selectedLog.message_type.toUpperCase()} • ${new Date(selectedLog.sent_at).toLocaleString()}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedLog ? (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="text-sm font-medium">Subject</div>
+                <div className="text-sm text-muted-foreground break-words">
+                  {selectedLog.subject || '—'}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-sm font-medium">Content</div>
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                  {selectedLog.content}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const md = (selectedLog.metadata as any) || {};
+                    sendMessageMutation.mutate({
+                      message_type: selectedLog.message_type,
+                      subject: selectedLog.subject || '',
+                      content: selectedLog.content,
+                      target_audience: (md.target_audience || 'all') as any,
+                      custom_recipients: (md.custom_recipients || []) as any,
+                    });
+                  }}
+                  disabled={sendMessageMutation.isPending}
+                >
+                  Resend
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    const ok = window.confirm('Delete this message log?');
+                    if (!ok) return;
+                    deleteLogMutation.mutate(selectedLog.id);
+                  }}
+                  disabled={deleteLogMutation.isPending}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
