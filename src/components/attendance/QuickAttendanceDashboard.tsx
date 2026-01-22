@@ -65,11 +65,12 @@ export const QuickAttendanceDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [classesLoading, setClassesLoading] = useState(false);
 
   // Fetch instructor's classes
   useEffect(() => {
     fetchInstructorClasses();
-  }, [profile, currentAcademyId]);
+  }, [profile, currentAcademyId, selectedDate]);
 
   // Fetch students when class is selected
   useEffect(() => {
@@ -82,6 +83,7 @@ export const QuickAttendanceDashboard = () => {
     if (!profile || !currentAcademyId) return;
 
     try {
+      setClassesLoading(true);
       const { data, error } = await supabase
         .from('classes')
         .select(`
@@ -96,12 +98,12 @@ export const QuickAttendanceDashboard = () => {
 
       if (error) throw error;
 
-      const today = new Date().getDay();
-      const todayClasses = (data || []).filter(cls => 
-        cls.class_schedules.some((schedule: any) => schedule.day_of_week === today)
+      const selectedDay = new Date(`${selectedDate}T00:00:00`).getDay();
+      const scheduledClasses = (data || []).filter(cls =>
+        (cls.class_schedules || []).some((schedule: any) => schedule.day_of_week === selectedDay)
       );
 
-      setClasses(todayClasses.map(cls => ({
+      setClasses(scheduledClasses.map(cls => ({
         id: cls.id,
         name: cls.name,
         max_students: cls.max_students,
@@ -111,8 +113,10 @@ export const QuickAttendanceDashboard = () => {
       })));
 
       // Auto-select first class if available
-      if (todayClasses.length > 0) {
-        setSelectedClass(todayClasses[0].id);
+      if (scheduledClasses.length > 0) {
+        setSelectedClass((prev) => prev || scheduledClasses[0].id);
+      } else {
+        setSelectedClass('');
       }
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -121,6 +125,10 @@ export const QuickAttendanceDashboard = () => {
         title: 'Error',
         description: 'Failed to fetch your classes'
       });
+      setClasses([]);
+      setSelectedClass('');
+    } finally {
+      setClassesLoading(false);
     }
   };
 
@@ -364,6 +372,11 @@ export const QuickAttendanceDashboard = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {!classesLoading && classes.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  No classes scheduled for the selected date.
+                </p>
+              )}
             </div>
 
             <div>

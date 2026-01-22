@@ -47,6 +47,11 @@ export const BeltRequirements = () => {
   const queryClient = useQueryClient();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingBelt, setEditingBelt] = useState<BeltProgression | null>(null);
+  const [editRequirement, setEditRequirement] = useState({
+    description: '',
+    category: 'technique',
+    required: true
+  });
   const [newBelt, setNewBelt] = useState<NewBeltProgression>({
     belt_level: '',
     next_belt_level: '',
@@ -73,6 +78,31 @@ export const BeltRequirements = () => {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const deleteBeltMutation = useMutation({
+    mutationFn: async (beltId: string) => {
+      const { error } = await supabase
+        .from('belt_progressions')
+        .delete()
+        .eq('id', beltId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Belt level deleted successfully!'
+      });
+      queryClient.invalidateQueries({ queryKey: ['belt-progressions-detailed'] });
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete belt level'
+      });
     }
   });
 
@@ -185,6 +215,42 @@ export const BeltRequirements = () => {
       ...prev,
       requirements: prev.requirements.filter(req => req.id !== id)
     }));
+  };
+
+  const addEditRequirement = () => {
+    if (!editingBelt) return;
+    if (editRequirement.description.trim()) {
+      const req: RequirementItem = {
+        id: Date.now().toString(),
+        ...editRequirement
+      };
+
+      setEditingBelt(prev => {
+        if (!prev) return prev;
+        const currentReqs = Array.isArray(prev.requirements) ? prev.requirements : [];
+        return {
+          ...prev,
+          requirements: [...currentReqs, req]
+        };
+      });
+
+      setEditRequirement({
+        description: '',
+        category: 'technique',
+        required: true
+      });
+    }
+  };
+
+  const removeEditRequirement = (id: string) => {
+    setEditingBelt(prev => {
+      if (!prev) return prev;
+      const currentReqs = Array.isArray(prev.requirements) ? prev.requirements : [];
+      return {
+        ...prev,
+        requirements: currentReqs.filter((req: any) => req.id !== id)
+      };
+    });
   };
 
   const getBeltColor = (beltLevel: string) => {
@@ -339,7 +405,7 @@ export const BeltRequirements = () => {
                 <TableHead>Next Level</TableHead>
                 <TableHead>Requirements</TableHead>
                 <TableHead>Time & Classes</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -389,13 +455,29 @@ export const BeltRequirements = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingBelt(belt as any)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setEditingBelt(belt as any)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          const confirmed = confirm(`Delete belt level "${belt.belt_level}"?`);
+                          if (confirmed) {
+                            deleteBeltMutation.mutate(belt.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -403,6 +485,138 @@ export const BeltRequirements = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingBelt} onOpenChange={(open) => !open && setEditingBelt(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Belt Requirements</DialogTitle>
+          </DialogHeader>
+
+          {editingBelt && (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Belt Level</Label>
+                  <Input value={editingBelt.belt_level} disabled />
+                </div>
+                <div>
+                  <Label>Next Belt Level</Label>
+                  <Input value={editingBelt.next_belt_level || ''} disabled />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Minimum Classes Required</Label>
+                  <Input
+                    type="number"
+                    value={editingBelt.minimum_classes_required}
+                    onChange={(e) =>
+                      setEditingBelt(prev => prev ? ({
+                        ...prev,
+                        minimum_classes_required: parseInt(e.target.value) || 0
+                      }) : prev)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Minimum Time (Months)</Label>
+                  <Input
+                    type="number"
+                    value={editingBelt.minimum_time_months}
+                    onChange={(e) =>
+                      setEditingBelt(prev => prev ? ({
+                        ...prev,
+                        minimum_time_months: parseInt(e.target.value) || 0
+                      }) : prev)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  value={editingBelt.description || ''}
+                  onChange={(e) =>
+                    setEditingBelt(prev => prev ? ({
+                      ...prev,
+                      description: e.target.value
+                    }) : prev)
+                  }
+                  placeholder="Description of this belt level..."
+                />
+              </div>
+
+              <div>
+                <Label>Requirements</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={editRequirement.description}
+                      onChange={(e) => setEditRequirement(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Requirement description..."
+                      className="flex-1"
+                    />
+                    <Button type="button" onClick={addEditRequirement} size="sm">
+                      Add
+                    </Button>
+                  </div>
+
+                  {Array.isArray(editingBelt.requirements) && editingBelt.requirements.length > 0 && (
+                    <div className="space-y-1 max-h-40 overflow-y-auto border rounded p-2">
+                      {editingBelt.requirements.map((req: any) => (
+                        <div key={req.id} className="flex items-center justify-between gap-2 text-sm">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Checkbox
+                              checked={!!req.required}
+                              onCheckedChange={(checked) => {
+                                setEditingBelt(prev => {
+                                  if (!prev) return prev;
+                                  const currentReqs = Array.isArray(prev.requirements) ? prev.requirements : [];
+                                  return {
+                                    ...prev,
+                                    requirements: currentReqs.map((r: any) =>
+                                      r.id === req.id ? { ...r, required: !!checked } : r
+                                    )
+                                  };
+                                });
+                              }}
+                            />
+                            <span className="truncate">{req.description || 'Requirement'}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => removeEditRequirement(req.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => updateBeltMutation.mutate(editingBelt)}
+                  disabled={updateBeltMutation.isPending}
+                  className="flex-1"
+                >
+                  {updateBeltMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button variant="outline" onClick={() => setEditingBelt(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
