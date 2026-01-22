@@ -46,8 +46,8 @@ interface Column {
 interface ContactsTableProps {
   contacts: Contact[];
   onView: (contact: Contact) => void;
-  onEdit: (contact: Contact) => void;
-  onAddChild: (contact: Contact) => void;
+  onEdit?: (contact: Contact) => void;
+  onAddChild?: (contact: Contact) => void;
   onViewFamily: (contact: Contact) => void;
   onContactClick?: (contact: Contact) => void;
   selectedContactIds?: string[];
@@ -262,6 +262,16 @@ export const ContactsTable = ({
             >
               <Eye className="h-4 w-4" />
             </Button>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(contact)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -311,21 +321,34 @@ export const ContactsTable = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onEdit(contact)}
+                onClick={() => onView(contact)}
                 className="flex-1"
               >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
+                <Eye className="mr-2 h-4 w-4" />
+                View
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onAddChild(contact)}
-                className="flex-1"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Child
-              </Button>
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(contact)}
+                  className="flex-1"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+              {onAddChild && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAddChild(contact)}
+                  className="flex-1"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Child
+                </Button>
+              )}
               {hasChildren(contact) && (
                 <Button
                   variant="outline"
@@ -584,20 +607,26 @@ export const ContactsTable = ({
                               <Eye className="mr-2 h-4 w-4" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onEdit(contact)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onAddChild(contact)}>
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Add Child
-                            </DropdownMenuItem>
-                            {hasChildren(contact) && (
-                              <DropdownMenuItem onClick={() => onViewFamily(contact)}>
-                                <Users className="mr-2 h-4 w-4" />
-                                View Family
+                            {onEdit && (
+                              <DropdownMenuItem onClick={() => onEdit(contact)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
                               </DropdownMenuItem>
+                            )}
+                            {onAddChild && (
+                              <DropdownMenuItem onClick={() => onAddChild(contact)}>
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Add Child
+                              </DropdownMenuItem>
+                            )}
+                            {hasChildren(contact) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => onViewFamily(contact)}>
+                                  <Users className="mr-2 h-4 w-4" />
+                                  View Family
+                                </DropdownMenuItem>
+                              </>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

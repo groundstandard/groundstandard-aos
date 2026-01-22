@@ -34,8 +34,8 @@ interface ContactCardProps {
   contact: Contact;
   children?: Contact[];
   onView: (contact: Contact) => void;
-  onEdit: (contact: Contact) => void;
-  onAddChild: (contact: Contact) => void;
+  onEdit?: (contact: Contact) => void;
+  onAddChild?: (contact: Contact) => void;
   onViewFamily: (contact: Contact) => void;
   onAssignMembership?: (contact: Contact) => void;
 }
@@ -130,15 +130,17 @@ export const ContactCard = ({
             <Eye className="h-3 w-3 mr-1" />
             View
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => onEdit(contact)}
-          >
-            <Edit className="h-3 w-3 mr-1" />
-            Edit
-          </Button>
-          {!isChild && (
+          {onEdit && (
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => onEdit(contact)}
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+          )}
+          {!isChild && onAddChild && (
             <Button 
               size="sm" 
               variant="outline"

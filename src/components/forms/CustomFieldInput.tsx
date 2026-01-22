@@ -28,9 +28,20 @@ interface CustomFieldInputProps {
 }
 
 export const CustomFieldInput = ({ field, value = '', onChange, error }: CustomFieldInputProps) => {
-  const [multiSelectValues, setMultiSelectValues] = useState<string[]>(
-    value ? (typeof value === 'string' ? JSON.parse(value || '[]') : value) : []
-  );
+  const safeParseMultiSelect = (raw: unknown): string[] => {
+    if (Array.isArray(raw)) return raw.filter((v) => typeof v === 'string') as string[];
+    if (typeof raw !== 'string') return [];
+    const trimmed = raw.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'string') : [];
+    } catch (_e) {
+      return [];
+    }
+  };
+
+  const [multiSelectValues, setMultiSelectValues] = useState<string[]>(safeParseMultiSelect(value));
 
   const handleMultiSelectChange = (optionValue: string, checked: boolean) => {
     let newValues;

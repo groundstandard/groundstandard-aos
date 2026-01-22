@@ -585,7 +585,7 @@ export const SettingsContent = ({ embedded = false }: { embedded?: boolean }) =>
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Sign Out</Label>
-                        <p className="text-sm text-muted-foreground">Sign out of your administrator account</p>
+                        <p className="text-sm text-muted-foreground">Sign out of your account</p>
                       </div>
                       <Button 
                         variant="destructive" 
@@ -600,13 +600,40 @@ export const SettingsContent = ({ embedded = false }: { embedded?: boolean }) =>
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-muted-foreground">
-                    Academy settings are only available to administrators.
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="text-center text-muted-foreground">
+                      Academy settings are only available to administrators.
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <LogOut className="h-4 w-4" />
+                        Account Management
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Sign Out</Label>
+                          <p className="text-sm text-muted-foreground">Sign out of your account</p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          onClick={signOut}
+                          className="flex items-center gap-2"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Sign Out
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </TabsContent>
         </Tabs>

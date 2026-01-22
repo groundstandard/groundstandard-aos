@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useAcademy } from "@/hooks/useAcademy";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -74,6 +75,7 @@ interface MembershipPlan {
   renewal_new_rate_enabled?: boolean;
   renewal_new_rate_cents?: number;
   auto_renewal_default?: boolean;
+  academy_id?: string;
 }
 
 interface MembershipPlanDialogProps {
@@ -92,6 +94,7 @@ export const MembershipPlanDialog = ({
   defaultTab = "main",
 }: MembershipPlanDialogProps) => {
   const { toast } = useToast();
+  const { academy } = useAcademy();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -176,6 +179,15 @@ export const MembershipPlanDialog = ({
     try {
       setIsLoading(true);
 
+      if (!academy?.id) {
+        toast({
+          title: "Error",
+          description: "No academy selected. Please refresh and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Ensure required fields are properly typed for database
       const dataToSubmit = {
         name: values.name,
@@ -196,13 +208,14 @@ export const MembershipPlanDialog = ({
         renewal_new_rate_enabled: values.renewal_new_rate_enabled,
         renewal_new_rate_cents: values.renewal_new_rate_enabled ? values.renewal_new_rate_cents : null,
         auto_renewal_default: values.auto_renewal_default,
+        academy_id: plan?.academy_id ?? academy.id,
       };
 
       if (plan) {
         const { error } = await supabase
-          .from('membership_plans')
+          .from("membership_plans")
           .update(dataToSubmit)
-          .eq('id', plan.id);
+          .eq("id", plan.id);
 
         if (error) throw error;
 
@@ -212,7 +225,7 @@ export const MembershipPlanDialog = ({
         });
       } else {
         const { error } = await supabase
-          .from('membership_plans')
+          .from("membership_plans")
           .insert(dataToSubmit);
 
         if (error) throw error;
@@ -226,10 +239,20 @@ export const MembershipPlanDialog = ({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving membership plan:', error);
+      const e = error as any;
+      const message: string | undefined = e?.message;
+      const code: string | undefined = e?.code;
+
+      const isRlsError =
+        code === "42501" ||
+        (typeof message === "string" && message.toLowerCase().includes("row-level security"));
+
+      console.error("Error saving membership plan:", error);
       toast({
-        title: "Error",
-        description: "Failed to save membership plan",
+        title: isRlsError ? "Permission denied" : "Error",
+        description: isRlsError
+          ? "You don't have permission to create or update membership plans. Please sign in as an admin/owner."
+          : "Failed to save membership plan",
         variant: "destructive",
       });
     } finally {
@@ -383,12 +406,10 @@ export const MembershipPlanDialog = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
                             <SelectItem value="monthly">Monthly</SelectItem>
-                            <SelectItem value="quarterly">3 Months</SelectItem>
-                            <SelectItem value="semi-annually">6 Months</SelectItem>
-                            <SelectItem value="tri-annually">9 Months</SelectItem>
-                            <SelectItem value="annually">Annual</SelectItem>
+                            <SelectItem value="bi_monthly">Every 2 Months</SelectItem>
+                            <SelectItem value="quarterly">Quarterly</SelectItem>
+                            <SelectItem value="annually">Annually</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -432,9 +453,8 @@ export const MembershipPlanDialog = ({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="all">All Ages</SelectItem>
-                            <SelectItem value="kids">Kids (5-12)</SelectItem>
-                            <SelectItem value="teens">Teens (13-17)</SelectItem>
-                            <SelectItem value="adults">Adults (18+)</SelectItem>
+                            <SelectItem value="youth">Youth</SelectItem>
+                            <SelectItem value="adult">Adult</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

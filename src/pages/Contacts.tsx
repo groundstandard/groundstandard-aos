@@ -76,6 +76,7 @@ const Contacts = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const canManageContacts = profile?.role === 'owner' || profile?.role === 'admin' || profile?.role === 'staff';
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -249,7 +250,6 @@ const Contacts = () => {
       // Check authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.error('Session error:', sessionError);
         throw new Error('Authentication required');
       }
       
@@ -275,7 +275,6 @@ const Contacts = () => {
         .single();
 
       if (profileError) {
-        console.error('Profile error:', profileError);
         throw new Error('Could not determine your academy');
       }
 
@@ -306,7 +305,6 @@ const Contacts = () => {
         .select();
 
       if (error) {
-        console.error('Database error:', error);
         throw error;
       }
 
@@ -366,10 +364,13 @@ const Contacts = () => {
       setShowAddDialog(false);
       resetForm();
     } catch (error) {
-      console.error('Error adding contact:', error);
+      const err: any = error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add contact",
+        description: isRls
+          ? "You don’t have permission to add contacts. Please ask an admin/owner/staff."
+          : (error instanceof Error ? error.message : "Failed to add contact"),
         variant: "destructive",
       });
     }
@@ -382,7 +383,6 @@ const Contacts = () => {
       // First check if we have a valid session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.error('Session error:', sessionError);
         throw new Error('Authentication required');
       }
       
@@ -461,10 +461,13 @@ const Contacts = () => {
       setSelectedContact(null);
       resetForm();
     } catch (error) {
-      console.error('Error updating contact:', error);
+      const err: any = error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update contact",
+        description: isRls
+          ? "You don’t have permission to update contacts. Please ask an admin/owner/staff."
+          : (error instanceof Error ? error.message : "Failed to update contact"),
         variant: "destructive",
       });
     }
@@ -493,6 +496,15 @@ const Contacts = () => {
   };
 
   const handleAddChild = (parent: Contact) => {
+    if (!canManageContacts) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to add child contacts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSelectedContact(parent);
     setShowAddChildDialog(true);
   };
@@ -585,39 +597,42 @@ const Contacts = () => {
             </div>
             
             {/* Add Contact Button */}
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={() => { resetForm(); setShowAddDialog(true); }}
-                  className="flex-shrink-0"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span>Add Contact</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
-                <DialogHeader>
-                  <DialogTitle>Add New Contact</DialogTitle>
-                  <DialogDescription>
-                    Add a new member to your academy
-                  </DialogDescription>
-                </DialogHeader>
-                <EnhancedContactForm 
-                  formData={formData} 
-                  setFormData={setFormData} 
-                  contacts={contacts}
-                  mode="add"
-                />
-                <div className="flex flex-col sm:flex-row justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)} className="order-2 sm:order-1">
-                    Cancel
+            {canManageContacts && (
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    onClick={() => { resetForm(); setShowAddDialog(true); }}
+                    className="flex-shrink-0"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span>Add Contact</span>
                   </Button>
-                  <Button onClick={handleAddContact} className="order-1 sm:order-2">
-                    Add Contact
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
+                  <DialogHeader>
+                    <DialogTitle>Add New Contact</DialogTitle>
+                    <DialogDescription>
+                      Add a new member to your academy
+                    </DialogDescription>
+                  </DialogHeader>
+                  <EnhancedContactForm 
+                    formData={formData} 
+                    setFormData={setFormData} 
+                    contacts={contacts}
+                    mode="add"
+                  />
+                  <div className="flex flex-col sm:flex-row justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowAddDialog(false)} className="order-2 sm:order-1">
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddContact} className="order-1 sm:order-2">
+                      Add Contact
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            
 
             {/* Right side: Search and Filters - Inline */}
             <div className="flex flex-1 items-center gap-3 min-w-0">
@@ -700,8 +715,8 @@ const Contacts = () => {
                         contact={parent}
                         children={children}
                         onView={handleViewContact}
-                        onEdit={handleEditContactClick}
-                        onAddChild={handleAddChild}
+                        onEdit={canManageContacts ? handleEditContactClick : undefined}
+                        onAddChild={canManageContacts ? handleAddChild : undefined}
                         onViewFamily={handleViewFamily}
                         onAssignMembership={handleAssignMembership}
                       />
@@ -710,8 +725,8 @@ const Contacts = () => {
                           key={child.id}
                           contact={child}
                           onView={handleViewContact}
-                          onEdit={handleEditContactClick}
-                          onAddChild={handleAddChild}
+                          onEdit={canManageContacts ? handleEditContactClick : undefined}
+                          onAddChild={canManageContacts ? handleAddChild : undefined}
                           onViewFamily={handleViewFamily}
                           onAssignMembership={handleAssignMembership}
                         />
@@ -735,8 +750,8 @@ const Contacts = () => {
                         key={contact.id}
                         contact={contact}
                         onView={handleViewContact}
-                        onEdit={handleEditContactClick}
-                        onAddChild={handleAddChild}
+                        onEdit={canManageContacts ? handleEditContactClick : undefined}
+                        onAddChild={canManageContacts ? handleAddChild : undefined}
                         onViewFamily={handleViewFamily}
                         onAssignMembership={handleAssignMembership}
                       />
@@ -751,8 +766,8 @@ const Contacts = () => {
               <ContactsTable
                 contacts={organizeContacts.allFiltered}
                 onView={handleViewContact}
-                onEdit={handleEditContactClick}
-                onAddChild={handleAddChild}
+                onEdit={canManageContacts ? handleEditContactClick : undefined}
+                onAddChild={canManageContacts ? handleAddChild : undefined}
                 onViewFamily={handleViewFamily}
                 onContactClick={handleContactClick}
                 selectedContactIds={selectedContactIds}
@@ -775,8 +790,8 @@ const Contacts = () => {
                     contact={contact}
                     children={children}
                     onView={handleViewContact}
-                    onEdit={handleEditContactClick}
-                    onAddChild={handleAddChild}
+                    onEdit={canManageContacts ? handleEditContactClick : undefined}
+                    onAddChild={canManageContacts ? handleAddChild : undefined}
                     onViewFamily={handleViewFamily}
                     onAssignMembership={handleAssignMembership}
                   />
@@ -921,7 +936,7 @@ const Contacts = () => {
           familyMembers={contacts.filter(c => c.parent_id === selectedContact?.id)}
           onEdit={handleEditContactClick}
           onView={handleViewContact}
-          onAddChild={handleAddChild}
+          onAddChild={canManageContacts ? handleAddChild : undefined}
         />
 
         {/* Temporarily commenting out AssignMembershipDialog until we fix the issue */}

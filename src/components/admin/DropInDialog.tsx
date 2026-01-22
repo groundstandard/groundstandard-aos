@@ -74,7 +74,7 @@ export const DropInDialog = ({
       name: "",
       description: "",
       price_cents: 0,
-      option_type: "single_class",
+      option_type: "drop_in",
       age_group: "all",
       trial_duration_days: 0,
       is_active: true,
@@ -97,7 +97,7 @@ export const DropInDialog = ({
         name: "",
         description: "",
         price_cents: 0,
-        option_type: "single_class",
+        option_type: "drop_in",
         age_group: "all",
         trial_duration_days: 0,
         is_active: true,
@@ -114,7 +114,7 @@ export const DropInDialog = ({
         name: values.name,
         description: values.description || "",
         price_cents: values.price_cents,
-        option_type: values.option_type || "single_class",
+        option_type: values.option_type || "drop_in",
         age_group: values.age_group || "all",
         trial_duration_days: values.trial_duration_days || 0,
         is_active: values.is_active,
@@ -148,10 +148,13 @@ export const DropInDialog = ({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving drop-in option:', error);
+      const err: any = error;
+      const isCheckConstraint = err?.code === '23514' || err?.message?.toLowerCase?.().includes('check constraint');
       toast({
         title: "Error",
-        description: "Failed to save drop-in option",
+        description: isCheckConstraint
+          ? "Invalid drop-in settings. Please update the option type and try again."
+          : "Failed to save drop-in option",
         variant: "destructive",
       });
     } finally {
@@ -245,10 +248,8 @@ export const DropInDialog = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="single_class">Single Class</SelectItem>
-                        <SelectItem value="trial_class">Trial Class</SelectItem>
-                        <SelectItem value="intro_package">Intro Package</SelectItem>
-                        <SelectItem value="guest_pass">Guest Pass</SelectItem>
+                        <SelectItem value="drop_in">Drop-in</SelectItem>
+                        <SelectItem value="trial">Trial</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -270,9 +271,8 @@ export const DropInDialog = ({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="all">All Ages</SelectItem>
-                        <SelectItem value="kids">Kids (5-12)</SelectItem>
-                        <SelectItem value="teens">Teens (13-17)</SelectItem>
-                        <SelectItem value="adults">Adults (18+)</SelectItem>
+                        <SelectItem value="youth">Youth</SelectItem>
+                        <SelectItem value="adult">Adult</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

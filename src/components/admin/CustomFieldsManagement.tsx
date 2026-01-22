@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAcademy } from "@/hooks/useAcademy";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CustomFieldPage {
   id: string;
@@ -65,6 +66,8 @@ export const CustomFieldsManagement = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { academy: currentAcademy } = useAcademy();
+  const { profile } = useAuth();
+  const canManageCustomFields = profile?.role === 'owner' || profile?.role === 'admin';
 
   const [pageForm, setPageForm] = useState({
     name: '',
@@ -138,6 +141,14 @@ export const CustomFieldsManagement = () => {
 
   const handleSavePage = async () => {
     if (!currentAcademy?.id) return;
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can create or edit custom field pages.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const pageData = {
       ...pageForm,
@@ -158,9 +169,13 @@ export const CustomFieldsManagement = () => {
     }
 
     if (result.error) {
+      const err: any = result.error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error saving page",
-        description: result.error.message,
+        description: isRls
+          ? "You don’t have permission to save pages. Please ask an admin/owner."
+          : result.error.message,
         variant: "destructive",
       });
     } else {
@@ -177,6 +192,14 @@ export const CustomFieldsManagement = () => {
 
   const handleSaveField = async () => {
     if (!currentAcademy?.id) return;
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can create or edit custom fields.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const fieldData = {
       ...fieldForm,
@@ -200,9 +223,13 @@ export const CustomFieldsManagement = () => {
     }
 
     if (result.error) {
+      const err: any = result.error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error saving field",
-        description: result.error.message,
+        description: isRls
+          ? "You don’t have permission to save fields. Please ask an admin/owner."
+          : result.error.message,
         variant: "destructive",
       });
     } else {
@@ -230,6 +257,14 @@ export const CustomFieldsManagement = () => {
   };
 
   const handleDeletePage = async (page: CustomFieldPage) => {
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can delete pages.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!confirm(`Are you sure you want to delete the page "${page.display_name}"?`)) return;
 
     const { error } = await supabase
@@ -238,9 +273,13 @@ export const CustomFieldsManagement = () => {
       .eq('id', page.id);
 
     if (error) {
+      const err: any = error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error deleting page",
-        description: error.message,
+        description: isRls
+          ? "You don’t have permission to delete pages. Please ask an admin/owner."
+          : error.message,
         variant: "destructive",
       });
     } else {
@@ -254,6 +293,14 @@ export const CustomFieldsManagement = () => {
   };
 
   const handleDeleteField = async (field: CustomFieldDefinition) => {
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can delete fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!confirm(`Are you sure you want to delete the field "${field.display_name}"?`)) return;
 
     const { error } = await supabase
@@ -262,9 +309,13 @@ export const CustomFieldsManagement = () => {
       .eq('id', field.id);
 
     if (error) {
+      const err: any = error;
+      const isRls = err?.code === '42501' || err?.status === 403 || err?.message?.toLowerCase?.().includes('row-level security');
       toast({
         title: "Error deleting field",
-        description: error.message,
+        description: isRls
+          ? "You don’t have permission to delete fields. Please ask an admin/owner."
+          : error.message,
         variant: "destructive",
       });
     } else {
@@ -277,6 +328,14 @@ export const CustomFieldsManagement = () => {
   };
 
   const openEditPage = (page: CustomFieldPage) => {
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can edit pages.",
+        variant: "destructive",
+      });
+      return;
+    }
     setEditingPage(page);
     setPageForm({
       name: page.name,
@@ -288,6 +347,14 @@ export const CustomFieldsManagement = () => {
   };
 
   const openEditField = (field: CustomFieldDefinition) => {
+    if (!canManageCustomFields) {
+      toast({
+        title: "Access Denied",
+        description: "Only admins/owners can edit fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     setEditingField(field);
     setFieldForm({
       name: field.name,
@@ -338,15 +405,17 @@ export const CustomFieldsManagement = () => {
         <h1 className="text-2xl font-bold">Custom Fields Management</h1>
         <div className="flex gap-2">
           <Dialog open={showPageDialog} onOpenChange={setShowPageDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                setEditingPage(null);
-                setPageForm({ name: '', display_name: '', description: '', is_active: true });
-              }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Page
-              </Button>
-            </DialogTrigger>
+            {canManageCustomFields && (
+              <DialogTrigger asChild>
+                <Button onClick={() => {
+                  setEditingPage(null);
+                  setPageForm({ name: '', display_name: '', description: '', is_active: true });
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Page
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingPage ? 'Edit Page' : 'Create Page'}</DialogTitle>
@@ -409,27 +478,29 @@ export const CustomFieldsManagement = () => {
           </Dialog>
 
           <Dialog open={showFieldDialog} onOpenChange={setShowFieldDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => {
-                setEditingField(null);
-                setFieldForm({
-                  name: '',
-                  display_name: '',
-                  field_type: 'text',
-                  is_required: false,
-                  options: [],
-                  default_value: '',
-                  placeholder_text: '',
-                  help_text: '',
-                  page_id: 'no_page',
-                  is_active: true,
-                  show_in_table: false
-                });
-              }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Field
-              </Button>
-            </DialogTrigger>
+            {canManageCustomFields && (
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => {
+                  setEditingField(null);
+                  setFieldForm({
+                    name: '',
+                    display_name: '',
+                    field_type: 'text',
+                    is_required: false,
+                    options: [],
+                    default_value: '',
+                    placeholder_text: '',
+                    help_text: '',
+                    page_id: 'no_page',
+                    is_active: true,
+                    show_in_table: false
+                  });
+                }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Field
+                </Button>
+              </DialogTrigger>
+            )}
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingField ? 'Edit Field' : 'Create Field'}</DialogTitle>
@@ -613,14 +684,16 @@ export const CustomFieldsManagement = () => {
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">{page.description}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openEditPage(page)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeletePage(page)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {canManageCustomFields && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEditPage(page)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDeletePage(page)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm text-muted-foreground">
@@ -673,14 +746,16 @@ export const CustomFieldsManagement = () => {
                       Page: {field.page?.display_name || 'None'}
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openEditField(field)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteField(field)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {canManageCustomFields && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEditField(field)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteField(field)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </CardHeader>
                 {field.help_text && (
                   <CardContent>

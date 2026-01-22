@@ -142,10 +142,13 @@ export const DiscountDialog = ({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving discount:', error);
+      const err: any = error;
+      const isCheckConstraint = err?.code === '23514' || err?.message?.toLowerCase?.().includes('check constraint');
       toast({
         title: "Error",
-        description: "Failed to save discount",
+        description: isCheckConstraint
+          ? "Invalid discount settings. Please update the ‘Applies To’ field and try again."
+          : "Failed to save discount",
         variant: "destructive",
       });
     } finally {
@@ -267,11 +270,9 @@ export const DiscountDialog = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="membership">Membership Plans</SelectItem>
-                      <SelectItem value="class_pack">Class Packs</SelectItem>
                       <SelectItem value="drop_in">Drop-in Classes</SelectItem>
                       <SelectItem value="all">All Services</SelectItem>
-                      <SelectItem value="private_lesson">Private Lessons</SelectItem>
-                      <SelectItem value="belt_testing">Belt Testing</SelectItem>
+                      <SelectItem value="private_sessions">Private Lessons</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
