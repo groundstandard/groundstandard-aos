@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+
 import { 
   Search, 
   Filter, 
@@ -52,7 +53,13 @@ interface AuditStats {
   uniqueUsers: number;
 }
 
-export const AuditLogViewer = () => {
+export const AuditLogViewer = ({
+  userId,
+  defaultScope = 'all',
+}: {
+  userId?: string | null;
+  defaultScope?: 'all' | 'mine';
+}) => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState<AuditStats>({
     totalLogs: 0,
@@ -69,12 +76,49 @@ export const AuditLogViewer = () => {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [referenceDisplayMap, setReferenceDisplayMap] = useState<Record<string, string>>({});
   const missingAcademyNamesRpcRef = useRef<boolean | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(userId || null);
+  const [scope, setScope] = useState<'all' | 'mine'>(defaultScope);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const hydrateUser = async () => {
+      if (userId) {
+        setCurrentUserId(userId);
+        return;
+      }
+
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('AuditLogViewer: failed to get current user', error);
+        setCurrentUserId(null);
+        return;
+      }
+      setCurrentUserId(data.user?.id || null);
+    };
+
+    hydrateUser();
+  }, [userId]);
 
   useEffect(() => {
     fetchAuditLogs();
     fetchStats();
-  }, []);
+
+    const channel = supabase
+      .channel('audit_logs_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'audit_logs' },
+        () => {
+          fetchAuditLogs();
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, scope]);
 
   const getUserDisplayName = (log: AuditLog) => {
     if (!log.user_id) return 'System';
@@ -260,33 +304,51 @@ export const AuditLogViewer = () => {
 
   const fetchAuditLogs = async () => {
     try {
-      const { data, error } = await supabase
+      const shouldScopeToUser = scope === 'mine' && !!currentUserId;
+      let query = supabase
         .from('audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(500); // Limit to recent logs for performance
+        .limit(500);
+
+      if (shouldScopeToUser) {
+        query = query.eq('user_id', currentUserId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      
-      // Fetch profile data separately for each log
-      const logsWithProfiles = await Promise.all(
-        (data || []).map(async (log) => {
-          if (!log.user_id) return { ...log, profiles: null };
-          
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('first_name, last_name, email')
-            .eq('id', log.user_id)
-            .single();
-          
-          return {
-            ...log,
-            profiles: profile
-          };
-        })
+
+      const rows = (data || []) as AuditLog[];
+      const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean))) as string[];
+
+      const profileMap = new Map<string, { first_name: string; last_name: string; email: string }>();
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles for audit logs:', profilesError);
+        } else {
+          for (const p of profiles || []) {
+            if (!p?.id) continue;
+            profileMap.set(p.id, {
+              first_name: p.first_name,
+              last_name: p.last_name,
+              email: p.email,
+            });
+          }
+        }
+      }
+
+      setAuditLogs(
+        rows.map((log) => ({
+          ...log,
+          profiles: log.user_id ? profileMap.get(log.user_id) || null : null,
+        }))
       );
-      
-      setAuditLogs(logsWithProfiles);
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       toast({
@@ -301,9 +363,16 @@ export const AuditLogViewer = () => {
 
   const fetchStats = async () => {
     try {
-      const { data, error } = await supabase
+      const shouldScopeToUser = scope === 'mine' && !!currentUserId;
+      let query = supabase
         .from('audit_logs')
         .select('action, table_name, user_id, created_at');
+
+      if (shouldScopeToUser) {
+        query = query.eq('user_id', currentUserId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -312,12 +381,10 @@ export const AuditLogViewer = () => {
       const todayLogs = data?.filter(log => 
         new Date(log.created_at).toDateString() === today
       ).length || 0;
-      
       const roleChanges = data?.filter(log => log.action === 'role_change').length || 0;
       const securityEvents = data?.filter(log => 
         ['login_failed', 'unauthorized_access', 'permission_denied'].includes(log.action)
       ).length || 0;
-      
       const uniqueUsers = new Set(data?.map(log => log.user_id).filter(Boolean)).size || 0;
 
       setStats({
@@ -432,16 +499,6 @@ export const AuditLogViewer = () => {
     return `${trimmed.slice(0, 8)}...${trimmed.slice(-4)}`;
   };
 
-  const formatChangeValue = (value: any) => {
-    if (value === null || value === undefined) return '—';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-    if (value instanceof Date) return value.toISOString();
-    if (Array.isArray(value)) return value.length === 0 ? '—' : `List (${value.length})`;
-    if (typeof value === 'object') return 'Updated';
-    return String(value);
-  };
-
   const getFieldChanges = (oldValues: any, newValues: any) => {
     const oldObj = oldValues && typeof oldValues === 'object' ? oldValues : {};
     const newObj = newValues && typeof newValues === 'object' ? newValues : {};
@@ -463,6 +520,14 @@ export const AuditLogViewer = () => {
       .filter((c) => !c.isSame);
 
     return changes;
+  };
+
+  const getChangeSummary = (log: AuditLog) => {
+    if (log.action === 'create') return 'Created record';
+    if (log.action === 'delete') return 'Deleted record';
+    const changes = getFieldChanges(log.old_values, log.new_values);
+    if (changes.length === 0) return 'No changes recorded';
+    return `${changes.length} field(s) modified`;
   };
 
   const exportLogs = () => {
@@ -582,6 +647,16 @@ export const AuditLogViewer = () => {
                 />
               </div>
             </div>
+            <Select value={scope} onValueChange={(v) => setScope(v as 'all' | 'mine')}>
+              <SelectTrigger className="w-40">
+                <User className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Scope" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="mine" disabled={!currentUserId}>My Account</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-40">
                 <Filter className="h-4 w-4 mr-2" />
@@ -647,7 +722,6 @@ export const AuditLogViewer = () => {
                   <TableHead>Timestamp</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
-                  <TableHead>Changes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -659,31 +733,15 @@ export const AuditLogViewer = () => {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">
-                          {getUserDisplayName(log)}
-                        </div>
+                        <div className="font-medium">{getUserDisplayName(log)}</div>
                         {log.profiles?.email && (
-                          <div className="text-sm text-muted-foreground">
-                            {log.profiles.email}
-                          </div>
+                          <div className="text-sm text-muted-foreground">{log.profiles.email}</div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>{getActionBadge(log.action, log.table_name)}</TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="truncate text-sm">
-                        {log.new_values ? 
-                          Object.keys(log.new_values).length + ' field(s) modified' : 
-                          'No changes recorded'
-                        }
-                      </div>
-                    </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedLog(log)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedLog(log)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -737,6 +795,10 @@ export const AuditLogViewer = () => {
                 <div>
                   <Label>Record ID</Label>
                   <p className="text-sm">{maskId(selectedLog.record_id)}</p>
+                </div>
+                <div>
+                  <Label>Summary</Label>
+                  <p className="text-sm">{getChangeSummary(selectedLog)}</p>
                 </div>
               </div>
 
