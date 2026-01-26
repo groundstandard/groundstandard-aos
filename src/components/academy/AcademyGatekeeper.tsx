@@ -46,8 +46,6 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
           onAcademySelected={() => {
             console.log('AcademyGatekeeper - Academy selected, setting localStorage flag');
             localStorage.setItem('student_academy_selected', 'true');
-            // Force a page refresh to reload with the selected academy
-            window.location.reload();
           }} 
           studentAcademies={studentAcademies}
         />
@@ -57,8 +55,6 @@ const AcademyGatekeeper: React.FC<AcademyGatekeeperProps> = ({ children }) => {
     // If user has only one student academy, auto-select it
     if (studentAcademies.length === 1 && !localStorage.getItem('student_academy_selected')) {
       localStorage.setItem('student_academy_selected', 'true');
-      // Force a page refresh to reload with the selected academy
-      window.location.reload();
       return (
         <div className="min-h-screen flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />

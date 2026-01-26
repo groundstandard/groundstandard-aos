@@ -23,11 +23,21 @@ export const AuthFlowHandler = () => {
       // Supabase PKCE flow uses ?code=...
       if (code) {
         try {
+          try {
+            sessionStorage.setItem('audit:login_intent', '1');
+          } catch {
+            // ignore
+          }
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('AuthFlowHandler: exchangeCodeForSession failed', error);
           }
         } catch (e) {
+          try {
+            sessionStorage.removeItem('audit:login_intent');
+          } catch {
+            // ignore
+          }
           console.error('AuthFlowHandler: exchangeCodeForSession threw', e);
         } finally {
           clearUrl();
@@ -60,6 +70,11 @@ export const AuthFlowHandler = () => {
         }
 
         try {
+          try {
+            sessionStorage.setItem('audit:login_intent', '1');
+          } catch {
+            // ignore
+          }
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -68,6 +83,11 @@ export const AuthFlowHandler = () => {
             console.error('AuthFlowHandler: setSession failed', error);
           }
         } catch (e) {
+          try {
+            sessionStorage.removeItem('audit:login_intent');
+          } catch {
+            // ignore
+          }
           console.error('AuthFlowHandler: setSession threw', e);
         } finally {
           clearUrl();

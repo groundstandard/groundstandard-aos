@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ interface AuditLog {
     first_name: string;
     last_name: string;
     email: string;
-  };
+  } | null;
 }
 
 interface AuditStats {
@@ -67,12 +67,196 @@ export const AuditLogViewer = () => {
   const [tableFilter, setTableFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [referenceDisplayMap, setReferenceDisplayMap] = useState<Record<string, string>>({});
+  const missingAcademyNamesRpcRef = useRef<boolean | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAuditLogs();
     fetchStats();
   }, []);
+
+  const getUserDisplayName = (log: AuditLog) => {
+    if (!log.user_id) return 'System';
+    const first = log.profiles?.first_name?.trim() || '';
+    const last = log.profiles?.last_name?.trim() || '';
+    const fullName = `${first} ${last}`.trim();
+    if (fullName) return fullName;
+    const email = log.profiles?.email?.trim();
+    return email || 'Unknown User';
+  };
+
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  const isUuid = (value: unknown) => {
+    return typeof value === 'string' && uuidRegex.test(value);
+  };
+
+  const toDisplayValue = (value: any, fieldKey?: string) => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (isUuid(trimmed)) {
+        const mapped = referenceDisplayMap[trimmed];
+        if (mapped) return mapped;
+        const key = (fieldKey || '').toLowerCase();
+        if (key === 'user_id') return 'Unknown User';
+        if (key.includes('academy_id')) return 'Unknown Academy';
+        if (key.endsWith('_id')) return 'Hidden';
+        return 'Hidden';
+      }
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (value instanceof Date) return value.toISOString();
+
+    if (Array.isArray(value)) return value.length === 0 ? '—' : `List (${value.length})`;
+    if (typeof value === 'object') return 'Updated';
+    return String(value);
+  };
+
+  const getReadableFieldLabel = (key: string) => {
+    const overrides: Record<string, string> = {
+      from_academy_id: 'From Academy',
+      to_academy_id: 'To Academy',
+      academy_id: 'Academy',
+      user_id: 'User',
+      switched_at: 'Switched At',
+    };
+    return overrides[key] || key.split('_').join(' ');
+  };
+
+  const getHiddenChangeKeys = () => {
+    return new Set<string>(['id']);
+  };
+
+  const collectReferenceUuids = (log: AuditLog) => {
+    const ids = new Set<string>();
+    const scan = (obj: any) => {
+      if (!obj || typeof obj !== 'object') return;
+      for (const [k, v] of Object.entries(obj)) {
+        if (typeof v === 'string' && isUuid(v)) {
+          if (k === 'user_id' || k.toLowerCase().endsWith('_id')) ids.add(v);
+        }
+      }
+    };
+    scan(log.old_values);
+    scan(log.new_values);
+    return ids;
+  };
+
+  useEffect(() => {
+    const hydrateReferenceMap = async () => {
+      if (!selectedLog) return;
+
+      const ids = Array.from(collectReferenceUuids(selectedLog));
+      if (ids.length === 0) {
+        setReferenceDisplayMap({});
+        return;
+      }
+
+      try {
+        const nextMap: Record<string, string> = {};
+
+        let academies: any = null;
+        let academiesError: any = null;
+
+        // Cache whether the RPC exists to avoid repeated 404 spam in the browser.
+        if (missingAcademyNamesRpcRef.current === null) {
+          try {
+            missingAcademyNamesRpcRef.current = sessionStorage.getItem('audit:missing_academy_names_rpc') === '1';
+          } catch {
+            missingAcademyNamesRpcRef.current = false;
+          }
+        }
+
+        const shouldTryRpc = !missingAcademyNamesRpcRef.current;
+        if (shouldTryRpc) {
+          const rpcResult = await (supabase as any).rpc('get_academy_names_by_ids', {
+            academy_ids: ids,
+          });
+          academies = rpcResult?.data;
+          academiesError = rpcResult?.error;
+
+          const isMissingRpc =
+            !!academiesError &&
+            (((academiesError as any).status as number | undefined) === 404 ||
+              String((academiesError as any).message || '').toLowerCase().includes('not found'));
+
+          if (isMissingRpc) {
+            missingAcademyNamesRpcRef.current = true;
+            try {
+              sessionStorage.setItem('audit:missing_academy_names_rpc', '1');
+            } catch {
+              // ignore
+            }
+          }
+        }
+
+        const isMissingRpc = missingAcademyNamesRpcRef.current === true;
+
+        if (isMissingRpc || academiesError) {
+          // Fallback to direct academies query (may be blocked by RLS; in that case we just won't resolve names).
+          const directResult = await supabase
+            .from('academies')
+            .select('id, name')
+            .in('id', ids);
+
+          if (!directResult.error) {
+            academies = directResult.data;
+            academiesError = null;
+          } else if (!isMissingRpc) {
+            console.error('AuditLogViewer: failed to hydrate academies reference map', {
+              error: academiesError,
+              fallbackError: directResult.error,
+              ids,
+              selectedLogId: selectedLog?.id,
+              tableName: selectedLog?.table_name,
+            });
+          }
+        }
+
+        const academiesList = (Array.isArray(academies) ? academies : []) as Array<{
+          id?: string;
+          name?: string | null;
+        }>;
+        for (const a of academiesList) {
+          if (a?.id) nextMap[a.id] = a.name || 'Academy';
+        }
+
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .in('id', ids);
+        if (profilesError) {
+          console.error('AuditLogViewer: failed to hydrate profiles reference map', {
+            error: profilesError,
+            ids,
+            selectedLogId: selectedLog?.id,
+            tableName: selectedLog?.table_name,
+          });
+        }
+        for (const p of profiles || []) {
+          if (!p?.id) continue;
+          const name = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+          nextMap[p.id] = name || p.email || 'User';
+        }
+
+        setReferenceDisplayMap(nextMap);
+      } catch (e) {
+        console.error('AuditLogViewer: reference hydration threw', {
+          error: e,
+          ids,
+          selectedLogId: selectedLog?.id,
+          tableName: selectedLog?.table_name,
+        });
+        setReferenceDisplayMap({});
+      }
+    };
+
+    hydrateReferenceMap();
+  }, [selectedLog]);
 
   const fetchAuditLogs = async () => {
     try {
@@ -149,13 +333,14 @@ export const AuditLogViewer = () => {
   };
 
   const filteredLogs = auditLogs.filter(log => {
+    const normalizedSearch = searchTerm.toLowerCase();
     const matchesSearch = log.profiles ? 
-      `${log.profiles.first_name} ${log.profiles.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.profiles.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.table_name.toLowerCase().includes(searchTerm.toLowerCase())
-      : log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+      getUserDisplayName(log).toLowerCase().includes(normalizedSearch) ||
+      (log.profiles.email || '').toLowerCase().includes(normalizedSearch) ||
+      log.action.toLowerCase().includes(normalizedSearch) ||
+      log.table_name.toLowerCase().includes(normalizedSearch)
+      : log.action.toLowerCase().includes(normalizedSearch) ||
+        log.table_name.toLowerCase().includes(normalizedSearch);
     
     const matchesAction = actionFilter === "all" || log.action === actionFilter;
     const matchesTable = tableFilter === "all" || log.table_name === tableFilter;
@@ -166,7 +351,38 @@ export const AuditLogViewer = () => {
     return matchesSearch && matchesAction && matchesTable && matchesDate;
   });
 
-  const getActionBadge = (action: string) => {
+  const availableTables = Array.from(
+    new Set((auditLogs || []).map((log) => log.table_name).filter(Boolean))
+  ).sort();
+
+  const getActionBadge = (action: string, tableName?: string) => {
+    if (action === 'create' && tableName === 'academy_switches') {
+      return (
+        <Badge variant="default" className="flex items-center gap-1">
+          <Settings className="h-3 w-3" />
+          Academy Switch
+        </Badge>
+      );
+    }
+
+    if (action === 'login') {
+      return (
+        <Badge className="flex items-center gap-1 bg-green-600 text-white hover:bg-green-600">
+          <User className="h-3 w-3" />
+          Login
+        </Badge>
+      );
+    }
+
+    if (action === 'logout') {
+      return (
+        <Badge className="flex items-center gap-1 bg-red-600 text-white hover:bg-red-600">
+          <User className="h-3 w-3" />
+          Logout
+        </Badge>
+      );
+    }
+
     const actionConfig = {
       role_change: { label: "Role Change", variant: "destructive" as const, icon: AlertTriangle },
       create: { label: "Create", variant: "default" as const, icon: CheckCircle },
@@ -230,13 +446,17 @@ export const AuditLogViewer = () => {
     const oldObj = oldValues && typeof oldValues === 'object' ? oldValues : {};
     const newObj = newValues && typeof newValues === 'object' ? newValues : {};
     const keys = Array.from(new Set([...Object.keys(oldObj), ...Object.keys(newObj)])).sort();
+    const hidden = getHiddenChangeKeys();
 
     const changes = keys
       .map((key) => {
         const oldVal = (oldObj as any)[key];
         const newVal = (newObj as any)[key];
-        const oldStr = formatChangeValue(oldVal);
-        const newStr = formatChangeValue(newVal);
+        if (hidden.has(key)) {
+          return { key, oldStr: '', newStr: '', isSame: true };
+        }
+        const oldStr = toDisplayValue(oldVal, key);
+        const newStr = toDisplayValue(newVal, key);
         const isSame = oldStr === newStr;
         return { key, oldStr, newStr, isSame };
       })
@@ -249,7 +469,7 @@ export const AuditLogViewer = () => {
     const csvContent = "data:text/csv;charset=utf-8," + 
       "Timestamp,User,Action,Table,Record ID,Details\n" +
       filteredLogs.map(log => {
-        const user = log.profiles ? `${log.profiles.first_name} ${log.profiles.last_name}` : 'System';
+        const user = getUserDisplayName(log);
         const timestamp = format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss');
         const details = log.new_values ? JSON.stringify(log.new_values).replace(/"/g, '""') : '';
         return `"${timestamp}","${user}","${log.action}","${log.table_name}","${log.record_id || ''}","${details}"`;
@@ -384,11 +604,11 @@ export const AuditLogViewer = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tables</SelectItem>
-                <SelectItem value="profiles">Profiles</SelectItem>
-                <SelectItem value="classes">Classes</SelectItem>
-                <SelectItem value="attendance">Attendance</SelectItem>
-                <SelectItem value="payments">Payments</SelectItem>
-                <SelectItem value="events">Events</SelectItem>
+                {availableTables.map((tableName) => (
+                  <SelectItem key={tableName} value={tableName}>
+                    {tableName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Popover>
@@ -427,8 +647,6 @@ export const AuditLogViewer = () => {
                   <TableHead>Timestamp</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Action</TableHead>
-                  <TableHead>Table</TableHead>
-                  <TableHead>Record ID</TableHead>
                   <TableHead>Changes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -442,23 +660,16 @@ export const AuditLogViewer = () => {
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {log.profiles ? 
-                            `${log.profiles.first_name} ${log.profiles.last_name}` : 
-                            'System'
-                          }
+                          {getUserDisplayName(log)}
                         </div>
-                        {log.profiles && (
+                        {log.profiles?.email && (
                           <div className="text-sm text-muted-foreground">
                             {log.profiles.email}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{getActionBadge(log.action)}</TableCell>
-                    <TableCell>{getTableBadge(log.table_name)}</TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {maskId(log.record_id)}
-                    </TableCell>
+                    <TableCell>{getActionBadge(log.action, log.table_name)}</TableCell>
                     <TableCell className="max-w-xs">
                       <div className="truncate text-sm">
                         {log.new_values ? 
@@ -512,15 +723,12 @@ export const AuditLogViewer = () => {
                 <div>
                   <Label>User</Label>
                   <p className="text-sm font-medium">
-                    {selectedLog.profiles ? 
-                      `${selectedLog.profiles.first_name} ${selectedLog.profiles.last_name}` : 
-                      'System'
-                    }
+                    {getUserDisplayName(selectedLog)}
                   </p>
                 </div>
                 <div>
                   <Label>Action</Label>
-                  {getActionBadge(selectedLog.action)}
+                  {getActionBadge(selectedLog.action, selectedLog.table_name)}
                 </div>
                 <div>
                   <Label>Table</Label>
@@ -560,7 +768,7 @@ export const AuditLogViewer = () => {
                         <TableBody>
                           {shown.map((c) => (
                             <TableRow key={c.key}>
-                              <TableCell className="font-medium">{c.key}</TableCell>
+                              <TableCell className="font-medium">{getReadableFieldLabel(c.key)}</TableCell>
                               <TableCell className="text-sm text-muted-foreground">{c.oldStr}</TableCell>
                               <TableCell className="text-sm">{c.newStr}</TableCell>
                             </TableRow>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useRef, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -50,12 +50,14 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [academy, setAcademy] = useState<Academy | null>(null);
   const [currentAcademyId, setCurrentAcademyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const refreshAcademy = async () => {
     if (!user || !profile) {
       setAcademy(null);
       setCurrentAcademyId(null);
       setLoading(false);
+      hasLoadedOnceRef.current = true;
       return;
     }
 
@@ -71,6 +73,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setAcademy(null);
       setCurrentAcademyId(null);
       setLoading(false);
+      hasLoadedOnceRef.current = true;
       return;
     }
 
@@ -108,11 +111,14 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setAcademy(null);
       setCurrentAcademyId(null);
       setLoading(false);
+      hasLoadedOnceRef.current = true;
       return;
     }
 
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
       console.log('useAcademy: Fetching academy data for ID:', academyIdToLoad);
       
       const { data, error } = await supabase
@@ -144,6 +150,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setCurrentAcademyId(null);
     } finally {
       setLoading(false);
+      hasLoadedOnceRef.current = true;
     }
   };
 

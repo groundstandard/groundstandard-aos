@@ -1,7 +1,7 @@
 import { BackButton } from '@/components/ui/BackButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, Zap, FileText, MessageSquare } from 'lucide-react';
+import { Settings, Zap, FileText, MessageSquare, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,6 +43,14 @@ export default function Configurations() {
             path: '/communications',
             color: 'text-indigo-500',
             bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+          },
+          {
+            title: 'Audit Logs',
+            description: 'Review audit logs for system activities and security events',
+            icon: Shield,
+            path: '/audit-logs',
+            color: 'text-red-500',
+            bgColor: 'bg-red-50 dark:bg-red-900/20',
           },
         ]
       : []),

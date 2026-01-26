@@ -16,7 +16,6 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AuditLogViewer } from "@/components/admin/AuditLogViewer";
 
 export const SettingsContent = ({ embedded = false }: { embedded?: boolean }) => {
   const { user, profile, signOut } = useAuth();
@@ -371,19 +370,6 @@ export const SettingsContent = ({ embedded = false }: { embedded?: boolean }) =>
                 </div>
               </CardContent>
             </Card>
-
-            {(profile?.role === 'admin' || profile?.role === 'owner') ? (
-              <AuditLogViewer />
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center">Access Restricted</CardTitle>
-                  <CardDescription className="text-center">
-                    Audit logs are only available to administrators.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            )}
           </TabsContent>
 
           <TabsContent value="academy" className="space-y-6">

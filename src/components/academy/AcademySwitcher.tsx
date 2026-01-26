@@ -23,7 +23,7 @@ interface Academy {
 
 const AcademySwitcher = () => {
   const { user, profile } = useAuth();
-  const { academy } = useAcademy();
+  const { academy, refreshAcademy } = useAcademy();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userAcademies, setUserAcademies] = useState<Academy[]>([]);
@@ -92,8 +92,8 @@ const AcademySwitcher = () => {
         description: "Successfully switched to the selected academy.",
       });
 
-      // Force a page reload to refresh all contexts
-      window.location.reload();
+      await refreshAcademy();
+      await fetchUserAcademies();
     } catch (error) {
       console.error('Error switching academy:', error);
       toast({

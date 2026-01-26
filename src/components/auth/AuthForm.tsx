@@ -145,12 +145,22 @@ export const AuthForm = () => {
     setLoading(true);
     
     try {
+      try {
+        sessionStorage.setItem('audit:login_intent', '1');
+      } catch {
+        // ignore
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password
       });
 
       if (error) {
+        try {
+          sessionStorage.removeItem('audit:login_intent');
+        } catch {
+          // ignore
+        }
         // Handle different error scenarios based on selected role
         if (error.message.includes('Invalid login credentials') || error.message.includes('User not found')) {
           if (selectedRole === 'staff') {
@@ -198,6 +208,11 @@ export const AuthForm = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
+      try {
+        sessionStorage.removeItem('audit:login_intent');
+      } catch {
+        // ignore
+      }
       toast({
         variant: "destructive",
         title: "Sign In Failed",

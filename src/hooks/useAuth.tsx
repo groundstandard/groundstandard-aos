@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
@@ -55,12 +55,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userAcademies, setUserAcademies] = useState<AcademyMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const lastProfileFetchUserIdRef = useRef<string | null>(null);
+  const loginIntentKey = 'audit:login_intent';
+
+  const logAuthAuditEvent = async (action: 'login' | 'logout', userId: string | null) => {
+    if (!userId) return;
+    try {
+      await supabase.from('audit_logs').insert({
+        user_id: userId,
+        action,
+        table_name: 'auth',
+        record_id: null,
+        old_values: null,
+        new_values: null,
+      });
+    } catch (e) {
+      // Intentionally ignore audit logging failures to avoid blocking auth flows
+    }
+  };
+
+  const shouldLogLoginForSession = (userId: string, accessToken: string | null | undefined) => {
+    if (!accessToken) return false;
+    try {
+      const key = `audit:last_login_token:${userId}`;
+      const last = sessionStorage.getItem(key);
+      if (last === accessToken) return false;
+      sessionStorage.setItem(key, accessToken);
+      return true;
+    } catch {
+      // If sessionStorage isn't available, fall back to logging once per SIGNED_IN.
+      return true;
+    }
+  };
+
+  const consumeLoginIntent = () => {
+    try {
+      const v = sessionStorage.getItem(loginIntentKey);
+      if (!v) return false;
+      sessionStorage.removeItem(loginIntentKey);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        lastProfileFetchUserIdRef.current = session.user.id;
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
@@ -71,14 +115,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, session?.user?.email);
-        
-        setUser(session?.user ?? null);
+
+        if (event === 'SIGNED_IN' && session?.user?.id) {
+          // Only log login when we know the user just performed a real login action.
+          // This prevents page refresh/session restore from creating repeated login logs.
+          const hasIntent = consumeLoginIntent();
+          if (hasIntent) {
+            const shouldLog = shouldLogLoginForSession(session.user.id, session.access_token);
+            if (shouldLog) {
+              setTimeout(() => {
+                logAuthAuditEvent('login', session.user.id);
+              }, 0);
+            }
+          }
+        }
+
+        setUser((prev) => {
+          const next = session?.user ?? null;
+          if (!prev && !next) return prev;
+          if (!prev && next) return next;
+          if (prev && !next) return next;
+
+          // Both exist
+          if (prev.id !== next.id) return next;
+
+          // Avoid churning the User object on token refresh / focus; only replace on explicit events.
+          if (event === 'SIGNED_IN' || event === 'USER_UPDATED') return next;
+          return prev;
+        });
         if (session?.user) {
-          // Defer Supabase calls with setTimeout to prevent deadlocks
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
+          const userId = session.user.id;
+          const shouldFetchProfile =
+            event === 'SIGNED_IN' ||
+            event === 'USER_UPDATED' ||
+            lastProfileFetchUserIdRef.current !== userId;
+
+          if (shouldFetchProfile) {
+            lastProfileFetchUserIdRef.current = userId;
+            // Defer Supabase calls with setTimeout to prevent deadlocks
+            setTimeout(() => {
+              fetchProfile(userId);
+            }, 0);
+          }
         } else {
+          lastProfileFetchUserIdRef.current = null;
           setProfile(null);
           setUserAcademies([]);
           setLoading(false);
@@ -210,10 +290,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Refresh profile to get updated last_academy_id
       await refreshProfile();
-      
-      console.log('switchAcademy: Reloading page to refresh academy context');
-      // Reload the page to clear any cached academy-specific data
-      window.location.reload();
     } catch (error) {
       console.error('switchAcademy: Error occurred', error);
       throw error;
@@ -222,19 +298,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      const currentUserId = user?.id || (await supabase.auth.getUser()).data.user?.id || null;
+      await logAuthAuditEvent('logout', currentUserId);
+
       // Clear local storage and session storage
       localStorage.clear();
       sessionStorage.clear();
       
       // Sign out from Supabase
       await supabase.auth.signOut();
-      
-      // Force page reload to clear any cached state
-      window.location.reload();
+
+      setUser(null);
+      setProfile(null);
+      setUserAcademies([]);
+      navigate('/auth');
     } catch (error) {
       console.error('Error signing out:', error);
-      // Force reload even if sign out fails
-      window.location.reload();
+      navigate('/auth');
     }
   };
 
