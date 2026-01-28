@@ -20,12 +20,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // ABOUTME: Multi-Academy Switcher Component - Secure academy switching with proper error handling
 
 const MultiAcademySwitcher = () => {
-  const { user, userAcademies, switchAcademy } = useAuth();
+  const { user, profile, userAcademies, switchAcademy, onlineUserIds } = useAuth();
   const { academy, currentAcademyId } = useAcademy();
   const { currentView } = useView();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [academyLogos, setAcademyLogos] = useState<Record<string, string>>({});
+
+  const isOnline = !!profile?.id && onlineUserIds.has(profile.id);
 
   // Filter academies based on login role - only show appropriate roles
   const getFilteredAcademies = () => {
@@ -192,9 +194,17 @@ const MultiAcademySwitcher = () => {
                 {academy?.name || 'Select Academy'}
               </span>
               {currentAcademy && (
-                <span className="text-xs text-muted-foreground">
-                  {getEffectiveRole(currentAcademy).charAt(0).toUpperCase() + getEffectiveRole(currentAcademy).slice(1)}
-                </span>
+                <>
+                  <span className="text-xs text-muted-foreground">
+                    {getEffectiveRole(currentAcademy).charAt(0).toUpperCase() + getEffectiveRole(currentAcademy).slice(1)}
+                  </span>
+                  <span className="mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] leading-none">
+                    <span className={isOnline ? 'h-2 w-2 rounded-full bg-green-500' : 'h-2 w-2 rounded-full bg-gray-400'} />
+                    <span className={isOnline ? 'text-green-700' : 'text-muted-foreground'}>
+                      {isOnline ? 'Online' : 'Offline'}
+                    </span>
+                  </span>
+                </>
               )}
             </div>
           </div>

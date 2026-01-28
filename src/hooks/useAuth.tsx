@@ -32,6 +32,8 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   userAcademies: AcademyMembership[];
+  onlineUserIds: Set<string>;
+  onlineAtByUserId: Record<string, string>;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -53,10 +55,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userAcademies, setUserAcademies] = useState<AcademyMembership[]>([]);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+  const [onlineAtByUserId, setOnlineAtByUserId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const lastProfileFetchUserIdRef = useRef<string | null>(null);
   const loginIntentKey = 'audit:login_intent';
+  const presenceKeyRef = useRef<string | null>(null);
+  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const logAuthAuditEvent = async (action: 'login' | 'logout', userId: string | null) => {
     if (!userId) return;
@@ -168,6 +174,80 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const userId = profile?.id;
+    if (!userId) {
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+        presenceChannelRef.current = null;
+      }
+      presenceKeyRef.current = null;
+      setOnlineUserIds(new Set());
+      setOnlineAtByUserId({});
+      return;
+    }
+
+    if (!presenceKeyRef.current) presenceKeyRef.current = userId;
+
+    if (presenceChannelRef.current) {
+      supabase.removeChannel(presenceChannelRef.current);
+      presenceChannelRef.current = null;
+    }
+
+    const channel = supabase.channel('app-presence', {
+      config: { presence: { key: presenceKeyRef.current } },
+    });
+    presenceChannelRef.current = channel;
+
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState() as Record<string, any[]>;
+      const ids = Object.keys(state || {});
+      setOnlineUserIds(new Set(ids));
+
+      const nextOnlineAt: Record<string, string> = {};
+      for (const id of ids) {
+        const sessions = (state[id] || []) as any[];
+        let best: string | null = null;
+        for (const s of sessions) {
+          const onlineAt = typeof s?.online_at === 'string' ? s.online_at : null;
+          if (!onlineAt) continue;
+          if (!best) best = onlineAt;
+          else if (new Date(onlineAt).getTime() < new Date(best).getTime()) best = onlineAt;
+        }
+        if (best) nextOnlineAt[id] = best;
+      }
+      setOnlineAtByUserId(nextOnlineAt);
+    });
+
+    channel.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
+
+      let onlineAt: string;
+      try {
+        const key = `presence:online_at:${userId}`;
+        const stored = sessionStorage.getItem(key);
+        onlineAt = stored || new Date().toISOString();
+        if (!stored) sessionStorage.setItem(key, onlineAt);
+      } catch {
+        onlineAt = new Date().toISOString();
+      }
+
+      await channel.track({
+        user_id: userId,
+        name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(),
+        online_at: onlineAt,
+        status: 'online',
+      });
+    });
+
+    return () => {
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+        presenceChannelRef.current = null;
+      }
+    };
+  }, [profile?.id, profile?.first_name, profile?.last_name]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -301,6 +381,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const currentUserId = user?.id || (await supabase.auth.getUser()).data.user?.id || null;
       await logAuthAuditEvent('logout', currentUserId);
 
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+        presenceChannelRef.current = null;
+      }
+      presenceKeyRef.current = null;
+
       // Clear local storage and session storage
       localStorage.clear();
       sessionStorage.clear();
@@ -323,6 +409,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user, 
       profile, 
       userAcademies, 
+      onlineUserIds,
+      onlineAtByUserId,
       loading, 
       signOut, 
       refreshProfile, 
