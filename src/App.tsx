@@ -51,6 +51,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Communications from "./pages/Communications";
 import AuditLogs from "./pages/AuditLogs";
+import AdminBeltTests from "./pages/AdminBeltTests";
 
 import { RoleSwitcher } from "@/components/admin/RoleSwitcher";
 import { useRoleTesting } from "@/contexts/RoleTestingContext";
@@ -96,6 +97,7 @@ const AppRoutes = () => {
         <Route path="/custom-fields" element={user ? <AcademyGatekeeper><CustomFields /></AcademyGatekeeper> : <Auth />} />
         <Route path="/audit-logs" element={user ? <AcademyGatekeeper><AuditLogs /></AcademyGatekeeper> : <Auth />} />
         <Route path="/admin/performance-targets" element={user ? <AcademyGatekeeper><PerformanceTargets /></AcademyGatekeeper> : <Auth />} />
+        <Route path="/admin/belt-tests" element={user ? <AcademyGatekeeper><AdminBeltTests /></AcademyGatekeeper> : <Auth />} />
         <Route path="/settings" element={user ? <AcademyGatekeeper><Settings /></AcademyGatekeeper> : <Auth />} />
         <Route path="/academy-setup" element={user ? <AcademySetup /> : <Auth />} />
         <Route path="/setup" element={user ? <AcademySetupPage /> : <Auth />} />

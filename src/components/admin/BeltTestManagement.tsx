@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+﻿import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,27 +9,25 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   Plus, 
   Search, 
   Filter, 
-  Calendar as CalendarIcon,
   Award,
   Clock,
   CheckCircle,
   XCircle,
-  User,
   Trophy,
   Star,
   Eye,
-  Edit
+  Edit,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface BeltTest {
   id: string;
@@ -43,11 +42,14 @@ interface BeltTest {
   created_at: string;
   updated_at: string;
   profiles?: {
+    id: string;
     first_name: string;
     last_name: string;
-    email: string;
+    email?: string;
+    belt_level?: string;
   };
   evaluator?: {
+    id: string;
     first_name: string;
     last_name: string;
   };
@@ -61,12 +63,21 @@ interface BeltTestStats {
   passRate: number;
 }
 
+interface PersonOption {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  belt_level?: string;
+}
+
 const BELT_LEVELS = [
   "White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Black 1st Dan",
   "Black 2nd Dan", "Black 3rd Dan", "Black 4th Dan", "Black 5th Dan"
 ];
 
 export const BeltTestManagement = () => {
+  const { profile } = useAuth();
   const [beltTests, setBeltTests] = useState<BeltTest[]>([]);
   const [stats, setStats] = useState<BeltTestStats>({
     totalTests: 0,
@@ -75,13 +86,13 @@ export const BeltTestManagement = () => {
     failedTests: 0,
     passRate: 0
   });
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTest, setSelectedTest] = useState<BeltTest | null>(null);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showEvaluateDialog, setShowEvaluateDialog] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // New belt test form state
   const [newTest, setNewTest] = useState({
@@ -98,70 +109,455 @@ export const BeltTestManagement = () => {
     notes: "",
     evaluated_by: ""
   });
+  const [deletingTestId, setDeletingTestId] = useState<string | null>(null);
+  const [confirmDeleteTest, setConfirmDeleteTest] = useState<BeltTest | null>(null);
 
-  useEffect(() => {
-    fetchBeltTests();
-    fetchStats();
-  }, []);
+  const { data: myBeltTests = [], isLoading: myBeltTestsLoading } = useQuery({
+    queryKey: ['my-belt-tests', profile?.id],
+    enabled: !!profile?.id && profile?.role === 'student',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('belt_tests')
+        .select('id, student_id, current_belt, target_belt, test_date, status, result, notes, evaluated_by, created_at, updated_at')
+        .eq('student_id', profile!.id)
+        .order('test_date', { ascending: false });
 
-  const fetchBeltTests = async () => {
-    try {
+      if (error) throw error;
+
+      const rows = (data || []) as BeltTest[];
+      const evaluatorIds = Array.from(
+        new Set(rows.map((r) => r.evaluated_by).filter(Boolean))
+      ) as string[];
+
+      if (evaluatorIds.length === 0) return rows;
+
+      const { data: evaluatorProfiles, error: evaluatorError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', evaluatorIds);
+
+      if (evaluatorError) throw evaluatorError;
+
+      const byId = new Map<string, { id: string; first_name: string; last_name: string }>();
+      for (const p of evaluatorProfiles || []) {
+        if (!p?.id) continue;
+        byId.set(p.id, {
+          id: p.id,
+          first_name: (p as any).first_name,
+          last_name: (p as any).last_name,
+        });
+      }
+
+      return rows.map((r) => ({
+        ...r,
+        evaluator: r.evaluated_by ? byId.get(r.evaluated_by) : undefined,
+      }));
+    },
+  });
+
+  const { data: myBeltHistory = [], isLoading: myBeltHistoryLoading } = useQuery({
+    queryKey: ['my-belt-history', profile?.id],
+    enabled: !!profile?.id && profile?.role === 'student',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_belt_history')
+        .select('id, student_id, belt_level, promoted_date, promoted_by, notes, created_at')
+        .eq('student_id', profile!.id)
+        .order('promoted_date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const rows = (data || []) as any[];
+      const promoterIds = Array.from(new Set(rows.map((r) => r.promoted_by).filter(Boolean))) as string[];
+      if (promoterIds.length === 0) return rows;
+
+      const { data: promoterProfiles, error: promoterError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, role')
+        .in('id', promoterIds);
+
+      if (promoterError) throw promoterError;
+
+      const byId = new Map<string, { id: string; first_name: string; last_name: string; role?: string }>();
+      for (const p of promoterProfiles || []) {
+        if (!p?.id) continue;
+        byId.set(p.id, {
+          id: p.id,
+          first_name: (p as any).first_name,
+          last_name: (p as any).last_name,
+          role: (p as any).role,
+        });
+      }
+
+      return rows.map((r) => ({
+        ...r,
+        promoted_by_profile: r.promoted_by ? byId.get(r.promoted_by) : undefined,
+      }));
+    },
+  });
+
+  if (profile?.role === 'student') {
+    const latestPassed = (myBeltTests || []).find((t) => t.result === 'passed');
+    const nextScheduled = (myBeltTests || []).find((t) => t.status === 'scheduled');
+
+    const findPromotionForTest = (test: BeltTest) => {
+      if (!test || test.result !== 'passed') return null;
+      const candidates = (myBeltHistory || []).filter(
+        (h: any) => (h?.belt_level || '').toLowerCase() === (test.target_belt || '').toLowerCase()
+      );
+      if (candidates.length === 0) return null;
+      return candidates
+        .slice()
+        .sort((a: any, b: any) => {
+          const ad = a?.promoted_date ? new Date(a.promoted_date).getTime() : 0;
+          const bd = b?.promoted_date ? new Date(b.promoted_date).getTime() : 0;
+          if (bd !== ad) return bd - ad;
+          const ac = a?.created_at ? new Date(a.created_at).getTime() : 0;
+          const bc = b?.created_at ? new Date(b.created_at).getTime() : 0;
+          return bc - ac;
+        })[0];
+    };
+
+    const getEvaluatorDisplayName = (test: any) => {
+      if (test?.evaluator) return `${test.evaluator.first_name} ${test.evaluator.last_name}`;
+      if (!test?.evaluated_by) return test?.result ? 'Not assigned' : 'Awaiting evaluation';
+
+      const id = String(test.evaluated_by);
+      if (id === '00000000-0000-0000-0000-000000000096') return 'Academy Staff';
+      if (id.startsWith('00000000-0000-0000-0000-')) return 'Academy Staff';
+      return 'Evaluator unavailable';
+    };
+
+    const beltToClassName = (belt: string) => {
+      const v = (belt || '').toLowerCase();
+      if (v.includes('white')) return 'bg-gray-100 text-gray-900 border-gray-200';
+      if (v.includes('yellow')) return 'bg-yellow-100 text-yellow-900 border-yellow-200';
+      if (v.includes('orange')) return 'bg-orange-100 text-orange-900 border-orange-200';
+      if (v.includes('green')) return 'bg-green-100 text-green-900 border-green-200';
+      if (v.includes('blue')) return 'bg-blue-100 text-blue-900 border-blue-200';
+      if (v.includes('purple')) return 'bg-purple-100 text-purple-900 border-purple-200';
+      if (v.includes('brown')) return 'bg-amber-100 text-amber-900 border-amber-200';
+      if (v.includes('red')) return 'bg-red-100 text-red-900 border-red-200';
+      if (v.includes('black')) return 'bg-slate-900 text-white border-slate-900';
+      return 'bg-muted text-foreground border-border';
+    };
+
+    const BeltBadge = ({ belt }: { belt: string }) => (
+      <Badge variant="outline" className={beltToClassName(belt)}>
+        {belt}
+      </Badge>
+    );
+
+    const getStatusBadge = (status: string) => {
+      const v = (status || '').toLowerCase();
+      if (v === 'scheduled') {
+        return (
+          <Badge variant="outline" className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Scheduled
+          </Badge>
+        );
+      }
+      if (v === 'completed') {
+        return (
+          <Badge variant="secondary" className="inline-flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Completed
+          </Badge>
+        );
+      }
+      return <Badge variant="secondary">{status}</Badge>;
+    };
+
+    const getResultBadge = (result: string | null) => {
+      if (result === 'passed') {
+        return (
+          <Badge variant="default" className="inline-flex items-center gap-1">
+            <Trophy className="h-3 w-3" />
+            Passed
+          </Badge>
+        );
+      }
+      if (result === 'failed') {
+        return (
+          <Badge variant="destructive" className="inline-flex items-center gap-1">
+            <XCircle className="h-3 w-3" />
+            Failed
+          </Badge>
+        );
+      }
+      return <Badge variant="outline">Pending</Badge>;
+    };
+
+    return (
+      <div className="space-y-4">
+        <Card className={latestPassed ? "border-primary/40" : undefined}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              Belt Promotions
+            </CardTitle>
+            <CardDescription>
+              Your belt test history and promotion status
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className={latestPassed ? "rounded-lg border bg-primary/5 p-4" : "rounded-lg border bg-muted/30 p-4"}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="text-sm text-muted-foreground">Promotion Status</div>
+                  {latestPassed ? (
+                    <div className="mt-1">
+                      <div className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+                        <Star className="h-5 w-5 text-primary" />
+                        PROMOTED
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        Promoted to <BeltBadge belt={latestPassed.target_belt} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      Keep training. Your next promotion will show here once you pass a belt test.
+                    </div>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  {latestPassed ? (
+                    <Badge variant="default" className="inline-flex items-center gap-1">
+                      <Trophy className="h-3 w-3" />
+                      Promoted
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">In Progress</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Current Belt</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-bold">{profile?.belt_level || '—'}</div>
+                    {profile?.belt_level ? <BeltBadge belt={profile.belt_level} /> : null}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Next Test</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {nextScheduled ? (
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        {format(new Date(nextScheduled.test_date), 'MMM dd, yyyy')}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Target: <BeltBadge belt={nextScheduled.target_belt} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No scheduled test yet</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{(myBeltTests || []).length}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Test Date</TableHead>
+                    <TableHead>Target Belt</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Result</TableHead>
+                    <TableHead>Evaluator</TableHead>
+                    <TableHead>Promoted Date</TableHead>
+                    <TableHead>Promoted By</TableHead>
+                    <TableHead>Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {myBeltTestsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : (myBeltTests || []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                        No belt tests found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (myBeltTests || []).map((test) => (
+                      (() => {
+                        const promo = findPromotionForTest(test);
+                        return (
+                      <TableRow key={test.id}>
+                        <TableCell>{format(new Date(test.test_date), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell>
+                          <BeltBadge belt={test.target_belt} />
+                        </TableCell>
+                        <TableCell>{getStatusBadge(test.status)}</TableCell>
+                        <TableCell>{getResultBadge(test.result)}</TableCell>
+                        <TableCell>
+                          {getEvaluatorDisplayName(test)}
+                        </TableCell>
+                        <TableCell>
+                          {promo?.promoted_date
+                            ? format(new Date(promo.promoted_date), 'MMM dd, yyyy')
+                            : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          {promo?.promoted_by_profile
+                            ? `${promo.promoted_by_profile.first_name} ${promo.promoted_by_profile.last_name}${promo.promoted_by_profile.role ? ` (${promo.promoted_by_profile.role})` : ''}`
+                            : (promo?.promoted_by ? `Promoter unavailable (${String(promo.promoted_by).slice(0, 8)}…)` : <span className="text-muted-foreground">—</span>)}
+                        </TableCell>
+                        <TableCell>
+                          {promo?.notes ? String(promo.notes) : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                      </TableRow>
+                        );
+                      })()
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (profile?.role !== 'admin' && profile?.role !== 'owner') {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            Access denied. Admin privileges required.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { data: students = [] } = useQuery({
+    queryKey: ['belt-test-students'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, belt_level')
+        .eq('role', 'student')
+        .eq('membership_status', 'active')
+        .order('first_name');
+      if (error) throw error;
+      return (data || []) as PersonOption[];
+    }
+  });
+
+  const deleteTestMutation = useMutation({
+    mutationFn: async (testId: string) => {
+      const { error } = await supabase
+        .from('belt_tests')
+        .delete()
+        .eq('id', testId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['belt-tests-management'] });
+      toast({
+        title: "Deleted",
+        description: "Belt test deleted successfully",
+      });
+      if (selectedTest?.id === deletingTestId) {
+        setSelectedTest(null);
+        setShowEvaluateDialog(false);
+      }
+      setDeletingTestId(null);
+    },
+    onError: (error: any) => {
+      console.error('Error deleting belt test:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete belt test",
+        variant: "destructive",
+      });
+      setDeletingTestId(null);
+    }
+  });
+
+  const { data: evaluators = [] } = useQuery({
+    queryKey: ['belt-test-evaluators'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('role', ['instructor', 'admin', 'owner'])
+        .order('first_name');
+      if (error) throw error;
+      return (data || []) as PersonOption[];
+    }
+  });
+
+  const { isLoading } = useQuery({
+    queryKey: ['belt-tests-management'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('belt_tests')
         .select('*')
         .order('test_date', { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch profile and evaluator data separately for each test
+
       const testsWithDetails = await Promise.all(
         (data || []).map(async (test) => {
           const [profileResult, evaluatorResult] = await Promise.all([
             supabase
               .from('profiles')
-              .select('first_name, last_name, email')
+              .select('id, first_name, last_name, email, belt_level')
               .eq('id', test.student_id)
               .single(),
             test.evaluated_by ? supabase
               .from('profiles')
-              .select('first_name, last_name')
+              .select('id, first_name, last_name')
               .eq('id', test.evaluated_by)
               .single() : Promise.resolve({ data: null })
           ]);
-          
+
           return {
             ...test,
             profiles: profileResult.data,
             evaluator: evaluatorResult.data
-          };
+          } as BeltTest;
         })
       );
-      
+
       setBeltTests(testsWithDetails);
-    } catch (error) {
-      console.error('Error fetching belt tests:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch belt tests",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchStats = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('belt_tests')
-        .select('status, result');
-
-      if (error) throw error;
-
-      const totalTests = data?.length || 0;
-      const scheduledTests = data?.filter(test => test.status === 'scheduled').length || 0;
-      const passedTests = data?.filter(test => test.result === 'passed').length || 0;
-      const failedTests = data?.filter(test => test.result === 'failed').length || 0;
+      const totalTests = testsWithDetails.length;
+      const scheduledTests = testsWithDetails.filter(test => test.status === 'scheduled').length;
+      const passedTests = testsWithDetails.filter(test => test.result === 'passed').length;
+      const failedTests = testsWithDetails.filter(test => test.result === 'failed').length;
       const completedTests = passedTests + failedTests;
       const passRate = completedTests > 0 ? (passedTests / completedTests) * 100 : 0;
 
@@ -170,38 +566,37 @@ export const BeltTestManagement = () => {
         scheduledTests,
         passedTests,
         failedTests,
-        passRate
+        passRate,
       });
-    } catch (error) {
-      console.error('Error fetching belt test stats:', error);
-    }
-  };
 
-  const handleScheduleTest = async () => {
-    try {
+      return testsWithDetails;
+    }
+  });
+
+  const scheduleTestMutation = useMutation({
+    mutationFn: async (payload: typeof newTest) => {
       const { error } = await supabase
         .from('belt_tests')
         .insert({
-          student_id: newTest.student_id,
-          current_belt: newTest.current_belt,
-          target_belt: newTest.target_belt,
-          test_date: newTest.test_date,
+          student_id: payload.student_id,
+          current_belt: payload.current_belt,
+          target_belt: payload.target_belt,
+          test_date: payload.test_date,
           status: 'scheduled',
-          notes: newTest.notes || null
+          notes: payload.notes || null,
         });
-
       if (error) throw error;
-
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['belt-tests-management'] });
       toast({
         title: "Success",
         description: "Belt test scheduled successfully",
       });
-
       setShowScheduleDialog(false);
       setNewTest({ student_id: "", current_belt: "", target_belt: "", test_date: "", notes: "" });
-      fetchBeltTests();
-      fetchStats();
-    } catch (error) {
+    },
+    onError: (error: any) => {
       console.error('Error scheduling belt test:', error);
       toast({
         title: "Error",
@@ -209,43 +604,73 @@ export const BeltTestManagement = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const handleEvaluateTest = async () => {
-    if (!selectedTest) return;
+  const evaluateTestMutation = useMutation({
+    mutationFn: async (payload: { test: BeltTest; evaluation: typeof evaluation }) => {
+      const sessionUser = await supabase.auth.getUser();
+      const sessionUserId = sessionUser.data.user?.id || null;
 
-    try {
+      const evaluatedByToSave = payload.evaluation.evaluated_by || sessionUserId;
+
       const { error } = await supabase
         .from('belt_tests')
         .update({
           status: 'completed',
-          result: evaluation.result,
-          notes: evaluation.notes || null,
-          evaluated_by: evaluation.evaluated_by || null
+          result: payload.evaluation.result,
+          notes: payload.evaluation.notes || null,
+          evaluated_by: evaluatedByToSave || null,
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', selectedTest.id);
+        .eq('id', payload.test.id);
 
       if (error) throw error;
 
-      // If student passed, update their belt level in profiles
-      if (evaluation.result === 'passed') {
-        await supabase
-          .from('profiles')
-          .update({ belt_level: selectedTest.target_belt })
-          .eq('id', selectedTest.student_id);
-      }
+      if (payload.evaluation.result === 'passed') {
+        let roleAtInsert: string | null = null;
+        try {
+          const rpcResult = await (supabase as any).rpc('get_current_user_role');
+          roleAtInsert = (rpcResult?.data as string | null) || null;
+        } catch {
+          roleAtInsert = null;
+        }
 
+        const promotedByUserId = sessionUserId;
+        console.info('student_belt_history insert context', {
+          auth_uid: sessionUserId,
+          role: roleAtInsert,
+          student_id: payload.test.student_id,
+          belt_level: payload.test.target_belt,
+        });
+
+        const { error: historyError } = await supabase
+          .from('student_belt_history')
+          .insert({
+            student_id: payload.test.student_id,
+            belt_level: payload.test.target_belt,
+            promoted_by: promotedByUserId,
+            notes: payload.evaluation.notes || null,
+          });
+        if (historyError) throw historyError;
+
+        const { error: beltError } = await supabase
+          .from('profiles')
+          .update({ belt_level: payload.test.target_belt })
+          .eq('id', payload.test.student_id);
+        if (beltError) throw beltError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['belt-tests-management'] });
       toast({
         title: "Success",
         description: `Belt test evaluated: ${evaluation.result}`,
       });
-
       setShowEvaluateDialog(false);
       setSelectedTest(null);
       setEvaluation({ result: "", notes: "", evaluated_by: "" });
-      fetchBeltTests();
-      fetchStats();
-    } catch (error) {
+    },
+    onError: (error: any) => {
       console.error('Error evaluating belt test:', error);
       toast({
         title: "Error",
@@ -253,12 +678,12 @@ export const BeltTestManagement = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
   const filteredTests = beltTests.filter(test => {
     const matchesSearch = test.profiles ? 
       `${test.profiles.first_name} ${test.profiles.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      test.profiles.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (test.profiles.email ? test.profiles.email.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
       test.target_belt.toLowerCase().includes(searchTerm.toLowerCase())
       : test.target_belt.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -267,47 +692,7 @@ export const BeltTestManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      scheduled: { label: "Scheduled", variant: "secondary" as const, icon: Clock },
-      in_progress: { label: "In Progress", variant: "default" as const, icon: Award },
-      completed: { label: "Completed", variant: "outline" as const, icon: CheckCircle },
-      cancelled: { label: "Cancelled", variant: "destructive" as const, icon: XCircle }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.scheduled;
-    const IconComponent = config.icon;
-    
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <IconComponent className="h-3 w-3" />
-        {config.label}
-      </Badge>
-    );
-  };
-
-  const getResultBadge = (result: string | null) => {
-    if (!result) return null;
-    
-    const resultConfig = {
-      passed: { label: "Passed", variant: "default" as const, icon: Trophy },
-      failed: { label: "Failed", variant: "destructive" as const, icon: XCircle }
-    };
-    
-    const config = resultConfig[result as keyof typeof resultConfig];
-    if (!config) return null;
-    
-    const IconComponent = config.icon;
-    
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <IconComponent className="h-3 w-3" />
-        {config.label}
-      </Badge>
-    );
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -400,13 +785,29 @@ export const BeltTestManagement = () => {
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="student_id">Student ID</Label>
-                      <Input
-                        id="student_id"
+                      <Label htmlFor="student_id">Student</Label>
+                      <Select
                         value={newTest.student_id}
-                        onChange={(e) => setNewTest({ ...newTest, student_id: e.target.value })}
-                        placeholder="Enter student ID"
-                      />
+                        onValueChange={(value) => {
+                          const student = students.find((s) => s.id === value);
+                          setNewTest({
+                            ...newTest,
+                            student_id: value,
+                            current_belt: student?.belt_level || newTest.current_belt,
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select student" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {students.map((student) => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.first_name} {student.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -454,7 +855,11 @@ export const BeltTestManagement = () => {
                         placeholder="Additional notes for the test..."
                       />
                     </div>
-                    <Button onClick={handleScheduleTest} className="w-full">
+                    <Button
+                      onClick={() => scheduleTestMutation.mutate(newTest)}
+                      className="w-full"
+                      disabled={!newTest.student_id || !newTest.current_belt || !newTest.target_belt || !newTest.test_date || scheduleTestMutation.isPending}
+                    >
                       Schedule Test
                     </Button>
                   </div>
@@ -532,8 +937,17 @@ export const BeltTestManagement = () => {
                     <TableCell>
                       {format(new Date(test.test_date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell>{getStatusBadge(test.status)}</TableCell>
-                    <TableCell>{getResultBadge(test.result)}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{test.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {test.result === 'passed' ? 
+                        <Badge variant="default">Passed</Badge> : 
+                        test.result === 'failed' ? 
+                        <Badge variant="destructive">Failed</Badge> : 
+                        <span className="text-sm text-muted-foreground">Pending</span>
+                      }
+                    </TableCell>
                     <TableCell>
                       {test.evaluator ? 
                         `${test.evaluator.first_name} ${test.evaluator.last_name}` : 
@@ -561,6 +975,16 @@ export const BeltTestManagement = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteTestMutation.isPending && deletingTestId === test.id}
+                          onClick={() => {
+                            setConfirmDeleteTest(test);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -568,6 +992,35 @@ export const BeltTestManagement = () => {
               </TableBody>
             </Table>
           </div>
+
+          <AlertDialog
+            open={!!confirmDeleteTest}
+            onOpenChange={(open) => {
+              if (!open) setConfirmDeleteTest(null);
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Belt Test</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Delete this belt test? This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>No</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (!confirmDeleteTest?.id) return;
+                    setDeletingTestId(confirmDeleteTest.id);
+                    deleteTestMutation.mutate(confirmDeleteTest.id);
+                    setConfirmDeleteTest(null);
+                  }}
+                >
+                  Yes
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           {filteredTests.length === 0 && (
             <div className="text-center py-8">
@@ -613,11 +1066,16 @@ export const BeltTestManagement = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  {getStatusBadge(selectedTest.status)}
+                  <Badge variant="secondary">{selectedTest.status}</Badge>
                 </div>
                 <div>
                   <Label>Result</Label>
-                  {getResultBadge(selectedTest.result) || <span className="text-sm text-muted-foreground">Pending</span>}
+                  {selectedTest.result === 'passed' ? 
+                    <Badge variant="default">Passed</Badge> : 
+                    selectedTest.result === 'failed' ? 
+                    <Badge variant="destructive">Failed</Badge> : 
+                    <span className="text-sm text-muted-foreground">Pending</span>
+                  }
                 </div>
               </div>
               
@@ -678,13 +1136,19 @@ export const BeltTestManagement = () => {
               </div>
               
               <div>
-                <Label htmlFor="evaluated_by">Evaluator ID</Label>
-                <Input
-                  id="evaluated_by"
-                  value={evaluation.evaluated_by}
-                  onChange={(e) => setEvaluation({ ...evaluation, evaluated_by: e.target.value })}
-                  placeholder="Enter evaluator ID"
-                />
+                <Label htmlFor="evaluated_by">Evaluator</Label>
+                <Select value={evaluation.evaluated_by} onValueChange={(value) => setEvaluation({ ...evaluation, evaluated_by: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select evaluator" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {evaluators.map((evaluator) => (
+                      <SelectItem key={evaluator.id} value={evaluator.id}>
+                        {evaluator.first_name} {evaluator.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
@@ -697,7 +1161,11 @@ export const BeltTestManagement = () => {
                 />
               </div>
               
-              <Button onClick={handleEvaluateTest} className="w-full" disabled={!evaluation.result}>
+              <Button
+                onClick={() => evaluateTestMutation.mutate({ test: selectedTest, evaluation })}
+                className="w-full"
+                disabled={!evaluation.result || evaluateTestMutation.isPending}
+              >
                 Submit Evaluation
               </Button>
             </div>
