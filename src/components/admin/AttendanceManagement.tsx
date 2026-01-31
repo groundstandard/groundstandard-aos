@@ -379,7 +379,7 @@ export const AttendanceManagement = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to mark attendance'
+        description: error?.message || 'Failed to mark attendance'
       });
     }
   };
@@ -411,7 +411,7 @@ export const AttendanceManagement = () => {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to update attendance record'
+        description: error?.message || 'Failed to update attendance record'
       });
     }
   };

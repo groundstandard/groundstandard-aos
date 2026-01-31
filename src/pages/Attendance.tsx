@@ -75,7 +75,7 @@ const Attendance = () => {
             variant="ghost" 
             size="sm"
             className="flex items-center gap-1.5 sm:gap-2 hover:text-primary whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
-            onClick={() => navigate('/belt-testing')}
+            onClick={() => navigate('/admin/belt-tests')}
           >
             <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Promotions</span>
